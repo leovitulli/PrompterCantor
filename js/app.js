@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', function () {
   PrompterDB.initDB()
     .then(ensureSambaRepertoireExists)
     .then(migrateOrphanSongs)
-    .then(cleanAutoAssignedSingingKeys)
     .then(function() {
       return loadRepertoires().then(function() {
         restoreActiveState();
@@ -59,22 +58,6 @@ document.addEventListener('DOMContentLoaded', function () {
       console.error('Erro ao inicializar DB:', err);
       showToast('Erro ao carregar banco de dados.', 'warning');
     });
-
-  function cleanAutoAssignedSingingKeys() {
-    return PrompterDB.getAllSongs().then(function(allSongs) {
-      var updated = false;
-      for (var i = 0; i < allSongs.length; i++) {
-        var s = allSongs[i];
-        if (s.key && s.originalKey && s.key === s.originalKey) {
-          s.key = '';
-          updated = true;
-        }
-      }
-      if (updated) {
-        return PrompterDB.saveSongsBatch(allSongs);
-      }
-    });
-  }
 
   setupEventListeners();
 

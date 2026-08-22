@@ -223,7 +223,7 @@
             }, true));
           });
 
-          // 2. Processar músicas da nuvem com fusão inteligente
+          // 2. Processar músicas da nuvem com fusão inteligente (prioridade para alterações locais recentes)
           cloudSongs.forEach(function (cSong) {
             var local = localSongMap[cSong.id];
             var keyToUse = cSong.key;
@@ -235,18 +235,31 @@
             var orderToUse = cSong.order !== undefined ? cSong.order : null;
 
             if (local) {
-              // Se o local possui tom/ritmo/áudio e a nuvem não, preserva o local
-              if (local.key && !keyToUse) keyToUse = local.key;
-              if (local.rhythm && !rhythmToUse) rhythmToUse = local.rhythm;
-              if (local.originalKey && !origKeyToUse) origKeyToUse = local.originalKey;
+              var cloudUpdated = cSong.updated_at ? new Date(cSong.updated_at).getTime() : 0;
+              var localUpdated = local.updatedAt || 0;
+
+              // Se o item local foi modificado pelo usuário, ele prevalece e atualiza a nuvem
+              if (localUpdated >= cloudUpdated) {
+                var localWinsSong = Object.assign({}, local, {
+                  title: local.title || cSong.title,
+                  key: local.key || cSong.key || '',
+                  originalKey: local.originalKey || cSong.original_key || '',
+                  rhythm: local.rhythm || cSong.rhythm || '',
+                  content: local.content || cSong.content || '',
+                  artist: local.artist || cSong.artist || '',
+                  composer: local.composer || cSong.composer || '',
+                  youtubeUrl: local.youtubeUrl || cSong.youtube_url || '',
+                  youtubeId: local.youtubeId || cSong.youtube_id || '',
+                  repertoireId: cSong.repertoire_id || local.repertoireId
+                });
+
+                savePromises.push(window.PrompterDB.saveSong(localWinsSong, true));
+                savePromises.push(PrompterCloud.saveSongToCloud(localWinsSong));
+                return;
+              }
+
               if (local.audioBlob) audioBlobToUse = local.audioBlob;
               if (local.audioName) audioNameToUse = local.audioName;
-              if (local.trackNumber !== null && local.trackNumber !== undefined && trackNumToUse === null) {
-                trackNumToUse = local.trackNumber;
-              }
-              if (local.order !== null && local.order !== undefined && orderToUse === null) {
-                orderToUse = local.order;
-              }
             }
 
             var mergedSong = {
@@ -270,11 +283,6 @@
             };
 
             savePromises.push(window.PrompterDB.saveSong(mergedSong, true));
-
-            // Se o local tinha dados mais completos que a nuvem, sincroniza para a nuvem
-            if (local && ((local.key && !cSong.key) || (local.rhythm && !cSong.rhythm))) {
-              savePromises.push(PrompterCloud.saveSongToCloud(mergedSong));
-            }
           });
 
           // 3. Enviar repertórios e músicas locais que não estão na nuvem
