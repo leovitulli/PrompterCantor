@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f0f12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PrompterCantor">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+  <title>PrompterCantor - Repertório e Palco</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css?v=11">
+
+  <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
+  <script src="js/polyfills.js?v=11"></script>
+
+  <!-- Desregistrar Service Worker e Limpar Todo o Cache do Navegador -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      });
+    }
+    if (window.caches) {
+      caches.keys().then(function(keys) {
+        for (var k = 0; k < keys.length; k++) {
+          caches.delete(keys[k]);
+        }
+      });
+    }
+  </script>
+
+  <!-- Mammoth.js para leitura de arquivos .docx no navegador -->
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <!-- PDF.js para leitura de PDFs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- Google API Client (GAPI) e Google Identity Services (GIS) -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+</head>
+<body class="dark-mode">
+
+  <!-- CABEÇALHO DA APLICAÇÃO -->
+  <header class="app-header" id="appHeader">
+    <div class="header-content">
+      <div class="logo-area" id="btnGoHome">
+        <span class="logo-icon">🎤</span>
+        <h1 class="logo-title">PrompterCantor</h1>
+        <span class="logo-badge">PRO</span>
+      </div>
+
+      <!-- Barra de Busca Rápida -->
+      <div class="search-box-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar repertório ou música..." autocomplete="off">
+        <button id="btnClearSearch" class="btn-icon hidden">✕</button>
+      </div>
+
+      <!-- Botões de Ação do Topo -->
+      <div class="header-actions">
+        <div id="supabaseSyncBadge" class="sync-badge-minimal sync-online" title="Conectado à Nuvem (Sincronização Automática)">
+          <span class="sync-dot dot-online"></span>
+          <span class="sync-label">Nuvem Online</span>
+        </div>
+        <!-- Menu Unificado de Adição -->
+        <div class="dropdown-add-container">
+          <button id="btnDropdownAdd" class="btn btn-primary btn-add-main">
+            <span class="btn-icon">➕</span> <span class="btn-text">Adicionar</span> <span class="dropdown-arrow">▾</span>
+          </button>
+          <div id="dropdownAddMenu" class="dropdown-add-menu hidden">
+            <button id="btnMenuNewRepertoire" class="dropdown-add-item">
+              <span class="item-icon">📂</span> Criar Repertório
+            </button>
+            <button id="btnMenuNewSong" class="dropdown-add-item">
+              <span class="item-icon">🎵</span> Criar Música Manual
+            </button>
+            <div class="dropdown-divider"></div>
+            <button id="btnMenuImportLocal" class="dropdown-add-item">
+              <span class="item-icon">📄</span> Importar Arquivos (Local)
+            </button>
+            <button id="btnMenuImportDrive" class="dropdown-add-item">
+              <span class="item-icon">☁️</span> Importar do Google Drive
+            </button>
+          </div>
+        </div>
+        <button id="btnToggleTheme" class="btn btn-secondary" title="Alternar Modo Claro/Escuro">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER DE PROGRESSO DE IMPORTAÇÃO EM SEGUNDO PLANO -->
+  <div id="importProgressBanner" class="import-progress-banner hidden">
+    <div class="ipb-content">
+      <span class="ipb-icon">⚡</span>
+      <div class="ipb-text-area">
+        <div class="ipb-title" id="ipbTitle">Importando músicas do Google Drive...</div>
+        <div class="ipb-progress-bar"><div class="ipb-progress-fill" id="ipbFill" style="width:0%"></div></div>
+      </div>
+      <span class="ipb-status" id="ipbStatus">0 / 0</span>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL (SPA) -->
+  <main class="main-container">
+
+    <!-- TELA PRINCIPAL: REPERTÓRIOS -->
+    <section id="tabRepertoire" class="tab-content active">
+
+      <!-- === VISÃO PRINCIPAL: Grid de cards de Repertório === -->
+      <div id="mainRepertoireView">
+        <div id="repertoiresList" class="repertoires-grid">
+          <!-- Cards inseridos dinamicamente -->
+        </div>
+      </div>
+
+      <!-- === VISÃO INTERNA: Músicas de um Repertório === -->
+      <div id="repertoireSongsView" class="hidden">
+
+        <!-- Cabeçalho da tela interna -->
+        <div class="rsv-header">
+          <div class="rsv-nav">
+            <button id="btnRsvBack" class="btn btn-back">‹ Repertórios</button>
+            <div class="rsv-title-block">
+              <h2 id="rsvTitle" class="rsv-title">Nome do Repertório</h2>
+              <span id="rsvCount" class="rsv-count">0 músicas</span>
+            </div>
+          </div>
+          <div class="rsv-actions">
+            <button id="btnToggleRepOfflineHeader" class="btn btn-sm btn-secondary btn-offline-toggle" title="Alternar modo offline para todo este repertório">⚡ <span id="rsvOfflineText">Offline</span></button>
+            <button id="btnRsvSortAZ" class="btn btn-sm btn-secondary" title="Organizar músicas em ordem alfabética (A-Z)">🔤 Ordem A-Z</button>
+            <button id="btnRsvPrint" class="btn btn-sm btn-secondary" title="Imprimir Setlist de Palco">🖨️ Imprimir</button>
+            <button id="btnRsvCreateManual" class="btn btn-sm btn-outline">✏️ Nova Música</button>
+            <button id="btnRsvAddSong" class="btn btn-sm btn-primary">+ Importar Arquivo</button>
+          </div>
+        </div>
+
+        <!-- Lista de músicas -->
+        <div id="rsvSongsList" class="rsv-songs-list">
+          <!-- Inserido dinamicamente -->
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <!-- MODO PALCO / LEITOR PROMPTER (TELA ÚNICA FULLSCREEN) -->
+  <section id="prompterView" class="prompter-section hidden" style="display: none;">
+      <!-- Barra Superior de Controle do Prompter -->
+      <header class="prompter-header" id="prompterHeader">
+        <div class="prompter-title-area">
+          <button id="btnClosePrompter" class="btn btn-back">‹ Voltar</button>
+          <div class="song-metadata-header">
+            <h2 id="prompterSongTitle">Título da Música</h2>
+            <div class="song-badges">
+              <select id="prompterKeySelect" class="key-selector-dropdown" title="Alterar Tom de Cantar">
+                <option value="">Tom: —</option>
+                <optgroup label="Tons Maiores">
+                  <option value="C">C (Dó)</option>
+                  <option value="C#">C# / Db</option>
+                  <option value="D">D (Ré)</option>
+                  <option value="D#">D# / Eb</option>
+                  <option value="E">E (Mi)</option>
+                  <option value="F">F (Fá)</option>
+                  <option value="F#">F# / Gb</option>
+                  <option value="G">G (Sol)</option>
+                  <option value="G#">G# / Ab</option>
+                  <option value="A">A (Lá)</option>
+                  <option value="A#">A# / Bb</option>
+                  <option value="B">B (Si)</option>
+                </optgroup>
+                <optgroup label="Tons Menores">
+                  <option value="Cm">Cm (Dó m)</option>
+                  <option value="C#m">C#m / Dbm</option>
+                  <option value="Dm">Dm (Ré m)</option>
+                  <option value="D#m">D#m / Ebm</option>
+                  <option value="Em">Em (Mi m)</option>
+                  <option value="Fm">Fm (Fá m)</option>
+                  <option value="F#m">F#m / Gbm</option>
+                  <option value="Gm">Gm (Sol m)</option>
+                  <option value="G#m">G#m / Abm</option>
+                  <option value="Am">Am (Lá m)</option>
+                  <option value="Bbm">Bbm / A#m</option>
+                  <option value="Bm">Bm (Si m)</option>
+                </optgroup>
+              </select>
+              <button id="btnPrompterPrevSong" class="btn btn-secondary btn-sm hidden" title="Música Anterior do Show">‹ Anterior</button>
+              <span id="prompterShowPos" class="badge badge-submeta hidden" style="background:#3b82f6; color:#fff; font-weight:800;">Show 1/1</span>
+              <button id="btnPrompterNextSong" class="btn btn-secondary btn-sm hidden" title="Próxima Música do Show">Próxima ›</button>
+              <button id="btnPrompterYoutube" class="btn btn-secondary btn-sm hidden" title="Vídeo de Referência no YouTube">🎬 Vídeo</button>
+              <button id="btnPrompterEdit" class="btn btn-secondary btn-sm" title="Editar Letra e Cifra">✏️ Editar</button>
+            </div>
+            <div id="prompterSongSubmeta" class="prompter-song-submeta">
+              <span id="prompterSongArtist" class="badge-submeta"></span>
+              <span id="prompterSongComposer" class="badge-submeta"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles de Prompter e Fonte -->
+        <div class="prompter-controls">
+          <div class="control-group">
+            <span class="control-label">Fonte:</span>
+            <button id="btnFontSmaller" class="btn-circle" title="Diminuir Fonte">A-</button>
+            <span id="fontSizeDisplay">32px</span>
+            <button id="btnFontBigger" class="btn-circle" title="Aumentar Fonte">A+</button>
+          </div>
+
+          <div class="control-group">
+            <button id="btnToggleScroll" class="btn btn-scroll-play">
+              <span id="scrollPlayIcon">▶</span> <span id="scrollPlayText">Iniciar Rolagem</span>
+            </button>
+            <span class="control-label">Velocidade:</span>
+            <button id="btnSpeedSlower" class="btn-circle" title="Diminuir Velocidade">-</button>
+            <span id="scrollSpeedDisplay">3x</span>
+            <button id="btnSpeedFaster" class="btn-circle" title="Aumentar Velocidade">+</button>
+          </div>
+
+          <button id="btnToggleFullscreen" class="btn btn-secondary" title="Tela Cheia">
+            ⛶
+          </button>
+        </div>
+      </header>
+
+
+      <!-- ─── PLAYER AVANÇADO DE ÁUDIO ─── -->
+      <div id="advancedPlayer" class="advanced-player hidden">
+
+        <!-- Cabeçalho do player -->
+        <div class="ap-header">
+          <div class="ap-song-info">
+            <span class="ap-icon">🎵</span>
+            <span id="apSongName" class="ap-song-name">Áudio Guia</span>
+          </div>
+          <div class="ap-key-info">
+            <span class="ap-key-label">Tom detectado:</span>
+            <span id="apDetectedKey" class="ap-key-badge">—</span>
+            <button id="apKeySuggest" class="btn btn-outline btn-sm hidden" data-key=""></button>
+          </div>
+          <span id="apStatus" class="ap-status">Carregando...</span>
+        </div>
+
+        <!-- Waveform -->
+        <div class="ap-waveform-wrap">
+          <canvas id="apWaveform" class="ap-waveform" width="800" height="60"></canvas>
+          <div class="ap-seek-row">
+            <span id="apTime" class="ap-time">0:00 / 0:00</span>
+            <input type="range" id="apSeek" class="ap-seek" min="0" max="100" value="0" step="0.1">
+          </div>
+        </div>
+
+        <!-- Controles principais -->
+        <div class="ap-controls">
+
+          <!-- Play / Stop -->
+          <div class="ap-control-group">
+            <button id="apPlayPause" class="ap-btn ap-btn-play">
+              <span>▶</span> Tocar
+            </button>
+            <button id="apStop" class="ap-btn ap-btn-stop" title="Parar">⏹</button>
+          </div>
+
+          <!-- Pitch (semitons) -->
+          <div class="ap-control-group">
+            <span class="ap-ctrl-label">Tom (♪)</span>
+            <button id="apPitchDown" class="ap-btn ap-btn-sm" title="-1 semitom">▼</button>
+            <span id="apPitchDisplay" class="ap-pitch-display pitch-neutral">0 st</span>
+            <button id="apPitchUp" class="ap-btn ap-btn-sm" title="+1 semitom">▲</button>
+            <button id="apPitchReset" class="ap-btn ap-btn-xs" title="Resetar tom">↺</button>
+          </div>
+
+          <!-- Velocidade -->
+          <div class="ap-control-group">
+            <span class="ap-ctrl-label">Velocidade</span>
+            <input type="range" id="apRate" class="ap-rate-slider" min="0.5" max="1.5" value="1" step="0.05">
+            <span id="apRateDisplay" class="ap-rate-display">100%</span>
+          </div>
+
+          <!-- Vocal Mode -->
+          <div class="ap-control-group">
+            <span class="ap-ctrl-label">Voz</span>
+            <button id="apVocalFull" class="ap-btn ap-btn-vocal active" title="Faixa completa">🎙️ Completo</button>
+            <button id="apVocalInstrumental" class="ap-btn ap-btn-vocal" title="Tirar a voz (sem vocal)">🎸 Sem Voz</button>
+          </div>
+
+        </div>
+
+        <p id="apVocalNote" class="ap-vocal-note"></p>
+      </div>
+
+
+      <!-- ÁREA DE EXIBIÇÃO DA LETRA COM ROLAGEM AUTOMÁTICA -->
+      <div id="prompterScrollArea" class="prompter-scroll-area">
+        <div id="prompterTextContent" class="prompter-text-content">
+          <!-- Conteúdo da letra / cifra é renderizado aqui -->
+        </div>
+        <div class="prompter-bottom-spacer"></div>
+      </div>
+
+      <!-- BOTÃO FLUTUANTE VOLTAR AO TOPO (APENAS DENTRO DO MODO PALCO / PROMPTER MÚSICA) -->
+      <button id="btnScrollToTop" class="btn-floating-top" title="Voltar ao Topo">
+        <span class="btn-floating-icon">⬆</span> <span class="btn-floating-text">Topo</span>
+      </button>
+    </section>
+
+  <!-- ─── ÁREA DE IMPRESSÃO (oculta na tela, visível ao imprimir) ─── -->
+  <div id="printArea" class="print-area"></div>
+
+  <!-- ─── MODAL DE IMPORTAÇÃO DE ARQUIVOS (LOCAL) ─── -->
+  <div id="importModal" class="modal hidden">
+    <div class="modal-overlay" id="importModalOverlay"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📂 Importar Arquivos de Músicas</h3>
+        <button class="modal-close" id="btnCloseImportModal">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Nome do Repertório -->
+        <div class="form-group">
+          <label for="importRepertoireName">Nome do Repertório</label>
+          <input type="text" id="importRepertoireName" class="form-control" placeholder="Ex: Ensaio 12/08, Show de Natal...">
+        </div>
+
+        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">Selecione letras (.docx, .pdf, .txt) e/ou áudios (.mp3, .m4a, .wav). Arquivos com mesmo nome são pareados automaticamente.</p>
+
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-zone-icon">📂</div>
+          <p class="drop-zone-text">Arraste seus arquivos aqui ou clique para selecionar</p>
+          <input type="file" id="fileInput" multiple accept=".docx,.doc,.pdf,.txt,.rtf,.odt,.md,.mp3,.m4a,.aac,.wav,.ogg,.flac,.opus,.webm,.wma,.3gp,.amr,.mp4,.mov,.mkv,.avi" class="file-input-hidden">
+        </div>
+
+        <div id="importPreviewList" class="import-preview-list">
+          <!-- Músicas extraídas antes de salvar -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelImport" class="btn btn-secondary">Cancelar</button>
+        <button id="btnSaveImportedSongs" class="btn btn-primary" disabled>💾 Salvar Repertório</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL GOOGLE DRIVE INTEGRATION ─── -->
+  <div id="gDriveModal" class="modal hidden">
+    <div class="modal-overlay" id="gDriveModalOverlay"></div>
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3>☁️ Importar do Google Drive</h3>
+        <button class="modal-close" id="btnCloseGDriveModal">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Nome do Repertório -->
+        <div class="form-group">
+          <label for="gdriveRepertoireName">Nome do Repertório</label>
+          <input type="text" id="gdriveRepertoireName" class="form-control" placeholder="Ex: Repertório Drive, Ensaio Março...">
+        </div>
+
+        <!-- Passo 1: Autenticação -->
+        <div class="gdrive-step">
+          <div class="gdrive-step-label">1. Conecte sua Conta Google</div>
+          <div class="gdrive-auth-box">
+            <button id="btnGDriveConnect" class="btn btn-gdrive btn-lg">
+              🔑 Conectar Minha Conta Google
+            </button>
+            <span id="gdriveAuthStatus" class="status-text">Não conectado</span>
+          </div>
+        </div>
+
+        <!-- Passo 2: Informar pasta -->
+        <div class="gdrive-step">
+          <div class="gdrive-step-label">2. Cole o link da pasta no Google Drive</div>
+          <div class="gdrive-folder-input-row">
+            <input type="url" id="gdriveFolderUrl" class="form-control" placeholder="https://drive.google.com/drive/folders/...">
+            <button id="btnLoadGDriveFolder" class="btn btn-primary">🔍 Buscar</button>
+          </div>
+          <div class="gdrive-folder-hint">
+            <button id="btnOpenDrivePreset" class="btn btn-outline btn-sm">
+              📂 Abrir Google Drive (nova aba)
+            </button>
+          </div>
+        </div>
+
+        <!-- Passo 3: Lista de arquivos -->
+        <div class="gdrive-step">
+          <div class="gdrive-step-label">3. Selecione as músicas para importar</div>
+          <div id="gdriveFilesList" class="gdrive-files-list">
+            <div class="gdrive-placeholder">
+              <span>🎵</span>
+              <p>Conecte sua conta e busque uma pasta para ver os arquivos aqui.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelGDrive" class="btn btn-secondary">Fechar</button>
+        <button id="btnImportSelectedGDrive" class="btn btn-primary" disabled>⬇️ Importar Selecionados</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL DE EDIÇÃO / CRIAÇÃO MANUAL DE MÚSICA ─── -->
+  <div id="songEditorModal" class="modal hidden">
+    <div class="modal-overlay" id="songEditorOverlay"></div>
+    <div class="modal-card modal-lg editor-modal-card">
+      <div class="modal-header">
+        <h3 id="editorModalTitle">Editar Música</h3>
+        <button class="modal-close" id="btnCloseEditorModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="songForm" onsubmit="return false;">
+          <input type="hidden" id="editSongId">
+
+          <!-- BLOCO 1: DADOS DA MÚSICA -->
+          <div class="editor-section-title">📌 Informações da Música</div>
+          <div class="form-grid-3cols">
+            <div class="form-group form-col-full">
+              <label for="editSongTitle">Nome da Música *</label>
+              <input type="text" id="editSongTitle" required class="form-control" placeholder="Ex: A cobra Piou">
+            </div>
+            <div class="form-group">
+              <label for="editSongRhythm">Toque / Ritmo</label>
+              <input type="text" id="editSongRhythm" class="form-control" placeholder="Ex: Samba de Caboclo, Ijexá, Barravento...">
+            </div>
+            <div class="form-group">
+              <label for="editSongArtist">Intérprete / Cantor</label>
+              <input type="text" id="editSongArtist" class="form-control" placeholder="Ex: Elis Regina">
+            </div>
+            <div class="form-group">
+              <label for="editSongComposer">Compositor / Autoria</label>
+              <input type="text" id="editSongComposer" class="form-control" placeholder="Ex: Belchior">
+            </div>
+          </div>
+
+          <!-- BLOCO 2: TONALIDADES -->
+          <div class="editor-section-title">🎵 Tonalidade & Harmonia</div>
+          <div class="form-grid-2cols">
+            <div class="form-group">
+              <label for="editSongKey">Tom de Cantar (Configurável)</label>
+              <select id="editSongKey" class="form-control">
+                <option value="">Selecione...</option>
+                <option value="C">C (Dó)</option><option value="C#">C# / Db</option>
+                <option value="D">D (Ré)</option><option value="D#">D# / Eb</option>
+                <option value="E">E (Mi)</option><option value="F">F (Fá)</option>
+                <option value="F#">F# / Gb</option><option value="G">G (Sol)</option>
+                <option value="G#">G# / Ab</option><option value="A">A (Lá)</option>
+                <option value="A#">A# / Bb</option><option value="B">B (Si)</option>
+                <option value="Cm">Cm (Dó menor)</option><option value="C#m">C#m (Dó# menor)</option>
+                <option value="Dm">Dm (Ré menor)</option><option value="D#m">D#m (Ré# menor)</option>
+                <option value="Em">Em (Mi menor)</option><option value="Fm">Fm (Fá menor)</option>
+                <option value="F#m">F#m (Fá# menor)</option><option value="Gm">Gm (Sol menor)</option>
+                <option value="G#m">G#m (Sol# menor)</option><option value="Am">Am (Lá menor)</option>
+                <option value="Bbm">Bbm (Sib menor)</option><option value="Bm">Bm (Si menor)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editSongOriginalKey">Tom Original (Referência)</label>
+              <div class="input-with-button">
+                <select id="editSongOriginalKey" class="form-control flex-1">
+                  <option value="">Auto-detectar pelas cifras...</option>
+                  <option value="C">C (Dó)</option><option value="C#">C# / Db</option>
+                  <option value="D">D (Ré)</option><option value="D#">D# / Eb</option>
+                  <option value="E">E (Mi)</option><option value="F">F (Fá)</option>
+                  <option value="F#">F# / Gb</option><option value="G">G (Sol)</option>
+                  <option value="G#">G# / Ab</option><option value="A">A (Lá)</option>
+                  <option value="A#">A# / Bb</option><option value="B">B (Si)</option>
+                  <option value="Cm">Cm (Dó menor)</option><option value="C#m">C#m (Dó#m)</option>
+                  <option value="Dm">Dm (Ré menor)</option><option value="D#m">D#m (Ré#m)</option>
+                  <option value="Em">Em (Mi menor)</option><option value="Fm">Fm (Fá menor)</option>
+                  <option value="F#m">F#m (Fá#m)</option><option value="Gm">Gm (Sol menor)</option>
+                  <option value="G#m">G#m (Sol#m)</option><option value="Am">Am (Lá menor)</option>
+                  <option value="Bbm">Bbm (Sib m)</option><option value="Bm">Bm (Si menor)</option>
+                </select>
+                <button type="button" id="btnSearchOriginalKeyWeb" class="btn btn-secondary btn-nowrap" title="Buscar Tom Original na Web">🔍 Tom Web</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOCO 3: MÍDIA GUIA E YOUTUBE -->
+          <div class="editor-section-title">📺 Mídia & Áudio Guia</div>
+          <div class="form-group">
+            <label for="editSongYoutubeUrl">Link do Vídeo / Gravação no YouTube</label>
+            <div class="input-with-button">
+              <input type="url" id="editSongYoutubeUrl" class="form-control flex-1" placeholder="https://www.youtube.com/watch?v=...">
+              <button type="button" id="btnSearchSongYoutube" class="btn btn-secondary btn-nowrap">🔍 Buscar no YouTube</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="editSongAudioFile">Anexar Áudio/Vídeo da Melodia Guia (Arquivo Local)</label>
+            <div class="file-upload-box">
+              <input type="file" id="editSongAudioFile" accept="audio/*,video/*" class="file-input-hidden">
+              <label for="editSongAudioFile" class="file-upload-label">
+                <span class="file-upload-icon">🎵</span>
+                <span class="file-upload-text">Clique para selecionar um arquivo de áudio (MP3, M4A, WAV, MP4)</span>
+              </label>
+            </div>
+            <span id="currentAudioName" class="file-attached-info"></span>
+          </div>
+
+          <!-- BLOCO 4: LETRA E CIFRA -->
+          <div class="editor-section-title">📄 Letra e Cifra</div>
+          <div class="form-group">
+            <textarea id="editSongContent" class="form-control text-content-editor" rows="14" placeholder="Digite ou cole a letra com cifras da música aqui..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer editor-modal-footer">
+        <button id="btnDeleteSong" class="btn btn-danger hidden">🗑️ Excluir Música</button>
+        <button id="btnSaveSong" class="btn btn-primary">💾 Salvar Música</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── DOCK FLUTUANTE DE VÍDEO DO YOUTUBE (PICTURE-IN-PICTURE SEM OCULTAR A LETRA) ─── -->
+  <div id="youtubePlayerDock" class="youtube-player-dock hidden">
+    <div class="youtube-dock-header">
+      <span id="youtubeDockTitle" class="youtube-dock-title">🎬 Referência YouTube</span>
+      <div class="youtube-dock-actions">
+        <button id="btnToggleMinYoutubeDock" class="btn-dock-action btn-dock-min" title="Ocultar vídeo para só escutar o áudio">🙈 Minimiz. vídeo</button>
+        <button id="btnOpenExternalYoutube" class="btn-dock-action" title="Abrir no App YouTube">▶️ App</button>
+        <button id="btnCloseYoutubeDock" class="btn-dock-action btn-dock-close" title="Fechar Vídeo">✕ Fechar</button>
+      </div>
+    </div>
+    <div id="youtubePlayerContainer" class="youtube-player-container">
+      <!-- iframe do YouTube renderizado aqui -->
+    </div>
+  </div>
+
+  <!-- NOTIFICAÇÕES TOAST -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- SCRIPTS DA APLICAÇÃO -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=48"></script>
+  <script src="js/supabaseClient.js?v=48"></script>
+  <script src="js/db.js?v=48"></script>
+  <script src="js/textParser.js?v=48"></script>
+  <script src="js/sampleRepertoire.js?v=48"></script>
+  <script src="js/transposer.js?v=48"></script>
+  <script src="js/prompter.js?v=48"></script>
+  <script src="js/mediaPlayer.js?v=48"></script>
+  <script src="js/advancedPlayer.js?v=48"></script>
+  <script src="js/gdrive.js?v=48"></script>
+  <script src="js/gdriveUI.js?v=48"></script>
+  <script src="js/app.js?v=48"></script>
+</body>
+</html>

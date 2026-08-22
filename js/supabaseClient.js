@@ -1,0 +1,305 @@
+/**
+ * PrompterCantor — Supabase Cloud Integration
+ * Gerencia a sincronização bidirecional entre o banco local (IndexedDB) e a nuvem (Supabase).
+ */
+
+(function () {
+  'use strict';
+
+  var client = null;
+  var isSyncing = false;
+
+  function initClient() {
+    if (window.supabase && window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
+      try {
+        client = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.key);
+        console.log('✅ Supabase Client inicializado com sucesso.');
+      } catch (err) {
+        console.error('❌ Erro ao inicializar Supabase Client:', err);
+      }
+    }
+  }
+
+  function updateSyncBadge(status, message) {
+    var badge = document.getElementById('supabaseSyncBadge');
+    if (!badge) return;
+
+    badge.className = 'sync-badge-minimal sync-' + status;
+    if (status === 'online') {
+      badge.innerHTML = '<span class="sync-dot dot-online"></span><span class="sync-label">Nuvem Online</span>';
+      badge.title = 'Conectado à nuvem. Dados sincronizados automaticamente.';
+    } else if (status === 'syncing') {
+      badge.innerHTML = '<span class="sync-dot dot-syncing"></span><span class="sync-label">Sincronizando...</span>';
+      badge.title = 'Sincronizando com a nuvem...';
+    } else {
+      badge.innerHTML = '<span class="sync-dot dot-offline"></span><span class="sync-label">Local</span>';
+      badge.title = 'Operando localmente. Use "⚡ Offline" no repertório para baixar para o palco.';
+    }
+  }
+
+  var PrompterCloud = {
+    getClient: function () {
+      if (!client) initClient();
+      return client;
+    },
+
+    // ═══════════════════════════════════════
+    //  REPERTÓRIOS
+    // ═══════════════════════════════════════
+    saveRepertoireToCloud: function (rep) {
+      var sb = this.getClient();
+      if (!sb || !rep) return Promise.resolve(null);
+
+      var payload = {
+        name: rep.name,
+        source: rep.source || 'manual'
+      };
+
+      if (rep.id) payload.id = Number(rep.id);
+
+      return sb.from('repertoires').upsert(payload).select().then(function (res) {
+        if (res.error) {
+          console.warn('Erro ao salvar repertório na nuvem:', res.error);
+          updateSyncBadge('offline');
+          throw res.error;
+        }
+        updateSyncBadge('online');
+        return res.data && res.data[0] ? res.data[0] : null;
+      }).catch(function (e) {
+        console.warn('Falha na requisição Supabase:', e);
+        updateSyncBadge('offline');
+        throw e;
+      });
+    },
+
+    deleteRepertoireFromCloud: function (repId) {
+      var sb = this.getClient();
+      if (!sb || !repId) return Promise.resolve();
+
+      return sb.from('repertoires').delete().eq('id', Number(repId)).then(function (res) {
+        if (res.error) console.warn('Erro ao deletar repertório na nuvem:', res.error);
+      }).catch(function (e) { console.warn(e); });
+    },
+
+    // ═══════════════════════════════════════
+    //  MÚSICAS
+    // ═══════════════════════════════════════
+    saveSongToCloud: function (song) {
+      var sb = this.getClient();
+      if (!sb || !song) return Promise.resolve(null);
+
+      var payload = {
+        repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
+        title: song.title,
+        key: song.key || '',
+        original_key: song.originalKey || '',
+        rhythm: song.rhythm || '',
+        artist: song.artist || '',
+        composer: song.composer || '',
+        youtube_url: song.youtubeUrl || '',
+        youtube_id: song.youtubeId || '',
+        content: song.content || ''
+      };
+
+      if (song.id) payload.id = Number(song.id);
+
+      return sb.from('songs').upsert(payload).select().then(function (res) {
+        if (res.error) {
+          console.warn('Erro ao salvar música na nuvem:', res.error);
+          updateSyncBadge('offline');
+          throw res.error;
+        }
+        updateSyncBadge('online');
+        return res.data && res.data[0] ? res.data[0] : null;
+      }).catch(function (e) {
+        console.warn('Falha na requisição Supabase:', e);
+        updateSyncBadge('offline');
+        throw e;
+      });
+    },
+
+    deleteSongFromCloud: function (songId) {
+      var sb = this.getClient();
+      if (!sb || !songId) return Promise.resolve();
+
+      return sb.from('songs').delete().eq('id', Number(songId)).then(function (res) {
+        if (res.error) console.warn('Erro ao deletar música na nuvem:', res.error);
+      }).catch(function (e) { console.warn(e); });
+    },
+
+    // ═══════════════════════════════════════
+    //  SINCRONIZAÇÃO COMPLETA BIDIRECIONAL
+    // ═══════════════════════════════════════
+    syncAllWithCloud: function () {
+      var sb = this.getClient();
+      if (!sb || isSyncing) return Promise.resolve();
+
+      isSyncing = true;
+      updateSyncBadge('syncing');
+
+      // 1. Buscar tudo da nuvem
+      return Promise.all([
+        sb.from('repertoires').select('*'),
+        sb.from('songs').select('*')
+      ]).then(function (results) {
+        var cloudRepsRes = results[0];
+        var cloudSongsRes = results[1];
+
+        if (cloudRepsRes.error || cloudSongsRes.error) {
+          console.warn('Tabelas do Supabase ainda não foram criadas ou erro de conexão:', cloudRepsRes.error || cloudSongsRes.error);
+          updateSyncBadge('offline');
+          isSyncing = false;
+          return;
+        }
+
+        var cloudReps = cloudRepsRes.data || [];
+        var cloudSongs = cloudSongsRes.data || [];
+
+        // 2. Buscar tudo do banco local IndexedDB
+        return Promise.all([
+          window.PrompterDB.getAllRepertoires(),
+          window.PrompterDB.getAllSongs()
+        ]).then(function (localResults) {
+          var localReps = localResults[0] || [];
+          var localSongs = localResults[1] || [];
+
+          var savePromises = [];
+
+          var localRepMap = {};
+          localReps.forEach(function (r) { localRepMap[r.id] = r; });
+
+          var localSongMap = {};
+          localSongs.forEach(function (s) { localSongMap[s.id] = s; });
+
+          var cloudRepMap = {};
+          cloudReps.forEach(function (r) { cloudRepMap[r.id] = r; });
+
+          var cloudSongMap = {};
+          cloudSongs.forEach(function (s) { cloudSongMap[s.id] = s; });
+
+          // 1. Processar repertórios da nuvem
+          cloudReps.forEach(function (cRep) {
+            savePromises.push(window.PrompterDB.saveRepertoire({
+              id: cRep.id,
+              name: cRep.name,
+              source: cRep.source,
+              createdAt: cRep.created_at ? new Date(cRep.created_at).getTime() : Date.now()
+            }, true));
+          });
+
+          // 2. Processar músicas da nuvem com fusão inteligente
+          cloudSongs.forEach(function (cSong) {
+            var local = localSongMap[cSong.id];
+            var keyToUse = cSong.key;
+            var rhythmToUse = cSong.rhythm;
+            var origKeyToUse = cSong.original_key;
+            var audioBlobToUse = null;
+            var audioNameToUse = '';
+            var trackNumToUse = cSong.track_number !== undefined ? cSong.track_number : null;
+            var orderToUse = cSong.order !== undefined ? cSong.order : null;
+
+            if (local) {
+              // Se o local possui tom/ritmo/áudio e a nuvem não, preserva o local
+              if (local.key && !keyToUse) keyToUse = local.key;
+              if (local.rhythm && !rhythmToUse) rhythmToUse = local.rhythm;
+              if (local.originalKey && !origKeyToUse) origKeyToUse = local.originalKey;
+              if (local.audioBlob) audioBlobToUse = local.audioBlob;
+              if (local.audioName) audioNameToUse = local.audioName;
+              if (local.trackNumber !== null && local.trackNumber !== undefined && trackNumToUse === null) {
+                trackNumToUse = local.trackNumber;
+              }
+              if (local.order !== null && local.order !== undefined && orderToUse === null) {
+                orderToUse = local.order;
+              }
+            }
+
+            var mergedSong = {
+              id: cSong.id,
+              repertoireId: cSong.repertoire_id,
+              title: cSong.title,
+              key: keyToUse || '',
+              originalKey: origKeyToUse || '',
+              rhythm: rhythmToUse || '',
+              artist: cSong.artist || '',
+              composer: cSong.composer || '',
+              youtubeUrl: cSong.youtube_url || '',
+              youtubeId: cSong.youtube_id || '',
+              content: cSong.content || '',
+              audioBlob: audioBlobToUse,
+              audioName: audioNameToUse,
+              trackNumber: trackNumToUse,
+              order: orderToUse,
+              createdAt: cSong.created_at ? new Date(cSong.created_at).getTime() : (local ? local.createdAt : Date.now()),
+              updatedAt: local && local.updatedAt ? local.updatedAt : Date.now()
+            };
+
+            savePromises.push(window.PrompterDB.saveSong(mergedSong, true));
+
+            // Se o local tinha dados mais completos que a nuvem, sincroniza para a nuvem
+            if (local && ((local.key && !cSong.key) || (local.rhythm && !cSong.rhythm))) {
+              savePromises.push(PrompterCloud.saveSongToCloud(mergedSong));
+            }
+          });
+
+          // 3. Enviar itens exclusivamente locais para a nuvem
+          localReps.forEach(function (lRep) {
+            if (!cloudRepMap[lRep.id]) {
+              savePromises.push(PrompterCloud.saveRepertoireToCloud(lRep));
+            }
+          });
+
+          localSongs.forEach(function (lSong) {
+            if (!cloudSongMap[lSong.id]) {
+              savePromises.push(PrompterCloud.saveSongToCloud(lSong));
+            }
+          });
+
+          return Promise.all(savePromises).then(function () {
+            updateSyncBadge('online');
+            isSyncing = false;
+            console.log('🎉 Sincronização bidirecional Supabase <-> IndexedDB concluída!');
+          });
+        });
+      }).catch(function (e) {
+        console.warn('Erro ao sincronizar com Supabase:', e);
+        updateSyncBadge('offline');
+        isSyncing = false;
+      });
+    },
+
+    pushAllLocalToCloud: function () {
+      var sb = this.getClient();
+      if (!sb) return Promise.reject(new Error('Supabase não inicializado.'));
+
+      updateSyncBadge('syncing');
+
+      return Promise.all([
+        window.PrompterDB.getAllRepertoires(),
+        window.PrompterDB.getAllSongs()
+      ]).then(function (results) {
+        var localReps = results[0] || [];
+        var localSongs = results[1] || [];
+
+        var promises = [];
+
+        localReps.forEach(function (r) {
+          promises.push(PrompterCloud.saveRepertoireToCloud(r));
+        });
+
+        localSongs.forEach(function (s) {
+          promises.push(PrompterCloud.saveSongToCloud(s));
+        });
+
+        return Promise.all(promises).then(function () {
+          updateSyncBadge('online');
+          return {
+            reps: localReps.length,
+            songs: localSongs.length
+          };
+        });
+      });
+    }
+  };
+
+  window.PrompterCloud = PrompterCloud;
+})();

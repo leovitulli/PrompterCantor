@@ -1,0 +1,2136 @@
+/**
+ * PrompterCantor - Módulo Principal da Aplicação (App Controller)
+ * v2: Sistema de Repertórios por importação, com gerenciamento de músicas
+ * Compatível com navegadores antigos (Safari do iOS 9/10/11/12 em iPads antigos).
+ */
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ═══════════════════════════════════════
+  //  ESTADO GLOBAL
+  // ═══════════════════════════════════════
+
+  var state = {
+    repertoires: [],
+    currentRepertoire: null,    // Repertório atualmente aberto
+    currentRepertoireSongs: [], // Músicas do repertório aberto
+    pendingImportSongs: [],
+    searchQuery: '',
+    editingSong: null,          // Música sendo editada
+    targetRepertoireId: null    // Para "adicionar ao repertório X"
+  };
+
+  // ═══════════════════════════════════════
+  //  REFERÊNCIAS DOM
+  // ═══════════════════════════════════════
+
+  var repertoiresListEl = document.getElementById('repertoiresList');
+  var searchInput = document.getElementById('searchInput');
+  var btnClearSearch = document.getElementById('btnClearSearch');
+
+  // Modais
+  var importModal = document.getElementById('importModal');
+  var gDriveModal = document.getElementById('gDriveModal');
+  var songEditorModal = document.getElementById('songEditorModal');
+
+  // ═══════════════════════════════════════
+  //  INICIALIZAÇÃO
+  // ═══════════════════════════════════════
+
+  if (window.Prompter) Prompter.init();
+  if (window.MediaPlayer) MediaPlayer.init();
+  if (window.AdvancedPlayer) AdvancedPlayer.init();
+
+  PrompterDB.initDB()
+    .then(ensureSambaRepertoireExists)
+    .then(migrateOrphanSongs)
+    .then(cleanAutoAssignedSingingKeys)
+    .then(function() {
+      return loadRepertoires().then(function() {
+        restoreActiveState();
+        if (window.PrompterCloud) {
+          PrompterCloud.syncAllWithCloud().then(function() {
+            loadRepertoires();
+          });
+        }
+      });
+    })
+    .catch(function (err) {
+      console.error('Erro ao inicializar DB:', err);
+      showToast('Erro ao carregar banco de dados.', 'warning');
+    });
+
+  function cleanAutoAssignedSingingKeys() {
+    return PrompterDB.getAllSongs().then(function(allSongs) {
+      var updated = false;
+      for (var i = 0; i < allSongs.length; i++) {
+        var s = allSongs[i];
+        if (s.key && s.originalKey && s.key === s.originalKey) {
+          s.key = '';
+          updated = true;
+        }
+      }
+      if (updated) {
+        return PrompterDB.saveSongsBatch(allSongs);
+      }
+    });
+  }
+
+  setupEventListeners();
+
+  if (window.GDriveUI) {
+    GDriveUI.init({
+      onBatch: function (songsBatch, currentNum, totalNum) {
+        onDriveStreamBatch(songsBatch);
+      },
+      onProgress: function (currentNum, totalNum) {
+        updateImportBanner(currentNum, totalNum);
+      },
+      onComplete: function (totalNum) {
+        finishImportBanner(totalNum);
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════
+  //  INICIALIZAÇÃO E MIGRAÇÃO DE REPERTÓRIOS
+  // ═══════════════════════════════════════
+
+  function ensureSambaRepertoireExists() {
+    return PrompterDB.getAllRepertoires().then(function (reps) {
+      var hasSamba = false;
+      if (reps && reps.length > 0) {
+        for (var i = 0; i < reps.length; i++) {
+          if (reps[i].name === 'SAMBA') {
+            hasSamba = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasSamba && window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
+        console.log('🎶 Criando repertório SAMBA com as 27 músicas...');
+        var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
+        return PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample' })
+          .then(function (newRepId) {
+            for (var s = 0; s < sampleSongs.length; s++) {
+              sampleSongs[s].repertoireId = newRepId;
+            }
+            return PrompterDB.saveSongsBatch(sampleSongs);
+          });
+      }
+    });
+  }
+
+  function migrateOrphanSongs() {
+    return PrompterDB.getAllSongs().then(function (allSongs) {
+      var orphans = allSongs.filter(function (s) { return !s.repertoireId || s.repertoireId === 0; });
+      if (!orphans || orphans.length === 0) return;
+
+      return PrompterDB.getAllRepertoires().then(function (reps) {
+        var sambaRep = null;
+        for (var i = 0; i < reps.length; i++) {
+          if (reps[i].name === 'SAMBA') { sambaRep = reps[i]; break; }
+        }
+
+        var doMigrate = function (repId) {
+          for (var j = 0; j < orphans.length; j++) {
+            orphans[j].repertoireId = repId;
+          }
+          return PrompterDB.saveSongsBatch(orphans).then(function () {
+            console.log('✅ ' + orphans.length + ' música(s) migradas para o repertório SAMBA.');
+          });
+        };
+
+        if (sambaRep) {
+          return doMigrate(sambaRep.id);
+        } else {
+          return PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample' })
+            .then(function (newRepId) { return doMigrate(newRepId); });
+        }
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════
+  //  CARREGAMENTO DE REPERTÓRIOS
+  // ═══════════════════════════════════════
+
+  function loadRepertoires() {
+    var mainView = document.getElementById('mainRepertoireView');
+    var songsView = document.getElementById('repertoireSongsView');
+
+    if (!state.currentRepertoire) {
+      if (mainView) mainView.classList.remove('hidden');
+      if (songsView) songsView.classList.add('hidden');
+    }
+
+    return PrompterDB.getAllRepertoires()
+      .then(function (reps) {
+        state.repertoires = reps || [];
+        renderRepertoires();
+      });
+  }
+
+  function promptCreateRepertoire() {
+    var now = new Date();
+    var dd = String(now.getDate()).padStart(2, '0');
+    var mm = String(now.getMonth() + 1).padStart(2, '0');
+    var defaultName = 'Novo Repertório ' + dd + '/' + mm;
+
+    var name = prompt('Digite o nome do novo Repertório:', defaultName);
+    if (name && name.trim()) {
+      var repName = name.trim();
+      PrompterDB.saveRepertoire({ name: repName, source: 'manual' }).then(function (newId) {
+        showToast('Repertório "' + repName + '" criado com sucesso!', 'success');
+        return loadRepertoires().then(function () {
+          openRepertoireSongsView(newId);
+        });
+      }).catch(function (err) {
+        console.error('Erro ao criar repertório:', err);
+        showToast('Erro ao criar repertório.', 'warning');
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  RENDER: TELA PRINCIPAL (cards de repertório)
+  // ═══════════════════════════════════════
+
+  function renderRepertoires() {
+    var filtered = state.repertoires;
+
+    // Filtro de busca global
+    if (state.searchQuery) {
+      var q = state.searchQuery.toLowerCase();
+      filtered = filtered.filter(function (r) {
+        return r.name && r.name.toLowerCase().indexOf(q) !== -1;
+      });
+    }
+
+    if (!repertoiresListEl) return;
+
+    if (!filtered || filtered.length === 0) {
+      repertoiresListEl.innerHTML =
+        '<div class="empty-state">' +
+        '<div class="empty-icon">🎵</div>' +
+        '<h2>Nenhum repertório ainda</h2>' +
+        '<p>Importe músicas do seu computador ou Google Drive para criar seu primeiro repertório.</p>' +
+        '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">' +
+        '<button id="btnEmptyImport" class="btn btn-primary btn-lg">📂 Importar Arquivos</button>' +
+        '<button id="btnEmptyGDrive" class="btn btn-gdrive btn-lg">☁️ Google Drive</button>' +
+        '<button id="btnEmptySample" class="btn btn-outline btn-lg">🎶 Restaurar SAMBA (27 Músicas)</button>' +
+        '</div>' +
+        '</div>';
+
+      var bEI = document.getElementById('btnEmptyImport');
+      if (bEI) bEI.addEventListener('click', function () { openModal(importModal); });
+      var bEG = document.getElementById('btnEmptyGDrive');
+      if (bEG) bEG.addEventListener('click', function () { openModal(gDriveModal); });
+      var bES = document.getElementById('btnEmptySample');
+      if (bES) bES.addEventListener('click', function () {
+        if (window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
+          var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
+          PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample' })
+            .then(function (newRepId) {
+              for (var s = 0; s < sampleSongs.length; s++) {
+                sampleSongs[s].repertoireId = newRepId;
+              }
+              return PrompterDB.saveSongsBatch(sampleSongs);
+            })
+            .then(function () {
+              showToast('Repertório SAMBA restaurado com sucesso!', 'success');
+              loadRepertoires();
+            });
+        }
+      });
+      return;
+    }
+
+    // Renderizar HTML dos cards IMEDIATAMENTE (sem esperar contagem)
+    var html = '';
+    for (var i = 0; i < filtered.length; i++) {
+      var rep = filtered[i];
+      var sourceIcon = rep.source === 'gdrive' ? '☁️' : rep.source === 'manual' ? '✏️' : '📁';
+      var sourceLabel = rep.source === 'gdrive' ? 'Google Drive' : rep.source === 'manual' ? 'Manual' : 'Importação Local';
+      var dateStr = formatDate(rep.createdAt);
+      var repId = rep.id;
+
+      html +=
+        '<div class="repertoire-card" data-rep-id="' + repId + '">' +
+        '<div class="rep-card-header">' +
+        '<div class="rep-source-badge rep-source-' + (rep.source || 'local') + '">' + sourceIcon + ' ' + sourceLabel + '</div>' +
+        '<div class="rep-card-actions-top">' +
+        '<button class="btn-offline-toggle ' + (rep.isOfflinePinned ? 'pinned' : '') + ' btn-toggle-rep-offline" data-rep-id="' + repId + '" title="' + (rep.isOfflinePinned ? 'Salvo no dispositivo para uso offline' : 'Baixar repertório para uso offline') + '">⚡ <span class="offline-label-text">' + (rep.isOfflinePinned ? 'Offline' : 'Offline') + '</span></button>' +
+        '<button class="btn-icon-sm btn-print-rep" data-rep-id="' + repId + '" title="Imprimir Repertório">🖨️</button>' +
+        '<button class="btn-icon-sm btn-delete-rep" data-rep-id="' + repId + '" title="Excluir Repertório">🗑️</button>' +
+        '</div>' +
+        '</div>' +
+        '<div class="rep-card-body">' +
+        '<h3 class="rep-card-title" id="rep-title-' + repId + '">' + escapeHtml(rep.name) + '</h3>' +
+        '<div class="rep-card-meta">' +
+        '<span class="rep-song-count" id="rep-count-' + repId + '">... músicas</span>' +
+        '<span class="rep-date">' + dateStr + '</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="rep-card-footer">' +
+        '<button class="btn btn-primary btn-sm btn-open-rep" data-rep-id="' + repId + '">🎵 Ver Músicas</button>' +
+        '<button class="btn btn-outline btn-sm btn-rename-rep" data-rep-id="' + repId + '">✏️ Renomear</button>' +
+        '</div>' +
+        '</div>';
+    }
+
+    repertoiresListEl.innerHTML = html;
+    bindRepertoireCardEvents();
+
+    // Atualizar contagens assincronamente sem bloquear a renderização dos cards
+    filtered.forEach(function (rep) {
+      PrompterDB.countSongsByRepertoire(rep.id).then(function (count) {
+        var countEl = document.getElementById('rep-count-' + rep.id);
+        if (countEl) {
+          countEl.textContent = count + ' música' + (count !== 1 ? 's' : '');
+        }
+      }).catch(function () { });
+    });
+  }
+
+  function bindRepertoireCardEvents() {
+    // Abrir repertório
+    var openBtns = document.querySelectorAll('.btn-open-rep');
+    for (var i = 0; i < openBtns.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openRepertoireSongs(Number(btn.getAttribute('data-rep-id')));
+        });
+      })(openBtns[i]);
+    }
+
+    // Imprimir
+    var printBtns = document.querySelectorAll('.btn-print-rep');
+    for (var p = 0; p < printBtns.length; p++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          printRepertoire(Number(btn.getAttribute('data-rep-id')));
+        });
+      })(printBtns[p]);
+    }
+
+    // Excluir
+    var deleteBtns = document.querySelectorAll('.btn-delete-rep');
+    for (var d = 0; d < deleteBtns.length; d++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          confirmDeleteRepertoire(Number(btn.getAttribute('data-rep-id')));
+        });
+      })(deleteBtns[d]);
+    }
+
+    // Renomear
+    var renameBtns = document.querySelectorAll('.btn-rename-rep');
+    for (var r = 0; r < renameBtns.length; r++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          renameRepertoire(Number(btn.getAttribute('data-rep-id')));
+        });
+      })(renameBtns[r]);
+    }
+
+    // Toggle Offline Repertório
+    var repOfflineBtns = document.querySelectorAll('.btn-toggle-rep-offline');
+    for (var ro = 0; ro < repOfflineBtns.length; ro++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var repId = Number(btn.getAttribute('data-rep-id'));
+          var isCurrentlyPinned = btn.classList.contains('pinned');
+          PrompterDB.toggleRepertoireOffline(repId, !isCurrentlyPinned).then(function (newState) {
+            showToast(newState ? '⚡ Repertório salvo offline para uso no palco!' : '⚡ Repertório removido do modo offline', newState ? 'success' : 'info');
+            loadRepertoiresGrid();
+          });
+        });
+      })(repOfflineBtns[ro]);
+    }
+
+    // Clique no card inteiro também abre
+    var cards = document.querySelectorAll('.repertoire-card');
+    for (var c = 0; c < cards.length; c++) {
+      (function (card) {
+        card.addEventListener('click', function (e) {
+          if (e.target.closest('.btn-icon-sm') || e.target.closest('.btn') || e.target.closest('.btn-offline-toggle')) return;
+          openRepertoireSongs(Number(card.getAttribute('data-rep-id')));
+        });
+      })(cards[c]);
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  TELA INTERNA: MÚSICAS DO REPERTÓRIO
+  // ═══════════════════════════════════════
+
+  function openRepertoireSongs(repId) {
+    PrompterDB.getRepertoireById(repId).then(function (rep) {
+      if (!rep) return;
+      state.currentRepertoire = rep;
+
+      return PrompterDB.getSongsByRepertoire(repId).then(function (songs) {
+        state.currentRepertoireSongs = songs;
+        showRepertoireSongsView(rep, songs);
+      });
+    }).catch(function (err) {
+      console.error(err);
+      showToast('Erro ao carregar repertório.', 'warning');
+    });
+  }
+
+  function showRepertoireSongsView(rep, songs) {
+    var mainView = document.getElementById('mainRepertoireView');
+    var songsView = document.getElementById('repertoireSongsView');
+
+    if (mainView) mainView.classList.add('hidden');
+    if (songsView) songsView.classList.remove('hidden');
+
+    // Atualizar cabeçalho da tela interna
+    var titleEl = document.getElementById('rsvTitle');
+    var countEl = document.getElementById('rsvCount');
+    if (titleEl) titleEl.textContent = rep.name;
+    if (countEl) countEl.textContent = songs.length + ' música' + (songs.length !== 1 ? 's' : '');
+
+    var btnOfflineHeader = document.getElementById('btnToggleRepOfflineHeader');
+    var txtOfflineHeader = document.getElementById('rsvOfflineText');
+    if (btnOfflineHeader) {
+      if (rep.isOfflinePinned) {
+        btnOfflineHeader.classList.add('pinned');
+        if (txtOfflineHeader) txtOfflineHeader.textContent = 'Offline Ready ⚡';
+      } else {
+        btnOfflineHeader.classList.remove('pinned');
+        if (txtOfflineHeader) txtOfflineHeader.textContent = 'Baixar Offline';
+      }
+
+      btnOfflineHeader.onclick = function () {
+        var isCurrentlyPinned = rep.isOfflinePinned;
+        PrompterDB.toggleRepertoireOffline(rep.id, !isCurrentlyPinned).then(function (newState) {
+          rep.isOfflinePinned = newState;
+          showToast(newState ? '⚡ Repertório salvo offline para uso no palco!' : '⚡ Repertório removido do modo offline', newState ? 'success' : 'info');
+          openRepertoireSongs(rep.id);
+        });
+      };
+    }
+
+    renderSongsList(songs);
+    saveActiveState('repertoire', { repertoireId: rep.id });
+  }
+
+  function closeRepertoireSongsView() {
+    closeYoutubeModal();
+    var mainView = document.getElementById('mainRepertoireView');
+    var songsView = document.getElementById('repertoireSongsView');
+
+    if (mainView) mainView.classList.remove('hidden');
+    if (songsView) songsView.classList.add('hidden');
+
+    state.currentRepertoire = null;
+    state.currentRepertoireSongs = [];
+    saveActiveState('main', {});
+
+    loadRepertoires();
+  }
+
+  function renderSongsList(songs) {
+    var listEl = document.getElementById('rsvSongsList');
+    if (!listEl) return;
+
+    if (songs.length === 0) {
+      listEl.innerHTML =
+        '<div class="songs-list-empty">' +
+        '<p>Nenhuma música neste repertório.</p>' +
+        '<p>Clique em <b>+ Adicionar Música</b> para começar.</p>' +
+        '</div>';
+      return;
+    }
+
+    var html = '<div class="songs-list-table">';
+    for (var i = 0; i < songs.length; i++) {
+      var song = songs[i];
+      var preview = getFirstTwoLines(song.content);
+      var displayTitle = (song.title || 'Sem Título').toUpperCase();
+
+      html +=
+        '<div class="song-list-row" data-song-id="' + song.id + '" draggable="true">' +
+        '<div class="song-drag-handle" title="Arraste para reposicionar">⋮⋮</div>' +
+        '<div class="song-row-number">' + ((song.trackNumber || (i + 1)) < 10 ? '0' + (song.trackNumber || (i + 1)) : (song.trackNumber || (i + 1))) + '</div>' +
+        '<div class="song-row-main">' +
+        '<div class="song-row-title-line">' +
+        '<span class="song-row-title">' + escapeHtml(displayTitle) + '</span>' +
+        (song.key ? '<span class="badge badge-key song-row-key" title="Tom de Cantar">' + escapeHtml(song.key) + '</span>' : '<span class="badge badge-nokey">S/Tom</span>') +
+        (song.rhythm ? '<span class="badge badge-rhythm" title="Toque / Ritmo" style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:0.75rem;padding:2px 7px;border-radius:6px;">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
+        (song.isOfflinePinned ? '<span class="badge-offline-tag" title="Salva no dispositivo para uso offline">⚡ Offline</span>' : '') +
+        (song.youtubeUrl ? '<span class="badge" title="Vídeo / Áudio no YouTube" style="background:rgba(239,68,68,0.15);color:#f87171;font-size:0.75rem;padding:2px 7px;border-radius:6px;">▶ Vídeo</span>' : '') +
+        (song.audioBlob || song.audioUrl ? '<span class="song-audio-dot" title="Tem áudio guia local">🎵</span>' : '') +
+        '</div>' +
+        '<div class="song-row-meta">' +
+        (song.artist ? '<span>🎤 ' + escapeHtml(song.artist) + '</span>' : '') +
+        (song.composer ? '<span>✍️ ' + escapeHtml(song.composer) + '</span>' : '') +
+        '</div>' +
+        (preview ? '<div class="song-row-preview">' + escapeHtml(preview) + '</div>' : '') +
+        '</div>' +
+        '<div class="song-row-actions">' +
+        '<button class="btn-action btn-palco" data-song-id="' + song.id + '" title="Tocar / Abrir Prompter"><span class="btn-action-icon">▶</span> <span>Tocar</span></button>' +
+        '<button class="btn-action btn-action-icon-only btn-song-offline ' + (song.isOfflinePinned ? 'pinned' : '') + '" data-song-id="' + song.id + '" title="' + (song.isOfflinePinned ? 'Música salva offline' : 'Baixar música para uso offline') + '">⚡</button>' +
+        '<button class="btn-action btn-action-icon-only btn-edit-song" data-song-id="' + song.id + '" title="Editar Música">✏️</button>' +
+        '<button class="btn-action btn-action-icon-only btn-delete-song" data-song-id="' + song.id + '" title="Excluir Música">🗑️</button>' +
+        '</div>' +
+        '</div>';
+    }
+    html += '</div>';
+    listEl.innerHTML = html;
+
+    // Bind Drag & Drop para Reordenar Músicas
+    var draggedRow = null;
+    var allRows = listEl.querySelectorAll('.song-list-row');
+    for (var dr = 0; dr < allRows.length; dr++) {
+      (function (row) {
+        row.addEventListener('dragstart', function (e) {
+          draggedRow = row;
+          row.classList.add('dragging');
+          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragover', function (e) {
+          if (e.preventDefault) e.preventDefault();
+          if (row !== draggedRow) row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', function () {
+          row.classList.remove('drag-over');
+        });
+        row.addEventListener('drop', function (e) {
+          if (e.preventDefault) e.preventDefault();
+          row.classList.remove('drag-over');
+          if (draggedRow && draggedRow !== row) {
+            var parent = row.parentNode;
+            var rowsArr = Array.prototype.slice.call(parent.querySelectorAll('.song-list-row'));
+            var fromIdx = rowsArr.indexOf(draggedRow);
+            var toIdx = rowsArr.indexOf(row);
+
+            if (fromIdx !== -1 && toIdx !== -1) {
+              var movedSong = state.currentRepertoireSongs.splice(fromIdx, 1)[0];
+              state.currentRepertoireSongs.splice(toIdx, 0, movedSong);
+
+              for (var s = 0; s < state.currentRepertoireSongs.length; s++) {
+                state.currentRepertoireSongs[s].trackNumber = s + 1;
+                state.currentRepertoireSongs[s].order = s + 1;
+              }
+
+              PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
+                renderSongsList(state.currentRepertoireSongs);
+                showToast('Ordem do repertório atualizada!', 'info');
+              });
+            }
+          }
+        });
+        row.addEventListener('dragend', function () {
+          row.classList.remove('dragging');
+          var overs = listEl.querySelectorAll('.drag-over');
+          for (var o = 0; o < overs.length; o++) overs[o].classList.remove('drag-over');
+        });
+      })(allRows[dr]);
+    }
+
+    // Bind clique na linha da música para abrir a letra em TELA CHEIA EXCLUSIVA
+    var songRows = listEl.querySelectorAll('.song-row-main, .song-row-number');
+    for (var r = 0; r < songRows.length; r++) {
+      (function (row) {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function () {
+          var rowParent = row.closest('.song-list-row');
+          var id = Number(rowParent.getAttribute('data-song-id'));
+          var song = findSongById(id, state.currentRepertoireSongs);
+          if (song) openPrompterView(song);
+        });
+      })(songRows[r]);
+    }
+
+    // Bind clique no botão de Play (▶) para tocar áudio diretamente ou abrir o prompter
+    var palcoBtns = listEl.querySelectorAll('.btn-palco');
+    for (var p = 0; p < palcoBtns.length; p++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = Number(btn.getAttribute('data-song-id'));
+          var song = findSongById(id, state.currentRepertoireSongs);
+          if (!song) return;
+
+          if (song.audioBlob || song.audioUrl) {
+            if (window.AdvancedPlayer) {
+              if (AdvancedPlayer.isPlaying) {
+                AdvancedPlayer.pause();
+                showToast('⏸️ Áudio pausado: ' + song.title, 'info');
+              } else {
+                AdvancedPlayer.loadSong(song);
+                AdvancedPlayer.play();
+                showToast('▶ Tocando áudio guia: ' + song.title, 'info');
+              }
+            } else {
+              openPrompterView(song);
+            }
+          } else {
+            openPrompterView(song);
+          }
+        });
+      })(palcoBtns[p]);
+    }
+
+    var editBtns = listEl.querySelectorAll('.btn-edit-song');
+    for (var e = 0; e < editBtns.length; e++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = Number(btn.getAttribute('data-song-id'));
+          var song = findSongById(id, state.currentRepertoireSongs);
+          if (song) openEditorModal(song);
+        });
+      })(editBtns[e]);
+    }
+
+    var deleteBtns = listEl.querySelectorAll('.btn-delete-song');
+    for (var d = 0; d < deleteBtns.length; d++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = Number(btn.getAttribute('data-song-id'));
+          confirmDeleteSong(id);
+        });
+      })(deleteBtns[d]);
+    }
+
+
+
+    var songOfflineBtns = listEl.querySelectorAll('.btn-song-offline');
+    for (var o = 0; o < songOfflineBtns.length; o++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = Number(btn.getAttribute('data-song-id'));
+          var isCurrentlyPinned = btn.classList.contains('pinned');
+          PrompterDB.toggleSongOffline(id, !isCurrentlyPinned).then(function (newState) {
+            showToast(newState ? '⚡ Música salva offline!' : '⚡ Música removida do modo offline', newState ? 'success' : 'info');
+            if (state.currentRepertoire) openRepertoireSongs(state.currentRepertoire.id);
+          });
+        });
+      })(songOfflineBtns[o]);
+    }
+  }
+
+  function findSongById(id, list) {
+    for (var i = 0; i < list.length; i++) {
+      if (Number(list[i].id) === id) return list[i];
+    }
+    return null;
+  }
+
+  function getFirstTwoLines(content) {
+    if (!content) return '';
+    var lines = content.split('\n');
+    var result = [];
+    for (var i = 0; i < lines.length && result.length < 2; i++) {
+      var line = lines[i].trim();
+      if (line && line.length > 2) result.push(line);
+    }
+    return result.join(' / ');
+  }
+
+  // ═══════════════════════════════════════
+  //  MODO PALCO / PROMPTER
+  // ═══════════════════════════════════════
+
+  function openPrompterView(song) {
+    if (!song) return;
+    state.currentSong = song;
+    saveActiveState('prompter', { songId: song.id, repertoireId: song.repertoireId });
+
+    // Ocultar 100% o cabeçalho, abas e containers da página principal
+    var appHeader = document.getElementById('appHeader');
+    var navTabs = document.getElementById('navTabs');
+    var mainContainer = document.querySelector('.main-container');
+    var songsView = document.getElementById('repertoireSongsView');
+    var mainView = document.getElementById('mainRepertoireView');
+
+    if (appHeader) appHeader.style.setProperty('display', 'none', 'important');
+    if (navTabs) navTabs.style.setProperty('display', 'none', 'important');
+    if (mainContainer) mainContainer.style.setProperty('display', 'none', 'important');
+    if (songsView) songsView.style.setProperty('display', 'none', 'important');
+    if (mainView) mainView.style.setProperty('display', 'none', 'important');
+
+    // Exibir o Prompter como camada fixa de tela inteira
+    var prompterView = document.getElementById('prompterView');
+    if (prompterView) {
+      prompterView.classList.remove('hidden');
+      prompterView.style.setProperty('display', 'flex', 'important');
+      prompterView.style.setProperty('position', 'fixed', 'important');
+      prompterView.style.setProperty('top', '0', 'important');
+      prompterView.style.setProperty('left', '0', 'important');
+      prompterView.style.setProperty('width', '100vw', 'important');
+      prompterView.style.setProperty('height', '100vh', 'important');
+      prompterView.style.setProperty('z-index', '99999', 'important');
+      prompterView.style.removeProperty('background-color');
+    }
+
+    document.getElementById('prompterSongTitle').textContent = (song.title || 'Música').toUpperCase();
+
+    var keySelect = document.getElementById('prompterKeySelect');
+    if (keySelect) {
+      if (window.Transposer && typeof window.Transposer.setSelectKey === 'function') {
+        window.Transposer.setSelectKey(keySelect, song.key);
+      } else {
+        keySelect.value = song.key || '';
+      }
+
+      keySelect.onchange = function () {
+        var rawVal = this.value;
+        var newKey = (window.Transposer && typeof window.Transposer.normalizeKey === 'function')
+          ? window.Transposer.normalizeKey(rawVal)
+          : rawVal;
+
+        if (!state.currentSong) return;
+        state.currentSong.key = newKey;
+
+        // Atualizar lista em memória
+        if (state.currentRepertoireSongs) {
+          for (var k = 0; k < state.currentRepertoireSongs.length; k++) {
+            if (state.currentRepertoireSongs[k].id === state.currentSong.id) {
+              state.currentRepertoireSongs[k].key = newKey;
+              break;
+            }
+          }
+          renderSongsList(state.currentRepertoireSongs);
+        }
+
+        // Transpor cifras no prompter
+        if (window.Prompter && typeof Prompter.transposeTo === 'function') {
+          Prompter.transposeTo(newKey);
+        }
+
+        PrompterDB.saveSong(state.currentSong).then(function () {
+          showToast(newKey ? 'Tom ' + newKey + ' salvo na música!' : 'Tom removido!', 'success');
+        });
+      };
+    }
+
+    var origKeyEl = document.getElementById('prompterSongOriginalKey');
+    if (origKeyEl) {
+      origKeyEl.textContent = 'Orig: ' + (song.originalKey || '—');
+    }
+
+    var btnPrompterYt = document.getElementById('btnPrompterYoutube');
+    if (btnPrompterYt) {
+      if (song.youtubeUrl || song.youtubeId) {
+        btnPrompterYt.classList.remove('hidden');
+        btnPrompterYt.onclick = function() {
+          if (state.currentSong) openYoutubeModal(state.currentSong);
+        };
+      } else {
+        btnPrompterYt.classList.add('hidden');
+      }
+    }
+
+    var btnPrompterAddSetlist = document.getElementById('btnPrompterAddToSetlist');
+    if (btnPrompterAddSetlist) {
+      btnPrompterAddSetlist.onclick = function() {
+        if (state.currentSong) openAddToSetlistModal(state.currentSong);
+      };
+    }
+
+    var btnPrompterEdit = document.getElementById('btnPrompterEdit');
+    if (btnPrompterEdit) {
+      btnPrompterEdit.onclick = function () {
+        if (state.currentSong) openEditorModal(state.currentSong);
+      };
+    }
+
+    var artistEl = document.getElementById('prompterSongArtist');
+    if (artistEl) {
+      artistEl.textContent = song.artist ? '🎤 ' + song.artist : '';
+      artistEl.style.display = song.artist ? 'inline-block' : 'none';
+    }
+
+    var composerEl = document.getElementById('prompterSongComposer');
+    if (composerEl) {
+      composerEl.textContent = song.composer ? '✍️ ' + song.composer : '';
+      composerEl.style.display = song.composer ? 'inline-block' : 'none';
+    }
+
+    // Configurar Navegação de Show se estiver em modo Setlist
+    var btnPrev = document.getElementById('btnPrompterPrevSong');
+    var btnNext = document.getElementById('btnPrompterNextSong');
+    var showPos = document.getElementById('prompterShowPos');
+
+    if (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0) {
+      if (btnPrev) {
+        btnPrev.classList.remove('hidden');
+        btnPrev.onclick = function() { navigatePrompterShow(-1); };
+        btnPrev.style.opacity = (state.currentSetlistIndex === 0) ? '0.4' : '1';
+      }
+      if (btnNext) {
+        btnNext.classList.remove('hidden');
+        btnNext.onclick = function() { navigatePrompterShow(1); };
+        btnNext.style.opacity = (state.currentSetlistIndex >= state.currentSetlistSongs.length - 1) ? '0.4' : '1';
+      }
+      if (showPos) {
+        showPos.classList.remove('hidden');
+        showPos.textContent = 'Show: ' + (state.currentSetlistIndex + 1) + '/' + state.currentSetlistSongs.length;
+      }
+    } else {
+      if (btnPrev) btnPrev.classList.add('hidden');
+      if (btnNext) btnNext.classList.add('hidden');
+      if (showPos) showPos.classList.add('hidden');
+    }
+
+    Prompter.loadContent(song.content, song.key, song.originalKey);
+
+    if (song.audioBlob || song.audioUrl) {
+      if (window.AdvancedPlayer) {
+        AdvancedPlayer.loadSong(song);
+      } else if (window.MediaPlayer) {
+        MediaPlayer.loadMedia(song.audioBlob || song.audioUrl, song.audioName || song.title);
+      }
+    } else {
+      if (window.AdvancedPlayer) AdvancedPlayer.hide();
+      if (window.MediaPlayer) MediaPlayer.hide();
+    }
+
+    var btnSuggest = document.getElementById('apKeySuggest');
+    if (btnSuggest) {
+      btnSuggest.onclick = function () {
+        var rawDetected = this.getAttribute('data-key');
+        var detectedKey = (window.Transposer && typeof window.Transposer.normalizeKey === 'function')
+          ? window.Transposer.normalizeKey(rawDetected)
+          : rawDetected;
+
+        if (!detectedKey || !state.currentSong) return;
+        state.currentSong.key = detectedKey;
+
+        var kSelect = document.getElementById('prompterKeySelect');
+        if (kSelect) {
+          if (window.Transposer && typeof window.Transposer.setSelectKey === 'function') {
+            window.Transposer.setSelectKey(kSelect, detectedKey);
+          } else {
+            kSelect.value = detectedKey;
+          }
+        }
+
+        if (state.currentRepertoireSongs) {
+          for (var k = 0; k < state.currentRepertoireSongs.length; k++) {
+            if (state.currentRepertoireSongs[k].id === state.currentSong.id) {
+              state.currentRepertoireSongs[k].key = detectedKey;
+              break;
+            }
+          }
+          renderSongsList(state.currentRepertoireSongs);
+        }
+
+        if (window.Prompter && typeof Prompter.transposeTo === 'function') {
+          Prompter.transposeTo(detectedKey);
+        }
+
+        PrompterDB.saveSong(state.currentSong).then(function() {
+          showToast('Tom ' + detectedKey + ' salvo na música!', 'success');
+        });
+        this.classList.add('hidden');
+      };
+    }
+
+    var btnClose = document.getElementById('btnClosePrompter');
+    if (btnClose) {
+      btnClose.onclick = function () {
+        closePrompterView();
+      };
+    }
+
+    window.scrollTo(0, 0);
+  }
+
+  function closePrompterView() {
+    Prompter.stopScroll();
+    if (window.AdvancedPlayer) AdvancedPlayer.stop();
+    if (window.MediaPlayer) MediaPlayer.hide();
+    closeYoutubeModal();
+
+    var prompterView = document.getElementById('prompterView');
+    if (prompterView) {
+      prompterView.classList.add('hidden');
+      prompterView.style.setProperty('display', 'none', 'important');
+    }
+
+    var appHeader = document.getElementById('appHeader');
+    var navTabs = document.getElementById('navTabs');
+    var mainContainer = document.querySelector('.main-container');
+    var songsView = document.getElementById('repertoireSongsView');
+    var mainView = document.getElementById('mainRepertoireView');
+
+    if (appHeader) appHeader.style.removeProperty('display');
+    if (navTabs) navTabs.style.removeProperty('display');
+    if (mainContainer) mainContainer.style.removeProperty('display');
+
+    state.currentSong = null;
+
+    if (state.currentSetlist) {
+      var setlistSongsView = document.getElementById('setlistSongsView');
+      var mainSetlistsView = document.getElementById('mainSetlistsView');
+      if (setlistSongsView) setlistSongsView.classList.remove('hidden');
+      if (mainSetlistsView) mainSetlistsView.classList.add('hidden');
+      openSetlistSongsView(state.currentSetlist.id);
+    } else if (state.currentRepertoire) {
+      if (mainView) mainView.classList.add('hidden');
+      if (songsView) {
+        songsView.classList.remove('hidden');
+        songsView.style.removeProperty('display');
+      }
+      renderSongsList(state.currentRepertoireSongs);
+      saveActiveState('repertoire', { repertoireId: state.currentRepertoire.id });
+    } else {
+      if (songsView) songsView.classList.add('hidden');
+      if (mainView) {
+        mainView.classList.remove('hidden');
+        mainView.style.removeProperty('display');
+      }
+      loadRepertoires();
+      saveActiveState('main', {});
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  GERENCIAR REPERTÓRIOS
+  // ═══════════════════════════════════════
+
+  function renameRepertoire(repId) {
+    var rep = null;
+    for (var i = 0; i < state.repertoires.length; i++) {
+      if (state.repertoires[i].id === repId) { rep = state.repertoires[i]; break; }
+    }
+    if (!rep) return;
+
+    var newName = prompt('Novo nome para o repertório:', rep.name);
+    if (!newName || !newName.trim()) return;
+
+    PrompterDB.saveRepertoire({ id: rep.id, name: newName.trim(), source: rep.source, createdAt: rep.createdAt })
+      .then(function () {
+        showToast('Repertório renomeado!', 'success');
+        loadRepertoires();
+      });
+  }
+
+  function confirmDeleteRepertoire(repId) {
+    var rep = null;
+    for (var i = 0; i < state.repertoires.length; i++) {
+      if (state.repertoires[i].id === repId) { rep = state.repertoires[i]; break; }
+    }
+    var name = rep ? rep.name : 'este repertório';
+
+    if (!confirm('Excluir "' + name + '" e TODAS as suas músicas?\n\nEsta ação não pode ser desfeita.')) return;
+
+    PrompterDB.deleteRepertoire(repId)
+      .then(function () {
+        showToast('Repertório excluído.', 'info');
+        loadRepertoires();
+      })
+      .catch(function (err) {
+        console.error(err);
+        showToast('Erro ao excluir repertório.', 'warning');
+      });
+  }
+
+  function confirmDeleteSong(songId) {
+    if (!confirm('Excluir esta música do repertório?')) return;
+
+    PrompterDB.deleteSong(songId)
+      .then(function () {
+        showToast('Música excluída.', 'info');
+        // Recarregar músicas do repertório atual
+        if (state.currentRepertoire) {
+          openRepertoireSongs(state.currentRepertoire.id);
+        }
+      })
+      .catch(function (err) {
+        console.error(err);
+        showToast('Erro ao excluir música.', 'warning');
+      });
+  }
+
+  // ═══════════════════════════════════════
+  //  IMPORTAÇÃO LOCAL
+  // ═══════════════════════════════════════
+
+  function setupEventListeners() {
+    // Busca global
+    if (searchInput) {
+      searchInput.addEventListener('input', function (e) {
+        state.searchQuery = e.target.value;
+        if (state.searchQuery) {
+          if (btnClearSearch) btnClearSearch.classList.remove('hidden');
+        } else {
+          if (btnClearSearch) btnClearSearch.classList.add('hidden');
+        }
+        renderRepertoires();
+      });
+    }
+
+    if (btnClearSearch) {
+      btnClearSearch.addEventListener('click', function () {
+        if (searchInput) searchInput.value = '';
+        state.searchQuery = '';
+        btnClearSearch.classList.add('hidden');
+        renderRepertoires();
+      });
+    }
+
+    // Navegação de tabs
+    var navTabs = document.querySelectorAll('.nav-tab');
+    for (var t = 0; t < navTabs.length; t++) {
+      (function (tab) {
+        tab.addEventListener('click', function () {
+          var target = tab.getAttribute('data-tab');
+          document.querySelectorAll('.nav-tab').forEach(function (nt) { nt.classList.remove('active'); });
+          document.querySelectorAll('.tab-content').forEach(function (tc) { tc.classList.remove('active'); });
+          tab.classList.add('active');
+          var el = document.getElementById(target);
+          if (el) el.classList.add('active');
+
+          if (target === 'tabRepertoire') {
+            var mainView = document.getElementById('mainRepertoireView');
+            var songsView = document.getElementById('repertoireSongsView');
+            if (!state.currentRepertoire) {
+              if (mainView) mainView.classList.remove('hidden');
+              if (songsView) songsView.classList.add('hidden');
+            }
+            loadRepertoires();
+          }
+        });
+      })(navTabs[t]);
+    }
+
+    // Logo → voltar home
+    var btnGoHome = document.getElementById('btnGoHome');
+    if (btnGoHome) {
+      btnGoHome.addEventListener('click', function () {
+        closeRepertoireSongsView();
+        Prompter.stopScroll();
+        MediaPlayer.hide();
+        document.getElementById('prompterView').classList.add('hidden');
+      });
+    }
+
+    // Botão Ordenar A-Z no Repertório
+    var btnSortAZ = document.getElementById('btnRsvSortAZ');
+    if (btnSortAZ) {
+      btnSortAZ.addEventListener('click', function () {
+        if (!state.currentRepertoireSongs || state.currentRepertoireSongs.length === 0) return;
+        state.currentRepertoireSongs.sort(function (a, b) {
+          return (a.title || '').localeCompare(b.title || '', 'pt', { sensitivity: 'base' });
+        });
+        for (var s = 0; s < state.currentRepertoireSongs.length; s++) {
+          state.currentRepertoireSongs[s].trackNumber = s + 1;
+          state.currentRepertoireSongs[s].order = s + 1;
+        }
+        PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
+          renderSongsList(state.currentRepertoireSongs);
+          showToast('Músicas ordenadas de A a Z!', 'success');
+        });
+      });
+    }
+
+    // Menu Dropdown "+ Adicionar" unificado no cabeçalho
+    var btnDropdownAdd = document.getElementById('btnDropdownAdd');
+    var dropdownAddMenu = document.getElementById('dropdownAddMenu');
+    if (btnDropdownAdd && dropdownAddMenu) {
+      btnDropdownAdd.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdownAddMenu.classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', function (e) {
+        if (dropdownAddMenu && !dropdownAddMenu.classList.contains('hidden') && !btnDropdownAdd.contains(e.target) && !dropdownAddMenu.contains(e.target)) {
+          dropdownAddMenu.classList.add('hidden');
+        }
+      });
+    }
+
+    var btnMenuNewRepertoire = document.getElementById('btnMenuNewRepertoire');
+    if (btnMenuNewRepertoire) {
+      btnMenuNewRepertoire.addEventListener('click', function () {
+        if (dropdownAddMenu) dropdownAddMenu.classList.add('hidden');
+        promptCreateRepertoire();
+      });
+    }
+
+    var btnMenuNewSong = document.getElementById('btnMenuNewSong');
+    if (btnMenuNewSong) {
+      btnMenuNewSong.addEventListener('click', function () {
+        if (dropdownAddMenu) dropdownAddMenu.classList.add('hidden');
+        openEditorModal(null);
+      });
+    }
+
+    var btnMenuImportLocal = document.getElementById('btnMenuImportLocal');
+    if (btnMenuImportLocal) {
+      btnMenuImportLocal.addEventListener('click', function () {
+        if (dropdownAddMenu) dropdownAddMenu.classList.add('hidden');
+        state.targetRepertoireId = null;
+        openModal(importModal);
+        suggestRepertoireName('import');
+      });
+    }
+
+    var btnMenuImportDrive = document.getElementById('btnMenuImportDrive');
+    if (btnMenuImportDrive) {
+      btnMenuImportDrive.addEventListener('click', function () {
+        if (dropdownAddMenu) dropdownAddMenu.classList.add('hidden');
+        openModal(gDriveModal);
+      });
+    }
+
+    // Fechar modais
+    bindModalClose('btnCloseImportModal', importModal);
+    bindModalClose('btnCancelImport', importModal);
+    bindModalClose('importModalOverlay', importModal);
+    bindModalClose('btnCloseGDriveModal', gDriveModal);
+    bindModalClose('btnCancelGDrive', gDriveModal);
+    bindModalClose('gDriveModalOverlay', gDriveModal);
+    bindModalClose('btnCloseEditorModal', songEditorModal);
+    bindModalClose('songEditorOverlay', songEditorModal);
+
+    // Drop Zone
+    var dropZone = document.getElementById('dropZone');
+    var fileInput = document.getElementById('fileInput');
+
+    if (dropZone && fileInput) {
+      dropZone.addEventListener('click', function (e) {
+        if (e.target !== fileInput) {
+          fileInput.click();
+        }
+      });
+      dropZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropZone.classList.add('drop-zone-active');
+      });
+      dropZone.addEventListener('dragleave', function () {
+        dropZone.classList.remove('drop-zone-active');
+      });
+      dropZone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropZone.classList.remove('drop-zone-active');
+        if (e.dataTransfer.files.length) {
+          handleFilesToImport(Array.prototype.slice.call(e.dataTransfer.files));
+        }
+      });
+      fileInput.addEventListener('change', function (e) {
+        if (e.target.files.length) {
+          handleFilesToImport(Array.prototype.slice.call(e.target.files));
+        }
+      });
+    }
+
+    // Salvar importação
+    var btnSaveImportedSongs = document.getElementById('btnSaveImportedSongs');
+    if (btnSaveImportedSongs) {
+      btnSaveImportedSongs.addEventListener('click', function () {
+        saveImportedFiles();
+      });
+    }
+
+    // Fechar Prompter
+    var btnClosePrompter = document.getElementById('btnClosePrompter');
+    if (btnClosePrompter) {
+      btnClosePrompter.onclick = function () {
+        closePrompterView();
+      };
+    }
+
+    // Fechar / Minimizar Dock do YouTube
+    var btnCloseYtDock = document.getElementById('btnCloseYoutubeDock');
+    if (btnCloseYtDock) {
+      var handleCloseYt = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        closeYoutubeModal();
+      };
+      btnCloseYtDock.addEventListener('pointerdown', handleCloseYt, { passive: false });
+      btnCloseYtDock.addEventListener('click', handleCloseYt, { passive: false });
+    }
+
+    var btnMinYtDock = document.getElementById('btnToggleMinYoutubeDock');
+    if (btnMinYtDock) {
+      var handleMinYt = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        toggleMinYoutubeModal();
+      };
+      btnMinYtDock.addEventListener('pointerdown', handleMinYt, { passive: false });
+      btnMinYtDock.addEventListener('click', handleMinYt, { passive: false });
+    }
+
+    // Botão Flutuante Voltar ao Topo (Funciona Instantaneamente em qualquer momento, mesmo durante rolagem ativa)
+    var btnScrollToTop = document.getElementById('btnScrollToTop');
+    if (btnScrollToTop) {
+      var handleTopClick = function (e) {
+        if (e) {
+          if (e.preventDefault) e.preventDefault();
+          if (e.stopPropagation) e.stopPropagation();
+        }
+        if (window.Prompter && window.Prompter.scrollToTop) {
+          window.Prompter.scrollToTop();
+        } else {
+          var area = document.getElementById('prompterScrollArea');
+          if (area) area.scrollTop = 0;
+          window.scrollTo(0, 0);
+          if (document.documentElement) document.documentElement.scrollTop = 0;
+          if (document.body) document.body.scrollTop = 0;
+        }
+      };
+
+      btnScrollToTop.addEventListener('pointerdown', handleTopClick, { passive: false });
+      btnScrollToTop.addEventListener('touchstart', handleTopClick, { passive: false });
+      btnScrollToTop.addEventListener('click', handleTopClick, { passive: false });
+    }
+
+    // Alternar Tema
+    var btnToggleTheme = document.getElementById('btnToggleTheme');
+    if (btnToggleTheme) {
+      btnToggleTheme.addEventListener('click', function () {
+        document.body.classList.toggle('light-mode');
+        document.body.classList.toggle('dark-mode');
+      });
+    }
+
+    // Fechar tela interna de músicas
+    var btnRsvBack = document.getElementById('btnRsvBack');
+    if (btnRsvBack) {
+      btnRsvBack.addEventListener('click', closeRepertoireSongsView);
+    }
+
+    // Imprimir dentro da tela interna
+    var btnRsvPrint = document.getElementById('btnRsvPrint');
+    if (btnRsvPrint) {
+      btnRsvPrint.addEventListener('click', function () {
+        if (state.currentRepertoire) printRepertoire(state.currentRepertoire.id);
+      });
+    }
+
+    // Adicionar música dentro do repertório
+    var btnRsvAddSong = document.getElementById('btnRsvAddSong');
+    if (btnRsvAddSong) {
+      btnRsvAddSong.addEventListener('click', function () {
+        // Abre o modal de importação vinculado ao repertório atual
+        if (state.currentRepertoire) {
+          state.targetRepertoireId = state.currentRepertoire.id;
+          openModal(importModal);
+          // Preencher nome do repertório com o atual
+          var nameInput = document.getElementById('importRepertoireName');
+          if (nameInput) {
+            nameInput.value = state.currentRepertoire.name;
+            nameInput.setAttribute('disabled', 'true');
+          }
+        }
+      });
+    }
+
+    // Ao fechar modal de importação, re-habilitar campo de nome
+    var btnCloseImportModal2 = document.getElementById('btnCloseImportModal');
+    if (btnCloseImportModal2) {
+      btnCloseImportModal2.addEventListener('click', function () {
+        var nameInput = document.getElementById('importRepertoireName');
+        if (nameInput) nameInput.removeAttribute('disabled');
+        state.targetRepertoireId = null;
+      });
+    }
+
+    // Botão criar música manual dentro do repertório
+    var btnRsvCreateManual = document.getElementById('btnRsvCreateManual');
+    if (btnRsvCreateManual) {
+      btnRsvCreateManual.addEventListener('click', function () {
+        openEditorModal(null);
+      });
+    }
+
+    // Botão Batch: Detectar Tons e Vídeos no Repertório
+    var btnBatchKeyYt = document.getElementById('btnRsvAutoSearchKeyYt');
+    if (btnBatchKeyYt) {
+      btnBatchKeyYt.addEventListener('click', function() {
+        runBatchKeyAndYoutubeDetection();
+      });
+    }
+
+    // Botão Buscar no YouTube no Editor de Músicas
+    var btnSearchYt = document.getElementById('btnSearchSongYoutube');
+    if (btnSearchYt) {
+      btnSearchYt.addEventListener('click', function() {
+        var title = document.getElementById('editSongTitle').value.trim();
+        var artist = document.getElementById('editSongArtist').value.trim();
+        if (!title) {
+          showToast('Informe o nome da música para pesquisar no YouTube.', 'warning');
+          return;
+        }
+        var searchUrl = TextParser.getYouTubeSearchUrl(title, artist);
+        window.open(searchUrl, '_blank');
+      });
+    }
+
+    // Botão Buscar Tom Original na Web / Análise Harmônica no Editor de Músicas
+    var btnSearchKeyWeb = document.getElementById('btnSearchOriginalKeyWeb');
+    if (btnSearchKeyWeb) {
+      btnSearchKeyWeb.addEventListener('click', function() {
+        var title = document.getElementById('editSongTitle').value.trim();
+        var artist = document.getElementById('editSongArtist').value.trim();
+        var content = document.getElementById('editSongContent').value;
+
+        if (!title && !content) {
+          showToast('Informe o nome da música ou cole a letra/cifra para detectar o tom.', 'warning');
+          return;
+        }
+
+        var detectedKey = TextParser.detectOriginalKey(content);
+        var origKeySelect = document.getElementById('editSongOriginalKey');
+        if (origKeySelect) {
+          origKeySelect.value = detectedKey;
+        }
+        showToast('🎯 Tom Original detectado: ' + (detectedKey || 'Não identificado'), 'success');
+      });
+    }
+
+    // Modais YouTube
+    bindModalClose('btnCloseYoutubeModal', document.getElementById('youtubeModal'));
+    bindModalClose('youtubeModalOverlay', document.getElementById('youtubeModal'));
+
+    // Salvar edição manual
+    var btnSaveSong = document.getElementById('btnSaveSong');
+    if (btnSaveSong) {
+      btnSaveSong.addEventListener('click', function (e) {
+        e.preventDefault();
+        saveManualSong();
+      });
+    }
+
+    // Deletar música no editor
+    var btnDeleteSong = document.getElementById('btnDeleteSong');
+    if (btnDeleteSong) {
+      btnDeleteSong.addEventListener('click', function () {
+        var id = document.getElementById('editSongId').value;
+        if (id && confirm('Excluir esta música?')) {
+          PrompterDB.deleteSong(Number(id))
+            .then(function () {
+              showToast('Música excluída!', 'info');
+              closeModal(songEditorModal);
+              if (state.currentRepertoire) openRepertoireSongs(state.currentRepertoire.id);
+            });
+        }
+      });
+    }
+
+    // Navegação por abas (Repertórios / Setlists)
+
+
+    // Formulário de música: previne reload da página e salva com Enter
+    var songForm = document.getElementById('songForm');
+    if (songForm) {
+      songForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveManualSong();
+      });
+    }
+
+    // Tecla ESC para fechar modais abertos
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        var openModals = document.querySelectorAll('.modal:not(.hidden)');
+        if (openModals.length > 0) {
+          closeModal(openModals[openModals.length - 1]);
+        }
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════
+  //  MODAL VÍDEO DO YOUTUBE & DETECÇÃO DE TOM
+  // ═══════════════════════════════════════
+
+  function openYoutubeModal(song) {
+    var dock = document.getElementById('youtubePlayerDock');
+    var container = document.getElementById('youtubePlayerContainer');
+    var titleEl = document.getElementById('youtubeDockTitle');
+    var btnExternal = document.getElementById('btnOpenExternalYoutube');
+
+    if (!dock || !song) return;
+
+    if (titleEl) titleEl.textContent = '🎬 ' + (song.title || 'Referência YouTube');
+    var ytId = song.youtubeId || (song.youtubeUrl ? TextParser.extractYouTubeId(song.youtubeUrl) : '');
+
+    if (ytId) {
+      container.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + ytId + '?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+    } else {
+      var query = encodeURIComponent((song.title || '') + ' ' + (song.artist || ''));
+      container.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=' + query + '&autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+    }
+
+    if (btnExternal) {
+      btnExternal.onclick = function() {
+        var targetUrl = song.youtubeUrl || TextParser.getYouTubeSearchUrl(song.title, song.artist);
+        window.open(targetUrl, '_blank');
+      };
+    }
+
+    dock.classList.remove('hidden');
+    dock.classList.remove('minimized');
+    var btnMin = document.getElementById('btnToggleMinYoutubeDock');
+    if (btnMin) btnMin.textContent = '🙈 Minimiz. vídeo';
+  }
+
+  function toggleMinYoutubeModal() {
+    var dock = document.getElementById('youtubePlayerDock');
+    var btnMin = document.getElementById('btnToggleMinYoutubeDock');
+    if (!dock) return;
+
+    if (dock.classList.contains('minimized')) {
+      dock.classList.remove('minimized');
+      if (btnMin) btnMin.textContent = '🙈 Minimiz. vídeo';
+    } else {
+      dock.classList.add('minimized');
+      if (btnMin) btnMin.textContent = '📺 Mostrar vídeo';
+    }
+  }
+
+  function closeYoutubeModal() {
+    var dock = document.getElementById('youtubePlayerDock');
+    var container = document.getElementById('youtubePlayerContainer');
+    if (container) container.innerHTML = '';
+    if (dock) {
+      dock.classList.add('hidden');
+      dock.classList.remove('minimized');
+    }
+  }
+
+
+
+  function runBatchKeyAndYoutubeDetection() {
+    if (!state.currentRepertoireSongs || state.currentRepertoireSongs.length === 0) {
+      showToast('Nenhuma música no repertório atual.', 'warning');
+      return;
+    }
+
+    var updatedCount = 0;
+    for (var i = 0; i < state.currentRepertoireSongs.length; i++) {
+      var s = state.currentRepertoireSongs[i];
+      var changed = false;
+
+      if (!s.originalKey) {
+        var detected = TextParser.detectOriginalKey(s.content);
+        if (detected) {
+          s.originalKey = detected;
+          changed = true;
+        }
+      }
+
+      if (!s.youtubeUrl && s.title) {
+        s.youtubeUrl = TextParser.getYouTubeSearchUrl(s.title, s.artist);
+        s.youtubeId = TextParser.extractYouTubeId(s.youtubeUrl);
+        changed = true;
+      }
+
+      if (changed) updatedCount++;
+    }
+
+    if (updatedCount > 0) {
+      PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function() {
+        renderSongsList(state.currentRepertoireSongs);
+        showToast('⚡ Tons originais e links do YouTube atualizados em ' + updatedCount + ' música(s)!', 'success');
+      });
+    } else {
+      showToast('Todas as músicas já possuem tom original e links configurados.', 'info');
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  PERSISTÊNCIA DE ESTADO (REFRESH RESILIENTE)
+  // ═══════════════════════════════════════
+
+  function saveActiveState(viewName, extra) {
+    try {
+      var activeState = Object.assign({ view: viewName }, extra || {});
+      localStorage.setItem('prompter_active_state', JSON.stringify(activeState));
+    } catch (e) {
+      console.warn('Erro ao salvar estado no localStorage:', e);
+    }
+  }
+
+  function restoreActiveState() {
+    try {
+      var saved = localStorage.getItem('prompter_active_state');
+      if (!saved) return false;
+      var parsed = JSON.parse(saved);
+      if (!parsed || !parsed.view) return false;
+
+      if (parsed.view === 'prompter' && parsed.songId) {
+        PrompterDB.getSongById(parsed.songId).then(function (song) {
+          if (song) {
+            if (song.repertoireId) {
+              PrompterDB.getRepertoireById(song.repertoireId).then(function (rep) {
+                if (rep) state.currentRepertoire = rep;
+              });
+              PrompterDB.getSongsByRepertoire(song.repertoireId).then(function (songs) {
+                state.currentRepertoireSongs = songs;
+              });
+            }
+            openPrompterView(song);
+          }
+        });
+        return true;
+      } else if (parsed.view === 'repertoire' && parsed.repertoireId) {
+        openRepertoireSongs(parsed.repertoireId);
+        return true;
+      }
+    } catch (e) {
+      console.warn('Erro ao restaurar estado:', e);
+    }
+    return false;
+  }
+
+  function bindModalClose(btnId, modalEl) {
+    var btn = document.getElementById(btnId);
+    if (btn) {
+      btn.addEventListener('click', function () { closeModal(modalEl); });
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  PROCESSAR ARQUIVOS IMPORTADOS
+  // ═══════════════════════════════════════
+
+  function suggestRepertoireName(source) {
+    var now = new Date();
+    var dd = String(now.getDate()).padStart(2, '0');
+    var mm = String(now.getMonth() + 1).padStart(2, '0');
+    var hh = String(now.getHours()).padStart(2, '0');
+    var min = String(now.getMinutes()).padStart(2, '0');
+    var suggestion = (source === 'gdrive' ? 'Drive' : 'Importação') + ' ' + dd + '/' + mm + ' ' + hh + 'h' + min;
+
+    var nameInput = document.getElementById('importRepertoireName');
+    if (nameInput && !nameInput.value) nameInput.value = suggestion;
+
+    var driveNameInput = document.getElementById('gdriveRepertoireName');
+    if (driveNameInput && !driveNameInput.value) driveNameInput.value = 'Drive ' + dd + '/' + mm + ' ' + hh + 'h' + min;
+  }
+
+  function normalizeForCompare(str) {
+    if (!str) return '';
+    return str.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
+  }
+
+  function getLyricsFingerprint(content) {
+    if (!content) return '';
+    var lines = content.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(function(l) {
+      return l && !/^(\s*([A-G][#b]?(m|maj|min|aug|dim|sus|add|[0-9])*)(\/[A-G][#b]?)?\s*)+$/.test(l);
+    });
+    return normalizeForCompare(lines.slice(0, 3).join(' '));
+  }
+
+  function handleFilesToImport(files) {
+    var previewList = document.getElementById('importPreviewList');
+    if (previewList) previewList.innerHTML = '<div style="text-align:center;padding:1rem;">Processando ' + files.length + ' arquivo(s)...</div>';
+
+    var textFiles = [];
+    var audioFiles = [];
+
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      var ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      if (['.docx', '.doc', '.pdf', '.txt'].indexOf(ext) !== -1) {
+        textFiles.push(file);
+      } else if (['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.flac', '.mp4'].indexOf(ext) !== -1) {
+        audioFiles.push(file);
+      }
+    }
+
+    var parsePromises = textFiles.map(function(tf) {
+      return TextParser.parseFile(tf);
+    });
+
+    Promise.all([
+      Promise.all(parsePromises),
+      PrompterDB.getAllSongs(),
+      PrompterDB.getAllRepertoires()
+    ]).then(function(allResults) {
+      var results = allResults[0] || [];
+      var existingSongs = allResults[1] || [];
+      var existingReps = allResults[2] || [];
+
+      var repMap = {};
+      existingReps.forEach(function(r) { repMap[r.id] = r.name; });
+
+      var allParsedSongs = [];
+      for (var r = 0; r < results.length; r++) {
+        var songsInDoc = results[r] || [];
+        for (var s = 0; s < songsInDoc.length; s++) {
+          allParsedSongs.push(songsInDoc[s]);
+        }
+      }
+
+      var songsToCreate = (window.GDriveImporter && GDriveImporter.pairSongsWithAudioFiles)
+        ? GDriveImporter.pairSongsWithAudioFiles(allParsedSongs, audioFiles)
+        : allParsedSongs;
+
+      // Análise de Duplicidades (no arquivo e no banco)
+      var seenInBatchTitle = {};
+      var seenInBatchLyrics = {};
+      var existingTitleMap = {};
+      var existingLyricsMap = {};
+
+      existingSongs.forEach(function(s) {
+        var titleKey = normalizeForCompare(TextParser.cleanTitle(s.title));
+        var lyricsKey = getLyricsFingerprint(s.content);
+        if (titleKey) existingTitleMap[titleKey] = s;
+        if (lyricsKey && lyricsKey.length >= 10) existingLyricsMap[lyricsKey] = s;
+      });
+
+      var duplicateCount = 0;
+      var annotatedSongs = songsToCreate.map(function(song) {
+        var titleKey = normalizeForCompare(TextParser.cleanTitle(song.title));
+        var lyricsKey = getLyricsFingerprint(song.content);
+
+        var isDuplicate = false;
+        var dupReason = '';
+
+        if (titleKey && seenInBatchTitle[titleKey]) {
+          isDuplicate = true;
+          dupReason = 'Duplicada no próprio arquivo';
+        } else if (lyricsKey && lyricsKey.length >= 10 && seenInBatchLyrics[lyricsKey]) {
+          isDuplicate = true;
+          dupReason = 'Letra idêntica a outra música deste arquivo';
+        }
+
+        if (titleKey) seenInBatchTitle[titleKey] = true;
+        if (lyricsKey && lyricsKey.length >= 10) seenInBatchLyrics[lyricsKey] = true;
+
+        if (!isDuplicate) {
+          if (titleKey && existingTitleMap[titleKey]) {
+            var mSong = existingTitleMap[titleKey];
+            var rName = repMap[mSong.repertoireId] ? 'Repertório ' + repMap[mSong.repertoireId] : 'banco de dados';
+            isDuplicate = true;
+            dupReason = 'Já existe em ' + rName;
+          } else if (lyricsKey && lyricsKey.length >= 10 && existingLyricsMap[lyricsKey]) {
+            var mSong2 = existingLyricsMap[lyricsKey];
+            var rName2 = repMap[mSong2.repertoireId] ? 'Repertório ' + repMap[mSong2.repertoireId] : 'banco de dados';
+            isDuplicate = true;
+            dupReason = 'Letra igual a "' + (mSong2.title || '') + '" (' + rName2 + ')';
+          }
+        }
+
+        if (isDuplicate) duplicateCount++;
+        song.isDuplicate = isDuplicate;
+        song.dupReason = dupReason;
+        return song;
+      });
+
+      state.pendingImportSongs = annotatedSongs;
+
+      var html = '';
+      if (!annotatedSongs || annotatedSongs.length === 0) {
+        html = '<div style="color:var(--text-muted);padding:1rem;text-align:center;">Nenhuma música reconhecida nos arquivos selecionados.</div>';
+      } else {
+        if (duplicateCount > 0) {
+          html +=
+            '<div class="import-dup-banner" style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.35);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;color:#facc15;font-size:0.88rem;">' +
+              '<div style="font-weight:700;display:flex;align-items:center;gap:0.4rem;">⚠️ Notificação de Duplicidade: ' + duplicateCount + ' música(s) já cadastradas ou repetidas.</div>' +
+              '<label style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;cursor:pointer;color:var(--text-main);font-size:0.84rem;">' +
+                '<input type="checkbox" id="chkIgnoreDuplicates" checked> ' +
+                '<span><b>Ignorar duplicadas</b> (salvar apenas as músicas inéditas)</span>' +
+              '</label>' +
+            '</div>';
+        }
+
+        for (var k = 0; k < annotatedSongs.length; k++) {
+          var song = annotatedSongs[k];
+          var numTag = song.trackNumber ? (song.trackNumber < 10 ? '0' + song.trackNumber : song.trackNumber) + '. ' : '';
+          var itemStyle = song.isDuplicate ? 'style="border-left: 3px solid #eab308; background: rgba(234,179,8,0.04);"' : '';
+          html +=
+            '<div class="import-preview-item" ' + itemStyle + '>' +
+              '<span class="import-preview-icon">' + (song.isDuplicate ? '⚠️' : '🎵') + '</span>' +
+              '<div class="import-preview-info">' +
+                '<b>' + numTag + escapeHtml(song.title || 'Sem Título') + '</b>' +
+                (song.key ? ' <span class="badge badge-key">' + escapeHtml(song.key) + '</span>' : '') +
+                (song.rhythm ? ' <span class="badge" style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:0.75rem;padding:2px 6px;border-radius:5px;">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
+                (song.youtubeUrl ? ' <span class="badge" style="background:rgba(239,68,68,0.15);color:#f87171;font-size:0.75rem;padding:2px 6px;border-radius:5px;">▶ Vídeo</span>' : '') +
+                (song.isDuplicate ? ' <span class="badge" style="background:rgba(234,179,8,0.2);color:#facc15;font-size:0.75rem;padding:2px 6px;border-radius:5px;">⚠️ ' + escapeHtml(song.dupReason) + '</span>' : '') +
+                (song.audioBlob ? '<br><span class="import-audio-tag">🎵 ' + escapeHtml(song.audioName) + '</span>' : '') +
+              '</div>' +
+            '</div>';
+        }
+      }
+
+      if (previewList) previewList.innerHTML = html;
+      var btnSave = document.getElementById('btnSaveImportedSongs');
+      if (btnSave && annotatedSongs.length > 0) btnSave.removeAttribute('disabled');
+    }).catch(function(err) {
+      console.error('Erro no processamento de arquivos:', err);
+      if (previewList) previewList.innerHTML = '<div style="color:var(--danger-color);padding:1rem;">Erro ao ler arquivos (' + escapeHtml(err.message || 'Formato incompatível') + '). Tente novamente.</div>';
+    });
+  }
+
+  function saveImportedFiles() {
+    if (!state.pendingImportSongs || state.pendingImportSongs.length === 0) return;
+
+    var nameInput = document.getElementById('importRepertoireName');
+    var repName = (nameInput && nameInput.value.trim()) || ('Importação ' + formatDate(Date.now()));
+    var targetRepId = state.targetRepertoireId;
+
+    var chkIgnore = document.getElementById('chkIgnoreDuplicates');
+    var shouldIgnoreDupes = chkIgnore ? chkIgnore.checked : false;
+
+    var songsToSave = state.pendingImportSongs.filter(function(s) {
+      return !shouldIgnoreDupes || !s.isDuplicate;
+    });
+
+    if (songsToSave.length === 0) {
+      showToast('⚠️ Nenhuma música nova para salvar (todas eram duplicadas).', 'warning');
+      return;
+    }
+
+    var count = songsToSave.length;
+    var ignoredCount = state.pendingImportSongs.length - songsToSave.length;
+
+    function doSave(repId) {
+      for (var s = 0; s < songsToSave.length; s++) {
+        songsToSave[s].repertoireId = repId;
+      }
+
+      PrompterDB.saveSongsBatch(songsToSave).then(function () {
+        closeModal(importModal);
+        state.pendingImportSongs = [];
+
+        var previewList = document.getElementById('importPreviewList');
+        if (previewList) previewList.innerHTML = '';
+        var btnSave = document.getElementById('btnSaveImportedSongs');
+        if (btnSave) btnSave.setAttribute('disabled', 'true');
+        var ni = document.getElementById('importRepertoireName');
+        if (ni) { ni.value = ''; ni.removeAttribute('disabled'); }
+        state.targetRepertoireId = null;
+
+        var successMsg = '🎉 ' + count + ' música(s) salvas no repertório!';
+        if (ignoredCount > 0) {
+          successMsg += ' (' + ignoredCount + ' duplicada(s) ignoradas)';
+        }
+        showToast(successMsg, 'success');
+
+        if (state.currentRepertoire && state.currentRepertoire.id === repId) {
+          openRepertoireSongs(repId);
+        } else {
+          var mainView = document.getElementById('mainRepertoireView');
+          var songsView = document.getElementById('repertoireSongsView');
+          if (mainView) mainView.classList.remove('hidden');
+          if (songsView) songsView.classList.add('hidden');
+          state.currentRepertoire = null;
+          loadRepertoires();
+        }
+      }).catch(function (err) {
+        console.error('Erro ao salvar músicas:', err);
+        showToast('Erro ao salvar músicas no banco.', 'warning');
+      });
+    }
+
+    if (targetRepId) {
+      doSave(targetRepId);
+    } else {
+      PrompterDB.saveRepertoire({ name: repName, source: 'local' })
+        .then(function (newRepId) {
+          doSave(newRepId);
+        });
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  IMPORTAÇÃO VIA GOOGLE DRIVE
+  // ═══════════════════════════════════════
+
+  // ═══════════════════════════════════════
+  //  IMPORTAÇÃO STREAMING VIA GOOGLE DRIVE (EM SEGUNDO PLANO)
+  // ═══════════════════════════════════════
+
+  var repCache = {};
+
+  function onDriveStreamBatch(songsBatch) {
+    if (!songsBatch || songsBatch.length === 0) return;
+
+    var defaultNameInput = document.getElementById('gdriveRepertoireName');
+    var defaultName = (defaultNameInput && defaultNameInput.value.trim()) || ('Drive ' + formatDate(Date.now()));
+
+    // Agrupar músicas por subpasta
+    var groups = {};
+    songsBatch.forEach(function (song) {
+      var groupName = song.subfolderName || defaultName;
+      if (!groups[groupName]) groups[groupName] = [];
+      groups[groupName].push(song);
+    });
+
+    var groupNames = Object.keys(groups);
+    var promises = groupNames.map(function (gName) {
+      var songsInGroup = groups[gName];
+
+      if (repCache[gName]) {
+        var repId = repCache[gName];
+        songsInGroup.forEach(function (s) { s.repertoireId = repId; });
+        return PrompterDB.saveSongsBatch(songsInGroup).then(function () {
+          if (state.currentRepertoire && state.currentRepertoire.id === repId) {
+            openRepertoireSongs(repId);
+          } else {
+            loadRepertoires();
+          }
+        });
+      } else {
+        return PrompterDB.saveRepertoire({ name: gName, source: 'gdrive' })
+          .then(function (newRepId) {
+            repCache[gName] = newRepId;
+            songsInGroup.forEach(function (s) { s.repertoireId = newRepId; });
+            return PrompterDB.saveSongsBatch(songsInGroup);
+          })
+          .then(function () {
+            if (!state.currentRepertoire && repCache[gName]) {
+              openRepertoireSongs(repCache[gName]);
+            } else if (state.currentRepertoire && state.currentRepertoire.id === repCache[gName]) {
+              openRepertoireSongs(repCache[gName]);
+            } else {
+              loadRepertoires();
+            }
+          });
+      }
+    });
+
+    Promise.all(promises).catch(function (err) { console.error(err); });
+  }
+
+  function updateImportBanner(current, total) {
+    var banner = document.getElementById('importProgressBanner');
+    var fill = document.getElementById('ipbFill');
+    var status = document.getElementById('ipbStatus');
+    var title = document.getElementById('ipbTitle');
+
+    if (!banner) return;
+    banner.classList.remove('hidden');
+
+    var pct = Math.round((current / total) * 100);
+    if (fill) fill.style.width = pct + '%';
+    if (status) status.textContent = current + ' / ' + total + ' (' + pct + '%)';
+    if (title) title.textContent = '⚡ Baixando e organizando músicas do Google Drive em segundo plano...';
+  }
+
+  function finishImportBanner(total) {
+    var banner = document.getElementById('importProgressBanner');
+    var fill = document.getElementById('ipbFill');
+    var status = document.getElementById('ipbStatus');
+    var title = document.getElementById('ipbTitle');
+
+    if (!banner) return;
+    if (fill) fill.style.width = '100%';
+    if (status) status.textContent = total + ' / ' + total + ' (100%)';
+    if (title) title.textContent = '🎉 Importação concluída! ' + total + ' arquivo(s) adicionados ao repertório.';
+
+    repCache = {};
+
+    setTimeout(function () {
+      banner.classList.add('hidden');
+    }, 4000);
+  }
+
+  // ═══════════════════════════════════════
+  //  EDITOR MANUAL DE MÚSICA
+  // ═══════════════════════════════════════
+
+  function openEditorModal(song) {
+    var form = document.getElementById('songForm');
+    if (form) form.reset();
+    document.getElementById('currentAudioName').textContent = '';
+
+    if (song) {
+      state.editingSong = song;
+      document.getElementById('editorModalTitle').textContent = 'Editar Música';
+      document.getElementById('editSongId').value = song.id || '';
+      document.getElementById('editSongTitle').value = song.title || '';
+      var rhythmInput = document.getElementById('editSongRhythm');
+      if (rhythmInput) rhythmInput.value = song.rhythm || '';
+
+      var editKeyEl = document.getElementById('editSongKey');
+      if (editKeyEl) {
+        if (window.Transposer && typeof window.Transposer.setSelectKey === 'function') {
+          window.Transposer.setSelectKey(editKeyEl, song.key);
+        } else {
+          editKeyEl.value = song.key || '';
+        }
+      }
+
+      var origKeySelect = document.getElementById('editSongOriginalKey');
+      if (origKeySelect) {
+        if (window.Transposer && typeof window.Transposer.setSelectKey === 'function') {
+          window.Transposer.setSelectKey(origKeySelect, song.originalKey);
+        } else {
+          origKeySelect.value = song.originalKey || '';
+        }
+      }
+      var ytInput = document.getElementById('editSongYoutubeUrl');
+      if (ytInput) ytInput.value = song.youtubeUrl || '';
+      document.getElementById('editSongArtist').value = song.artist || '';
+      document.getElementById('editSongComposer').value = song.composer || '';
+      document.getElementById('editSongContent').value = song.content || '';
+      if (song.audioName) {
+        document.getElementById('currentAudioName').textContent = 'Áudio atual: ' + song.audioName;
+      }
+      document.getElementById('btnDeleteSong').classList.remove('hidden');
+    } else {
+      state.editingSong = null;
+      document.getElementById('editorModalTitle').textContent = 'Nova Música';
+      document.getElementById('editSongId').value = '';
+      var rhythmInput2 = document.getElementById('editSongRhythm');
+      if (rhythmInput2) rhythmInput2.value = '';
+      var origKeySelect2 = document.getElementById('editSongOriginalKey');
+      if (origKeySelect2) origKeySelect2.value = '';
+      var ytInput2 = document.getElementById('editSongYoutubeUrl');
+      if (ytInput2) ytInput2.value = '';
+      document.getElementById('btnDeleteSong').classList.add('hidden');
+    }
+
+    var audioFileInput = document.getElementById('editSongAudioFile');
+    if (audioFileInput && !audioFileInput._hasChangeListener) {
+      audioFileInput._hasChangeListener = true;
+      audioFileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          document.getElementById('currentAudioName').textContent = '📎 Novo arquivo selecionado: ' + this.files[0].name;
+        }
+      });
+    }
+
+    openModal(songEditorModal);
+  }
+
+  function saveManualSong() {
+    var id = document.getElementById('editSongId').value;
+    var title = document.getElementById('editSongTitle').value.trim();
+    var rhythmEl = document.getElementById('editSongRhythm');
+    var rhythm = rhythmEl ? rhythmEl.value.trim() : '';
+    var key = document.getElementById('editSongKey').value;
+    var origKeyEl = document.getElementById('editSongOriginalKey');
+    var originalKey = origKeyEl ? origKeyEl.value : '';
+    var ytEl = document.getElementById('editSongYoutubeUrl');
+    var youtubeUrl = ytEl ? ytEl.value.trim() : '';
+    var artist = document.getElementById('editSongArtist').value.trim();
+    var composer = document.getElementById('editSongComposer').value.trim();
+    var content = document.getElementById('editSongContent').value;
+    var audioFileInput = document.getElementById('editSongAudioFile');
+
+    if (!title) {
+      showToast('Por favor, informe o nome da música.', 'warning');
+      return;
+    }
+
+    if (window.Transposer && typeof window.Transposer.normalizeKey === 'function') {
+      if (key) key = window.Transposer.normalizeKey(key);
+      if (originalKey) originalKey = window.Transposer.normalizeKey(originalKey);
+    }
+
+    if (!originalKey) {
+      originalKey = TextParser.detectOriginalKey(content) || key;
+    }
+
+    var youtubeId = TextParser.extractYouTubeId(youtubeUrl);
+
+    var repId = state.currentRepertoire ? state.currentRepertoire.id : 0;
+    if (state.editingSong) repId = state.editingSong.repertoireId || repId;
+
+    var songData = {
+      title: title,
+      key: key,
+      originalKey: originalKey,
+      rhythm: rhythm,
+      youtubeUrl: youtubeUrl,
+      youtubeId: youtubeId,
+      artist: artist,
+      composer: composer,
+      content: content,
+      repertoireId: repId
+    };
+
+    if (id) songData.id = Number(id);
+
+    // Preservar metadados existentes da música editada
+    if (state.editingSong) {
+      if (state.editingSong.trackNumber !== undefined) songData.trackNumber = state.editingSong.trackNumber;
+      if (state.editingSong.order !== undefined) songData.order = state.editingSong.order;
+      if (state.editingSong.isOfflinePinned !== undefined) songData.isOfflinePinned = state.editingSong.isOfflinePinned;
+      if (state.editingSong.audioBlob) {
+        songData.audioBlob = state.editingSong.audioBlob;
+        songData.audioName = state.editingSong.audioName;
+      }
+    }
+
+    if (audioFileInput && audioFileInput.files.length > 0) {
+      var audioFile = audioFileInput.files[0];
+      songData.audioBlob = audioFile;
+      songData.audioName = audioFile.name;
+    }
+
+    var saveFunc = function (rId) {
+      songData.repertoireId = rId;
+      PrompterDB.saveSong(songData)
+        .then(function (savedId) {
+          songData.id = savedId;
+          showToast('Música salva com sucesso!', 'success');
+          closeModal(songEditorModal);
+
+          // Atualizar lista em memória imediatamente
+          if (state.currentRepertoireSongs && state.currentRepertoireSongs.length > 0) {
+            var found = false;
+            for (var k = 0; k < state.currentRepertoireSongs.length; k++) {
+              if (state.currentRepertoireSongs[k].id === songData.id) {
+                state.currentRepertoireSongs[k] = Object.assign({}, state.currentRepertoireSongs[k], songData);
+                found = true;
+                break;
+              }
+            }
+            if (!found && rId === (state.currentRepertoire ? state.currentRepertoire.id : null)) {
+              state.currentRepertoireSongs.push(songData);
+            }
+            renderSongsList(state.currentRepertoireSongs);
+          }
+
+          if (state.currentRepertoire && state.currentRepertoire.id === rId) {
+            openRepertoireSongs(state.currentRepertoire.id);
+          } else if (!state.currentRepertoire) {
+            loadRepertoires();
+          }
+
+          // Se a música editada estiver aberta no modo Prompter / Palco, recarrega-la
+          if (state.currentSong && state.currentSong.id === songData.id) {
+            state.currentSong = Object.assign({}, state.currentSong, songData);
+            openPrompterView(state.currentSong);
+          }
+        }).catch(function(err) {
+          console.error('Erro ao salvar música:', err);
+          showToast('Erro ao salvar música.', 'warning');
+        });
+    };
+
+    if (!repId && !id) {
+      PrompterDB.saveRepertoire({ name: 'Músicas Manuais', source: 'manual' })
+        .then(function (newRepId) { saveFunc(newRepId); });
+    } else {
+      saveFunc(repId);
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  IMPRESSÃO
+  // ═══════════════════════════════════════
+
+  function printRepertoire(repId) {
+    PrompterDB.getRepertoireById(repId).then(function (rep) {
+      if (!rep) return;
+      PrompterDB.getSongsByRepertoire(repId).then(function (songs) {
+        buildPrintView(rep, songs);
+        setTimeout(function () {
+          window.print();
+        }, 150);
+      });
+    });
+  }
+
+  function buildPrintView(rep, songs) {
+    var printArea = document.getElementById('printArea');
+    if (!printArea) return;
+
+    var repName = (rep.name || 'REPERTÓRIO').toUpperCase();
+
+    var html =
+      '<div class="stage-setlist-container">' +
+        '<div class="stage-setlist-header">' +
+          '<h1 class="stage-setlist-title">SETLIST: ' + escapeHtml(repName) + '</h1>' +
+          '<div class="stage-setlist-meta">' + songs.length + ' MÚSICAS</div>' +
+        '</div>' +
+        '<div class="stage-setlist-list">';
+
+    for (var i = 0; i < songs.length; i++) {
+      var s = songs[i];
+      var num = (s.trackNumber !== null && s.trackNumber !== undefined) ? s.trackNumber : (i + 1);
+      var numStr = (num < 10 ? '0' : '') + num + '.';
+      var title = (s.title || 'SEM TÍTULO').toUpperCase();
+      var rhythmStr = s.rhythm ? ' — ' + escapeHtml(s.rhythm.toUpperCase()) : '';
+      var noteStr = s.artist ? ' (' + escapeHtml(s.artist.toUpperCase()) + ')' : '';
+
+      html +=
+        '<div class="stage-setlist-row">' +
+          '<div class="stage-setlist-main">' +
+            '<span class="stage-setlist-num">' + numStr + '</span>' +
+            '<span class="stage-setlist-name">' + escapeHtml(title) + '</span>' +
+            (rhythmStr ? '<span class="stage-setlist-rhythm">' + rhythmStr + '</span>' : '') +
+            (noteStr ? '<span class="stage-setlist-note">' + noteStr + '</span>' : '') +
+          '</div>' +
+          '<div class="stage-setlist-key-col">' +
+            (s.key ? '<span class="stage-setlist-key">[ ' + escapeHtml(s.key.toUpperCase()) + ' ]</span>' : '') +
+          '</div>' +
+        '</div>';
+    }
+
+    html +=
+        '</div>' +
+      '</div>';
+
+    printArea.innerHTML = html;
+  }
+
+  // ═══════════════════════════════════════
+  //  UTILITÁRIOS
+  // ═══════════════════════════════════════
+
+  function openModal(modalEl) { if (modalEl) modalEl.classList.remove('hidden'); }
+  function closeModal(modalEl) { if (modalEl) modalEl.classList.add('hidden'); }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function showToast(msg, type) {
+    var container = document.getElementById('toastContainer');
+    if (!container) return;
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'info');
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3500);
+  }
+
+  // Sugerir nome ao abrir o modal do Drive
+  var gDriveModal2 = document.getElementById('gDriveModal');
+  var btnGDriveModalTrigger = document.getElementById('btnGDriveModal');
+  if (btnGDriveModalTrigger) {
+    btnGDriveModalTrigger.addEventListener('click', function () {
+      suggestRepertoireName('gdrive');
+    });
+  }
+
+  // Botão: Salvar tudo no Servidor (Supabase)
+  var btnPushCloud = document.getElementById('btnPushToCloud');
+  if (btnPushCloud) {
+    btnPushCloud.addEventListener('click', function () {
+      if (!window.PrompterCloud) return;
+      showToast('☁️ Salvando todos os repertórios e músicas no servidor...', 'info');
+      window.PrompterCloud.pushAllLocalToCloud().then(function (res) {
+        showToast('🎉 Todos os dados (' + res.reps + ' repertório(s), ' + res.songs + ' música(s)) foram salvos no Supabase!', 'success');
+        loadRepertoiresGrid();
+      }).catch(function (err) {
+        showToast('⚠️ Erro ao salvar dados no servidor. Verifique a conexão com Supabase.', 'warning');
+      });
+    });
+  }
+});

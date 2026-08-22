@@ -1,0 +1,17 @@
+{
+  "name": "PrompterCantor",
+  "short_name": "Prompter",
+  "description": "Teleprompter e Gestor de Repertório para Palco e Ensaios",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f0f12",
+  "theme_color": "#0f0f12",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

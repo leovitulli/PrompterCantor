@@ -1,0 +1,13 @@
+{
+  "name": "prompter-cantor",
+  "version": "1.0.0",
+  "description": "Teleprompter e Repertório Inteligente para Cantores e Músicos",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "PORT=3333 node server.js"
+  },
+  "keywords": ["prompter", "teleprompter", "cifras", "musica", "repertorio"],
+  "author": "",
+  "license": "ISC"
+}
