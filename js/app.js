@@ -1071,11 +1071,20 @@ document.addEventListener('DOMContentLoaded', function () {
             state.searchQuery = '';
             if (btnClearSearch) btnClearSearch.classList.add('hidden');
 
-            PrompterDB.getSong(sId).then(function (song) {
+            PrompterDB.getSongById(sId).then(function (song) {
               if (song) {
-                state.currentRepertoire = { id: rId };
+                if (rId) {
+                  PrompterDB.getRepertoireById(rId).then(function (rep) {
+                    if (rep) state.currentRepertoire = rep;
+                  });
+                  PrompterDB.getSongsByRepertoire(rId).then(function (songs) {
+                    state.currentRepertoireSongs = songs || [];
+                  });
+                }
                 openPrompterView(song);
               }
+            }).catch(function (err) {
+              console.error('Erro ao abrir música selecionada na busca:', err);
             });
           });
         });

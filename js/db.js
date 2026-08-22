@@ -462,6 +462,7 @@ window.PrompterDB = {
   saveSongsBatch: saveSongsBatch,
   getAllSongs: getAllSongs,
   getSongById: getSongById,
+  getSong: getSongById,
   getSongsByRepertoire: getSongsByRepertoire,
   deleteSong: deleteSong,
   deduplicateSongsList: deduplicateSongsList,
