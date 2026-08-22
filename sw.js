@@ -3,28 +3,33 @@
  * Garante funcionamento 100% Offline em Smartphones, Tablets e iPads no palco.
  */
 
-var CACHE_NAME = 'prompter-cantor-v8';
+var CACHE_NAME = 'prompter-cantor-v48';
 var ASSETS = [
   './',
   './index.html',
+  './manifest.json',
   './css/style.css',
   './js/polyfills.js',
+  './js/config.js',
+  './js/supabaseClient.js',
   './js/db.js',
   './js/textParser.js',
   './js/sampleRepertoire.js',
-  './js/gdrive.js',
-  './js/gdriveUI.js',
-  './js/advancedPlayer.js',
+  './js/transposer.js',
   './js/prompter.js',
   './js/mediaPlayer.js',
-  './js/app.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap'
+  './js/advancedPlayer.js',
+  './js/gdrive.js',
+  './js/gdriveUI.js',
+  './js/app.js'
 ];
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(ASSETS);
+      return cache.addAll(ASSETS).catch(function(err) {
+        console.warn('Falha no pré-cache de alguns assets:', err);
+      });
     })
   );
   self.skipWaiting();
@@ -47,6 +52,8 @@ self.addEventListener('activate', function(event) {
 
 self.addEventListener('fetch', function(event) {
   // Estratégia Network First com Fallback para Cache
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     fetch(event.request)
       .then(function(response) {
@@ -60,7 +67,10 @@ self.addEventListener('fetch', function(event) {
       })
       .catch(function() {
         return caches.match(event.request).then(function(cachedResponse) {
-          return cachedResponse || caches.match('./index.html');
+          if (cachedResponse) return cachedResponse;
+          if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
+            return caches.match('./index.html');
+          }
         });
       })
   );

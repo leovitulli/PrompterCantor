@@ -16,25 +16,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=48">
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
-  <script src="js/polyfills.js?v=11"></script>
+  <script src="js/polyfills.js?v=48"></script>
 
-  <!-- Desregistrar Service Worker e Limpar Todo o Cache do Navegador -->
+  <!-- Service Worker para suporte PWA / Offline -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (var i = 0; i < registrations.length; i++) {
-          registrations[i].unregister();
-        }
-      });
-    }
-    if (window.caches) {
-      caches.keys().then(function(keys) {
-        for (var k = 0; k < keys.length; k++) {
-          caches.delete(keys[k]);
-        }
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').catch(function(err) {
+          console.log('SW registration error:', err);
+        });
       });
     }
   </script>
