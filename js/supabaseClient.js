@@ -118,6 +118,42 @@
       });
     },
 
+    saveSongsBatchToCloud: function (songsArray) {
+      var sb = this.getClient();
+      if (!sb || !songsArray || songsArray.length === 0) return Promise.resolve([]);
+
+      var payloads = songsArray.map(function(song) {
+        var p = {
+          repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
+          title: song.title || '',
+          key: song.key || '',
+          original_key: song.originalKey || '',
+          rhythm: song.rhythm || '',
+          artist: song.artist || '',
+          composer: song.composer || '',
+          youtube_url: song.youtubeUrl || '',
+          youtube_id: song.youtubeId || '',
+          content: song.content || ''
+        };
+        if (song.id) p.id = Number(song.id);
+        return p;
+      });
+
+      return sb.from('songs').upsert(payloads).select().then(function (res) {
+        if (res.error) {
+          console.warn('Erro ao salvar lote de músicas na nuvem:', res.error);
+          updateSyncBadge('offline');
+          throw res.error;
+        }
+        updateSyncBadge('online');
+        return res.data || [];
+      }).catch(function (e) {
+        console.warn('Falha na requisição Supabase:', e);
+        updateSyncBadge('offline');
+        throw e;
+      });
+    },
+
     deleteSongFromCloud: function (songId) {
       var sb = this.getClient();
       if (!sb || !songId) return Promise.resolve();

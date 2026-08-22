@@ -237,12 +237,13 @@ function saveSong(song, skipCloudSync) {
   });
 }
 
-function saveSongsBatch(songsArray) {
+function saveSongsBatch(songsArray, skipCloudSync) {
   return initDB().then(function(db) {
     return new Promise(function(resolve, reject) {
-      if (!songsArray || songsArray.length === 0) return resolve(true);
+      if (!songsArray || songsArray.length === 0) return resolve([]);
       var tx = db.transaction('songs', 'readwrite');
       var store = tx.objectStore('songs');
+      var savedSongs = [];
 
       for (var i = 0; i < songsArray.length; i++) {
         var song = songsArray[i];
@@ -264,17 +265,38 @@ function saveSongsBatch(songsArray) {
           createdAt: song.createdAt || Date.now(),
           updatedAt: Date.now()
         };
+
         if (song.id) {
           songData.id = Number(song.id);
           store.put(songData);
+          savedSongs.push(songData);
         } else {
-          store.add(songData);
+          var req = store.add(songData);
+          (function(sData) {
+            req.onsuccess = function(e) {
+              sData.id = e.target.result;
+              savedSongs.push(sData);
+            };
+          })(songData);
         }
       }
 
-      tx.oncomplete = function() { resolve(true); };
+      tx.oncomplete = function() {
+        resolve(savedSongs.length > 0 ? savedSongs : songsArray);
+      };
       tx.onerror = function(e) { reject(e.target.error); };
     });
+  }).then(function(savedResult) {
+    if (!skipCloudSync && window.PrompterCloud && typeof window.PrompterCloud.saveSongsBatchToCloud === 'function') {
+      try {
+        window.PrompterCloud.saveSongsBatchToCloud(savedResult).catch(function(e) {
+          console.warn('Sync de lote de músicas em segundo plano falhou:', e);
+        });
+      } catch (err) {
+        console.warn('Erro ao disparar sync de lote de músicas:', err);
+      }
+    }
+    return savedResult;
   });
 }
 
