@@ -142,8 +142,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function loadRepertoires() {
     var mainView = document.getElementById('mainRepertoireView');
     var songsView = document.getElementById('repertoireSongsView');
+    var prompterView = document.getElementById('prompterView');
 
-    if (!state.currentRepertoire) {
+    // Se estiver no Prompter ou com música aberta, não alterar a visibilidade da tela
+    var isPrompterActive = state.currentSong || (prompterView && prompterView.style.display === 'flex' && !prompterView.classList.contains('hidden'));
+
+    if (!state.currentRepertoire && !isPrompterActive) {
       if (mainView) mainView.classList.remove('hidden');
       if (songsView) songsView.classList.add('hidden');
     }
@@ -1591,35 +1595,58 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       var activeState = Object.assign({ view: viewName }, extra || {});
       localStorage.setItem('prompter_active_state', JSON.stringify(activeState));
+      if (viewName === 'prompter' && extra && extra.songId) {
+        window.location.hash = 'song-' + extra.songId;
+      } else if (viewName === 'repertoire' && extra && extra.repertoireId) {
+        window.location.hash = 'rep-' + extra.repertoireId;
+      } else if (viewName === 'main') {
+        if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+      }
     } catch (e) {
-      console.warn('Erro ao salvar estado no localStorage:', e);
+      console.warn('Erro ao salvar estado:', e);
     }
   }
 
   function restoreActiveState() {
     try {
-      var saved = localStorage.getItem('prompter_active_state');
-      if (!saved) return false;
-      var parsed = JSON.parse(saved);
-      if (!parsed || !parsed.view) return false;
+      var hash = window.location.hash || '';
+      var songIdFromHash = null;
+      var repIdFromHash = null;
 
-      if (parsed.view === 'prompter' && parsed.songId) {
-        PrompterDB.getSongById(parsed.songId).then(function (song) {
+      if (hash.indexOf('#song-') === 0) {
+        songIdFromHash = Number(hash.replace('#song-', ''));
+      } else if (hash.indexOf('#rep-') === 0) {
+        repIdFromHash = Number(hash.replace('#rep-', ''));
+      }
+
+      var saved = localStorage.getItem('prompter_active_state');
+      var parsed = saved ? JSON.parse(saved) : null;
+
+      var targetSongId = songIdFromHash || (parsed && parsed.view === 'prompter' ? parsed.songId : null);
+      var targetRepId = repIdFromHash || (parsed && (parsed.view === 'repertoire' || parsed.view === 'prompter') ? parsed.repertoireId : null);
+
+      if (targetSongId) {
+        return PrompterDB.getSongById(Number(targetSongId)).then(function (song) {
           if (song) {
-            if (song.repertoireId) {
-              PrompterDB.getRepertoireById(song.repertoireId).then(function (rep) {
+            state.currentSong = song;
+            var rId = song.repertoireId || targetRepId;
+            if (rId) {
+              PrompterDB.getRepertoireById(rId).then(function (rep) {
                 if (rep) state.currentRepertoire = rep;
               });
-              PrompterDB.getSongsByRepertoire(song.repertoireId).then(function (songs) {
+              PrompterDB.getSongsByRepertoire(rId).then(function (songs) {
                 state.currentRepertoireSongs = songs;
               });
             }
             openPrompterView(song);
+            return true;
+          } else if (targetRepId) {
+            openRepertoireSongs(targetRepId);
+            return true;
           }
         });
-        return true;
-      } else if (parsed.view === 'repertoire' && parsed.repertoireId) {
-        openRepertoireSongs(parsed.repertoireId);
+      } else if (targetRepId) {
+        openRepertoireSongs(targetRepId);
         return true;
       }
     } catch (e) {
