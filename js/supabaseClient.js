@@ -277,16 +277,29 @@
             }
           });
 
-          // 3. Enviar itens exclusivamente locais para a nuvem
+          // 3. Enviar repertórios e músicas locais que não estão na nuvem
           localReps.forEach(function (lRep) {
             if (!cloudRepMap[lRep.id]) {
               savePromises.push(PrompterCloud.saveRepertoireToCloud(lRep));
             }
           });
 
-          localSongs.forEach(function (lSong) {
-            if (!cloudSongMap[lSong.id]) {
-              savePromises.push(PrompterCloud.saveSongToCloud(lSong));
+          // Sincronizar em lote músicas locais de cada repertório que faltam na nuvem
+          localReps.forEach(function (lRep) {
+            var cSongsInRep = cloudSongs.filter(function (cs) { return Number(cs.repertoire_id) === Number(lRep.id); });
+            var cSongTitles = {};
+            cSongsInRep.forEach(function (cs) {
+              if (cs.title) cSongTitles[cs.title.trim().toLowerCase()] = true;
+            });
+
+            var lSongsInRep = localSongs.filter(function (ls) { return Number(ls.repertoireId) === Number(lRep.id); });
+            var missingInCloud = lSongsInRep.filter(function (ls) {
+              var t = (ls.title || '').trim().toLowerCase();
+              return !cSongTitles[t];
+            });
+
+            if (missingInCloud.length > 0) {
+              savePromises.push(PrompterCloud.saveSongsBatchToCloud(missingInCloud));
             }
           });
 

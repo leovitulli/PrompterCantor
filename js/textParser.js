@@ -75,12 +75,45 @@ var TextParser = {
           for (var i = 1; i <= numPages; i++) {
             promises.push(pdf.getPage(i).then(function(page) {
               return page.getTextContent().then(function(tc) {
-                return tc.items.map(function(item) { return item.str; }).join(' ');
+                if (!tc || !tc.items || tc.items.length === 0) return '';
+                // Agrupar itens por linha baseado na posição vertical (Y)
+                var items = tc.items.slice();
+                items.sort(function(a, b) {
+                  var yA = a.transform[5];
+                  var yB = b.transform[5];
+                  if (Math.abs(yA - yB) > 3) {
+                    return yB - yA; // Linha de cima primeiro
+                  }
+                  return a.transform[4] - b.transform[4]; // Esquerda para a direita
+                });
+
+                var lines = [];
+                var currentLineItems = [];
+                var lastY = null;
+
+                for (var k = 0; k < items.length; k++) {
+                  var item = items[k];
+                  var y = item.transform[5];
+                  if (lastY === null || Math.abs(y - lastY) > 3) {
+                    if (currentLineItems.length > 0) {
+                      lines.push(currentLineItems.map(function(it) { return it.str; }).join(' ').trim());
+                    }
+                    currentLineItems = [item];
+                    lastY = y;
+                  } else {
+                    currentLineItems.push(item);
+                  }
+                }
+                if (currentLineItems.length > 0) {
+                  lines.push(currentLineItems.map(function(it) { return it.str; }).join(' ').trim());
+                }
+
+                return lines.filter(Boolean).join('\n');
               });
             }));
           }
           Promise.all(promises).then(function(pagesText) {
-            resolve(pagesText.join('\n\n'));
+            resolve(pagesText.filter(Boolean).join('\n\n'));
           });
         }).catch(reject);
       };
@@ -284,12 +317,49 @@ var TextParser = {
 
     var trackNumber = null;
 
+    var KNOWN_RHYTHMS = [
+      'SAMBA DE CABOCLO', 'SAMBA CABOCLO', 'CABOCLO',
+      'IJEXA RAPIDO', 'IJEXÁ RÁPIDO', 'IJEXA', 'IJEXÁ',
+      'BARRAVENTO', 'CONGO DE OURO', 'CONGO', 'ANGOLA', 'NAGO', 'NAGÔ',
+      'MUZENZA', 'CABULA', 'BRAVUM', 'AVAMUNHA', 'AFOXE', 'AFOXÉ',
+      'MARACATU', 'SAMBA', 'PAGODE', 'PARTIDO ALTO', 'CHORO', 'BAIAO', 'BAIÃO',
+      'XOTE', 'FORRO', 'FORRÓ', 'VALSA', 'POP', 'ROCK', 'REGGAE', 'AXE', 'AXÉ',
+      'SERESTA', 'BOLERO', 'SAMBA-ENREDO', 'TOADA', 'CURURU', 'CATERETE', 'GUARANIA'
+    ];
+
     if (lineIndex < lines.length) {
       var rawTitleLine = lines[lineIndex];
 
       trackNumber = this.extractTrackNumber(rawTitleLine);
 
-      // Checar se há chave musical ou tag/falange entre parênteses
+      // 1. Detectar TOQUE : / RITMO : no meio da linha do título
+      var inlineToqueMatch = rawTitleLine.match(/(?:TOQUE|RITMO|BATIDA)\s*[:=-]\s*([^\n\r]+)/i);
+      if (inlineToqueMatch) {
+        var rawToquePart = inlineToqueMatch[1].replace(/[*_~]+/g, '').trim();
+        var matchedRhythm = '';
+        for (var ri = 0; ri < KNOWN_RHYTHMS.length; ri++) {
+          var rName = KNOWN_RHYTHMS[ri];
+          if (rawToquePart.toUpperCase().indexOf(rName) === 0) {
+            matchedRhythm = rName;
+            var restOfToque = rawToquePart.substring(rName.length).trim();
+            if (restOfToque) {
+              contentLines.push(restOfToque);
+            }
+            break;
+          }
+        }
+        rhythm = matchedRhythm || rawToquePart.split(/[\n\r]/)[0].substring(0, 30).trim();
+        rawTitleLine = rawTitleLine.replace(/(?:TOQUE|RITMO|BATIDA)\s*[:=-]\s*[^\n\r]+/i, '').trim();
+      }
+
+      // 2. Detectar ** ( SAMBA CABOCLO ) no título
+      var starToqueMatch = rawTitleLine.match(/:\s*\*{1,2}\s*\(\s*([^)]+)\s*\)/i);
+      if (starToqueMatch) {
+        if (!rhythm) rhythm = starToqueMatch[1].trim();
+        rawTitleLine = rawTitleLine.replace(/:\s*\*{1,2}\s*\(\s*[^)]+\s*\)/i, '').trim();
+      }
+
+      // 3. Checar se há chave musical ou tag/falange entre parênteses
       var parenMatch = rawTitleLine.match(/\(([^)]+)\)$/);
       if (parenMatch) {
         var inside = parenMatch[1].trim();
@@ -302,6 +372,17 @@ var TextParser = {
       }
 
       title = this.cleanTitle(rawTitleLine);
+
+      // 4. Se a linha do título continuou com texto gigante e sem quebra de linha:
+      if (title.length > 55 && !contentLines.length) {
+        var firstParenEnd = title.indexOf(')');
+        if (firstParenEnd !== -1 && firstParenEnd < 45) {
+          var extractedLyrics = title.substring(firstParenEnd + 1).trim();
+          title = title.substring(0, firstParenEnd + 1).trim();
+          if (extractedLyrics) contentLines.push(extractedLyrics);
+        }
+      }
+
       lineIndex++;
     }
 
