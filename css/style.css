@@ -192,6 +192,95 @@ textarea {
   color: var(--text-main);
 }
 
+/* ── AUTOCOMPLETE DROPDOWN ──────────────────────────── */
+.search-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #15151c;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 230, 118, 0.15);
+  max-height: 420px;
+  overflow-y: auto;
+  z-index: 10000;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.search-auto-section-title {
+  padding: 10px 14px 4px 14px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.search-auto-item {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.15s ease;
+}
+
+.search-auto-item:last-child {
+  border-bottom: none;
+}
+
+.search-auto-item:hover, .search-auto-item.active {
+  background: rgba(0, 230, 118, 0.12);
+}
+
+.search-auto-item:hover .search-auto-name {
+  color: var(--accent-color);
+}
+
+.search-auto-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.search-auto-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-auto-meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-auto-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.search-auto-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
 /* ── BOTÕES DA HEADER ───────────────────────────────── */
 .header-actions {
   display: flex;

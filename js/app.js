@@ -197,14 +197,23 @@ document.addEventListener('DOMContentLoaded', function () {
   //  RENDER: TELA PRINCIPAL (cards de repertório)
   // ═══════════════════════════════════════
 
+  function normalizeSearch(str) {
+    if (!str) return '';
+    return String(str)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
   function renderRepertoires() {
     var filtered = state.repertoires;
 
-    // Filtro de busca global
+    // Filtro de busca global sem distinção de acentos/maiúsculas
     if (state.searchQuery) {
-      var q = state.searchQuery.toLowerCase();
+      var q = normalizeSearch(state.searchQuery);
       filtered = filtered.filter(function (r) {
-        return r.name && r.name.toLowerCase().indexOf(q) !== -1;
+        return r.name && normalizeSearch(r.name).indexOf(q) !== -1;
       });
     }
 
@@ -214,8 +223,8 @@ document.addEventListener('DOMContentLoaded', function () {
       repertoiresListEl.innerHTML =
         '<div class="empty-state">' +
         '<div class="empty-icon">🎵</div>' +
-        '<h2>Nenhum repertório ainda</h2>' +
-        '<p>Importe músicas do seu computador ou Google Drive para criar seu primeiro repertório.</p>' +
+        '<h2>Nenhum repertório encontrado</h2>' +
+        '<p>' + (state.searchQuery ? 'Nenhum resultado para "' + escapeHtml(state.searchQuery) + '".' : 'Importe músicas do seu computador ou Google Drive para criar seu primeiro repertório.') + '</p>' +
         '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">' +
         '<button id="btnEmptyImport" class="btn btn-primary btn-lg">📂 Importar Arquivos</button>' +
         '<button id="btnEmptyGDrive" class="btn btn-gdrive btn-lg">☁️ Google Drive</button>' +
@@ -247,19 +256,20 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // Renderizar HTML dos cards IMEDIATAMENTE (sem esperar contagem)
+    // Renderizar HTML dos cards com badge unificado e consistente
     var html = '';
     for (var i = 0; i < filtered.length; i++) {
       var rep = filtered[i];
+      var sourceClass = (rep.source === 'sample' || rep.source === 'local') ? 'local' : (rep.source || 'local');
       var sourceIcon = rep.source === 'gdrive' ? '☁️' : rep.source === 'manual' ? '✏️' : '📁';
-      var sourceLabel = rep.source === 'gdrive' ? 'Google Drive' : rep.source === 'manual' ? 'Manual' : 'Importação Local';
+      var sourceLabel = rep.source === 'gdrive' ? 'Google Drive' : rep.source === 'manual' ? 'Criado Manual' : 'Importação Local';
       var dateStr = formatDate(rep.createdAt);
       var repId = rep.id;
 
       html +=
         '<div class="repertoire-card" data-rep-id="' + repId + '">' +
         '<div class="rep-card-header">' +
-        '<div class="rep-source-badge rep-source-' + (rep.source || 'local') + '">' + sourceIcon + ' ' + sourceLabel + '</div>' +
+        '<div class="rep-source-badge rep-source-' + sourceClass + '">' + sourceIcon + ' ' + sourceLabel + '</div>' +
         '<div class="rep-card-actions-top">' +
         '<button class="btn-offline-toggle ' + (rep.isOfflinePinned ? 'pinned' : '') + ' btn-toggle-rep-offline" data-rep-id="' + repId + '" title="' + (rep.isOfflinePinned ? 'Salvo no dispositivo para uso offline' : 'Baixar repertório para uso offline') + '">⚡ <span class="offline-label-text">' + (rep.isOfflinePinned ? 'Offline' : 'Offline') + '</span></button>' +
         '<button class="btn-icon-sm btn-print-rep" data-rep-id="' + repId + '" title="Imprimir Repertório">🖨️</button>' +
@@ -963,16 +973,141 @@ document.addEventListener('DOMContentLoaded', function () {
   // ═══════════════════════════════════════
 
   function setupEventListeners() {
-    // Busca global
+    // Busca global com Autocomplete Inteligente (ignora acentos e maiúsculas)
+    var searchDropdown = document.getElementById('searchAutocompleteDropdown');
+    var searchDebounce = null;
+
+    function executeGlobalSearch(query) {
+      state.searchQuery = query;
+      var normQ = normalizeSearch(query);
+
+      if (!normQ) {
+        if (searchDropdown) {
+          searchDropdown.innerHTML = '';
+          searchDropdown.classList.add('hidden');
+        }
+        if (btnClearSearch) btnClearSearch.classList.add('hidden');
+        renderRepertoires();
+        return;
+      }
+
+      if (btnClearSearch) btnClearSearch.classList.remove('hidden');
+
+      // Buscar repertórios e todas as músicas no banco de dados
+      Promise.all([
+        Promise.resolve(state.repertoires || []),
+        PrompterDB.getAllSongs()
+      ]).then(function (results) {
+        var reps = results[0] || [];
+        var allSongs = results[1] || [];
+
+        var matchedReps = reps.filter(function (r) {
+          return r.name && normalizeSearch(r.name).indexOf(normQ) !== -1;
+        });
+
+        var repMap = {};
+        reps.forEach(function (r) { repMap[r.id] = r.name; });
+
+        var matchedSongs = allSongs.filter(function (s) {
+          var titleMatch = s.title && normalizeSearch(s.title).indexOf(normQ) !== -1;
+          var artistMatch = s.artist && normalizeSearch(s.artist).indexOf(normQ) !== -1;
+          var composerMatch = s.composer && normalizeSearch(s.composer).indexOf(normQ) !== -1;
+          var rhythmMatch = s.rhythm && normalizeSearch(s.rhythm).indexOf(normQ) !== -1;
+          return titleMatch || artistMatch || composerMatch || rhythmMatch;
+        });
+
+        if (!searchDropdown) return;
+
+        if (matchedReps.length === 0 && matchedSongs.length === 0) {
+          searchDropdown.innerHTML = '<div class="search-auto-empty">🔍 Nenhum repertório ou música encontrado para "<strong>' + escapeHtml(query) + '</strong>"</div>';
+          searchDropdown.classList.remove('hidden');
+          return;
+        }
+
+        var html = '';
+
+        if (matchedReps.length > 0) {
+          html += '<div class="search-auto-section-title">📂 Repertórios (' + matchedReps.length + ')</div>';
+          matchedReps.slice(0, 4).forEach(function (r) {
+            html +=
+              '<div class="search-auto-item search-item-rep" data-rep-id="' + r.id + '">' +
+                '<div class="search-auto-info">' +
+                  '<span class="search-auto-name">📂 ' + escapeHtml(r.name) + '</span>' +
+                  '<span class="search-auto-meta">Abrir repertório</span>' +
+                '</div>' +
+              '</div>';
+          });
+        }
+
+        if (matchedSongs.length > 0) {
+          html += '<div class="search-auto-section-title">🎵 Músicas (' + matchedSongs.length + ')</div>';
+          matchedSongs.slice(0, 15).forEach(function (s) {
+            var repName = repMap[s.repertoireId] || 'Repertório';
+            var metaParts = [repName];
+            if (s.rhythm) metaParts.push(s.rhythm);
+            if (s.artist) metaParts.push(s.artist);
+
+            html +=
+              '<div class="search-auto-item search-item-song" data-song-id="' + s.id + '" data-rep-id="' + s.repertoireId + '">' +
+                '<div class="search-auto-info">' +
+                  '<span class="search-auto-name">🎵 ' + escapeHtml(s.title) + '</span>' +
+                  '<span class="search-auto-meta">' + escapeHtml(metaParts.join(' • ')) + '</span>' +
+                '</div>' +
+                '<div class="search-auto-badges">' +
+                  (s.key ? '<span class="badge badge-key" style="font-size:0.75rem;">' + escapeHtml(s.key) + '</span>' : '') +
+                '</div>' +
+              '</div>';
+          });
+        }
+
+        searchDropdown.innerHTML = html;
+        searchDropdown.classList.remove('hidden');
+
+        // Binds de clique nos itens do autocomplete
+        searchDropdown.querySelectorAll('.search-item-rep').forEach(function (el) {
+          el.addEventListener('click', function () {
+            var rId = Number(this.getAttribute('data-rep-id'));
+            searchDropdown.classList.add('hidden');
+            if (searchInput) searchInput.value = '';
+            state.searchQuery = '';
+            if (btnClearSearch) btnClearSearch.classList.add('hidden');
+            openRepertoireSongs(rId);
+          });
+        });
+
+        searchDropdown.querySelectorAll('.search-item-song').forEach(function (el) {
+          el.addEventListener('click', function () {
+            var sId = Number(this.getAttribute('data-song-id'));
+            var rId = Number(this.getAttribute('data-rep-id'));
+            searchDropdown.classList.add('hidden');
+            if (searchInput) searchInput.value = '';
+            state.searchQuery = '';
+            if (btnClearSearch) btnClearSearch.classList.add('hidden');
+
+            PrompterDB.getSong(sId).then(function (song) {
+              if (song) {
+                state.currentRepertoire = { id: rId };
+                openPrompterView(song);
+              }
+            });
+          });
+        });
+      });
+
+      renderRepertoires();
+    }
+
     if (searchInput) {
       searchInput.addEventListener('input', function (e) {
-        state.searchQuery = e.target.value;
-        if (state.searchQuery) {
-          if (btnClearSearch) btnClearSearch.classList.remove('hidden');
-        } else {
-          if (btnClearSearch) btnClearSearch.classList.add('hidden');
-        }
-        renderRepertoires();
+        clearTimeout(searchDebounce);
+        var val = e.target.value;
+        searchDebounce = setTimeout(function () {
+          executeGlobalSearch(val);
+        }, 120);
+      });
+
+      searchInput.addEventListener('focus', function () {
+        if (this.value) executeGlobalSearch(this.value);
       });
     }
 
@@ -980,10 +1115,28 @@ document.addEventListener('DOMContentLoaded', function () {
       btnClearSearch.addEventListener('click', function () {
         if (searchInput) searchInput.value = '';
         state.searchQuery = '';
+        if (searchDropdown) {
+          searchDropdown.innerHTML = '';
+          searchDropdown.classList.add('hidden');
+        }
         btnClearSearch.classList.add('hidden');
         renderRepertoires();
       });
     }
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', function (e) {
+      if (searchDropdown && !searchDropdown.contains(e.target) && e.target !== searchInput) {
+        searchDropdown.classList.add('hidden');
+      }
+    });
+
+    // Fechar no Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && searchDropdown) {
+        searchDropdown.classList.add('hidden');
+      }
+    });
 
     // Navegação de tabs
     var navTabs = document.querySelectorAll('.nav-tab');
