@@ -206,12 +206,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!repertoiresListEl) return;
 
-    if (!filtered || filtered.length === 0) {
+    if (!state.repertoires || state.repertoires.length === 0) {
       repertoiresListEl.innerHTML =
         '<div class="empty-state">' +
         '<div class="empty-icon">🎵</div>' +
-        '<h2>Nenhum repertório encontrado</h2>' +
-        '<p>' + (state.searchQuery ? 'Nenhum resultado para "' + escapeHtml(state.searchQuery) + '".' : 'Importe músicas do seu computador ou Google Drive para criar seu primeiro repertório.') + '</p>' +
+        '<h2>Nenhum repertório ainda</h2>' +
+        '<p>Importe músicas do seu computador ou Google Drive para criar seu primeiro repertório.</p>' +
         '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">' +
         '<button id="btnEmptyImport" class="btn btn-primary btn-lg">📂 Importar Arquivos</button>' +
         '<button id="btnEmptyGDrive" class="btn btn-gdrive btn-lg">☁️ Google Drive</button>' +
@@ -1089,8 +1089,6 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         });
       });
-
-      renderRepertoires();
     }
 
     if (searchInput) {
