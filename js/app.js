@@ -2176,6 +2176,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  function getSongLyricIntro(content) {
+    if (!content) return '';
+    var lines = content.split('\n');
+    var lyricLines = [];
+
+    for (var i = 0; i < lines.length && lyricLines.length < 2; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      // Pular tags e metadados
+      if (/^(tom|ritmo|bpm|intro|introdução|refrão|estrofe|solo|interlúdio|parte\s+[a-z0-9]|compasso|afinação)\s*[:：]/i.test(line)) continue;
+      if (/^\[.*\]$/.test(line)) continue;
+      // Pular linhas de acordes se detectado
+      if (window.TextParser && window.TextParser.isChordLine(line)) continue;
+      // Pular linhas curtas de pontuação
+      if (line.length < 3) continue;
+
+      lyricLines.push(line);
+    }
+    return lyricLines.join(' / ');
+  }
+
   function buildPrintView(rep, songs) {
     var printArea = document.getElementById('printArea');
     if (!printArea) return;
@@ -2195,20 +2216,17 @@ document.addEventListener('DOMContentLoaded', function () {
       var num = (s.trackNumber !== null && s.trackNumber !== undefined) ? s.trackNumber : (i + 1);
       var numStr = (num < 10 ? '0' : '') + num + '.';
       var title = (s.title || 'SEM TÍTULO').toUpperCase();
-      var rhythmStr = s.rhythm ? ' — ' + escapeHtml(s.rhythm.toUpperCase()) : '';
-      var noteStr = s.artist ? ' (' + escapeHtml(s.artist.toUpperCase()) + ')' : '';
+      var keyStr = s.key ? ' (' + escapeHtml(s.key.toUpperCase()) + ')' : '';
+      var lyricIntro = getSongLyricIntro(s.content);
 
       html +=
         '<div class="stage-setlist-row">' +
-          '<div class="stage-setlist-main">' +
+          '<div class="stage-setlist-title-line">' +
             '<span class="stage-setlist-num">' + numStr + '</span>' +
             '<span class="stage-setlist-name">' + escapeHtml(title) + '</span>' +
-            (rhythmStr ? '<span class="stage-setlist-rhythm">' + rhythmStr + '</span>' : '') +
-            (noteStr ? '<span class="stage-setlist-note">' + noteStr + '</span>' : '') +
+            (keyStr ? '<span class="stage-setlist-key">' + keyStr + '</span>' : '') +
           '</div>' +
-          '<div class="stage-setlist-key-col">' +
-            (s.key ? '<span class="stage-setlist-key">[ ' + escapeHtml(s.key.toUpperCase()) + ' ]</span>' : '') +
-          '</div>' +
+          (lyricIntro ? '<div class="stage-setlist-lyric-intro">' + escapeHtml(lyricIntro) + '</div>' : '') +
         '</div>';
     }
 

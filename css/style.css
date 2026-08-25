@@ -2779,104 +2779,89 @@ textarea {
     width: 100% !important;
     color: #000000 !important;
     background: #ffffff !important;
+    font-family: Arial, Helvetica, sans-serif !important;
   }
 
   .stage-setlist-header {
     display: flex !important;
     justify-content: space-between !important;
     align-items: baseline !important;
-    border-bottom: 4px solid #000000 !important;
+    border-bottom: 3px solid #000000 !important;
     padding-bottom: 6px !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 14px !important;
   }
 
   .stage-setlist-title {
-    font-size: 24pt !important;
+    font-size: 20pt !important;
     font-weight: 900 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
     margin: 0 !important;
     color: #000000 !important;
-    font-family: Arial, Helvetica, sans-serif !important;
   }
 
   .stage-setlist-meta {
-    font-size: 15pt !important;
+    font-size: 13pt !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
     color: #000000 !important;
   }
 
-  /* LISTA EM COLUNA ÚNICA COM LETRAS GRANDES E ESPAÇAMENTO DUPLO */
+  /* LISTA SEM LINHAS, COM INÍCIO DA LETRA ABAIXO DO TÍTULO */
   .stage-setlist-list {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
+    gap: 8px !important;
   }
 
   .stage-setlist-row {
     display: flex !important;
-    align-items: baseline !important;
-    justify-content: space-between !important;
-    border-bottom: 1.5px solid #000000 !important;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+    flex-direction: column !important;
+    border-bottom: none !important;
+    padding-top: 2px !important;
+    padding-bottom: 4px !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  .stage-setlist-main {
+  .stage-setlist-title-line {
     display: flex !important;
     align-items: baseline !important;
-    gap: 10px !important;
-    flex: 1 !important;
-    padding-right: 12px !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
   }
 
   .stage-setlist-num {
-    font-size: 22pt !important;
+    font-size: 17pt !important;
     font-weight: 900 !important;
-    min-width: 44px !important;
+    min-width: 38px !important;
     color: #000000 !important;
     font-family: Arial, Helvetica, sans-serif !important;
   }
 
   .stage-setlist-name {
-    font-size: 22pt !important;
+    font-size: 17pt !important;
     font-weight: 900 !important;
     text-transform: uppercase !important;
     color: #000000 !important;
-    letter-spacing: 0.3px !important;
-    font-family: Arial, Helvetica, sans-serif !important;
-  }
-
-  .stage-setlist-rhythm {
-    font-size: 16pt !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    color: #111111 !important;
-    margin-left: 6px !important;
-  }
-
-  .stage-setlist-note {
-    font-size: 15pt !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    color: #222222 !important;
-  }
-
-  .stage-setlist-key-col {
-    display: flex !important;
-    align-items: baseline !important;
-    white-space: nowrap !important;
+    letter-spacing: 0.2px !important;
   }
 
   .stage-setlist-key {
-    font-size: 22pt !important;
+    font-size: 16pt !important;
     font-weight: 900 !important;
-    text-transform: uppercase !important;
     color: #000000 !important;
-    letter-spacing: 0.5px !important;
-    font-family: Arial, Helvetica, sans-serif !important;
+    margin-left: 2px !important;
+  }
+
+  .stage-setlist-lyric-intro {
+    font-size: 12pt !important;
+    font-weight: 500 !important;
+    font-style: italic !important;
+    color: #333333 !important;
+    padding-left: 38px !important;
+    margin-top: 1px !important;
+    line-height: 1.3 !important;
   }
 }
