@@ -231,6 +231,47 @@ var TextParser = {
 
     var songBlocks = [];
 
+    // PADRÃO 0 (PRIORIDADE MÁXIMA): Se o documento contiver marcadores "TOQUE:" ou "RITMO:"
+    var toqueIndices = [];
+    for (var t = 0; t < lines.length; t++) {
+      var l = lines[t].trim();
+      if (/^(?:TOQUE|RITMO|BATIDA)\s*[:=-]/i.test(l)) {
+        // Encontrar a linha não-vazia anterior (o título do ponto/música)
+        var titleIdx = t - 1;
+        while (titleIdx >= 0 && (!lines[titleIdx].trim() || /^[-=─*_~]{2,}/.test(lines[titleIdx].trim()))) {
+          titleIdx--;
+        }
+        if (titleIdx >= 0) {
+          toqueIndices.push({ toqueIndex: t, titleIndex: titleIdx });
+        }
+      }
+    }
+
+    if (toqueIndices.length >= 1) {
+      for (var ti = 0; ti < toqueIndices.length; ti++) {
+        var startIdx = toqueIndices[ti].titleIndex;
+        var endIdx = (ti + 1 < toqueIndices.length) ? toqueIndices[ti + 1].titleIndex : lines.length;
+        var blockLines = lines.slice(startIdx, endIdx);
+        // Filtrar eventuais cabeçalhos de seção soltos
+        var cleanBlockLines = blockLines.filter(function(bl) {
+          var trimmedLine = bl.trim();
+          return !/^[-=─*_~]{2,}\s*(?:PONTOS|DESPEDIDA|REPERT[ÓO]RIO|SE[ÇC][ÃA]O|PARTE)/i.test(trimmedLine) &&
+                 !/^\.\s*[A-ZÀ-Ú\s]+\s*\.$/.test(trimmedLine) &&
+                 !/^Laroy[êe]\s+/i.test(trimmedLine);
+        });
+        var blockText = cleanBlockLines.join('\n').trim();
+        if (blockText) songBlocks.push(blockText);
+      }
+
+      if (songBlocks.length > 0) {
+        return songBlocks.map(function(bText, idx) {
+          var meta = self.extractMetadata(bText, filename);
+          if (meta.trackNumber === null) meta.trackNumber = idx + 1;
+          return meta;
+        });
+      }
+    }
+
     // PADRÃO 1: Se o documento tiver numeração sequencial (ex: 01., 02., 03. ou 1 -, 2 -)
     // Uma música começa exatamente no número e só termina quando o próximo número for encontrado.
     if (numberedLines.length >= 1) {

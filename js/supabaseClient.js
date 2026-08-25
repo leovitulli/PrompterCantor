@@ -292,24 +292,21 @@
             }
           });
 
-          // Sincronizar em lote músicas locais de cada repertório que faltam na nuvem
-          localReps.forEach(function (lRep) {
-            var cSongsInRep = cloudSongs.filter(function (cs) { return Number(cs.repertoire_id) === Number(lRep.id); });
-            var cSongTitles = {};
-            cSongsInRep.forEach(function (cs) {
-              if (cs.title) cSongTitles[cs.title.trim().toLowerCase()] = true;
+          // Sincronizar todas as músicas locais que ainda não existem na nuvem
+          var missingSongsInCloud = [];
+          localSongs.forEach(function(lSong) {
+            var existsInCloud = cloudSongs.some(function(cs) {
+              return Number(cs.id) === Number(lSong.id) ||
+                     (cs.title && lSong.title && cs.title.trim().toLowerCase() === lSong.title.trim().toLowerCase() && Number(cs.repertoire_id) === Number(lSong.repertoireId));
             });
-
-            var lSongsInRep = localSongs.filter(function (ls) { return Number(ls.repertoireId) === Number(lRep.id); });
-            var missingInCloud = lSongsInRep.filter(function (ls) {
-              var t = (ls.title || '').trim().toLowerCase();
-              return !cSongTitles[t];
-            });
-
-            if (missingInCloud.length > 0) {
-              savePromises.push(PrompterCloud.saveSongsBatchToCloud(missingInCloud));
+            if (!existsInCloud) {
+              missingSongsInCloud.push(lSong);
             }
           });
+
+          if (missingSongsInCloud.length > 0) {
+            savePromises.push(PrompterCloud.saveSongsBatchToCloud(missingSongsInCloud));
+          }
 
           return Promise.all(savePromises).then(function () {
             updateSyncBadge('online');
