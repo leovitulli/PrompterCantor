@@ -160,12 +160,23 @@ var TextParser = {
     return /^\s*\(?\s*(?:[0-9]\s*x|bis|coro|refr[ãa]o|estribilho|repete|final|intro|solo|2\s*vezes)\s*\)?\s*$/i.test(line);
   },
 
+  normalizeRawInputText: function(str) {
+    if (!str) return '';
+    return str
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/[\u00A0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]/g, ' ')
+      .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+      .replace(/\t/g, '    ');
+  },
+
   splitMultipleSongs: function(text, filename) {
+    text = this.normalizeRawInputText(text);
     if (!text || !text.trim()) {
       return [this.extractMetadata(text, filename)];
     }
 
-    var lines = text.split(/\r?\n/);
+    var lines = text.split('\n');
     var self = this;
 
     // 1. Escaneamento global: identificar se o documento usa numeração sequencial

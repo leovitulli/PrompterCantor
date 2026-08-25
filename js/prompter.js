@@ -175,23 +175,33 @@ var Prompter = {
   },
 
   formatChordsAndLyrics: function(text) {
-    if (!text) return '<p class="lyric-line">(Sem letra informada)</p>';
+    if (!text) return '<div class="lyric-line">(Sem letra informada)</div>';
 
     var lines = text.split('\n');
     var html = [];
+    var lastWasEmpty = false;
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
       var trimmed = line.trim();
       if (!trimmed) {
-        html.push('<br>');
+        if (!lastWasEmpty && html.length > 0) {
+          html.push('<div class="prompter-stanza-gap"></div>');
+          lastWasEmpty = true;
+        }
         continue;
       }
+      lastWasEmpty = false;
 
+      // Se for linha de acordes
       if (window.TextParser && window.TextParser.isChordLine(trimmed)) {
         html.push('<div class="chord-line">' + this.escapeHtml(line) + '</div>');
+      } else if (/^\[\s*(?:intro|refr[ãa]o|coro|ponte|solo|final|parte\s+[a-z0-9]|verso)\s*\]$/i.test(trimmed)) {
+        html.push('<div class="prompter-section-tag">' + this.escapeHtml(trimmed) + '</div>');
       } else {
-        html.push('<div class="lyric-line">' + this.escapeHtml(line) + '</div>');
+        // Se a linha tiver acordes em colchetes [Gm], [C7]
+        var formattedLyric = this.escapeHtml(line).replace(/\[([A-G][#b]?(?:m|maj|min|dim|aug|sus|add|[0-9])*(?:\/[A-G][#b]?)?)\]/g, '<span class="inline-chord">$1</span>');
+        html.push('<div class="lyric-line">' + formattedLyric + '</div>');
       }
     }
 

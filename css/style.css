@@ -2107,7 +2107,7 @@ textarea {
   flex: 1 !important;
   width: 100% !important;
   overflow-y: auto !important;
-  padding: 1.5rem 1.5rem !important;
+  padding: 1.25rem 1.5rem !important;
   box-sizing: border-box !important;
   scroll-behavior: smooth !important;
 }
@@ -2115,7 +2115,7 @@ textarea {
 .prompter-text-content {
   font-family: var(--font-sans) !important;
   font-size: 32px;
-  line-height: 1.65 !important;
+  line-height: 1.35 !important;
   color: #ffffff !important;
   white-space: pre-wrap !important;
   word-break: break-word !important;
@@ -2123,6 +2123,63 @@ textarea {
   max-width: 98% !important;
   width: 98% !important;
   margin: 0 auto !important;
+  padding-bottom: 40vh !important;
+}
+
+.lyric-line {
+  margin-bottom: 0.35rem !important;
+  letter-spacing: -0.2px !important;
+}
+
+.chord-line {
+  color: var(--accent-color) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.85em !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 0.1rem !important;
+}
+
+.prompter-stanza-gap {
+  height: 1.1rem !important;
+}
+
+.inline-chord {
+  color: var(--accent-color) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 800 !important;
+  background: rgba(0, 230, 118, 0.12) !important;
+  padding: 0.05rem 0.3rem !important;
+  border-radius: 4px !important;
+  margin: 0 0.15rem !important;
+  font-size: 0.9em !important;
+}
+
+.prompter-section-tag {
+  color: #38bdf8 !important;
+  font-size: 0.75em !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  margin-top: 0.6rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.prompter-scroll-to-top {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 16px !important;
+  z-index: 99999 !important;
+  opacity: 0.7 !important;
+  transform: scale(0.85) !important;
+  transition: all 0.2s ease !important;
+}
+
+.prompter-scroll-to-top:hover,
+.prompter-scroll-to-top:active {
+  opacity: 1 !important;
+  transform: scale(0.95) !important;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -2213,57 +2270,112 @@ textarea {
 
 @media (max-width: 768px) {
   .prompter-header {
-    padding: 0.5rem 0.75rem !important;
+    padding: 0.4rem 0.6rem !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 0.5rem !important;
+    gap: 0.35rem !important;
     min-height: auto !important;
+    background-color: rgba(14, 14, 20, 0.98) !important;
   }
 
   .prompter-title-area {
     width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
     justify-content: space-between !important;
-    gap: 0.5rem !important;
+    gap: 0.4rem !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .song-metadata-header {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
   }
 
   #prompterSongTitle {
-    font-size: 1.05rem !important;
+    font-size: 0.96rem !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: 160px !important;
+    max-width: 140px !important;
+    font-weight: 800 !important;
   }
 
   .song-badges {
-    flex-wrap: wrap !important;
-    gap: 0.35rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .key-selector-dropdown {
+    padding: 0.2rem 0.35rem !important;
+    font-size: 0.76rem !important;
+    height: 28px !important;
+    max-width: 85px !important;
+  }
+
+  .prompter-song-submeta {
+    display: none !important;
   }
 
   .prompter-controls {
     width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
     justify-content: space-between !important;
-    gap: 0.4rem !important;
-  }
-
-  .control-group {
-    padding: 0.35rem 0.55rem !important;
     gap: 0.35rem !important;
   }
 
+  .control-group {
+    padding: 0.25rem 0.45rem !important;
+    gap: 0.25rem !important;
+    border-radius: 7px !important;
+  }
+
   .control-label {
-    display: none !important; /* Oculta rótulos extensos ("Fonte:", "Velocidade:") no celular */
+    display: none !important;
+  }
+
+  .btn-circle {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.78rem !important;
+  }
+
+  #fontSizeDisplay, #scrollSpeedDisplay {
+    font-size: 0.78rem !important;
+    min-width: 26px !important;
   }
 
   .btn-scroll-play {
     flex: 1 !important;
     justify-content: center !important;
-    padding: 0.4rem 0.6rem !important;
+    padding: 0.35rem 0.5rem !important;
+    height: 28px !important;
+    font-size: 0.78rem !important;
     white-space: nowrap !important;
-    font-size: 0.82rem !important;
   }
 
   #scrollPlayText {
     white-space: nowrap !important;
+  }
+
+  #btnToggleFullscreen {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .prompter-scroll-area {
+    padding: 0.75rem 0.85rem !important;
   }
 
   .youtube-player-dock {
