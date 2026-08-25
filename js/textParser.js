@@ -162,12 +162,43 @@ var TextParser = {
 
   normalizeRawInputText: function(str) {
     if (!str) return '';
+
+    // 1. Se o texto foi colado codificado em URL (%20, %0A, %5B, etc.)
+    if (/%(?:20|0A|0D|5B|5D|3C|3E|22|23|27|2F)/i.test(str)) {
+      try {
+        str = decodeURIComponent(str.replace(/\+/g, ' '));
+      } catch (e) {
+        try {
+          str = unescape(str);
+        } catch (e2) {}
+      }
+    }
+
+    // 2. Se o texto contém tags HTML (como as copiadas do Cifra Club ou navegador)
+    if (/<(?:br|p|div|span|b|pre|a|h[1-6])\b/i.test(str)) {
+      str = str
+        .replace(/<\s*br\s*\/?>/gi, '\n')
+        .replace(/<\/\s*(?:p|div|pre|tr|li|h[1-6])\s*>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"');
+    }
+
+    // 3. Normalização universal de quebras de linha e caracteres invisíveis
     return str
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')
       .replace(/[\u00A0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]/g, ' ')
       .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
       .replace(/\t/g, '    ');
+  },
+
+  getCifraClubSearchUrl: function(title, artist) {
+    var query = (title || '') + ' ' + (artist || '');
+    return 'https://www.cifraclub.com.br/?q=' + encodeURIComponent(query.trim());
   },
 
   splitMultipleSongs: function(text, filename) {

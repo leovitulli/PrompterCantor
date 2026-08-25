@@ -1409,6 +1409,42 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // Botão Buscar Cifra / Tom no Cifra Club
+    var btnSearchCifra = document.getElementById('btnSearchCifraClub');
+    if (btnSearchCifra) {
+      btnSearchCifra.addEventListener('click', function() {
+        var title = document.getElementById('editSongTitle').value.trim();
+        var artist = document.getElementById('editSongArtist').value.trim();
+        if (!title) {
+          showToast('Informe o nome da música para pesquisar no Cifra Club.', 'warning');
+          return;
+        }
+        var searchUrl = TextParser.getCifraClubSearchUrl(title, artist);
+        window.open(searchUrl, '_blank');
+      });
+    }
+
+    // Sanitizar automaticamente ao colar texto no Editor
+    var editContentEl = document.getElementById('editSongContent');
+    if (editContentEl) {
+      editContentEl.addEventListener('paste', function () {
+        setTimeout(function () {
+          var raw = editContentEl.value;
+          if (raw && window.TextParser) {
+            var cleaned = TextParser.normalizeRawInputText(raw);
+            if (cleaned !== raw) editContentEl.value = cleaned;
+            var autoKey = TextParser.detectOriginalKey(cleaned);
+            var origKeySelect = document.getElementById('editSongOriginalKey');
+            var keySelect = document.getElementById('editSongKey');
+            if (autoKey) {
+              if (origKeySelect && !origKeySelect.value) origKeySelect.value = autoKey;
+              if (keySelect && !keySelect.value) keySelect.value = autoKey;
+            }
+          }
+        }, 40);
+      });
+    }
+
     // Modais YouTube
     bindModalClose('btnCloseYoutubeModal', document.getElementById('youtubeModal'));
     bindModalClose('youtubeModalOverlay', document.getElementById('youtubeModal'));
@@ -2058,6 +2094,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var artist = document.getElementById('editSongArtist').value.trim();
     var composer = document.getElementById('editSongComposer').value.trim();
     var content = document.getElementById('editSongContent').value;
+    if (window.TextParser && typeof window.TextParser.normalizeRawInputText === 'function') {
+      content = window.TextParser.normalizeRawInputText(content);
+    }
     var audioFileInput = document.getElementById('editSongAudioFile');
 
     if (!title) {

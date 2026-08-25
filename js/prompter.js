@@ -138,7 +138,12 @@ var Prompter = {
     this.stopScroll();
     if (this.scrollArea) this.scrollArea.scrollTop = 0;
 
-    this.currentRawText = text || '';
+    var cleaned = text || '';
+    if (window.TextParser && typeof window.TextParser.normalizeRawInputText === 'function') {
+      cleaned = window.TextParser.normalizeRawInputText(cleaned);
+    }
+
+    this.currentRawText = cleaned;
     this.currentOriginalKey = originalKey || '';
     this.currentDisplayKey = currentKey || originalKey || '';
 
