@@ -49,7 +49,14 @@ document.addEventListener('DOMContentLoaded', function () {
         restoreActiveState();
         if (window.PrompterCloud) {
           PrompterCloud.syncAllWithCloud().then(function() {
-            loadRepertoires();
+            if (state.currentRepertoire) {
+              PrompterDB.getSongsByRepertoire(state.currentRepertoire.id).then(function (songs) {
+                state.currentRepertoireSongs = songs || [];
+                renderSongsList(state.currentRepertoireSongs);
+              });
+            } else {
+              loadRepertoires();
+            }
           });
         }
       });
@@ -58,6 +65,46 @@ document.addEventListener('DOMContentLoaded', function () {
       console.error('Erro ao inicializar DB:', err);
       showToast('Erro ao carregar banco de dados.', 'warning');
     });
+
+  // Sincronização automática em tempo real ao focar a aba ou a cada 25s
+  function triggerCloudSync(silent) {
+    if (window.PrompterCloud && typeof window.PrompterCloud.syncAllWithCloud === 'function') {
+      PrompterCloud.syncAllWithCloud().then(function () {
+        if (state.currentRepertoire) {
+          PrompterDB.getSongsByRepertoire(state.currentRepertoire.id).then(function (songs) {
+            state.currentRepertoireSongs = songs || [];
+            renderSongsList(state.currentRepertoireSongs);
+          });
+        } else {
+          loadRepertoires();
+        }
+        if (!silent) showToast('☁️ Nuvem sincronizada com sucesso!', 'success');
+      }).catch(function () {
+        if (!silent) showToast('Falha na sincronização com a nuvem.', 'warning');
+      });
+    }
+  }
+
+  // Clique no Badge de Sincronização para forçar atualização imediata
+  var syncBadgeEl = document.getElementById('supabaseSyncBadge');
+  if (syncBadgeEl) {
+    syncBadgeEl.style.cursor = 'pointer';
+    syncBadgeEl.addEventListener('click', function () {
+      showToast('🔄 Sincronizando com a Nuvem...', 'info');
+      triggerCloudSync(false);
+    });
+  }
+
+  // Sincronizar ao alternar para a aba
+  window.addEventListener('focus', function () { triggerCloudSync(true); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') triggerCloudSync(true);
+  });
+
+  // Polling suave em background a cada 25s
+  setInterval(function () {
+    if (document.visibilityState === 'visible') triggerCloudSync(true);
+  }, 25000);
 
   setupEventListeners();
 
