@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', function () {
       listEl.innerHTML =
         '<div class="songs-list-empty">' +
         '<p>Nenhuma música neste repertório.</p>' +
-        '<p>Clique em <b>+ Adicionar Música</b> para começar.</p>' +
+        '<p>Clique em <b>+ Importar Arquivo</b> ou <b>✏️ Nova Música</b> para começar.</p>' +
         '</div>';
       return;
     }
@@ -454,32 +454,34 @@ document.addEventListener('DOMContentLoaded', function () {
       var song = songs[i];
       var preview = getFirstTwoLines(song.content);
       var displayTitle = (song.title || 'Sem Título').toUpperCase();
+      var trackNum = (song.trackNumber || (i + 1));
+      var trackNumStr = trackNum < 10 ? '0' + trackNum : '' + trackNum;
+
+      var metaParts = [];
+      if (song.artist) metaParts.push('🎤 ' + escapeHtml(song.artist));
+      if (song.composer) metaParts.push('✍️ ' + escapeHtml(song.composer));
+      if (preview) metaParts.push('💬 ' + escapeHtml(preview));
 
       html +=
-        '<div class="song-list-row" data-song-id="' + song.id + '" draggable="true">' +
-        '<div class="song-drag-handle" title="Arraste para reposicionar">⋮⋮</div>' +
-        '<div class="song-row-number">' + ((song.trackNumber || (i + 1)) < 10 ? '0' + (song.trackNumber || (i + 1)) : (song.trackNumber || (i + 1))) + '</div>' +
-        '<div class="song-row-main">' +
-        '<div class="song-row-title-line">' +
-        '<span class="song-row-title">' + escapeHtml(displayTitle) + '</span>' +
-        (song.key ? '<span class="badge badge-key song-row-key" title="Tom de Cantar">' + escapeHtml(song.key) + '</span>' : '<span class="badge badge-nokey">S/Tom</span>') +
-        (song.rhythm ? '<span class="badge badge-rhythm" title="Toque / Ritmo" style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:0.75rem;padding:2px 7px;border-radius:6px;">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
-        (song.isOfflinePinned ? '<span class="badge-offline-tag" title="Salva no dispositivo para uso offline">⚡ Offline</span>' : '') +
-        (song.youtubeUrl ? '<span class="badge" title="Vídeo / Áudio no YouTube" style="background:rgba(239,68,68,0.15);color:#f87171;font-size:0.75rem;padding:2px 7px;border-radius:6px;">▶ Vídeo</span>' : '') +
-        (song.audioBlob || song.audioUrl ? '<span class="song-audio-dot" title="Tem áudio guia local">🎵</span>' : '') +
-        '</div>' +
-        '<div class="song-row-meta">' +
-        (song.artist ? '<span>🎤 ' + escapeHtml(song.artist) + '</span>' : '') +
-        (song.composer ? '<span>✍️ ' + escapeHtml(song.composer) + '</span>' : '') +
-        '</div>' +
-        (preview ? '<div class="song-row-preview">' + escapeHtml(preview) + '</div>' : '') +
-        '</div>' +
-        '<div class="song-row-actions">' +
-        '<button class="btn-action btn-palco" data-song-id="' + song.id + '" title="Tocar / Abrir Prompter"><span class="btn-action-icon">▶</span> <span>Tocar</span></button>' +
-        '<button class="btn-action btn-action-icon-only btn-song-offline ' + (song.isOfflinePinned ? 'pinned' : '') + '" data-song-id="' + song.id + '" title="' + (song.isOfflinePinned ? 'Música salva offline' : 'Baixar música para uso offline') + '">⚡</button>' +
-        '<button class="btn-action btn-action-icon-only btn-edit-song" data-song-id="' + song.id + '" title="Editar Música">✏️</button>' +
-        '<button class="btn-action btn-action-icon-only btn-delete-song" data-song-id="' + song.id + '" title="Excluir Música">🗑️</button>' +
-        '</div>' +
+        '<div class="song-list-row" data-song-id="' + song.id + '" draggable="true" title="Clique para abrir no Prompter">' +
+          '<div class="song-drag-handle" title="Arraste para reposicionar">⋮⋮</div>' +
+          '<div class="song-row-number">' + trackNumStr + '</div>' +
+          '<div class="song-row-main">' +
+            '<div class="song-row-title-line">' +
+              '<span class="song-row-title">' + escapeHtml(displayTitle) + '</span>' +
+              (song.key ? '<span class="badge badge-key song-row-key" title="Tom de Cantar">' + escapeHtml(song.key) + '</span>' : '<span class="badge badge-nokey">S/Tom</span>') +
+              (song.rhythm ? '<span class="badge badge-rhythm" title="Toque / Ritmo">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
+              (song.isOfflinePinned ? '<span class="badge badge-offline-mini" title="Salva offline">⚡</span>' : '') +
+              (song.youtubeUrl ? '<span class="badge badge-yt-mini" title="Vídeo no YouTube">▶ Vídeo</span>' : '') +
+              (song.audioBlob || song.audioUrl ? '<span class="song-audio-dot" title="Tem áudio guia local">🎵</span>' : '') +
+            '</div>' +
+            (metaParts.length > 0 ? '<div class="song-row-meta">' + metaParts.join(' <span class="meta-sep">•</span> ') + '</div>' : '') +
+          '</div>' +
+          '<div class="song-row-actions">' +
+            '<button class="btn-icon-action btn-song-offline ' + (song.isOfflinePinned ? 'pinned' : '') + '" data-song-id="' + song.id + '" title="' + (song.isOfflinePinned ? 'Música salva offline' : 'Baixar música para uso offline') + '">⚡</button>' +
+            '<button class="btn-icon-action btn-edit-song" data-song-id="' + song.id + '" title="Editar Música">✏️</button>' +
+            '<button class="btn-icon-action btn-delete-song" data-song-id="' + song.id + '" title="Excluir Música">🗑️</button>' +
+          '</div>' +
         '</div>';
     }
     html += '</div>';
@@ -532,51 +534,15 @@ document.addEventListener('DOMContentLoaded', function () {
           var overs = listEl.querySelectorAll('.drag-over');
           for (var o = 0; o < overs.length; o++) overs[o].classList.remove('drag-over');
         });
-      })(allRows[dr]);
-    }
 
-    // Bind clique na linha da música para abrir a letra em TELA CHEIA EXCLUSIVA
-    var songRows = listEl.querySelectorAll('.song-row-main, .song-row-number');
-    for (var r = 0; r < songRows.length; r++) {
-      (function (row) {
-        row.style.cursor = 'pointer';
-        row.addEventListener('click', function () {
-          var rowParent = row.closest('.song-list-row');
-          var id = Number(rowParent.getAttribute('data-song-id'));
+        // Clique na linha inteira abre a música no Prompter
+        row.addEventListener('click', function (e) {
+          if (e.target.closest('.song-row-actions') || e.target.closest('.song-drag-handle')) return;
+          var id = Number(row.getAttribute('data-song-id'));
           var song = findSongById(id, state.currentRepertoireSongs);
           if (song) openPrompterView(song);
         });
-      })(songRows[r]);
-    }
-
-    // Bind clique no botão de Play (▶) para tocar áudio diretamente ou abrir o prompter
-    var palcoBtns = listEl.querySelectorAll('.btn-palco');
-    for (var p = 0; p < palcoBtns.length; p++) {
-      (function (btn) {
-        btn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var id = Number(btn.getAttribute('data-song-id'));
-          var song = findSongById(id, state.currentRepertoireSongs);
-          if (!song) return;
-
-          if (song.audioBlob || song.audioUrl) {
-            if (window.AdvancedPlayer) {
-              if (AdvancedPlayer.isPlaying) {
-                AdvancedPlayer.pause();
-                showToast('⏸️ Áudio pausado: ' + song.title, 'info');
-              } else {
-                AdvancedPlayer.loadSong(song);
-                AdvancedPlayer.play();
-                showToast('▶ Tocando áudio guia: ' + song.title, 'info');
-              }
-            } else {
-              openPrompterView(song);
-            }
-          } else {
-            openPrompterView(song);
-          }
-        });
-      })(palcoBtns[p]);
+      })(allRows[dr]);
     }
 
     var editBtns = listEl.querySelectorAll('.btn-edit-song');

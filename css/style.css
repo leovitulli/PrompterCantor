@@ -728,18 +728,20 @@ textarea {
 .songs-list-table {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 
 .song-list-row {
   display: flex;
-  align-items: flex-start;
-  gap: 1.25rem;
-  padding: 1.1rem 1.4rem;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 1.1rem;
   border-bottom: 1px solid var(--border-color);
-  transition: background-color 0.15s ease;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
 }
 
 .song-list-row:last-child {
@@ -747,180 +749,188 @@ textarea {
 }
 
 .song-list-row:hover {
-  background-color: var(--bg-card-hover);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.song-list-row:active {
+  background-color: rgba(0, 230, 118, 0.06);
+}
+
+.song-drag-handle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: grab;
+  padding: 0.2rem 0.3rem;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.song-list-row:hover .song-drag-handle {
+  opacity: 1;
 }
 
 .song-row-number {
-  min-width: 30px;
-  width: 30px;
-  height: 30px;
+  min-width: 28px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 0.82rem;
+  border-radius: 7px;
+  font-size: 0.78rem;
   font-weight: 800;
   color: var(--text-muted);
   flex-shrink: 0;
-  margin-top: 2px;
   font-family: var(--font-mono);
 }
 
 .song-row-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .song-row-title-line {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 0.3rem;
 }
 
 .song-row-title {
-  font-size: 1.1rem;
+  font-size: 0.96rem;
   font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-list-row:hover .song-row-title {
+  color: var(--accent-color);
 }
 
 .badge-key {
-  background-color: rgba(0, 230, 118, 0.15);
+  background-color: rgba(0, 230, 118, 0.12);
   color: var(--accent-color);
-  border: 1px solid rgba(0, 230, 118, 0.3);
-  font-weight: 900;
-  font-size: 0.82rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
+  border: 1px solid rgba(0, 230, 118, 0.25);
+  font-weight: 800;
+  font-size: 0.74rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 5px;
   font-family: var(--font-mono);
   white-space: nowrap;
 }
 
 .badge-nokey {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.04);
   color: var(--text-muted);
-  font-size: 0.78rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 6px;
+  font-size: 0.72rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 5px;
+}
+
+.badge-rhythm {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.12rem 0.45rem;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.badge-offline-mini {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.badge-yt-mini {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
 }
 
 .song-audio-dot {
-  font-size: 0.9rem;
-  color: #38bdf8;
+  font-size: 0.85rem;
 }
 
 .song-row-meta {
   display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-  font-size: 0.86rem;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
-  margin-bottom: 0.35rem;
-}
-
-.song-row-preview {
-  font-size: 0.86rem;
-  color: var(--text-muted);
-  font-style: italic;
-  line-height: 1.45;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 650px;
-  border-left: 2px solid var(--accent-color);
-  padding-left: 0.6rem;
-  margin-top: 0.25rem;
+}
+
+.meta-sep {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .song-row-actions {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
   flex-shrink: 0;
-  padding-top: 2px;
 }
 
-/* Base estilo para botões de ação na linha da música */
-.btn-action {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.4rem !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  padding: 0 0.8rem !important;
-  border-radius: 10px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: var(--text-main) !important;
-  font-size: 0.85rem !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  white-space: nowrap !important;
-  user-select: none !important;
-  box-sizing: border-box !important;
+.btn-icon-action {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
 }
 
-.btn-action:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+.btn-icon-action:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  transform: scale(1.05);
 }
 
-.btn-action:active {
-  transform: translateY(0) !important;
+.btn-icon-action:active {
+  transform: scale(0.95);
 }
 
-/* Botão principal de Palco / Play */
-.btn-palco {
-  background: linear-gradient(135deg, #00e676, #00c853) !important;
-  color: #000000 !important;
-  border: 1px solid rgba(0, 230, 118, 0.6) !important;
-  font-weight: 800 !important;
-  box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3) !important;
-}
-
-.btn-palco:hover {
-  background: linear-gradient(135deg, #33eb91, #00e676) !important;
-  box-shadow: 0 6px 18px rgba(0, 230, 118, 0.5) !important;
-  color: #000000 !important;
-}
-
-/* Botão de adicionar à setlist */
-.btn-add-setlist-song {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  color: #e4e4e7 !important;
-}
-
-.btn-add-setlist-song:hover {
-  border-color: rgba(0, 230, 118, 0.5) !important;
-  background: rgba(0, 230, 118, 0.1) !important;
-  color: #00e676 !important;
-}
-
-/* Botões apenas com ícone (Editar / Excluir) */
-.btn-action-icon-only {
-  width: 36px !important;
-  min-width: 36px !important;
-  padding: 0 !important;
-  font-size: 0.95rem !important;
-}
-
-.btn-edit-song:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
-  color: #ffffff !important;
+.btn-song-offline.pinned {
+  background: rgba(250, 204, 21, 0.18) !important;
+  color: #facc15 !important;
+  border-color: rgba(250, 204, 21, 0.4) !important;
 }
 
 .btn-delete-song:hover {
-  background: rgba(239, 68, 68, 0.15) !important;
+  background: rgba(239, 68, 68, 0.2) !important;
   border-color: rgba(239, 68, 68, 0.4) !important;
-  color: #ef4444 !important;
+  color: #f87171 !important;
 }
 
 /* ── MODO OFFLINE SELETIVO ───────────────────────────── */
@@ -1860,69 +1870,41 @@ textarea {
     padding: 0.4rem 0.75rem !important;
   }
 
-  /* LINHA DA MÚSICA (SONG ROW) - CORREÇÃO CRÍTICA */
+  /* LINHA DA MÚSICA (SONG ROW) - ULTRA COMPACTO NO MOBILE */
   .song-list-row {
-    flex-direction: column !important;
-    align-items: stretch !important;
+    flex-direction: row !important;
+    align-items: center !important;
     gap: 0.6rem !important;
-    padding: 0.95rem 0.85rem !important;
+    padding: 0.6rem 0.75rem !important;
   }
 
-  .song-row-main {
-    width: 100% !important;
+  .song-drag-handle {
+    display: none !important;
   }
 
-  .song-row-title-line {
-    flex-wrap: wrap !important;
-    gap: 0.4rem !important;
+  .song-row-number {
+    min-width: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 0.72rem !important;
   }
 
   .song-row-title {
-    font-size: 1.02rem !important;
-    line-height: 1.35 !important;
-    word-break: break-word !important;
+    font-size: 0.92rem !important;
   }
 
-  .song-row-meta {
-    gap: 0.75rem !important;
-    flex-wrap: wrap !important;
-    font-size: 0.82rem !important;
-    margin-bottom: 0.2rem !important;
-  }
-
-  .song-row-preview {
-    max-width: 100% !important;
-    white-space: normal !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-  }
-
-  /* BARRA DE AÇÕES DA MÚSICA 100% LARGURA NO RODAPÉ DO CARD DA MÚSICA */
   .song-row-actions {
-    width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.4rem !important;
-    padding-top: 0.55rem !important;
-    border-top: 1px dashed rgba(255, 255, 255, 0.08) !important;
-    justify-content: space-between !important;
+    width: auto !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+    gap: 0.25rem !important;
   }
 
-  .song-row-actions .btn-action {
-    flex: 1 !important;
-    height: 36px !important;
-    min-height: 36px !important;
-    padding: 0 0.4rem !important;
-    font-size: 0.78rem !important;
-    justify-content: center !important;
-  }
-
-  .song-row-actions .btn-action-icon-only {
-    flex: 0 0 36px !important;
-    width: 36px !important;
-    min-width: 36px !important;
+  .btn-icon-action {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    font-size: 0.82rem !important;
   }
 
   /* Cards de Repertório */
