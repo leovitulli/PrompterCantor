@@ -144,37 +144,32 @@ function deleteRepertoire(id, skipCloudSync) {
   // Deleta o repertório E todas as suas músicas
   return initDB().then(function(db) {
     return new Promise(function(resolve, reject) {
-      // 1. Buscar músicas do repertório
-      var txRead = db.transaction('songs', 'readonly');
-      var songStore = txRead.objectStore('songs');
-      var index = songStore.index('repertoireId');
-      var songIds = [];
+      var tx = db.transaction(['songs', 'repertoires'], 'readwrite');
+      var songStore = tx.objectStore('songs');
+      var repStore = tx.objectStore('repertoires');
+      var targetId = String(id);
 
-      var cursorReq = index.openCursor(IDBKeyRange.only(id));
-      cursorReq.onsuccess = function(e) {
+      repStore.delete(id);
+      if (typeof id === 'string' && !isNaN(Number(id))) {
+        repStore.delete(Number(id));
+      }
+
+      var req = songStore.openCursor();
+      req.onsuccess = function(e) {
         var cursor = e.target.result;
         if (cursor) {
-          songIds.push(cursor.primaryKey);
-          cursor.continue();
-        } else {
-          // 2. Deletar músicas e o repertório em transação de escrita
-          var txWrite = db.transaction(['songs', 'repertoires'], 'readwrite');
-          var writeSongs = txWrite.objectStore('songs');
-          var writeReps = txWrite.objectStore('repertoires');
-
-          for (var i = 0; i < songIds.length; i++) {
-            writeSongs.delete(songIds[i]);
+          if (cursor.value && String(cursor.value.repertoireId) === targetId) {
+            cursor.delete();
           }
-          writeReps.delete(id);
-
-          txWrite.oncomplete = function() { resolve(true); };
-          txWrite.onerror = function(e) { reject(e.target.error); };
+          cursor.continue();
         }
       };
-      cursorReq.onerror = function(e) { reject(e.target.error); };
+
+      tx.oncomplete = function() { resolve(true); };
+      tx.onerror = function(e) { reject(e.target.error); };
     });
   }).then(function(res) {
-    if (!skipCloudSync && window.PrompterCloud) {
+    if (!skipCloudSync && window.PrompterCloud && typeof window.PrompterCloud.deleteRepertoireFromCloud === 'function') {
       window.PrompterCloud.deleteRepertoireFromCloud(id);
     }
     return res;
@@ -303,16 +298,19 @@ function saveSongsBatch(songsArray, skipCloudSync) {
 function getSongsByRepertoire(repertoireId) {
   return initDB().then(function(db) {
     return new Promise(function(resolve, reject) {
+      if (!repertoireId) return resolve([]);
       var tx = db.transaction('songs', 'readonly');
       var store = tx.objectStore('songs');
-      var index = store.index('repertoireId');
       var songs = [];
+      var targetId = String(repertoireId);
 
-      var req = index.openCursor(IDBKeyRange.only(repertoireId));
+      var req = store.openCursor();
       req.onsuccess = function(e) {
         var cursor = e.target.result;
         if (cursor) {
-          songs.push(cursor.value);
+          if (cursor.value && String(cursor.value.repertoireId) === targetId) {
+            songs.push(cursor.value);
+          }
           cursor.continue();
         } else {
           songs.sort(function(a, b) {
@@ -324,7 +322,7 @@ function getSongsByRepertoire(repertoireId) {
           resolve(songs);
         }
       };
-      req.onerror = function(e) { reject(e.target.error); };
+      req.onerror = function() { resolve([]); };
     });
   });
 }
@@ -369,11 +367,14 @@ function deleteSong(id, skipCloudSync) {
       var tx = db.transaction('songs', 'readwrite');
       var store = tx.objectStore('songs');
       var req = store.delete(id);
+      if (typeof id === 'string' && !isNaN(Number(id))) {
+        store.delete(Number(id));
+      }
       req.onsuccess = function() { resolve(true); };
       req.onerror = function(e) { reject(e.target.error); };
     });
   }).then(function(res) {
-    if (!skipCloudSync && window.PrompterCloud) {
+    if (!skipCloudSync && window.PrompterCloud && typeof window.PrompterCloud.deleteSongFromCloud === 'function') {
       window.PrompterCloud.deleteSongFromCloud(id);
     }
     return res;
@@ -381,15 +382,8 @@ function deleteSong(id, skipCloudSync) {
 }
 
 function countSongsByRepertoire(repertoireId) {
-  return initDB().then(function(db) {
-    return new Promise(function(resolve, reject) {
-      var tx = db.transaction('songs', 'readonly');
-      var store = tx.objectStore('songs');
-      var index = store.index('repertoireId');
-      var req = index.count(IDBKeyRange.only(repertoireId));
-      req.onsuccess = function() { resolve(req.result); };
-      req.onerror = function() { resolve(0); };
-    });
+  return getSongsByRepertoire(repertoireId).then(function(songs) {
+    return songs.length;
   });
 }
 

@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          openRepertoireSongs(Number(btn.getAttribute('data-rep-id')));
+          openRepertoireSongs(btn.getAttribute('data-rep-id'));
         });
       })(openBtns[i]);
     }
@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          printRepertoire(Number(btn.getAttribute('data-rep-id')));
+          printRepertoire(btn.getAttribute('data-rep-id'));
         });
       })(printBtns[p]);
     }
@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          confirmDeleteRepertoire(Number(btn.getAttribute('data-rep-id')));
+          confirmDeleteRepertoire(btn.getAttribute('data-rep-id'));
         });
       })(deleteBtns[d]);
     }
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          renameRepertoire(Number(btn.getAttribute('data-rep-id')));
+          renameRepertoire(btn.getAttribute('data-rep-id'));
         });
       })(renameBtns[r]);
     }
@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          var repId = Number(btn.getAttribute('data-rep-id'));
+          var repId = btn.getAttribute('data-rep-id');
           var isCurrentlyPinned = btn.classList.contains('pinned');
           PrompterDB.toggleRepertoireOffline(repId, !isCurrentlyPinned).then(function (newState) {
             showToast(newState ? '⚡ Repertório salvo offline para uso no palco!' : '⚡ Repertório removido do modo offline', newState ? 'success' : 'info');
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (card) {
         card.addEventListener('click', function (e) {
           if (e.target.closest('.btn-icon-sm') || e.target.closest('.btn') || e.target.closest('.btn-offline-toggle')) return;
-          openRepertoireSongs(Number(card.getAttribute('data-rep-id')));
+          openRepertoireSongs(card.getAttribute('data-rep-id'));
         });
       })(cards[c]);
     }
@@ -602,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Clique na linha inteira abre a música no Prompter
         row.addEventListener('click', function (e) {
           if (e.target.closest('.song-row-actions') || e.target.closest('.song-drag-handle')) return;
-          var id = Number(row.getAttribute('data-song-id'));
+          var id = row.getAttribute('data-song-id');
           var song = findSongById(id, state.currentRepertoireSongs);
           if (song) openPrompterView(song);
         });
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          var id = Number(btn.getAttribute('data-song-id'));
+          var id = btn.getAttribute('data-song-id');
           var song = findSongById(id, state.currentRepertoireSongs);
           if (song) openEditorModal(song);
         });
@@ -626,7 +626,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          var id = Number(btn.getAttribute('data-song-id'));
+          var id = btn.getAttribute('data-song-id');
           confirmDeleteSong(id);
         });
       })(deleteBtns[d]);
@@ -639,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          var id = Number(btn.getAttribute('data-song-id'));
+          var id = btn.getAttribute('data-song-id');
           var isCurrentlyPinned = btn.classList.contains('pinned');
           PrompterDB.toggleSongOffline(id, !isCurrentlyPinned).then(function (newState) {
             showToast(newState ? '⚡ Música salva offline!' : '⚡ Música removida do modo offline', newState ? 'success' : 'info');
@@ -651,8 +651,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function findSongById(id, list) {
+    if (!id || !list) return null;
+    var targetId = String(id);
     for (var i = 0; i < list.length; i++) {
-      if (Number(list[i].id) === id) return list[i];
+      if (list[i] && String(list[i].id) === targetId) return list[i];
     }
     return null;
   }
@@ -1083,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Binds de clique nos itens do autocomplete
         searchDropdown.querySelectorAll('.search-item-rep').forEach(function (el) {
           el.addEventListener('click', function () {
-            var rId = Number(this.getAttribute('data-rep-id'));
+            var rId = this.getAttribute('data-rep-id');
             searchDropdown.classList.add('hidden');
             if (searchInput) searchInput.value = '';
             state.searchQuery = '';
@@ -1094,8 +1096,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         searchDropdown.querySelectorAll('.search-item-song').forEach(function (el) {
           el.addEventListener('click', function () {
-            var sId = Number(this.getAttribute('data-song-id'));
-            var rId = Number(this.getAttribute('data-rep-id'));
+            var sId = this.getAttribute('data-song-id');
+            var rId = this.getAttribute('data-rep-id');
             searchDropdown.classList.add('hidden');
             if (searchInput) searchInput.value = '';
             state.searchQuery = '';
@@ -1528,7 +1530,7 @@ document.addEventListener('DOMContentLoaded', function () {
       btnDeleteSong.addEventListener('click', function () {
         var id = document.getElementById('editSongId').value;
         if (id && confirm('Excluir esta música?')) {
-          PrompterDB.deleteSong(Number(id))
+          PrompterDB.deleteSong(id)
             .then(function () {
               showToast('Música excluída!', 'info');
               closeModal(songEditorModal);
@@ -1687,9 +1689,9 @@ document.addEventListener('DOMContentLoaded', function () {
       var repIdFromHash = null;
 
       if (hash.indexOf('#song-') === 0) {
-        songIdFromHash = Number(hash.replace('#song-', ''));
+        songIdFromHash = hash.replace('#song-', '');
       } else if (hash.indexOf('#rep-') === 0) {
-        repIdFromHash = Number(hash.replace('#rep-', ''));
+        repIdFromHash = hash.replace('#rep-', '');
       }
 
       var saved = localStorage.getItem('prompter_active_state');
@@ -1699,7 +1701,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var targetRepId = repIdFromHash || (parsed && (parsed.view === 'repertoire' || parsed.view === 'prompter') ? parsed.repertoireId : null);
 
       if (targetSongId) {
-        return PrompterDB.getSongById(Number(targetSongId)).then(function (song) {
+        return PrompterDB.getSongById(targetSongId).then(function (song) {
           if (song) {
             state.currentSong = song;
             var rId = song.repertoireId || targetRepId;
@@ -2195,7 +2197,7 @@ document.addEventListener('DOMContentLoaded', function () {
       repertoireId: repId
     };
 
-    if (id) songData.id = Number(id);
+    if (id) songData.id = id;
 
     // Preservar metadados existentes da música editada
     if (state.editingSong) {
