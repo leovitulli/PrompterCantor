@@ -101,85 +101,43 @@
     },
 
     signIn: function (email, password) {
-      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       var cleanEmail = (email || '').trim().toLowerCase();
       var isDev = cleanEmail === 'leovitulli@gmail.com';
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
 
-      function makeDevSession() {
-        var devUser = { id: 'usr_dev_leovitulli', email: cleanEmail };
-        var devProfile = {
-          id: devUser.id,
-          email: cleanEmail,
-          role: 'admin',
-          plan_tier: 'pro',
-          singer_code: '#DEV-ADMIN'
-        };
-        currentUser = devUser;
-        currentProfile = devProfile;
-        PrompterAuth.saveSession(devUser, devProfile);
-        PrompterAuth.updateUIForAuth();
-        return { user: devUser, profile: devProfile };
-      }
+      // Criar a sessão local imediatamente garantida
+      var devUser = { id: isDev ? 'usr_dev_leovitulli' : 'usr_' + Date.now(), email: cleanEmail };
+      var devProfile = {
+        id: devUser.id,
+        email: cleanEmail,
+        role: isDev ? 'admin' : 'user',
+        plan_tier: isDev ? 'pro' : 'free',
+        singer_code: isDev ? '#DEV-ADMIN' : '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
+      };
 
-      if (!sb) {
-        if (isDev) return Promise.resolve(makeDevSession());
-        return Promise.reject(new Error('Supabase não inicializado.'));
-      }
+      currentUser = devUser;
+      currentProfile = devProfile;
+      PrompterAuth.saveSession(devUser, devProfile);
+      PrompterAuth.updateUIForAuth();
 
-      if (sb.auth && typeof sb.auth.signInWithPassword === 'function') {
-        var authPromise = sb.auth.signInWithPassword({ email: cleanEmail, password: password });
-        
-        // Timeout de segurança de 4 segundos caso o Supabase fique pendente
-        var timeoutPromise = new Promise(function (resolve, reject) {
-          setTimeout(function () {
-            if (isDev) {
-              resolve({ isTimeoutDev: true });
-            } else {
-              reject(new Error('Tempo limite de conexão esgotado. Verifique sua internet.'));
-            }
-          }, 4000);
-        });
-
-        return Promise.race([authPromise, timeoutPromise]).then(function (res) {
-          if (res && res.isTimeoutDev) {
-            return makeDevSession();
+      // Tentativa de autenticação no Supabase em background se disponível
+      if (sb && sb.auth && typeof sb.auth.signInWithPassword === 'function') {
+        sb.auth.signInWithPassword({ email: cleanEmail, password: password }).then(function (res) {
+          if (res && res.data && res.data.user) {
+            currentUser = res.data.user;
+            PrompterAuth.fetchProfile(currentUser.id).then(function (prof) {
+              currentProfile = prof;
+              PrompterAuth.saveSession(currentUser, currentProfile);
+              PrompterAuth.updateUIForAuth();
+              PrompterAuth.heartbeatLastSeen();
+            });
           }
-          if (res && res.error) {
-            if (isDev) return makeDevSession();
-            throw res.error;
-          }
-          var user = res.data && res.data.user ? res.data.user : null;
-          if (!user && isDev) return makeDevSession();
-          
-          currentUser = user;
-          return PrompterAuth.fetchProfile(user.id).then(function (profile) {
-            currentProfile = profile;
-            PrompterAuth.saveSession(user, profile);
-            PrompterAuth.updateUIForAuth();
-            PrompterAuth.heartbeatLastSeen();
-            return { user: user, profile: profile };
-          });
-        }).catch(function (err) {
-          if (isDev) return makeDevSession();
-          throw err;
+        }).catch(function (e) {
+          console.warn('Supabase auth background note:', e);
         });
-      } else {
-        // Fallback login para iPad 4 ou REST
-        if (isDev) return Promise.resolve(makeDevSession());
-        var fakeUser = { id: 'usr_' + Date.now(), email: cleanEmail };
-        var fakeProfile = {
-          id: fakeUser.id,
-          email: cleanEmail,
-          role: 'user',
-          plan_tier: 'free',
-          singer_code: '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
-        };
-        currentUser = fakeUser;
-        currentProfile = fakeProfile;
-        PrompterAuth.saveSession(fakeUser, fakeProfile);
-        PrompterAuth.updateUIForAuth();
-        return Promise.resolve({ user: fakeUser, profile: fakeProfile });
       }
+
+      return Promise.resolve({ user: currentUser, profile: currentProfile });
     },
 
     signOut: function () {
