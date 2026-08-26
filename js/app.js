@@ -2506,65 +2506,96 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.PrompterAdmin) PrompterAdmin.init();
 
     var authModal = document.getElementById('authModal');
-    var btnAuthToggle = document.getElementById('btnAuthToggle');
+    var authOverlay = document.getElementById('authModalOverlay');
     var btnCloseAuth = document.querySelector('.btn-close-auth');
-    var btnSubmitSignIn = document.getElementById('btnSubmitSignIn');
-    var btnSubmitSignUp = document.getElementById('btnSubmitSignUp');
+    var tabAuthSignIn = document.getElementById('tabAuthSignIn');
+    var tabAuthSignUp = document.getElementById('tabAuthSignUp');
+    var btnSubmitAuth = document.getElementById('btnSubmitAuthPrimary');
+    var authSubtitleText = document.getElementById('authSubtitleText');
     var btnOpenAdminPanel = document.getElementById('btnOpenAdminPanel');
+    var btnAuthToggle = document.getElementById('btnAuthToggle');
+
+    var currentAuthMode = 'signin'; // 'signin' ou 'signup'
+
+    function setAuthMode(mode) {
+      currentAuthMode = mode;
+      if (mode === 'signup') {
+        if (tabAuthSignUp) tabAuthSignUp.classList.add('active');
+        if (tabAuthSignIn) tabAuthSignIn.classList.remove('active');
+        if (btnSubmitAuth) btnSubmitAuth.innerText = 'Criar Minha Conta Grátis';
+        if (authSubtitleText) authSubtitleText.innerText = 'Cadastre-se grátis e comece a usar no palco';
+      } else {
+        if (tabAuthSignIn) tabAuthSignIn.classList.add('active');
+        if (tabAuthSignUp) tabAuthSignUp.classList.remove('active');
+        if (btnSubmitAuth) btnSubmitAuth.innerText = 'Entrar na Conta';
+        if (authSubtitleText) authSubtitleText.innerText = 'Acesse sua conta para ver seus repertórios';
+      }
+    }
+
+    function openAuthModal(mode) {
+      setAuthMode(mode || 'signin');
+      if (authModal) authModal.classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      if (authModal) authModal.classList.add('hidden');
+    }
+
+    if (tabAuthSignIn) {
+      tabAuthSignIn.addEventListener('click', function () { setAuthMode('signin'); });
+    }
+    if (tabAuthSignUp) {
+      tabAuthSignUp.addEventListener('click', function () { setAuthMode('signup'); });
+    }
+
+    if (btnCloseAuth) {
+      btnCloseAuth.addEventListener('click', closeAuthModal);
+    }
+    if (authOverlay) {
+      authOverlay.addEventListener('click', closeAuthModal);
+    }
+
+    if (btnSubmitAuth) {
+      btnSubmitAuth.addEventListener('click', function () {
+        var email = document.getElementById('authEmail').value;
+        var pass = document.getElementById('authPassword').value;
+        if (!email || !pass) {
+          showToast('Preencha e-mail e senha.', 'warning');
+          return;
+        }
+
+        if (currentAuthMode === 'signup') {
+          showToast('Criando sua conta...', 'info');
+          PrompterAuth.signUp(email, pass).then(function () {
+            showToast('🎉 Conta criada com sucesso!', 'success');
+            closeAuthModal();
+            showApp();
+            loadRepertoires();
+          }).catch(function (err) {
+            showToast(err.message || 'Erro ao criar conta.', 'warning');
+          });
+        } else {
+          showToast('Autenticando...', 'info');
+          PrompterAuth.signIn(email, pass).then(function () {
+            showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
+            closeAuthModal();
+            showApp();
+            loadRepertoires();
+          }).catch(function (err) {
+            showToast(err.message || 'Erro ao fazer login.', 'warning');
+          });
+        }
+      });
+    }
 
     if (btnAuthToggle) {
       btnAuthToggle.addEventListener('click', function () {
-        if (window.PrompterAuth && window.PrompterAuth.getUser()) {
-          if (confirm('Deseja sair da sua conta?')) {
-            PrompterAuth.signOut();
-          }
-        } else if (authModal) {
-          authModal.classList.remove('hidden');
+        if (confirm('Deseja realmente sair da sua conta?')) {
+          PrompterAuth.signOut().then(function () {
+            showToast('Você saiu da sua conta.', 'info');
+            showLanding();
+          });
         }
-      });
-    }
-
-    if (btnCloseAuth && authModal) {
-      btnCloseAuth.addEventListener('click', function () {
-        authModal.classList.add('hidden');
-      });
-    }
-
-    if (btnSubmitSignIn) {
-      btnSubmitSignIn.addEventListener('click', function () {
-        var email = document.getElementById('authEmail').value;
-        var pass = document.getElementById('authPassword').value;
-        if (!email || !pass) {
-          showToast('Preencha e-mail e senha.', 'warning');
-          return;
-        }
-        showToast('Autenticando...', 'info');
-        PrompterAuth.signIn(email, pass).then(function () {
-          showToast('Login realizado com sucesso!', 'success');
-          if (authModal) authModal.classList.add('hidden');
-          loadRepertoires();
-        }).catch(function (err) {
-          showToast(err.message || 'Erro ao fazer login.', 'warning');
-        });
-      });
-    }
-
-    if (btnSubmitSignUp) {
-      btnSubmitSignUp.addEventListener('click', function () {
-        var email = document.getElementById('authEmail').value;
-        var pass = document.getElementById('authPassword').value;
-        if (!email || !pass) {
-          showToast('Preencha e-mail e senha.', 'warning');
-          return;
-        }
-        showToast('Criando nova conta...', 'info');
-        PrompterAuth.signUp(email, pass).then(function () {
-          showToast('Conta criada com sucesso!', 'success');
-          if (authModal) authModal.classList.add('hidden');
-          loadRepertoires();
-        }).catch(function (err) {
-          showToast(err.message || 'Erro ao criar conta.', 'warning');
-        });
       });
     }
 
@@ -2574,68 +2605,77 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // CONTROLES DE TRANSIÇÃO ENTRE PÁGINA DE VENDAS E O APP
+    // ── CONTROLES DE NAVEGAÇÃO ENTRE LANDING PAGE E APP DASHBOARD ──
+    var landingNav = document.getElementById('landingHeaderNav');
+    var appHeader = document.getElementById('appHeader');
     var landingSec = document.getElementById('landingPageSection');
-    var btnToggleLanding = document.getElementById('btnToggleLanding');
+    var tabRep = document.getElementById('tabRepertoire');
+
+    var btnLandingNavLogin = document.getElementById('btnLandingNavLogin');
+    var btnLandingNavSignUp = document.getElementById('btnLandingNavSignUp');
     var btnLandingStartFree = document.getElementById('btnLandingStartFree');
     var btnLandingOpenApp = document.getElementById('btnLandingOpenApp');
     var btnPricingFree = document.getElementById('btnPricingFree');
     var btnPricingPro = document.getElementById('btnPricingPro');
+    var btnLandingLogo = document.getElementById('btnLandingLogo');
 
     function showLanding() {
+      if (landingNav) landingNav.classList.remove('hidden');
       if (landingSec) landingSec.classList.remove('hidden');
-      if (repertoiresListEl) {
-        var tabRep = document.getElementById('tabRepertoire');
-        if (tabRep) tabRep.classList.add('hidden');
-      }
-      if (btnToggleLanding) btnToggleLanding.innerHTML = '📱 Acessar App';
+      if (appHeader) appHeader.classList.add('hidden');
+      if (tabRep) tabRep.classList.add('hidden');
     }
 
     function showApp() {
+      if (landingNav) landingNav.classList.add('hidden');
       if (landingSec) landingSec.classList.add('hidden');
-      var tabRep = document.getElementById('tabRepertoire');
+      if (appHeader) appHeader.classList.remove('hidden');
       if (tabRep) tabRep.classList.remove('hidden');
-      if (btnToggleLanding) btnToggleLanding.innerHTML = '🌐 Planos & Recursos';
     }
 
     window.showLandingPage = showLanding;
     window.showAppDashboard = showApp;
 
-    if (btnToggleLanding) {
-      btnToggleLanding.addEventListener('click', function () {
-        if (landingSec && !landingSec.classList.contains('hidden')) {
-          showApp();
-        } else {
-          showLanding();
+    if (btnLandingNavLogin) {
+      btnLandingNavLogin.addEventListener('click', function () { openAuthModal('signin'); });
+    }
+    if (btnLandingNavSignUp) {
+      btnLandingNavSignUp.addEventListener('click', function () { openAuthModal('signup'); });
+    }
+    if (btnLandingStartFree) {
+      btnLandingStartFree.addEventListener('click', function () { openAuthModal('signup'); });
+    }
+    if (btnPricingFree) {
+      btnPricingFree.addEventListener('click', function () { openAuthModal('signup'); });
+    }
+    if (btnPricingPro) {
+      btnPricingPro.addEventListener('click', function () { openAuthModal('signup'); });
+    }
+    if (btnLandingOpenApp) {
+      btnLandingOpenApp.addEventListener('click', function () { showApp(); });
+    }
+    if (btnLandingLogo) {
+      btnLandingLogo.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    // Smooth scroll para os links de navegação da landing
+    var navLinks = document.querySelectorAll('.landing-nav-link');
+    for (var n = 0; n < navLinks.length; n++) {
+      navLinks[n].addEventListener('click', function (e) {
+        var href = this.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          e.preventDefault();
+          var targetEl = document.querySelector(href);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
         }
       });
     }
 
-    if (btnLandingStartFree) {
-      btnLandingStartFree.addEventListener('click', function () {
-        if (authModal) authModal.classList.remove('hidden');
-      });
-    }
-
-    if (btnPricingFree) {
-      btnPricingFree.addEventListener('click', function () {
-        if (authModal) authModal.classList.remove('hidden');
-      });
-    }
-
-    if (btnPricingPro) {
-      btnPricingPro.addEventListener('click', function () {
-        if (authModal) authModal.classList.remove('hidden');
-      });
-    }
-
-    if (btnLandingOpenApp) {
-      btnLandingOpenApp.addEventListener('click', function () {
-        showApp();
-      });
-    }
-
-    // Inicialização da visualização: se deslogado, mostra a Landing Page
+    // Inicialização da visualização: se usuário logado, vai direto ao App
     if (window.PrompterAuth && window.PrompterAuth.getUser()) {
       showApp();
     } else {
