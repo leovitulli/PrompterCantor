@@ -50,12 +50,12 @@
       var sb = this.getClient();
       if (!sb || !rep) return Promise.resolve(null);
 
+      var safeRepId = (rep.id && Number(rep.id) > 0) ? Number(rep.id) : (Date.now() + Math.floor(Math.random() * 1000));
       var payload = {
+        id: safeRepId,
         name: rep.name,
         source: rep.source || 'manual'
       };
-
-      if (rep.id) payload.id = Number(rep.id);
 
       return sb.from('repertoires').upsert(payload).select().then(function (res) {
         if (res.error) {
@@ -88,7 +88,9 @@
       var sb = this.getClient();
       if (!sb || !song) return Promise.resolve(null);
 
+      var safeSongId = (song.id && Number(song.id) > 0) ? Number(song.id) : (Date.now() + Math.floor(Math.random() * 1000));
       var payload = {
+        id: safeSongId,
         repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
         title: song.title,
         key: song.key || '',
@@ -100,8 +102,6 @@
         youtube_id: song.youtubeId || '',
         content: song.content || ''
       };
-
-      if (song.id) payload.id = Number(song.id);
 
       return sb.from('songs').upsert(payload).select().then(function (res) {
         if (res.error) {
@@ -122,8 +122,11 @@
       var sb = this.getClient();
       if (!sb || !songsArray || songsArray.length === 0) return Promise.resolve([]);
 
-      var payloads = songsArray.map(function(song) {
-        var p = {
+      var baseTimestamp = Date.now();
+      var payloads = songsArray.map(function(song, idx) {
+        var safeSongId = (song.id && Number(song.id) > 0) ? Number(song.id) : (baseTimestamp + idx + Math.floor(Math.random() * 100));
+        return {
+          id: safeSongId,
           repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
           title: song.title || '',
           key: song.key || '',
@@ -135,8 +138,6 @@
           youtube_id: song.youtubeId || '',
           content: song.content || ''
         };
-        if (song.id) p.id = Number(song.id);
-        return p;
       });
 
       return sb.from('songs').upsert(payloads).select().then(function (res) {
