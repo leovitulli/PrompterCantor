@@ -60,84 +60,75 @@
       return Promise.resolve({ user: currentUser, profile: currentProfile });
     },
 
-    // ═══════════════════════════════════════
-    //  LOGIN & CADASTRO
-    // ═══════════════════════════════════════
     signUp: function (email, password) {
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-      if (!sb) return Promise.reject(new Error('Supabase não inicializado.'));
+      var cleanEmail = (email || '').trim().toLowerCase();
 
-      if (sb.auth && typeof sb.auth.signUp === 'function') {
-        return sb.auth.signUp({ email: email, password: password }).then(function (res) {
-          if (res.error) throw res.error;
-          var user = res.data.user;
-          if (user) {
-            currentUser = user;
-            return PrompterAuth.fetchProfile(user.id).then(function (profile) {
-              currentProfile = profile;
-              PrompterAuth.saveSession(user, profile);
-              PrompterAuth.updateUIForAuth();
-              return { user: user, profile: profile };
-            });
-          }
-          return res;
-        });
-      } else {
-        // Fallback REST SignUp simulado / login direto
-        var fakeUser = { id: 'usr_' + Date.now(), email: email };
-        var fakeProfile = {
-          id: fakeUser.id,
-          email: email,
-          role: email === 'leovitulli@gmail.com' ? 'admin' : 'user',
-          plan_tier: email === 'leovitulli@gmail.com' ? 'pro' : 'free',
-          singer_code: '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
-        };
-        currentUser = fakeUser;
-        currentProfile = fakeProfile;
-        PrompterAuth.saveSession(fakeUser, fakeProfile);
-        PrompterAuth.updateUIForAuth();
-        return Promise.resolve({ user: fakeUser, profile: fakeProfile });
+      if (!sb || !sb.auth || typeof sb.auth.signUp !== 'function') {
+        return Promise.reject(new Error('Serviço de autenticação temporariamente indisponível.'));
       }
+
+      return sb.auth.signUp({ email: cleanEmail, password: password }).then(function (res) {
+        if (res.error) {
+          if (res.error.message.includes('User already registered') || res.error.message.includes('already exists')) {
+            throw new Error('Este e-mail já está cadastrado. Por favor, clique na aba "Entrar".');
+          }
+          throw new Error(res.error.message || 'Erro ao realizar cadastro.');
+        }
+
+        // No Supabase, quando o usuário já existe e a confirmação está desligada ou ligada,
+        // identities pode vir vazio ou sem user id novo:
+        if (res.data && res.data.user && res.data.user.identities && res.data.user.identities.length === 0) {
+          throw new Error('Este e-mail já está cadastrado. Por favor, acesse pela aba "Entrar".');
+        }
+
+        var user = res.data ? res.data.user : null;
+        if (!user) {
+          throw new Error('Não foi possível registrar o usuário. Tente novamente.');
+        }
+
+        currentUser = user;
+        return PrompterAuth.fetchProfile(user.id).then(function (profile) {
+          currentProfile = profile;
+          PrompterAuth.saveSession(user, profile);
+          PrompterAuth.updateUIForAuth();
+          PrompterAuth.heartbeatLastSeen();
+          return { user: user, profile: profile };
+        });
+      });
     },
 
     signIn: function (email, password) {
-      var cleanEmail = (email || '').trim().toLowerCase();
-      var isDev = cleanEmail === 'leovitulli@gmail.com';
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      var cleanEmail = (email || '').trim().toLowerCase();
 
-      // Criar a sessão local imediatamente garantida
-      var devUser = { id: isDev ? 'usr_dev_leovitulli' : 'usr_' + Date.now(), email: cleanEmail };
-      var devProfile = {
-        id: devUser.id,
-        email: cleanEmail,
-        role: isDev ? 'admin' : 'user',
-        plan_tier: isDev ? 'pro' : 'free',
-        singer_code: isDev ? '#DEV-ADMIN' : '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
-      };
-
-      currentUser = devUser;
-      currentProfile = devProfile;
-      PrompterAuth.saveSession(devUser, devProfile);
-      PrompterAuth.updateUIForAuth();
-
-      // Tentativa de autenticação no Supabase em background se disponível
-      if (sb && sb.auth && typeof sb.auth.signInWithPassword === 'function') {
-        sb.auth.signInWithPassword({ email: cleanEmail, password: password }).then(function (res) {
-          if (res && res.data && res.data.user) {
-            currentUser = res.data.user;
-            PrompterAuth.fetchProfile(currentUser.id).then(function (prof) {
-              currentProfile = prof;
-              PrompterAuth.saveSession(currentUser, currentProfile);
-              PrompterAuth.updateUIForAuth();
-              PrompterAuth.heartbeatLastSeen();
-            });
-          }
-        }).catch(function (e) {
-          console.warn('Supabase auth background note:', e);
-        });
+      if (!sb || !sb.auth || typeof sb.auth.signInWithPassword !== 'function') {
+        return Promise.reject(new Error('Serviço de autenticação temporariamente indisponível.'));
       }
 
-      return Promise.resolve({ user: currentUser, profile: currentProfile });
+      return sb.auth.signInWithPassword({ email: cleanEmail, password: password }).then(function (res) {
+        if (res.error) {
+          if (res.error.message.includes('Invalid login credentials') || res.error.message.includes('invalid_grant')) {
+            throw new Error('E-mail ou senha incorretos.');
+          }
+          if (res.error.message.includes('Email not confirmed')) {
+            throw new Error('E-mail ainda não confirmado. Desative a confirmação no painel do Supabase ou confirme seu e-mail.');
+          }
+          throw new Error(res.error.message || 'Erro ao fazer login.');
+        }
+
+        var user = res.data ? res.data.user : null;
+        if (!user) throw new Error('Usuário não retornado pelo servidor.');
+
+        currentUser = user;
+        return PrompterAuth.fetchProfile(user.id).then(function (profile) {
+          currentProfile = profile;
+          PrompterAuth.saveSession(user, profile);
+          PrompterAuth.updateUIForAuth();
+          PrompterAuth.heartbeatLastSeen();
+          return { user: user, profile: profile };
+        });
+      });
     },
 
     signOut: function () {
