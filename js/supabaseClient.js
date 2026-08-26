@@ -314,9 +314,8 @@
           // 4. Sincronizar todas as músicas locais que ainda não existem na nuvem
           var missingSongsInCloud = [];
           localSongs.forEach(function(lSong) {
-            // Mapear o ID do repertório local para o correspondente da nuvem pelo Nome do Repertório
             var targetCloudRepId = lSong.repertoireId;
-            var lRep = localRepMap[lSong.repertoireId];
+            var lRep = localRepMap[lSong.repertoireId] || localRepMap[String(lSong.repertoireId)];
             if (lRep && lRep.name) {
               var matchingCloudRep = cloudReps.find(function(cr) {
                 return cr.name && cr.name.trim().toLowerCase() === lRep.name.trim().toLowerCase();
@@ -338,6 +337,7 @@
           });
 
           if (missingSongsInCloud.length > 0) {
+            console.log('☁️ Enviando ' + missingSongsInCloud.length + ' músicas locais para a nuvem...');
             savePromises.push(PrompterCloud.saveSongsBatchToCloud(missingSongsInCloud));
           }
 
@@ -385,29 +385,53 @@
       updateSyncBadge('syncing');
 
       return Promise.all([
+        sb.from('repertoires').select('*'),
         window.PrompterDB.getAllRepertoires(),
         window.PrompterDB.getAllSongs()
       ]).then(function (results) {
-        var localReps = results[0] || [];
-        var localSongs = results[1] || [];
+        var cloudReps = (results[0] && results[0].data) || [];
+        var localReps = results[1] || [];
+        var localSongs = results[2] || [];
 
-        var promises = [];
+        var repPromises = [];
+        var repIdMap = {};
 
         localReps.forEach(function (r) {
-          promises.push(PrompterCloud.saveRepertoireToCloud(r));
+          var matchingCloud = cloudReps.find(function(cr) {
+            return Number(cr.id) === Number(r.id) || (cr.name && r.name && cr.name.trim().toLowerCase() === r.name.trim().toLowerCase());
+          });
+
+          if (matchingCloud) {
+            repIdMap[r.id] = matchingCloud.id;
+          } else {
+            repPromises.push(PrompterCloud.saveRepertoireToCloud(r).then(function(savedRep) {
+              if (savedRep && savedRep.id) {
+                repIdMap[r.id] = savedRep.id;
+              }
+            }));
+          }
         });
 
-        localSongs.forEach(function (s) {
-          promises.push(PrompterCloud.saveSongToCloud(s));
-        });
+        return Promise.all(repPromises).then(function() {
+          var songPromises = [];
+          localSongs.forEach(function (s) {
+            var targetRepId = repIdMap[s.repertoireId] || s.repertoireId;
+            var songToPush = Object.assign({}, s, { repertoireId: targetRepId });
+            songPromises.push(PrompterCloud.saveSongToCloud(songToPush));
+          });
 
-        return Promise.all(promises).then(function () {
-          updateSyncBadge('online');
-          return {
-            reps: localReps.length,
-            songs: localSongs.length
-          };
+          return Promise.all(songPromises).then(function() {
+            updateSyncBadge('online');
+            return {
+              reps: localReps.length,
+              songs: localSongs.length
+            };
+          });
         });
+      }).catch(function(err) {
+        console.warn('Erro em pushAllLocalToCloud:', err);
+        updateSyncBadge('offline');
+        throw err;
       });
     }
   };

@@ -80,7 +80,11 @@ document.addEventListener('DOMContentLoaded', function () {
   // Sincronização automática em tempo real ao focar a aba ou a cada 25s
   function triggerCloudSync(silent) {
     if (window.PrompterCloud && typeof window.PrompterCloud.syncAllWithCloud === 'function') {
-      PrompterCloud.syncAllWithCloud().then(function () {
+      var syncAction = (!silent && typeof PrompterCloud.pushAllLocalToCloud === 'function')
+        ? PrompterCloud.pushAllLocalToCloud().then(function() { return PrompterCloud.syncAllWithCloud(); })
+        : PrompterCloud.syncAllWithCloud();
+
+      syncAction.then(function () {
         if (state.currentRepertoire) {
           PrompterDB.getSongsByRepertoire(state.currentRepertoire.id).then(function (songs) {
             state.currentRepertoireSongs = songs || [];
@@ -89,8 +93,9 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
           loadRepertoires();
         }
-        if (!silent) showToast('☁️ Nuvem sincronizada com sucesso!', 'success');
-      }).catch(function () {
+        if (!silent) showToast('⚡ Envio e sincronização total concluídos!', 'success');
+      }).catch(function (e) {
+        console.warn('Erro no sync:', e);
         if (!silent) showToast('Falha na sincronização com a nuvem.', 'warning');
       });
     }
