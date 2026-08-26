@@ -2623,14 +2623,21 @@ document.addEventListener('DOMContentLoaded', function () {
       if (landingNav) landingNav.classList.remove('hidden');
       if (landingSec) landingSec.classList.remove('hidden');
       if (appHeader) appHeader.classList.add('hidden');
-      if (tabRep) tabRep.classList.add('hidden');
+      if (tabRep) {
+        tabRep.classList.add('hidden');
+        tabRep.classList.remove('active');
+      }
     }
 
     function showApp() {
       if (landingNav) landingNav.classList.add('hidden');
       if (landingSec) landingSec.classList.add('hidden');
       if (appHeader) appHeader.classList.remove('hidden');
-      if (tabRep) tabRep.classList.remove('hidden');
+      if (tabRep) {
+        tabRep.classList.remove('hidden');
+        tabRep.classList.add('active');
+      }
+      loadRepertoires();
     }
 
     window.showLandingPage = showLanding;

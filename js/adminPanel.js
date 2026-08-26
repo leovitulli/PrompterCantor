@@ -22,7 +22,8 @@
       if (document.getElementById('adminPanelModal')) return;
 
       var modalHtml =
-        '<div id="adminPanelModal" class="modal-overlay hidden">' +
+        '<div id="adminPanelModal" class="modal hidden">' +
+          '<div class="modal-overlay" id="adminModalOverlay"></div>' +
           '<div class="modal-card admin-modal-card">' +
             '<div class="modal-header">' +
               '<div class="admin-title-group">' +

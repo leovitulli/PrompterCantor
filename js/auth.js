@@ -183,11 +183,10 @@
       }
 
       this.updateUIForAuth();
-      if (window.PrompterDB && typeof window.PrompterDB.replaceLocalWithCloud === 'function') {
-        window.PrompterDB.replaceLocalWithCloud([], []);
-      }
       if (typeof window.loadRepertoires === 'function') {
         window.loadRepertoires();
+      }
+      return Promise.resolve();
       }
       return Promise.resolve();
     },

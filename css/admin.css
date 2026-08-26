@@ -1,50 +1,82 @@
 /* ================================================================
-   PROMPTERCANTOR PRO - PAINEL DE GOVERNANÇA DO DESENVOLVEDOR (CSS)
+   CANTA AÍ PRO - PAINEL DE GOVERNANÇA ENTERPRISE DO DESENVOLVEDOR
+   Design System Executivo: Obsidian Dark, Glassmorphism, Neon Indicators
    ================================================================ */
 
 .admin-modal-card {
-  max-width: 950px;
+  max-width: 1080px;
   width: 95%;
-  background: #0f172a;
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
-  border-radius: 16px;
+  max-height: 90vh;
+  background: #090d16;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.9), 0 0 50px rgba(16, 185, 129, 0.15);
+  border-radius: 24px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .admin-title-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .admin-title-group h2 {
-  font-size: 1.35rem;
+  font-size: 1.45rem;
+  font-weight: 800;
   color: #f8fafc;
   margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.admin-modal-body {
+  padding: 28px 32px;
+  overflow-y: auto;
+  max-height: calc(90vh - 90px);
 }
 
 .admin-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 32px;
 }
 
 .metric-card {
-  background: rgba(30, 41, 59, 0.7);
+  background: rgba(18, 26, 42, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  backdrop-filter: blur(10px);
+  transition: all 0.25s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
 .metric-icon {
-  font-size: 2rem;
-  background: rgba(56, 189, 248, 0.1);
-  padding: 10px;
-  border-radius: 12px;
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15));
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 12px;
+  border-radius: 14px;
 }
 
 .metric-info {
@@ -53,86 +85,93 @@
 }
 
 .metric-label {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .metric-value {
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 1.9rem;
+  font-weight: 900;
   color: #f8fafc;
+  line-height: 1;
 }
 
 .metric-green {
-  color: #4ade80;
+  color: #34d399;
+  text-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
 }
 
 .metric-gold {
-  color: #facc15;
+  color: #fbbf24;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
 }
 
 .admin-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .admin-section-header h3 {
-  font-size: 1.1rem;
-  color: #cbd5e1;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #e2e8f0;
   margin: 0;
 }
 
 .admin-table-container {
   overflow-x: auto;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(12, 17, 29, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .admin-table th {
-  background: rgba(30, 41, 59, 0.9);
+  background: rgba(22, 33, 50, 0.9);
   color: #94a3b8;
-  padding: 12px 16px;
-  font-weight: 600;
+  padding: 16px 20px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .admin-table td {
-  padding: 12px 16px;
-  color: #e2e8f0;
+  padding: 16px 20px;
+  color: #cbd5e1;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.admin-table tr:last-child td {
-  border-bottom: none;
+  vertical-align: middle;
 }
 
 .admin-table tr:hover {
-  background: rgba(56, 189, 248, 0.04);
+  background: rgba(56, 189, 248, 0.05);
 }
 
 .status-dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  margin-right: 6px;
+  margin-right: 8px;
 }
 
 .dot-online {
-  background-color: #22c55e;
-  box-shadow: 0 0 8px #22c55e;
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
 }
 
 .dot-offline {
@@ -140,40 +179,43 @@
 }
 
 .badge-pro {
-  background: rgba(234, 179, 8, 0.15);
-  color: #facc15;
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  padding: 2px 8px;
-  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 3px 10px;
+  border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
+  letter-spacing: 0.5px;
 }
 
 .badge-free {
   background: rgba(148, 163, 184, 0.15);
   color: #cbd5e1;
   border: 1px solid rgba(148, 163, 184, 0.3);
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 3px 10px;
+  border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge-plan {
-  margin-left: 6px;
+  font-weight: 700;
 }
 
 .admin-actions-cell {
   white-space: nowrap;
+  display: flex;
+  gap: 8px;
 }
 
+/* PERFIL DE USUÁRIO EXECUTIVO */
 .header-user-badge {
   display: inline-flex;
   align-items: center;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 0.85rem;
-  color: #e2e8f0;
+  gap: 8px;
+  background: rgba(18, 26, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 9999px;
+  padding: 6px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f8fafc;
+  backdrop-filter: blur(10px);
 }
