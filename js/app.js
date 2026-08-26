@@ -2313,7 +2313,12 @@ document.addEventListener('DOMContentLoaded', function () {
       var num = (s.trackNumber !== null && s.trackNumber !== undefined) ? s.trackNumber : (i + 1);
       var numStr = (num < 10 ? '0' : '') + num + '.';
       var title = (s.title || 'SEM TÍTULO').toUpperCase();
-      var keyStr = s.key ? ' (' + escapeHtml(s.key.toUpperCase()) + ')' : '';
+
+      var metaParts = [];
+      if (s.key) metaParts.push(s.key.toUpperCase());
+      if (s.rhythm) metaParts.push(s.rhythm.toUpperCase());
+      var metaStr = metaParts.length > 0 ? ' (' + escapeHtml(metaParts.join(' - ')) + ')' : '';
+
       var lyricIntro = getSongLyricIntro(s.content);
 
       html +=
@@ -2321,7 +2326,7 @@ document.addEventListener('DOMContentLoaded', function () {
           '<div class="stage-setlist-title-line">' +
             '<span class="stage-setlist-num">' + numStr + '</span>' +
             '<span class="stage-setlist-name">' + escapeHtml(title) + '</span>' +
-            (keyStr ? '<span class="stage-setlist-key">' + keyStr + '</span>' : '') +
+            (metaStr ? '<span class="stage-setlist-key">' + metaStr + '</span>' : '') +
           '</div>' +
           (lyricIntro ? '<div class="stage-setlist-lyric-intro">' + escapeHtml(lyricIntro) + '</div>' : '') +
         '</div>';
