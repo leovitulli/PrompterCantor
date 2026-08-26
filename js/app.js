@@ -2502,9 +2502,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function initAuthAndAdminUI() {
-    if (window.PrompterAuth) PrompterAuth.init();
-    if (window.PrompterAdmin) PrompterAdmin.init();
-
+    var landingNav = document.getElementById('landingHeaderNav');
+    var appHeader = document.getElementById('appHeader');
+    var landingSec = document.getElementById('landingPageSection');
+    var tabRep = document.getElementById('tabRepertoire');
     var authModal = document.getElementById('authModal');
     var authOverlay = document.getElementById('authModalOverlay');
     var btnCloseAuth = document.querySelector('.btn-close-auth');
@@ -2516,6 +2517,32 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnAuthToggle = document.getElementById('btnAuthToggle');
 
     var currentAuthMode = 'signin'; // 'signin' ou 'signup'
+
+    function showLanding() {
+      if (landingNav) landingNav.classList.remove('hidden');
+      if (landingSec) landingSec.classList.remove('hidden');
+      if (appHeader) appHeader.classList.add('hidden');
+      if (tabRep) {
+        tabRep.classList.add('hidden');
+        tabRep.classList.remove('active');
+      }
+    }
+
+    function showApp() {
+      if (authModal) authModal.classList.add('hidden');
+      if (landingNav) landingNav.classList.add('hidden');
+      if (landingSec) landingSec.classList.add('hidden');
+      if (appHeader) appHeader.classList.remove('hidden');
+      if (tabRep) {
+        tabRep.classList.remove('hidden');
+        tabRep.classList.add('active');
+      }
+      loadRepertoires();
+    }
+
+    function closeAuthModal() {
+      if (authModal) authModal.classList.add('hidden');
+    }
 
     function setAuthMode(mode) {
       currentAuthMode = mode;
@@ -2537,9 +2564,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (authModal) authModal.classList.remove('hidden');
     }
 
-    function closeAuthModal() {
-      if (authModal) authModal.classList.add('hidden');
-    }
+    window.showLandingPage = showLanding;
+    window.showAppDashboard = showApp;
+
+    if (window.PrompterAuth) PrompterAuth.init();
+    if (window.PrompterAdmin) PrompterAdmin.init();
 
     if (tabAuthSignIn) {
       tabAuthSignIn.addEventListener('click', function () { setAuthMode('signin'); });
@@ -2570,18 +2599,14 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast('Criando sua conta...', 'info');
         PrompterAuth.signUp(email, pass).then(function () {
           showToast('🎉 Conta criada com sucesso!', 'success');
-          closeAuthModal();
           showApp();
-          loadRepertoires();
         }).catch(function (err) {
           showToast(err.message || 'Erro ao criar conta.', 'warning');
         });
       } else {
         showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
         PrompterAuth.signIn(email, pass).then(function () {
-          closeAuthModal();
           showApp();
-          loadRepertoires();
         }).catch(function (err) {
           showToast(err.message || 'Erro ao fazer login.', 'warning');
         });
@@ -2620,12 +2645,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // ── CONTROLES DE NAVEGAÇÃO ENTRE LANDING PAGE E APP DASHBOARD ──
-    var landingNav = document.getElementById('landingHeaderNav');
-    var appHeader = document.getElementById('appHeader');
-    var landingSec = document.getElementById('landingPageSection');
-    var tabRep = document.getElementById('tabRepertoire');
-
+    // ── CONTROLES DE BOTÕES DA LANDING PAGE ──
     var btnLandingNavLogin = document.getElementById('btnLandingNavLogin');
     var btnLandingNavSignUp = document.getElementById('btnLandingNavSignUp');
     var btnLandingStartFree = document.getElementById('btnLandingStartFree');
@@ -2633,27 +2653,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnPricingFree = document.getElementById('btnPricingFree');
     var btnPricingPro = document.getElementById('btnPricingPro');
     var btnLandingLogo = document.getElementById('btnLandingLogo');
-
-    function showLanding() {
-      if (landingNav) landingNav.classList.remove('hidden');
-      if (landingSec) landingSec.classList.remove('hidden');
-      if (appHeader) appHeader.classList.add('hidden');
-      if (tabRep) {
-        tabRep.classList.add('hidden');
-        tabRep.classList.remove('active');
-      }
-    }
-
-    function showApp() {
-      if (landingNav) landingNav.classList.add('hidden');
-      if (landingSec) landingSec.classList.add('hidden');
-      if (appHeader) appHeader.classList.remove('hidden');
-      if (tabRep) {
-        tabRep.classList.remove('hidden');
-        tabRep.classList.add('active');
-      }
-      loadRepertoires();
-    }
 
     window.showLandingPage = showLanding;
     window.showAppDashboard = showApp;
