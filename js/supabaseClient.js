@@ -206,6 +206,8 @@
       if (song.repertoireId && isValidUUID(song.repertoireId)) payload.repertoire_id = song.repertoireId;
       if (song.rhythm) payload.rhythm = song.rhythm;
       if (song.id && isValidUUID(song.id)) payload.id = song.id;
+      if (song.order !== undefined && song.order !== null) payload.order = song.order;
+      if (song.trackNumber !== undefined && song.trackNumber !== null) payload.track_number = song.trackNumber;
 
       return sb.from('songs').upsert(payload).select().then(function (res) {
         if (res.error) {
@@ -249,6 +251,8 @@
           if (song.id && isValidUUID(song.id)) p.id = song.id;
           if (song.repertoireId && isValidUUID(song.repertoireId)) p.repertoire_id = song.repertoireId;
           if (includeRhythm && song.rhythm) p.rhythm = song.rhythm;
+          if (song.order !== undefined && song.order !== null) p.order = song.order;
+          if (song.trackNumber !== undefined && song.trackNumber !== null) p.track_number = song.trackNumber;
           return p;
         });
       }

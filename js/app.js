@@ -587,8 +587,10 @@ document.addEventListener('DOMContentLoaded', function () {
               }
 
               PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
-                renderSongsList(state.currentRepertoireSongs);
-                showToast('Ordem do repertório atualizada!', 'info');
+                return PrompterCloud.saveSongsBatchToCloud(state.currentRepertoireSongs).then(function() {
+                  renderSongsList(state.currentRepertoireSongs);
+                  showToast('Ordem do repertório salva no banco!', 'success');
+                });
               });
             }
           }
@@ -1231,8 +1233,10 @@ document.addEventListener('DOMContentLoaded', function () {
           state.currentRepertoireSongs[s].order = s + 1;
         }
         PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
-          renderSongsList(state.currentRepertoireSongs);
-          showToast('Músicas ordenadas de A a Z!', 'success');
+          return PrompterCloud.saveSongsBatchToCloud(state.currentRepertoireSongs).then(function() {
+            renderSongsList(state.currentRepertoireSongs);
+            showToast('Músicas ordenadas de A a Z e salvas no banco!', 'success');
+          });
         });
       });
     }
