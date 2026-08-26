@@ -2555,36 +2555,51 @@ document.addEventListener('DOMContentLoaded', function () {
       authOverlay.addEventListener('click', closeAuthModal);
     }
 
-    if (btnSubmitAuth) {
-      btnSubmitAuth.addEventListener('click', function () {
-        var email = document.getElementById('authEmail').value;
-        var pass = document.getElementById('authPassword').value;
-        if (!email || !pass) {
-          showToast('Preencha e-mail e senha.', 'warning');
-          return;
-        }
+    function handleAuthSubmit() {
+      var emailEl = document.getElementById('authEmail');
+      var passEl = document.getElementById('authPassword');
+      var email = emailEl ? emailEl.value.trim() : '';
+      var pass = passEl ? passEl.value : '';
 
-        if (currentAuthMode === 'signup') {
-          showToast('Criando sua conta...', 'info');
-          PrompterAuth.signUp(email, pass).then(function () {
-            showToast('🎉 Conta criada com sucesso!', 'success');
-            closeAuthModal();
-            showApp();
-            loadRepertoires();
-          }).catch(function (err) {
-            showToast(err.message || 'Erro ao criar conta.', 'warning');
-          });
-        } else {
-          showToast('Autenticando...', 'info');
-          PrompterAuth.signIn(email, pass).then(function () {
-            showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
-            closeAuthModal();
-            showApp();
-            loadRepertoires();
-          }).catch(function (err) {
-            showToast(err.message || 'Erro ao fazer login.', 'warning');
-          });
-        }
+      if (!email || !pass) {
+        showToast('Preencha e-mail e senha.', 'warning');
+        return;
+      }
+
+      if (currentAuthMode === 'signup') {
+        showToast('Criando sua conta...', 'info');
+        PrompterAuth.signUp(email, pass).then(function () {
+          showToast('🎉 Conta criada com sucesso!', 'success');
+          closeAuthModal();
+          showApp();
+          loadRepertoires();
+        }).catch(function (err) {
+          showToast(err.message || 'Erro ao criar conta.', 'warning');
+        });
+      } else {
+        showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
+        PrompterAuth.signIn(email, pass).then(function () {
+          closeAuthModal();
+          showApp();
+          loadRepertoires();
+        }).catch(function (err) {
+          showToast(err.message || 'Erro ao fazer login.', 'warning');
+        });
+      }
+    }
+
+    if (btnSubmitAuth) {
+      btnSubmitAuth.addEventListener('click', function (e) {
+        e.preventDefault();
+        handleAuthSubmit();
+      });
+    }
+
+    var formAuth = document.getElementById('formAuth');
+    if (formAuth) {
+      formAuth.addEventListener('submit', function (e) {
+        e.preventDefault();
+        handleAuthSubmit();
       });
     }
 
