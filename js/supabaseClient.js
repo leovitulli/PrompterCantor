@@ -419,6 +419,7 @@
         window.PrompterDB.getAllRepertoires(),
         window.PrompterDB.getAllSongs()
       ]).then(function (results) {
+        if (results[0] && results[0].error) throw results[0].error;
         var cloudReps = (results[0] && results[0].data) || [];
         var localReps = results[1] || [];
         var localSongs = results[2] || [];

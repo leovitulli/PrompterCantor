@@ -96,7 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!silent) showToast('⚡ Envio e sincronização total concluídos!', 'success');
       }).catch(function (e) {
         console.warn('Erro no sync:', e);
-        if (!silent) showToast('Falha na sincronização com a nuvem.', 'warning');
+        var errDesc = (e && e.message) ? e.message : (typeof e === 'object' ? JSON.stringify(e) : String(e));
+        if (!silent) showToast('Falha na sincronização: ' + errDesc, 'warning', 6000);
       });
     }
   }
