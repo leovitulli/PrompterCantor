@@ -3,7 +3,7 @@
  * Garante funcionamento 100% Offline em Smartphones, Tablets e iPads no palco.
  */
 
-var CACHE_NAME = 'prompter-cantor-v69';
+var CACHE_NAME = 'prompter-cantor-v70';
 var ASSETS = [
   './',
   './index.html',

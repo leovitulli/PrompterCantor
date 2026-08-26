@@ -16,13 +16,95 @@
   }
 
   function initClient() {
-    if (window.supabase && window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
+    if (window.supabase && typeof window.supabase.createClient === 'function' && window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
       try {
         client = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.key);
-        console.log('✅ Supabase Client inicializado com sucesso.');
+        console.log('✅ Supabase Client oficial inicializado com sucesso.');
+        return;
       } catch (err) {
-        console.error('❌ Erro ao inicializar Supabase Client:', err);
+        console.warn('⚠️ Erro ao inicializar cliente oficial Supabase, usando fallback REST:', err);
       }
+    }
+
+    // FALLBACK REST CLIENT PARA SAFARI 10 / IPAD 4 / NAVEGADORES LEGADOS
+    if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+      console.log('⚡ Ativando cliente Supabase REST Fallback (Compatível com iPad 4 / iOS 10)...');
+      var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/';
+      var apiKey = window.SUPABASE_CONFIG.key;
+
+      function restRequest(method, table, query, body, headers) {
+        return new Promise(function(resolve) {
+          var url = baseUrl + table + (query ? '?' + query : '');
+          var xhr = new XMLHttpRequest();
+          xhr.open(method, url, true);
+          xhr.setRequestHeader('apikey', apiKey);
+          xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+
+          if (headers) {
+            for (var h in headers) {
+              if (Object.prototype.hasOwnProperty.call(headers, h)) {
+                xhr.setRequestHeader(h, headers[h]);
+              }
+            }
+          }
+
+          xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                var data = xhr.responseText ? JSON.parse(xhr.responseText) : [];
+                resolve({ data: data, error: null });
+              } catch (e) {
+                resolve({ data: [], error: null });
+              }
+            } else {
+              try {
+                var errJson = JSON.parse(xhr.responseText);
+                resolve({ data: null, error: errJson });
+              } catch (e) {
+                resolve({ data: null, error: { message: 'HTTP ' + xhr.status } });
+              }
+            }
+          };
+          xhr.onerror = function() {
+            resolve({ data: null, error: { message: 'Erro de rede ou conexão no iPad 4' } });
+          };
+
+          if (body) {
+            xhr.send(typeof body === 'string' ? body : JSON.stringify(body));
+          } else {
+            xhr.send();
+          }
+        });
+      }
+
+      client = {
+        from: function(table) {
+          return {
+            select: function(cols) {
+              return restRequest('GET', table, 'select=' + encodeURIComponent(cols || '*'));
+            },
+            upsert: function(payload) {
+              var headers = { 'Prefer': 'resolution=merge-duplicates,return=representation' };
+              return restRequest('POST', table, '', payload, headers);
+            },
+            delete: function() {
+              var currentTable = table;
+              return {
+                eq: function(col, val) {
+                  return restRequest('DELETE', currentTable, col + '=eq.' + encodeURIComponent(val));
+                }
+              };
+            }
+          };
+        },
+        channel: function() {
+          return {
+            on: function() { return this; },
+            subscribe: function() { return this; }
+          };
+        }
+      };
     }
   }
 
