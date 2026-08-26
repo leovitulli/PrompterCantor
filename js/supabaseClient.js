@@ -293,8 +293,37 @@
           return;
         }
 
-        var cloudReps = cloudRepsRes.data || [];
-        var cloudSongs = cloudSongsRes.data || [];
+        var cloudRepsRaw = cloudRepsRes.data || [];
+        var cloudSongsRaw = cloudSongsRes.data || [];
+
+        // Deduplicar repertórios na nuvem por nome
+        var cloudReps = [];
+        var seenRepNames = {};
+        cloudRepsRaw.forEach(function(cr) {
+          var normName = (cr.name || '').trim().toLowerCase();
+          if (!normName) return;
+          if (!seenRepNames[normName]) {
+            seenRepNames[normName] = cr;
+            cloudReps.push(cr);
+          } else {
+            PrompterCloud.deleteRepertoireFromCloud(cr.id);
+          }
+        });
+
+        // Deduplicar músicas na nuvem por (repertoire_id + título)
+        var cloudSongs = [];
+        var seenSongKeys = {};
+        cloudSongsRaw.forEach(function(cs) {
+          var normTitle = (cs.title || '').trim().toLowerCase();
+          if (!normTitle) return;
+          var groupKey = (cs.repertoire_id || 'no_rep') + '|' + normTitle;
+          if (!seenSongKeys[groupKey]) {
+            seenSongKeys[groupKey] = cs;
+            cloudSongs.push(cs);
+          } else {
+            PrompterCloud.deleteSongFromCloud(cs.id);
+          }
+        });
 
         // 2. Buscar tudo do banco local IndexedDB
         return Promise.all([
@@ -459,9 +488,11 @@
           }
 
           return Promise.all(savePromises).then(function () {
-            updateSyncBadge('online');
-            isSyncing = false;
-            console.log('🎉 Sincronização bidirecional Supabase <-> IndexedDB concluída!');
+            return window.PrompterDB.cleanUpDuplicates().then(function() {
+              updateSyncBadge('online');
+              isSyncing = false;
+              console.log('🎉 Sincronização bidirecional Supabase <-> IndexedDB concluída com desduplicação!');
+            });
           });
         });
       }).catch(function (e) {

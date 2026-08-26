@@ -442,6 +442,50 @@ function toggleSongOffline(songId, isPinned) {
   });
 }
 
+function cleanUpDuplicates() {
+  return initDB().then(function(db) {
+    return new Promise(function(resolve) {
+      var tx = db.transaction(['songs', 'repertoires'], 'readwrite');
+      var songStore = tx.objectStore('songs');
+      var repStore = tx.objectStore('repertoires');
+
+      var seenReps = {};
+      repStore.openCursor().onsuccess = function(e) {
+        var cursor = e.target.result;
+        if (cursor) {
+          var rep = cursor.value;
+          var normName = (rep.name || '').trim().toLowerCase();
+          if (seenReps[normName]) {
+            cursor.delete();
+          } else {
+            seenReps[normName] = rep.id;
+          }
+          cursor.continue();
+        }
+      };
+
+      var seenSongs = {};
+      songStore.openCursor().onsuccess = function(e) {
+        var cursor = e.target.result;
+        if (cursor) {
+          var song = cursor.value;
+          var normTitle = (song.title || '').trim().toLowerCase();
+          var key = (song.repertoireId || 'no_rep') + '|' + normTitle;
+          if (seenSongs[key]) {
+            cursor.delete();
+          } else {
+            seenSongs[key] = song.id;
+          }
+          cursor.continue();
+        }
+      };
+
+      tx.oncomplete = function() { resolve(true); };
+      tx.onerror = function() { resolve(false); };
+    });
+  });
+}
+
 window.PrompterDB = {
   initDB: initDB,
   // Repertórios
@@ -451,6 +495,7 @@ window.PrompterDB = {
   deleteRepertoire: deleteRepertoire,
   countSongsByRepertoire: countSongsByRepertoire,
   toggleRepertoireOffline: toggleRepertoireOffline,
+  cleanUpDuplicates: cleanUpDuplicates,
   // Músicas
   saveSong: saveSong,
   saveSongsBatch: saveSongsBatch,
