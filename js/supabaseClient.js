@@ -301,22 +301,39 @@
             savePromises.push(window.PrompterDB.saveSong(mergedSong, true));
           });
 
-          // 3. Enviar repertórios locais que não estão na nuvem
+          // 3. Enviar repertórios locais que não estão na nuvem (por ID ou Nome)
           localReps.forEach(function (lRep) {
-            if (!cloudRepMap[lRep.id]) {
+            var existsInCloud = cloudReps.some(function (cr) {
+              return Number(cr.id) === Number(lRep.id) || (cr.name && lRep.name && cr.name.trim().toLowerCase() === lRep.name.trim().toLowerCase());
+            });
+            if (!existsInCloud) {
               savePromises.push(PrompterCloud.saveRepertoireToCloud(lRep));
             }
           });
 
-          // Sincronizar todas as músicas locais que ainda não existem na nuvem
+          // 4. Sincronizar todas as músicas locais que ainda não existem na nuvem
           var missingSongsInCloud = [];
           localSongs.forEach(function(lSong) {
+            // Mapear o ID do repertório local para o correspondente da nuvem pelo Nome do Repertório
+            var targetCloudRepId = lSong.repertoireId;
+            var lRep = localRepMap[lSong.repertoireId];
+            if (lRep && lRep.name) {
+              var matchingCloudRep = cloudReps.find(function(cr) {
+                return cr.name && cr.name.trim().toLowerCase() === lRep.name.trim().toLowerCase();
+              });
+              if (matchingCloudRep) {
+                targetCloudRepId = matchingCloudRep.id;
+              }
+            }
+
             var existsInCloud = cloudSongs.some(function(cs) {
               return Number(cs.id) === Number(lSong.id) ||
-                     (cs.title && lSong.title && cs.title.trim().toLowerCase() === lSong.title.trim().toLowerCase() && Number(cs.repertoire_id) === Number(lSong.repertoireId));
+                     (cs.title && lSong.title && cs.title.trim().toLowerCase() === lSong.title.trim().toLowerCase() && Number(cs.repertoire_id) === Number(targetCloudRepId));
             });
+
             if (!existsInCloud) {
-              missingSongsInCloud.push(lSong);
+              var songToSend = Object.assign({}, lSong, { repertoireId: targetCloudRepId });
+              missingSongsInCloud.push(songToSend);
             }
           });
 
