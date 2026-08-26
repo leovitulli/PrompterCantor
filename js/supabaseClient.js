@@ -167,12 +167,22 @@
       });
     },
 
-    deleteRepertoireFromCloud: function (repId) {
+    deleteRepertoireFromCloud: function (repId, repName) {
       var sb = this.getClient();
-      if (!sb || !repId || !isValidUUID(repId)) return Promise.resolve();
+      if (!sb || !repId) return Promise.resolve();
 
-      return sb.from('repertoires').delete().eq('id', repId).then(function (res) {
+      var deleteReq;
+      if (isValidUUID(repId)) {
+        deleteReq = sb.from('repertoires').delete().eq('id', repId);
+      } else if (repName) {
+        deleteReq = sb.from('repertoires').delete().eq('name', repName);
+      } else {
+        deleteReq = sb.from('repertoires').delete().eq('id', String(repId));
+      }
+
+      return deleteReq.then(function (res) {
         if (res.error) console.warn('Erro ao deletar repertório na nuvem:', res.error);
+        return res;
       }).catch(function (e) { console.warn(e); });
     },
 
@@ -265,17 +275,27 @@
       });
     },
 
-    deleteSongFromCloud: function (songId) {
+    deleteSongFromCloud: function (songId, songTitle) {
       var sb = this.getClient();
-      if (!sb || !songId || !isValidUUID(songId)) return Promise.resolve();
+      if (!sb || !songId) return Promise.resolve();
 
-      return sb.from('songs').delete().eq('id', songId).then(function (res) {
+      var deleteReq;
+      if (isValidUUID(songId)) {
+        deleteReq = sb.from('songs').delete().eq('id', songId);
+      } else if (songTitle) {
+        deleteReq = sb.from('songs').delete().eq('title', songTitle);
+      } else {
+        deleteReq = sb.from('songs').delete().eq('id', String(songId));
+      }
+
+      return deleteReq.then(function (res) {
         if (res.error) console.warn('Erro ao deletar música na nuvem:', res.error);
+        return res;
       }).catch(function (e) { console.warn(e); });
     },
 
     // ═══════════════════════════════════════
-    //  SINCRONIZAÇÃO COMPLETA BIDIRECIONAL
+    //  SINCRONIZAÇÃO DIRETA COM SUPABASE (FONTE DA VERDADE)
     // ═══════════════════════════════════════
     syncAllWithCloud: function () {
       var sb = this.getClient();
@@ -284,7 +304,7 @@
       isSyncing = true;
       updateSyncBadge('syncing');
 
-      // 1. Buscar tudo da nuvem
+      // 1. Buscar estado exato da nuvem Supabase
       return Promise.all([
         sb.from('repertoires').select('*'),
         sb.from('songs').select('*')
@@ -293,7 +313,7 @@
         var cloudSongsRes = results[1];
 
         if (cloudRepsRes.error || cloudSongsRes.error) {
-          console.warn('Tabelas do Supabase ainda não foram criadas ou erro de conexão:', cloudRepsRes.error || cloudSongsRes.error);
+          console.warn('Erro ao buscar dados do Supabase:', cloudRepsRes.error || cloudSongsRes.error);
           updateSyncBadge('offline');
           isSyncing = false;
           return;
@@ -331,175 +351,11 @@
           }
         });
 
-        // 2. Buscar tudo do banco local IndexedDB
-        return Promise.all([
-          window.PrompterDB.getAllRepertoires(),
-          window.PrompterDB.getAllSongs()
-        ]).then(function (localResults) {
-          var localReps = localResults[0] || [];
-          var localSongs = localResults[1] || [];
-
-          var savePromises = [];
-
-          var localRepMap = {};
-          localReps.forEach(function (r) { localRepMap[r.id] = r; });
-
-          var localSongMap = {};
-          localSongs.forEach(function (s) { localSongMap[s.id] = s; });
-
-          var cloudRepMap = {};
-          cloudReps.forEach(function (r) { cloudRepMap[r.id] = r; });
-
-          var cloudSongMap = {};
-          cloudSongs.forEach(function (s) { cloudSongMap[s.id] = s; });
-
-          // 1. Processar repertórios da nuvem
-          cloudReps.forEach(function (cRep) {
-            var cNameClean = (cRep.name || '').trim().toLowerCase();
-            for (var lid in localRepMap) {
-              var lr = localRepMap[lid];
-              if (lr.name && lr.name.trim().toLowerCase() === cNameClean && String(lr.id) !== String(cRep.id)) {
-                savePromises.push(window.PrompterDB.deleteRepertoire(lr.id, true));
-              }
-            }
-
-            savePromises.push(window.PrompterDB.saveRepertoire({
-              id: cRep.id,
-              name: cRep.name,
-              source: cRep.source,
-              createdAt: cRep.created_at ? new Date(cRep.created_at).getTime() : Date.now()
-            }, true));
-          });
-
-          // 2. Processar músicas da nuvem com fusão por ID e por Título + Repertório
-          cloudSongs.forEach(function (cSong) {
-            var cTitleClean = (cSong.title || '').trim().toLowerCase();
-            var cRepId = cSong.repertoire_id;
-
-            // Procurar correspondência local por ID ou por (Título + Repertório)
-            var local = localSongMap[cSong.id];
-            if (!local) {
-              for (var lid in localSongMap) {
-                var ls = localSongMap[lid];
-                if (ls.title && ls.title.trim().toLowerCase() === cTitleClean && String(ls.repertoireId) === String(cRepId)) {
-                  local = ls;
-                  break;
-                }
-              }
-            }
-
-            // Se encontrou item local com ID diferente (ex: ID numérico antigo), remove o item antigo
-            if (local && local.id && String(local.id) !== String(cSong.id)) {
-              savePromises.push(window.PrompterDB.deleteSong(local.id, true));
-            }
-
-            var keyToUse = cSong.key;
-            var rhythmToUse = cSong.rhythm;
-            var origKeyToUse = cSong.original_key;
-            var audioBlobToUse = null;
-            var audioNameToUse = '';
-            var trackNumToUse = cSong.track_number !== undefined ? cSong.track_number : null;
-            var orderToUse = cSong.order !== undefined ? cSong.order : null;
-
-            if (local) {
-              var cloudUpdated = cSong.updated_at ? new Date(cSong.updated_at).getTime() : 0;
-              var localUpdated = local.updatedAt || 0;
-
-              // Se o item local foi modificado pelo usuário mais recentemente, ele prevalece na nuvem
-              if (localUpdated > cloudUpdated) {
-                var localWinsSong = Object.assign({}, local, {
-                  id: cSong.id,
-                  title: local.title || cSong.title,
-                  key: local.key || cSong.key || '',
-                  originalKey: local.originalKey || cSong.original_key || '',
-                  rhythm: local.rhythm || cSong.rhythm || '',
-                  content: local.content || cSong.content || '',
-                  artist: local.artist || cSong.artist || '',
-                  composer: local.composer || cSong.composer || '',
-                  youtubeUrl: local.youtubeUrl || cSong.youtube_id || '',
-                  youtubeId: local.youtubeId || cSong.youtube_id || '',
-                  repertoireId: cSong.repertoire_id || local.repertoireId
-                });
-
-                savePromises.push(window.PrompterDB.saveSong(localWinsSong, true));
-                savePromises.push(PrompterCloud.saveSongToCloud(localWinsSong));
-                return;
-              }
-
-              if (local.audioBlob) audioBlobToUse = local.audioBlob;
-              if (local.audioName) audioNameToUse = local.audioName;
-            }
-
-            var mergedSong = {
-              id: cSong.id,
-              repertoireId: cSong.repertoire_id,
-              title: cSong.title,
-              key: keyToUse || '',
-              originalKey: origKeyToUse || '',
-              rhythm: rhythmToUse || '',
-              artist: cSong.artist || '',
-              composer: cSong.composer || '',
-              youtubeUrl: cSong.youtube_url || '',
-              youtubeId: cSong.youtube_id || '',
-              content: cSong.content || '',
-              audioBlob: audioBlobToUse,
-              audioName: audioNameToUse,
-              trackNumber: trackNumToUse,
-              order: orderToUse,
-              createdAt: cSong.created_at ? new Date(cSong.created_at).getTime() : (local ? local.createdAt : Date.now()),
-              updatedAt: local && local.updatedAt ? local.updatedAt : Date.now()
-            };
-
-            savePromises.push(window.PrompterDB.saveSong(mergedSong, true));
-          });
-
-          // 3. Enviar repertórios locais que não estão na nuvem (por ID ou Nome)
-          localReps.forEach(function (lRep) {
-            var existsInCloud = cloudReps.some(function (cr) {
-              return String(cr.id) === String(lRep.id) || (cr.name && lRep.name && cr.name.trim().toLowerCase() === lRep.name.trim().toLowerCase());
-            });
-            if (!existsInCloud) {
-              savePromises.push(PrompterCloud.saveRepertoireToCloud(lRep));
-            }
-          });
-
-          // 4. Sincronizar todas as músicas locais que ainda não existem na nuvem
-          var missingSongsInCloud = [];
-          localSongs.forEach(function(lSong) {
-            var targetCloudRepId = lSong.repertoireId;
-            var lRep = localRepMap[lSong.repertoireId] || localRepMap[String(lSong.repertoireId)];
-            if (lRep && lRep.name) {
-              var matchingCloudRep = cloudReps.find(function(cr) {
-                return cr.name && cr.name.trim().toLowerCase() === lRep.name.trim().toLowerCase();
-              });
-              if (matchingCloudRep) {
-                targetCloudRepId = matchingCloudRep.id;
-              }
-            }
-
-            var existsInCloud = cloudSongs.some(function(cs) {
-              return String(cs.id) === String(lSong.id) ||
-                     (cs.title && lSong.title && cs.title.trim().toLowerCase() === lSong.title.trim().toLowerCase() && String(cs.repertoire_id) === String(targetCloudRepId));
-            });
-
-            if (!existsInCloud) {
-              var songToSend = Object.assign({}, lSong, { repertoireId: targetCloudRepId });
-              missingSongsInCloud.push(songToSend);
-            }
-          });
-
-          if (missingSongsInCloud.length > 0) {
-            console.log('☁️ Enviando ' + missingSongsInCloud.length + ' músicas locais para a nuvem...');
-            savePromises.push(PrompterCloud.saveSongsBatchToCloud(missingSongsInCloud));
-          }
-
-          return Promise.all(savePromises).then(function () {
-            return window.PrompterDB.cleanUpDuplicates().then(function() {
-              updateSyncBadge('online');
-              isSyncing = false;
-              console.log('🎉 Sincronização bidirecional Supabase <-> IndexedDB concluída com desduplicação!');
-            });
-          });
+        // 2. Atualizar o IndexedDB local para ser ESPELHO EXATO do Supabase (Fonte da Verdade)
+        return window.PrompterDB.replaceLocalWithCloud(cloudReps, cloudSongs).then(function() {
+          updateSyncBadge('online');
+          isSyncing = false;
+          console.log('🎉 Dados sincronizados diretamente do Supabase com sucesso!');
         });
       }).catch(function (e) {
         console.warn('Erro ao sincronizar com Supabase:', e);

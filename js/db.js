@@ -486,6 +486,56 @@ function cleanUpDuplicates() {
   });
 }
 
+function replaceLocalWithCloud(cloudReps, cloudSongs) {
+  return initDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(['songs', 'repertoires'], 'readwrite');
+      var songStore = tx.objectStore('songs');
+      var repStore = tx.objectStore('repertoires');
+
+      songStore.clear();
+      repStore.clear();
+
+      if (cloudReps && cloudReps.length) {
+        cloudReps.forEach(function(cRep) {
+          repStore.put({
+            id: cRep.id,
+            name: cRep.name,
+            source: cRep.source || 'manual',
+            createdAt: cRep.created_at ? new Date(cRep.created_at).getTime() : Date.now(),
+            updatedAt: cRep.updated_at ? new Date(cRep.updated_at).getTime() : Date.now()
+          });
+        });
+      }
+
+      if (cloudSongs && cloudSongs.length) {
+        cloudSongs.forEach(function(cSong) {
+          songStore.put({
+            id: cSong.id,
+            repertoireId: cSong.repertoire_id,
+            title: cSong.title,
+            key: cSong.key || '',
+            originalKey: cSong.original_key || '',
+            rhythm: cSong.rhythm || '',
+            artist: cSong.artist || '',
+            composer: cSong.composer || '',
+            youtubeUrl: cSong.youtube_url || '',
+            youtubeId: cSong.youtube_id || '',
+            content: cSong.content || '',
+            trackNumber: cSong.track_number !== undefined ? cSong.track_number : null,
+            order: cSong.order !== undefined ? cSong.order : null,
+            createdAt: cSong.created_at ? new Date(cSong.created_at).getTime() : Date.now(),
+            updatedAt: cSong.updated_at ? new Date(cSong.updated_at).getTime() : Date.now()
+          });
+        });
+      }
+
+      tx.oncomplete = function() { resolve(true); };
+      tx.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
 window.PrompterDB = {
   initDB: initDB,
   // Repertórios
@@ -496,6 +546,7 @@ window.PrompterDB = {
   countSongsByRepertoire: countSongsByRepertoire,
   toggleRepertoireOffline: toggleRepertoireOffline,
   cleanUpDuplicates: cleanUpDuplicates,
+  replaceLocalWithCloud: replaceLocalWithCloud,
   // Músicas
   saveSong: saveSong,
   saveSongsBatch: saveSongsBatch,

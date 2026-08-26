@@ -953,15 +953,23 @@ document.addEventListener('DOMContentLoaded', function () {
   function confirmDeleteRepertoire(repId) {
     var rep = null;
     for (var i = 0; i < state.repertoires.length; i++) {
-      if (state.repertoires[i].id === repId) { rep = state.repertoires[i]; break; }
+      if (String(state.repertoires[i].id) === String(repId)) { rep = state.repertoires[i]; break; }
     }
-    var name = rep ? rep.name : 'este repertório';
+    var name = rep ? rep.name : null;
 
-    if (!confirm('Excluir "' + name + '" e TODAS as suas músicas?\n\nEsta ação não pode ser desfeita.')) return;
+    if (!confirm('Excluir "' + (name || 'este repertório') + '" e TODAS as suas músicas?\n\nEsta ação não pode ser desfeita.')) return;
 
-    PrompterDB.deleteRepertoire(repId)
+    showToast('Excluindo repertório...', 'info');
+
+    PrompterCloud.deleteRepertoireFromCloud(repId, name)
+      .then(function() {
+        return PrompterDB.deleteRepertoire(repId, true);
+      })
       .then(function () {
-        showToast('Repertório excluído.', 'info');
+        return PrompterCloud.syncAllWithCloud();
+      })
+      .then(function () {
+        showToast('Repertório excluído!', 'success');
         loadRepertoires();
       })
       .catch(function (err) {
@@ -973,10 +981,20 @@ document.addEventListener('DOMContentLoaded', function () {
   function confirmDeleteSong(songId) {
     if (!confirm('Excluir esta música do repertório?')) return;
 
-    PrompterDB.deleteSong(songId)
+    var song = findSongById(songId, state.currentRepertoireSongs);
+    var songTitle = song ? song.title : null;
+
+    showToast('Excluindo música...', 'info');
+
+    PrompterCloud.deleteSongFromCloud(songId, songTitle)
+      .then(function() {
+        return PrompterDB.deleteSong(songId, true);
+      })
+      .then(function() {
+        return PrompterCloud.syncAllWithCloud();
+      })
       .then(function () {
-        showToast('Música excluída.', 'info');
-        // Recarregar músicas do repertório atual
+        showToast('Música excluída!', 'success');
         if (state.currentRepertoire) {
           openRepertoireSongs(state.currentRepertoire.id);
         }
