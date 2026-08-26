@@ -58,6 +58,17 @@ document.addEventListener('DOMContentLoaded', function () {
               loadRepertoires();
             }
           });
+
+          PrompterCloud.initRealtimeListeners(function() {
+            if (state.currentRepertoire) {
+              PrompterDB.getSongsByRepertoire(state.currentRepertoire.id).then(function (songs) {
+                state.currentRepertoireSongs = songs || [];
+                renderSongsList(state.currentRepertoireSongs);
+              });
+            } else {
+              loadRepertoires();
+            }
+          });
         }
       });
     })

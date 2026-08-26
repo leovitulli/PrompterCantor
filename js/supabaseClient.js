@@ -223,9 +223,23 @@
             }, true));
           });
 
-          // 2. Processar músicas da nuvem com fusão inteligente (prioridade para alterações locais recentes)
+          // 2. Processar músicas da nuvem com fusão por ID e por Título + Repertório
           cloudSongs.forEach(function (cSong) {
+            var cTitleClean = (cSong.title || '').trim().toLowerCase();
+            var cRepId = Number(cSong.repertoire_id);
+
+            // Procurar correspondência local por ID ou por (Título + Repertório)
             var local = localSongMap[cSong.id];
+            if (!local) {
+              for (var lid in localSongMap) {
+                var ls = localSongMap[lid];
+                if (ls.title && ls.title.trim().toLowerCase() === cTitleClean && Number(ls.repertoireId) === cRepId) {
+                  local = ls;
+                  break;
+                }
+              }
+            }
+
             var keyToUse = cSong.key;
             var rhythmToUse = cSong.rhythm;
             var origKeyToUse = cSong.original_key;
@@ -238,9 +252,10 @@
               var cloudUpdated = cSong.updated_at ? new Date(cSong.updated_at).getTime() : 0;
               var localUpdated = local.updatedAt || 0;
 
-              // Se o item local foi modificado pelo usuário, ele prevalece e atualiza a nuvem
-              if (localUpdated >= cloudUpdated) {
+              // Se o item local foi modificado pelo usuário mais recentemente, ele prevalece na nuvem
+              if (localUpdated > cloudUpdated) {
                 var localWinsSong = Object.assign({}, local, {
+                  id: cSong.id,
                   title: local.title || cSong.title,
                   key: local.key || cSong.key || '',
                   originalKey: local.originalKey || cSong.original_key || '',
@@ -285,7 +300,7 @@
             savePromises.push(window.PrompterDB.saveSong(mergedSong, true));
           });
 
-          // 3. Enviar repertórios e músicas locais que não estão na nuvem
+          // 3. Enviar repertórios locais que não estão na nuvem
           localReps.forEach(function (lRep) {
             if (!cloudRepMap[lRep.id]) {
               savePromises.push(PrompterCloud.saveRepertoireToCloud(lRep));
@@ -319,6 +334,30 @@
         updateSyncBadge('offline');
         isSyncing = false;
       });
+    },
+
+    initRealtimeListeners: function (onUpdateCallback) {
+      var sb = this.getClient();
+      if (!sb) return;
+
+      try {
+        sb.channel('public:prompter_changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'songs' }, function (payload) {
+            console.log('⚡ Evento Realtime Supabase (songs):', payload);
+            PrompterCloud.syncAllWithCloud().then(function() {
+              if (typeof onUpdateCallback === 'function') onUpdateCallback();
+            });
+          })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'repertoires' }, function (payload) {
+            console.log('⚡ Evento Realtime Supabase (repertoires):', payload);
+            PrompterCloud.syncAllWithCloud().then(function() {
+              if (typeof onUpdateCallback === 'function') onUpdateCallback();
+            });
+          })
+          .subscribe();
+      } catch (err) {
+        console.warn('Realtime listener não pôde ser ativado:', err);
+      }
     },
 
     pushAllLocalToCloud: function () {
