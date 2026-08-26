@@ -147,8 +147,18 @@
         window.loadRepertoires();
       }
       return Promise.resolve();
+    },
+
+    resetPassword: function (email) {
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      var cleanEmail = (email || '').trim().toLowerCase();
+      if (!sb || !sb.auth || typeof sb.auth.resetPasswordForEmail !== 'function') {
+        return Promise.reject(new Error('Serviço de redefinição de senha indisponível.'));
       }
-      return Promise.resolve();
+      return sb.auth.resetPasswordForEmail(cleanEmail).then(function (res) {
+        if (res.error) throw res.error;
+        return res;
+      });
     },
 
     // ═══════════════════════════════════════

@@ -2544,6 +2544,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (authModal) authModal.classList.add('hidden');
     }
 
+    var forgotContainer = document.getElementById('forgotPasswordContainer');
+    var btnForgotPassword = document.getElementById('btnForgotPassword');
+
     function setAuthMode(mode) {
       currentAuthMode = mode;
       if (mode === 'signup') {
@@ -2551,11 +2554,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (tabAuthSignIn) tabAuthSignIn.classList.remove('active');
         if (btnSubmitAuth) btnSubmitAuth.innerText = 'Criar Minha Conta Grátis';
         if (authSubtitleText) authSubtitleText.innerText = 'Cadastre-se grátis e comece a usar no palco';
+        if (forgotContainer) forgotContainer.style.display = 'none';
       } else {
         if (tabAuthSignIn) tabAuthSignIn.classList.add('active');
         if (tabAuthSignUp) tabAuthSignUp.classList.remove('active');
         if (btnSubmitAuth) btnSubmitAuth.innerText = 'Entrar na Conta';
         if (authSubtitleText) authSubtitleText.innerText = 'Acesse sua conta para ver seus repertórios';
+        if (forgotContainer) forgotContainer.style.display = 'block';
       }
     }
 
@@ -2584,6 +2589,21 @@ document.addEventListener('DOMContentLoaded', function () {
       authOverlay.addEventListener('click', closeAuthModal);
     }
 
+    if (btnForgotPassword) {
+      btnForgotPassword.addEventListener('click', function (e) {
+        e.preventDefault();
+        var email = prompt('Digite o e-mail da sua conta para redefinir a senha:');
+        if (email && email.trim()) {
+          showToast('Enviando link de recuperação...', 'info');
+          PrompterAuth.resetPassword(email.trim()).then(function () {
+            showToast('Link de recuperação enviado para ' + email.trim() + '!', 'success');
+          }).catch(function (err) {
+            showToast(err.message || 'Erro ao enviar recuperação.', 'warning');
+          });
+        }
+      });
+    }
+
     function handleAuthSubmit() {
       var emailEl = document.getElementById('authEmail');
       var passEl = document.getElementById('authPassword');
@@ -2604,11 +2624,12 @@ document.addEventListener('DOMContentLoaded', function () {
           showToast(err.message || 'Erro ao criar conta.', 'warning');
         });
       } else {
-        showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
+        showToast('Autenticando...', 'info');
         PrompterAuth.signIn(email, pass).then(function () {
+          showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
           showApp();
         }).catch(function (err) {
-          showToast(err.message || 'Erro ao fazer login.', 'warning');
+          showToast(err.message || 'E-mail ou senha incorretos.', 'warning');
         });
       }
     }
