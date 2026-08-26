@@ -322,7 +322,6 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="rep-card-header">' +
         '<div class="rep-source-badge rep-source-' + sourceClass + '">' + sourceIcon + ' ' + sourceLabel + '</div>' +
         '<div class="rep-card-actions-top">' +
-        '<button class="btn-offline-toggle ' + (rep.isOfflinePinned ? 'pinned' : '') + ' btn-toggle-rep-offline" data-rep-id="' + repId + '" title="' + (rep.isOfflinePinned ? 'Salvo no dispositivo para uso offline' : 'Baixar repertório para uso offline') + '">⚡ <span class="offline-label-text">' + (rep.isOfflinePinned ? 'Offline' : 'Offline') + '</span></button>' +
         '<button class="btn-icon-sm btn-print-rep" data-rep-id="' + repId + '" title="Imprimir Repertório">🖨️</button>' +
         '<button class="btn-icon-sm btn-delete-rep" data-rep-id="' + repId + '" title="Excluir Repertório">🗑️</button>' +
         '</div>' +
@@ -542,7 +541,8 @@ document.addEventListener('DOMContentLoaded', function () {
             (metaParts.length > 0 ? '<div class="song-row-meta">' + metaParts.join(' <span class="meta-sep">•</span> ') + '</div>' : '') +
           '</div>' +
           '<div class="song-row-actions">' +
-            '<button class="btn-icon-action btn-song-offline ' + (song.isOfflinePinned ? 'pinned' : '') + '" data-song-id="' + song.id + '" title="' + (song.isOfflinePinned ? 'Música salva offline' : 'Baixar música para uso offline') + '">⚡</button>' +
+            '<button class="btn-icon-action btn-move-up" data-song-id="' + song.id + '" title="Mover para Cima">⬆️</button>' +
+            '<button class="btn-icon-action btn-move-down" data-song-id="' + song.id + '" title="Mover para Baixo">⬇️</button>' +
             '<button class="btn-icon-action btn-edit-song" data-song-id="' + song.id + '" title="Editar Música">✏️</button>' +
             '<button class="btn-icon-action btn-delete-song" data-song-id="' + song.id + '" title="Excluir Música">🗑️</button>' +
           '</div>' +
@@ -551,11 +551,12 @@ document.addEventListener('DOMContentLoaded', function () {
     html += '</div>';
     listEl.innerHTML = html;
 
-    // Bind Drag & Drop para Reordenar Músicas
+    // Bind Drag & Drop e Touch para Reordenar Músicas em Celulares, Tablets e Desktop
     var draggedRow = null;
     var allRows = listEl.querySelectorAll('.song-list-row');
     for (var dr = 0; dr < allRows.length; dr++) {
       (function (row) {
+        // Drag HTML5 para Mouse / Desktop
         row.addEventListener('dragstart', function (e) {
           draggedRow = row;
           row.classList.add('dragging');
@@ -580,16 +581,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (fromIdx !== -1 && toIdx !== -1) {
               var movedSong = state.currentRepertoireSongs.splice(fromIdx, 1)[0];
               state.currentRepertoireSongs.splice(toIdx, 0, movedSong);
-
               for (var s = 0; s < state.currentRepertoireSongs.length; s++) {
                 state.currentRepertoireSongs[s].trackNumber = s + 1;
                 state.currentRepertoireSongs[s].order = s + 1;
               }
-
               PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
                 return PrompterCloud.saveSongsBatchToCloud(state.currentRepertoireSongs).then(function() {
                   renderSongsList(state.currentRepertoireSongs);
-                  showToast('Ordem do repertório salva no banco!', 'success');
+                  showToast('Ordem salva no banco!', 'success');
                 });
               });
             }
@@ -601,6 +600,30 @@ document.addEventListener('DOMContentLoaded', function () {
           for (var o = 0; o < overs.length; o++) overs[o].classList.remove('drag-over');
         });
 
+        // Suporte a Touch Drag em Tablets e Smartphones
+        var touchStartY = 0;
+        var handle = row.querySelector('.song-drag-handle');
+        if (handle) {
+          handle.addEventListener('touchstart', function(e) {
+            if (e.touches && e.touches[0]) {
+              touchStartY = e.touches[0].clientY;
+              row.classList.add('dragging');
+            }
+          }, false);
+
+          handle.addEventListener('touchend', function(e) {
+            row.classList.remove('dragging');
+            if (e.changedTouches && e.changedTouches[0]) {
+              var touchEndY = e.changedTouches[0].clientY;
+              var diff = touchEndY - touchStartY;
+              if (Math.abs(diff) > 25) {
+                var sId = row.getAttribute('data-song-id');
+                moveSongPosition(sId, diff < 0 ? -1 : 1);
+              }
+            }
+          }, false);
+        }
+
         // Clique na linha inteira abre a música no Prompter
         row.addEventListener('click', function (e) {
           if (e.target.closest('.song-row-actions') || e.target.closest('.song-drag-handle')) return;
@@ -609,6 +632,29 @@ document.addEventListener('DOMContentLoaded', function () {
           if (song) openPrompterView(song);
         });
       })(allRows[dr]);
+    }
+
+    // Botões Mover para Cima ⬆️ e Mover para Baixo ⬇️
+    var moveUpBtns = listEl.querySelectorAll('.btn-move-up');
+    for (var u = 0; u < moveUpBtns.length; u++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = btn.getAttribute('data-song-id');
+          moveSongPosition(id, -1);
+        });
+      })(moveUpBtns[u]);
+    }
+
+    var moveDownBtns = listEl.querySelectorAll('.btn-move-down');
+    for (var d = 0; d < moveDownBtns.length; d++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = btn.getAttribute('data-song-id');
+          moveSongPosition(id, 1);
+        });
+      })(moveDownBtns[d]);
     }
 
     var editBtns = listEl.querySelectorAll('.btn-edit-song');
@@ -659,6 +705,40 @@ document.addEventListener('DOMContentLoaded', function () {
       if (list[i] && String(list[i].id) === targetId) return list[i];
     }
     return null;
+  }
+
+  function moveSongPosition(songId, direction) {
+    if (!state.currentRepertoireSongs || state.currentRepertoireSongs.length <= 1) return;
+
+    var idx = -1;
+    var targetId = String(songId);
+    for (var i = 0; i < state.currentRepertoireSongs.length; i++) {
+      if (state.currentRepertoireSongs[i] && String(state.currentRepertoireSongs[i].id) === targetId) {
+        idx = i;
+        break;
+      }
+    }
+
+    if (idx === -1) return;
+    var newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= state.currentRepertoireSongs.length) return;
+
+    var temp = state.currentRepertoireSongs[idx];
+    state.currentRepertoireSongs[idx] = state.currentRepertoireSongs[newIdx];
+    state.currentRepertoireSongs[newIdx] = temp;
+
+    for (var s = 0; s < state.currentRepertoireSongs.length; s++) {
+      state.currentRepertoireSongs[s].trackNumber = s + 1;
+      state.currentRepertoireSongs[s].order = s + 1;
+    }
+
+    renderSongsList(state.currentRepertoireSongs);
+
+    PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
+      return PrompterCloud.saveSongsBatchToCloud(state.currentRepertoireSongs).then(function() {
+        showToast('Nova ordem salva no banco!', 'success');
+      });
+    });
   }
 
   function getFirstTwoLines(content) {
