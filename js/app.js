@@ -2573,5 +2573,73 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.PrompterAdmin) PrompterAdmin.openModal();
       });
     }
+
+    // CONTROLES DE TRANSIÇÃO ENTRE PÁGINA DE VENDAS E O APP
+    var landingSec = document.getElementById('landingPageSection');
+    var btnToggleLanding = document.getElementById('btnToggleLanding');
+    var btnLandingStartFree = document.getElementById('btnLandingStartFree');
+    var btnLandingOpenApp = document.getElementById('btnLandingOpenApp');
+    var btnPricingFree = document.getElementById('btnPricingFree');
+    var btnPricingPro = document.getElementById('btnPricingPro');
+
+    function showLanding() {
+      if (landingSec) landingSec.classList.remove('hidden');
+      if (repertoiresListEl) {
+        var tabRep = document.getElementById('tabRepertoire');
+        if (tabRep) tabRep.classList.add('hidden');
+      }
+      if (btnToggleLanding) btnToggleLanding.innerHTML = '📱 Acessar App';
+    }
+
+    function showApp() {
+      if (landingSec) landingSec.classList.add('hidden');
+      var tabRep = document.getElementById('tabRepertoire');
+      if (tabRep) tabRep.classList.remove('hidden');
+      if (btnToggleLanding) btnToggleLanding.innerHTML = '🌐 Planos & Recursos';
+    }
+
+    window.showLandingPage = showLanding;
+    window.showAppDashboard = showApp;
+
+    if (btnToggleLanding) {
+      btnToggleLanding.addEventListener('click', function () {
+        if (landingSec && !landingSec.classList.contains('hidden')) {
+          showApp();
+        } else {
+          showLanding();
+        }
+      });
+    }
+
+    if (btnLandingStartFree) {
+      btnLandingStartFree.addEventListener('click', function () {
+        if (authModal) authModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnPricingFree) {
+      btnPricingFree.addEventListener('click', function () {
+        if (authModal) authModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnPricingPro) {
+      btnPricingPro.addEventListener('click', function () {
+        if (authModal) authModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnLandingOpenApp) {
+      btnLandingOpenApp.addEventListener('click', function () {
+        showApp();
+      });
+    }
+
+    // Inicialização da visualização: se deslogado, mostra a Landing Page
+    if (window.PrompterAuth && window.PrompterAuth.getUser()) {
+      showApp();
+    } else {
+      showLanding();
+    }
   }
 });
