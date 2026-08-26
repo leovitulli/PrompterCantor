@@ -82,17 +82,23 @@
         from: function(table) {
           return {
             select: function(cols) {
-              return restRequest('GET', table, 'select=' + encodeURIComponent(cols || '*'));
+              var p = restRequest('GET', table, 'select=' + encodeURIComponent(cols || '*'));
+              p.select = function() { return p; };
+              return p;
             },
             upsert: function(payload) {
               var headers = { 'Prefer': 'resolution=merge-duplicates,return=representation' };
-              return restRequest('POST', table, '', payload, headers);
+              var p = restRequest('POST', table, '', payload, headers);
+              p.select = function() { return p; };
+              return p;
             },
             delete: function() {
               var currentTable = table;
               return {
                 eq: function(col, val) {
-                  return restRequest('DELETE', currentTable, col + '=eq.' + encodeURIComponent(val));
+                  var p = restRequest('DELETE', currentTable, col + '=eq.' + encodeURIComponent(val));
+                  p.select = function() { return p; };
+                  return p;
                 }
               };
             }
