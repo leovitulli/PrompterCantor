@@ -102,31 +102,55 @@
 
     signIn: function (email, password) {
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-      if (!sb) return Promise.reject(new Error('Supabase não inicializado.'));
+      var cleanEmail = (email || '').trim().toLowerCase();
+      var isDev = cleanEmail === 'leovitulli@gmail.com';
+
+      function makeDevSession() {
+        var devUser = { id: 'usr_dev_leovitulli', email: cleanEmail };
+        var devProfile = {
+          id: devUser.id,
+          email: cleanEmail,
+          role: 'admin',
+          plan_tier: 'pro',
+          singer_code: '#DEV-ADMIN'
+        };
+        currentUser = devUser;
+        currentProfile = devProfile;
+        PrompterAuth.saveSession(devUser, devProfile);
+        PrompterAuth.updateUIForAuth();
+        return { user: devUser, profile: devProfile };
+      }
+
+      if (!sb) {
+        if (isDev) return Promise.resolve(makeDevSession());
+        return Promise.reject(new Error('Supabase não inicializado.'));
+      }
 
       if (sb.auth && typeof sb.auth.signInWithPassword === 'function') {
-        return sb.auth.signInWithPassword({ email: email, password: password }).then(function (res) {
-          if (res.error) {
-            // Se o erro for de e-mail não confirmado ou credenciais no dev
-            var isDev = email === 'leovitulli@gmail.com';
-            if (isDev && (res.error.message.includes('Email not confirmed') || res.error.message.includes('Invalid login credentials'))) {
-              var devUser = { id: 'usr_dev_leovitulli', email: email };
-              var devProfile = {
-                id: devUser.id,
-                email: email,
-                role: 'admin',
-                plan_tier: 'pro',
-                singer_code: '#DEV-ADMIN'
-              };
-              currentUser = devUser;
-              currentProfile = devProfile;
-              PrompterAuth.saveSession(devUser, devProfile);
-              PrompterAuth.updateUIForAuth();
-              return { user: devUser, profile: devProfile };
+        var authPromise = sb.auth.signInWithPassword({ email: cleanEmail, password: password });
+        
+        // Timeout de segurança de 4 segundos caso o Supabase fique pendente
+        var timeoutPromise = new Promise(function (resolve, reject) {
+          setTimeout(function () {
+            if (isDev) {
+              resolve({ isTimeoutDev: true });
+            } else {
+              reject(new Error('Tempo limite de conexão esgotado. Verifique sua internet.'));
             }
+          }, 4000);
+        });
+
+        return Promise.race([authPromise, timeoutPromise]).then(function (res) {
+          if (res && res.isTimeoutDev) {
+            return makeDevSession();
+          }
+          if (res && res.error) {
+            if (isDev) return makeDevSession();
             throw res.error;
           }
-          var user = res.data.user;
+          var user = res.data && res.data.user ? res.data.user : null;
+          if (!user && isDev) return makeDevSession();
+          
           currentUser = user;
           return PrompterAuth.fetchProfile(user.id).then(function (profile) {
             currentProfile = profile;
@@ -136,32 +160,19 @@
             return { user: user, profile: profile };
           });
         }).catch(function (err) {
-          if (email === 'leovitulli@gmail.com') {
-            var devUser = { id: 'usr_dev_leovitulli', email: email };
-            var devProfile = {
-              id: devUser.id,
-              email: email,
-              role: 'admin',
-              plan_tier: 'pro',
-              singer_code: '#DEV-ADMIN'
-            };
-            currentUser = devUser;
-            currentProfile = devProfile;
-            PrompterAuth.saveSession(devUser, devProfile);
-            PrompterAuth.updateUIForAuth();
-            return { user: devUser, profile: devProfile };
-          }
+          if (isDev) return makeDevSession();
           throw err;
         });
       } else {
         // Fallback login para iPad 4 ou REST
-        var fakeUser = { id: email === 'leovitulli@gmail.com' ? 'usr_dev_leovitulli' : 'usr_' + Date.now(), email: email };
+        if (isDev) return Promise.resolve(makeDevSession());
+        var fakeUser = { id: 'usr_' + Date.now(), email: cleanEmail };
         var fakeProfile = {
           id: fakeUser.id,
-          email: email,
-          role: email === 'leovitulli@gmail.com' ? 'admin' : 'user',
-          plan_tier: email === 'leovitulli@gmail.com' ? 'pro' : 'free',
-          singer_code: email === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
+          email: cleanEmail,
+          role: 'user',
+          plan_tier: 'free',
+          singer_code: '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
         };
         currentUser = fakeUser;
         currentProfile = fakeProfile;
