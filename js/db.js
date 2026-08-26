@@ -79,7 +79,7 @@ function saveRepertoire(repertoire, skipCloudSync) {
       };
 
       if (repertoire.id) {
-        data.id = Number(repertoire.id);
+        data.id = repertoire.id;
         var req = store.put(data);
         req.onsuccess = function(e) { resolve(e.target.result); };
         req.onerror = function(e) { reject(e.target.error); };
@@ -133,7 +133,7 @@ function getRepertoireById(id) {
     return new Promise(function(resolve, reject) {
       var tx = db.transaction('repertoires', 'readonly');
       var store = tx.objectStore('repertoires');
-      var req = store.get(Number(id));
+      var req = store.get(id);
       req.onsuccess = function() { resolve(req.result); };
       req.onerror = function(e) { reject(e.target.error); };
     });
@@ -150,7 +150,7 @@ function deleteRepertoire(id, skipCloudSync) {
       var index = songStore.index('repertoireId');
       var songIds = [];
 
-      var cursorReq = index.openCursor(IDBKeyRange.only(Number(id)));
+      var cursorReq = index.openCursor(IDBKeyRange.only(id));
       cursorReq.onsuccess = function(e) {
         var cursor = e.target.result;
         if (cursor) {
@@ -165,7 +165,7 @@ function deleteRepertoire(id, skipCloudSync) {
           for (var i = 0; i < songIds.length; i++) {
             writeSongs.delete(songIds[i]);
           }
-          writeReps.delete(Number(id));
+          writeReps.delete(id);
 
           txWrite.oncomplete = function() { resolve(true); };
           txWrite.onerror = function(e) { reject(e.target.error); };
@@ -203,7 +203,7 @@ function saveSong(song, skipCloudSync) {
         content: song.content || '',
         audioBlob: song.audioBlob || null,
         audioName: song.audioName || '',
-        repertoireId: song.repertoireId ? Number(song.repertoireId) : 0,
+        repertoireId: song.repertoireId || null,
         isOfflinePinned: Boolean(song.isOfflinePinned),
         trackNumber: song.trackNumber !== undefined ? song.trackNumber : null,
         order: song.order !== undefined ? song.order : null,
@@ -212,7 +212,7 @@ function saveSong(song, skipCloudSync) {
       };
 
       if (song.id) {
-        songData.id = Number(song.id);
+        songData.id = song.id;
         var req = store.put(songData);
         req.onsuccess = function(e) { resolve(e.target.result); };
         req.onerror = function(e) { reject(e.target.error); };
@@ -259,7 +259,7 @@ function saveSongsBatch(songsArray, skipCloudSync) {
           content: song.content || '',
           audioBlob: song.audioBlob || null,
           audioName: song.audioName || '',
-          repertoireId: song.repertoireId ? Number(song.repertoireId) : 0,
+          repertoireId: song.repertoireId || null,
           trackNumber: song.trackNumber !== undefined ? song.trackNumber : null,
           order: song.order !== undefined ? song.order : null,
           createdAt: song.createdAt || Date.now(),
@@ -267,7 +267,7 @@ function saveSongsBatch(songsArray, skipCloudSync) {
         };
 
         if (song.id) {
-          songData.id = Number(song.id);
+          songData.id = song.id;
           store.put(songData);
           savedSongs.push(songData);
         } else {
@@ -308,7 +308,7 @@ function getSongsByRepertoire(repertoireId) {
       var index = store.index('repertoireId');
       var songs = [];
 
-      var req = index.openCursor(IDBKeyRange.only(Number(repertoireId)));
+      var req = index.openCursor(IDBKeyRange.only(repertoireId));
       req.onsuccess = function(e) {
         var cursor = e.target.result;
         if (cursor) {
@@ -356,7 +356,7 @@ function getSongById(id) {
     return new Promise(function(resolve, reject) {
       var tx = db.transaction('songs', 'readonly');
       var store = tx.objectStore('songs');
-      var req = store.get(Number(id));
+      var req = store.get(id);
       req.onsuccess = function() { resolve(req.result); };
       req.onerror = function(e) { reject(e.target.error); };
     });
@@ -368,7 +368,7 @@ function deleteSong(id, skipCloudSync) {
     return new Promise(function(resolve, reject) {
       var tx = db.transaction('songs', 'readwrite');
       var store = tx.objectStore('songs');
-      var req = store.delete(Number(id));
+      var req = store.delete(id);
       req.onsuccess = function() { resolve(true); };
       req.onerror = function(e) { reject(e.target.error); };
     });
@@ -386,7 +386,7 @@ function countSongsByRepertoire(repertoireId) {
       var tx = db.transaction('songs', 'readonly');
       var store = tx.objectStore('songs');
       var index = store.index('repertoireId');
-      var req = index.count(IDBKeyRange.only(Number(repertoireId)));
+      var req = index.count(IDBKeyRange.only(repertoireId));
       req.onsuccess = function() { resolve(req.result); };
       req.onerror = function() { resolve(0); };
     });

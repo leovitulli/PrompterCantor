@@ -50,12 +50,14 @@
       var sb = this.getClient();
       if (!sb || !rep) return Promise.resolve(null);
 
-      var safeRepId = (rep.id && Number(rep.id) > 0) ? Number(rep.id) : (Date.now() + Math.floor(Math.random() * 1000));
+      // If an ID already exists (e.g., when editing), include it; otherwise let Supabase generate a UUID
       var payload = {
-        id: safeRepId,
         name: rep.name,
         source: rep.source || 'manual'
       };
+      if (rep.id) {
+        payload.id = rep.id;
+      }
 
       return sb.from('repertoires').upsert(payload).select().then(function (res) {
         if (res.error) {
@@ -76,7 +78,7 @@
       var sb = this.getClient();
       if (!sb || !repId) return Promise.resolve();
 
-      return sb.from('repertoires').delete().eq('id', Number(repId)).then(function (res) {
+      return sb.from('repertoires').delete().eq('id', repId).then(function (res) {
         if (res.error) console.warn('Erro ao deletar repertório na nuvem:', res.error);
       }).catch(function (e) { console.warn(e); });
     },
@@ -88,10 +90,7 @@
       var sb = this.getClient();
       if (!sb || !song) return Promise.resolve(null);
 
-      var safeSongId = (song.id && Number(song.id) > 0) ? Number(song.id) : (Date.now() + Math.floor(Math.random() * 1000));
       var payload = {
-        id: safeSongId,
-        repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
         title: song.title,
         key: song.key || '',
         original_key: song.originalKey || '',
@@ -101,7 +100,9 @@
         youtube_id: song.youtubeId || '',
         content: song.content || ''
       };
+      if (song.repertoireId) payload.repertoire_id = song.repertoireId;
       if (song.rhythm) payload.rhythm = song.rhythm;
+      if (song.id) payload.id = song.id;
 
       return sb.from('songs').upsert(payload).select().then(function (res) {
         if (res.error) {
@@ -130,13 +131,9 @@
       var sb = this.getClient();
       if (!sb || !songsArray || songsArray.length === 0) return Promise.resolve([]);
 
-      var baseTimestamp = Date.now();
       function buildPayloads(includeRhythm) {
-        return songsArray.map(function(song, idx) {
-          var safeSongId = (song.id && Number(song.id) > 0) ? Number(song.id) : (baseTimestamp + idx + Math.floor(Math.random() * 100));
+        return songsArray.map(function(song) {
           var p = {
-            id: safeSongId,
-            repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
             title: song.title || '',
             key: song.key || '',
             original_key: song.originalKey || '',
@@ -146,6 +143,8 @@
             youtube_id: song.youtubeId || '',
             content: song.content || ''
           };
+          if (song.id) p.id = song.id;
+          if (song.repertoireId) p.repertoire_id = song.repertoireId;
           if (includeRhythm && song.rhythm) p.rhythm = song.rhythm;
           return p;
         });
@@ -177,7 +176,7 @@
       var sb = this.getClient();
       if (!sb || !songId) return Promise.resolve();
 
-      return sb.from('songs').delete().eq('id', Number(songId)).then(function (res) {
+      return sb.from('songs').delete().eq('id', songId).then(function (res) {
         if (res.error) console.warn('Erro ao deletar música na nuvem:', res.error);
       }).catch(function (e) { console.warn(e); });
     },
@@ -245,14 +244,14 @@
           // 2. Processar músicas da nuvem com fusão por ID e por Título + Repertório
           cloudSongs.forEach(function (cSong) {
             var cTitleClean = (cSong.title || '').trim().toLowerCase();
-            var cRepId = Number(cSong.repertoire_id);
+            var cRepId = cSong.repertoire_id;
 
             // Procurar correspondência local por ID ou por (Título + Repertório)
             var local = localSongMap[cSong.id];
             if (!local) {
               for (var lid in localSongMap) {
                 var ls = localSongMap[lid];
-                if (ls.title && ls.title.trim().toLowerCase() === cTitleClean && Number(ls.repertoireId) === cRepId) {
+                if (ls.title && ls.title.trim().toLowerCase() === cTitleClean && String(ls.repertoireId) === String(cRepId)) {
                   local = ls;
                   break;
                 }
@@ -322,7 +321,7 @@
           // 3. Enviar repertórios locais que não estão na nuvem (por ID ou Nome)
           localReps.forEach(function (lRep) {
             var existsInCloud = cloudReps.some(function (cr) {
-              return Number(cr.id) === Number(lRep.id) || (cr.name && lRep.name && cr.name.trim().toLowerCase() === lRep.name.trim().toLowerCase());
+              return String(cr.id) === String(lRep.id) || (cr.name && lRep.name && cr.name.trim().toLowerCase() === lRep.name.trim().toLowerCase());
             });
             if (!existsInCloud) {
               savePromises.push(PrompterCloud.saveRepertoireToCloud(lRep));
@@ -344,8 +343,8 @@
             }
 
             var existsInCloud = cloudSongs.some(function(cs) {
-              return Number(cs.id) === Number(lSong.id) ||
-                     (cs.title && lSong.title && cs.title.trim().toLowerCase() === lSong.title.trim().toLowerCase() && Number(cs.repertoire_id) === Number(targetCloudRepId));
+              return String(cs.id) === String(lSong.id) ||
+                     (cs.title && lSong.title && cs.title.trim().toLowerCase() === lSong.title.trim().toLowerCase() && String(cs.repertoire_id) === String(targetCloudRepId));
             });
 
             if (!existsInCloud) {
@@ -416,7 +415,7 @@
 
         localReps.forEach(function (r) {
           var matchingCloud = cloudReps.find(function(cr) {
-            return Number(cr.id) === Number(r.id) || (cr.name && r.name && cr.name.trim().toLowerCase() === r.name.trim().toLowerCase());
+            return String(cr.id) === String(r.id) || (cr.name && r.name && cr.name.trim().toLowerCase() === r.name.trim().toLowerCase());
           });
 
           if (matchingCloud) {
