@@ -95,16 +95,24 @@
         title: song.title,
         key: song.key || '',
         original_key: song.originalKey || '',
-        rhythm: song.rhythm || '',
         artist: song.artist || '',
         composer: song.composer || '',
         youtube_url: song.youtubeUrl || '',
         youtube_id: song.youtubeId || '',
         content: song.content || ''
       };
+      if (song.rhythm) payload.rhythm = song.rhythm;
 
       return sb.from('songs').upsert(payload).select().then(function (res) {
         if (res.error) {
+          if (res.error.code === 'PGRST204' || (res.error.message && res.error.message.indexOf('rhythm') !== -1)) {
+            delete payload.rhythm;
+            return sb.from('songs').upsert(payload).select().then(function (res2) {
+              if (res2.error) throw res2.error;
+              updateSyncBadge('online');
+              return res2.data && res2.data[0] ? res2.data[0] : null;
+            });
+          }
           console.warn('Erro ao salvar música na nuvem:', res.error);
           updateSyncBadge('offline');
           throw res.error;
@@ -123,25 +131,35 @@
       if (!sb || !songsArray || songsArray.length === 0) return Promise.resolve([]);
 
       var baseTimestamp = Date.now();
-      var payloads = songsArray.map(function(song, idx) {
-        var safeSongId = (song.id && Number(song.id) > 0) ? Number(song.id) : (baseTimestamp + idx + Math.floor(Math.random() * 100));
-        return {
-          id: safeSongId,
-          repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
-          title: song.title || '',
-          key: song.key || '',
-          original_key: song.originalKey || '',
-          rhythm: song.rhythm || '',
-          artist: song.artist || '',
-          composer: song.composer || '',
-          youtube_url: song.youtubeUrl || '',
-          youtube_id: song.youtubeId || '',
-          content: song.content || ''
-        };
-      });
+      function buildPayloads(includeRhythm) {
+        return songsArray.map(function(song, idx) {
+          var safeSongId = (song.id && Number(song.id) > 0) ? Number(song.id) : (baseTimestamp + idx + Math.floor(Math.random() * 100));
+          var p = {
+            id: safeSongId,
+            repertoire_id: song.repertoireId ? Number(song.repertoireId) : null,
+            title: song.title || '',
+            key: song.key || '',
+            original_key: song.originalKey || '',
+            artist: song.artist || '',
+            composer: song.composer || '',
+            youtube_url: song.youtubeUrl || '',
+            youtube_id: song.youtubeId || '',
+            content: song.content || ''
+          };
+          if (includeRhythm && song.rhythm) p.rhythm = song.rhythm;
+          return p;
+        });
+      }
 
-      return sb.from('songs').upsert(payloads).select().then(function (res) {
+      return sb.from('songs').upsert(buildPayloads(true)).select().then(function (res) {
         if (res.error) {
+          if (res.error.code === 'PGRST204' || (res.error.message && res.error.message.indexOf('rhythm') !== -1)) {
+            return sb.from('songs').upsert(buildPayloads(false)).select().then(function (res2) {
+              if (res2.error) throw res2.error;
+              updateSyncBadge('online');
+              return res2.data || [];
+            });
+          }
           console.warn('Erro ao salvar lote de músicas na nuvem:', res.error);
           updateSyncBadge('offline');
           throw res.error;
