@@ -9,6 +9,12 @@
   var client = null;
   var isSyncing = false;
 
+  function isValidUUID(str) {
+    if (!str) return false;
+    var s = String(str).trim();
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  }
+
   function initClient() {
     if (window.supabase && window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
       try {
@@ -50,12 +56,11 @@
       var sb = this.getClient();
       if (!sb || !rep) return Promise.resolve(null);
 
-      // If an ID already exists (e.g., when editing), include it; otherwise let Supabase generate a UUID
       var payload = {
         name: rep.name,
         source: rep.source || 'manual'
       };
-      if (rep.id) {
+      if (rep.id && isValidUUID(rep.id)) {
         payload.id = rep.id;
       }
 
@@ -76,7 +81,7 @@
 
     deleteRepertoireFromCloud: function (repId) {
       var sb = this.getClient();
-      if (!sb || !repId) return Promise.resolve();
+      if (!sb || !repId || !isValidUUID(repId)) return Promise.resolve();
 
       return sb.from('repertoires').delete().eq('id', repId).then(function (res) {
         if (res.error) console.warn('Erro ao deletar repertório na nuvem:', res.error);
@@ -100,9 +105,9 @@
         youtube_id: song.youtubeId || '',
         content: song.content || ''
       };
-      if (song.repertoireId) payload.repertoire_id = song.repertoireId;
+      if (song.repertoireId && isValidUUID(song.repertoireId)) payload.repertoire_id = song.repertoireId;
       if (song.rhythm) payload.rhythm = song.rhythm;
-      if (song.id) payload.id = song.id;
+      if (song.id && isValidUUID(song.id)) payload.id = song.id;
 
       return sb.from('songs').upsert(payload).select().then(function (res) {
         if (res.error) {
@@ -143,8 +148,8 @@
             youtube_id: song.youtubeId || '',
             content: song.content || ''
           };
-          if (song.id) p.id = song.id;
-          if (song.repertoireId) p.repertoire_id = song.repertoireId;
+          if (song.id && isValidUUID(song.id)) p.id = song.id;
+          if (song.repertoireId && isValidUUID(song.repertoireId)) p.repertoire_id = song.repertoireId;
           if (includeRhythm && song.rhythm) p.rhythm = song.rhythm;
           return p;
         });
@@ -174,7 +179,7 @@
 
     deleteSongFromCloud: function (songId) {
       var sb = this.getClient();
-      if (!sb || !songId) return Promise.resolve();
+      if (!sb || !songId || !isValidUUID(songId)) return Promise.resolve();
 
       return sb.from('songs').delete().eq('id', songId).then(function (res) {
         if (res.error) console.warn('Erro ao deletar música na nuvem:', res.error);
@@ -434,10 +439,21 @@
 
           if (matchingCloud) {
             repIdMap[r.id] = matchingCloud.id;
+            if (!isValidUUID(r.id)) {
+              window.PrompterDB.deleteRepertoire(r.id, true);
+              window.PrompterDB.saveRepertoire(Object.assign({}, r, { id: matchingCloud.id }), true);
+            }
           } else {
-            repPromises.push(PrompterCloud.saveRepertoireToCloud(r).then(function(savedRep) {
+            var repToPush = Object.assign({}, r);
+            if (!isValidUUID(repToPush.id)) delete repToPush.id;
+
+            repPromises.push(PrompterCloud.saveRepertoireToCloud(repToPush).then(function(savedRep) {
               if (savedRep && savedRep.id) {
                 repIdMap[r.id] = savedRep.id;
+                if (r.id && String(r.id) !== String(savedRep.id)) {
+                  window.PrompterDB.deleteRepertoire(r.id, true);
+                  window.PrompterDB.saveRepertoire(Object.assign({}, r, { id: savedRep.id }), true);
+                }
               }
             }));
           }
@@ -447,8 +463,17 @@
           var songPromises = [];
           localSongs.forEach(function (s) {
             var targetRepId = repIdMap[s.repertoireId] || s.repertoireId;
+            if (!isValidUUID(targetRepId)) targetRepId = null;
+
             var songToPush = Object.assign({}, s, { repertoireId: targetRepId });
-            songPromises.push(PrompterCloud.saveSongToCloud(songToPush));
+            if (!isValidUUID(songToPush.id)) delete songToPush.id;
+
+            songPromises.push(PrompterCloud.saveSongToCloud(songToPush).then(function(savedSong) {
+              if (savedSong && savedSong.id && s.id && String(s.id) !== String(savedSong.id)) {
+                window.PrompterDB.deleteSong(s.id, true);
+                window.PrompterDB.saveSong(Object.assign({}, s, { id: savedSong.id, repertoireId: savedSong.repertoire_id || targetRepId }), true);
+              }
+            }));
           });
 
           return Promise.all(songPromises).then(function() {
