@@ -6,19 +6,19 @@
   <meta name="theme-color" content="#0f0f12">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PrompterCantor">
+  <meta name="apple-mobile-web-app-title" content="CantaAí PRO">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
-  <title>PrompterCantor - Repertório e Palco</title>
+  <title>CantaAí PRO - Teleprompter e Repertório de Palco Inteligente</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css?v=59">
   <link rel="stylesheet" href="css/admin.css?v=77">
-  <link rel="stylesheet" href="css/landing.css?v=78">
+  <link rel="stylesheet" href="css/landing.css?v=79">
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
   <script src="js/polyfills.js?v=76"></script>
@@ -55,7 +55,7 @@
     <div class="header-content">
       <div class="logo-area" id="btnGoHome">
         <span class="logo-icon">🎤</span>
-        <h1 class="logo-title">PrompterCantor</h1>
+        <h1 class="logo-title">CantaAí</h1>
         <span class="logo-badge">PRO</span>
       </div>
 
@@ -122,130 +122,164 @@
     <!-- ═══════════════════════════════════════════════════════ -->
     <section id="landingPageSection" class="landing-container">
       
-      <!-- HERO -->
+      <!-- HERO PRINCIPAL -->
       <div class="landing-hero">
-        <div class="hero-badge">✨ A Plataforma SaaS Oficial para Cantores e Músicos</div>
-        <h1 class="hero-title">O Teleprompter & Repertório de Palco Definitivo</h1>
-        <p class="hero-subtitle">
-          Cifras sincronizadas com rolagem automática suave, transposição de tom em 1 clique, áudio guia e Modo Banda ao vivo no palco para tablets e celulares.
+        <div class="hero-pill-badge">✨ A PLATAFORMA SAAS DEFINITIVA PARA CANTORES & BANDAS</div>
+        <h1 class="hero-title-main">
+          Chega de pastas de papel.<br>
+          <span class="hero-title-gradient">O seu show ao vivo no nível PRO.</span>
+        </h1>
+        <p class="hero-description">
+          Teleprompter inteligente com rolagem contínua suave, transposição instantânea de tom, áudio guia e sincronização ao vivo com os músicos da banda no palco.
         </p>
-        <div class="hero-cta-group">
-          <button id="btnLandingStartFree" class="btn-hero-primary">🚀 Começar Agora Grátis</button>
-          <button id="btnLandingOpenApp" class="btn-hero-secondary">▶ Ver Demonstração / Acessar App</button>
+
+        <div class="hero-cta-wrapper">
+          <button id="btnLandingStartFree" class="btn-canta-primary">🚀 Criar Minha Conta Grátis</button>
+          <button id="btnLandingOpenApp" class="btn-canta-secondary">▶ Experimentar no Navegador</button>
         </div>
 
-        <!-- MOCKUP DO PALCO -->
-        <div class="hero-mockup-wrapper">
-          <div class="mockup-header-bar">
-            <span class="mockup-dot dot-red"></span>
-            <span class="mockup-dot dot-yellow"></span>
-            <span class="mockup-dot dot-green"></span>
-            <span style="margin-left: 12px; font-size: 0.82rem; color: #64748b;">CANTA AÍ PRO • MODO PALCO TELEPROMPTER</span>
+        <div class="hero-stats-bar">
+          <div class="stat-item">
+            <span class="stat-number">100%</span>
+            <span class="stat-label">Fluído no Palco</span>
           </div>
-          <div class="mockup-body-preview">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
-              <span style="font-size: 1.3rem; font-weight: 800; color: #4ade80;">🎤 RESIGNAÇÃO</span>
-              <span style="background: rgba(34,197,94,0.15); color: #4ade80; padding: 4px 10px; border-radius: 6px; font-weight: 700;">TOM: Dm (Dó Menor)</span>
+          <div class="stat-item">
+            <span class="stat-number">0s</span>
+            <span class="stat-label">Delay na Transposição</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">Multi-Telas</span>
+            <span class="stat-label">iPad, Android & PC</span>
+          </div>
+        </div>
+
+        <!-- MOCKUP ULTRA-REALISTA DO PALCO -->
+        <div class="stage-mockup-frame">
+          <div class="mockup-toolbar">
+            <div class="mockup-controls-dots">
+              <span class="mockup-dot dot-red"></span>
+              <span class="mockup-dot dot-yellow"></span>
+              <span class="mockup-dot dot-green"></span>
             </div>
-            <div style="font-family: 'JetBrains Mono', monospace; line-height: 1.8; color: #cbd5e1; font-size: 1.05rem;">
-              <span style="color: #38bdf8; font-weight: 700;">[ Dm &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Gm ]</span><br>
+            <span class="mockup-badge-live">● AO VIVO NO PALCO</span>
+          </div>
+          <div class="mockup-screen-inner">
+            <div class="mockup-song-header">
+              <div class="mockup-song-title">🎤 Resignação • Geraldo Filme</div>
+              <div class="mockup-song-badges">
+                <span class="mockup-tag-tone">TOM: Dm (Dó Menor)</span>
+                <span class="mockup-tag-rhythm">RITMO: Samba</span>
+              </div>
+            </div>
+            <div class="mockup-lyrics-box">
+              <span class="chord-highlight">[ Dm &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Gm ]</span><br>
               Sinto que eu estou me atormentando<br>
-              <span style="color: #38bdf8; font-weight: 700;">[ A7 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dm ]</span><br>
-              E aos poucos me acabando por te amar em vão...
+              <span class="chord-highlight">[ A7 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dm ]</span><br>
+              E aos poucos me acabando por te amar em vão...<br>
+              <span class="chord-highlight">[ D7 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Gm ]</span><br>
+              Mas guardo comigo uma esperança...
             </div>
           </div>
         </div>
       </div>
 
-      <!-- RECURSOS E BENEFÍCIOS -->
-      <div class="section-title-area">
-        <div class="section-tag">Recursos Profissionais</div>
-        <h2 class="section-title">Feito sob medida para quem vive de música</h2>
+      <!-- SEÇÃO DE RECURSOS PROFISSIONAIS -->
+      <div class="section-headline-block">
+        <span class="section-pill-tag">Tecnologia para Artistas</span>
+        <h2 class="section-headline-title">Tudo o que você precisa antes, durante e após o show</h2>
+        <p class="section-headline-sub">Desenvolvido por quem entende as dores e a dinâmica real dos palcos e ensaios.</p>
       </div>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon-box">📜</div>
+      <div class="features-grid-premium">
+        <div class="feature-box-glass">
+          <div class="feature-avatar-icon">📜</div>
           <h3>Teleprompter Inteligente</h3>
-          <p>Rolagem automática contínua com velocidade regulável e fonte gigante para leitura fácil mesmo de longe no palco.</p>
+          <p>Rolagem automática milimétrica com controle de velocidade e tipografia em escala gigante pensada para leitura sem esforço sob luzes fortes.</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon-box">🎼</div>
-          <h3>Transposição Instantânea</h3>
-          <p>Mude o tom da música no palco com 1 toque (+1, -1, meio-tom) sem travar a apresentação.</p>
+        <div class="feature-box-glass">
+          <div class="feature-avatar-icon">🎼</div>
+          <h3>Transposição Instantânea de Tom</h3>
+          <p>O cantor trocou o tom na hora? Transponha acordes em meio-tom ou tom inteiro em frações de segundo com total precisão harmônica.</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon-box">📱</div>
-          <h3>Modo Banda ao Vivo (QR Code)</h3>
-          <p>Compartilhe o setlist com os músicos da banda no palco através de um QR Code rápido sem precisar de login.</p>
+        <div class="feature-box-glass">
+          <div class="feature-avatar-icon">📱</div>
+          <h3>Modo Banda ao Vivo via QR Code</h3>
+          <p>Gere um QR Code no camarim e permita que todos os músicos da banda acompanhem as cifras sincronizadas sem precisar de cadastro.</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon-box">☁️</div>
-          <h3>Nuvem & Multi-Aparelhos</h3>
-          <p>Seus repertórios sincronizados em tempo real no Computador, iPad 4, Tablet Android e Smartphone.</p>
+        <div class="feature-box-glass">
+          <div class="feature-avatar-icon">☁️</div>
+          <h3>Nuvem & Suporte a Dispositivos Antigos</h3>
+          <p>Seus repertórios salvos com segurança no Supabase e funcionando com performance nativa até em iPads 4 antigos no palco.</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon-box">🎧</div>
-          <h3>Áudio Guia Integrado</h3>
-          <p>Vincule áudios e vídeos do YouTube para ensaiar passagens e arranjos antes do show.</p>
+        <div class="feature-box-glass">
+          <div class="feature-avatar-icon">🎧</div>
+          <h3>Áudio Guia & Estudo Integrado</h3>
+          <p>Ouça a gravação original ou arranjo no YouTube Dock integrado enquanto acompanha a letra e treina as convenções da música.</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon-box">🖨️</div>
-          <h3>Exportação em PDF Limpa</h3>
-          <p>Gere e imprima folhas de repertório completas com tom, ordem de músicas e anotações da banda.</p>
+        <div class="feature-box-glass">
+          <div class="feature-avatar-icon">🖨️</div>
+          <h3>Exportação & Impressão PDF</h3>
+          <p>Gere relatórios de setlists limpos e formatados para entregar à equipe técnica e aos operadores de som e luz.</p>
         </div>
       </div>
 
-      <!-- TABELA DE PREÇOS (PRICING) -->
-      <div class="section-title-area">
-        <div class="section-tag">Planos Transparentes</div>
-        <h2 class="section-title">Escolha o plano ideal para a sua carreira</h2>
+      <!-- SEÇÃO DE PREÇOS -->
+      <div class="section-headline-block">
+        <span class="section-pill-tag">Planos Acessíveis</span>
+        <h2 class="section-headline-title">Investimento simples para transformar seus shows</h2>
+        <p class="section-headline-sub">Comece gratuitamente e evolua para o PRO quando quiser.</p>
       </div>
 
-      <div class="pricing-grid">
-        <!-- PLANO FREE -->
-        <div class="pricing-card">
-          <div class="pricing-header">
-            <h3>Plano Gratuito</h3>
-            <p>Ideal para quem está começando e quer testar o teleprompter.</p>
+      <div class="pricing-section-wrapper">
+        <div class="pricing-grid-cards">
+          <!-- PLANO GRATUITO -->
+          <div class="pricing-card-box">
+            <div class="plan-title-head">Plano Gratuito</div>
+            <div class="plan-description-text">Ideal para experimentar e gerenciar pequenos setlists.</div>
+            <div class="plan-price-tag">
+              <span class="price-currency">R$</span>
+              <span class="price-amount">0</span>
+              <span class="price-period">/mês</span>
+            </div>
+            <ul class="plan-features-list">
+              <li>✅ Até 2 Repertórios completos</li>
+              <li>✅ Até 20 Músicas cifradas</li>
+              <li>✅ Transposição de Tom em tempo real</li>
+              <li>✅ Rolagem automática de palco</li>
+              <li class="off">❌ Modo Banda ao Vivo via QR Code</li>
+              <li class="off">❌ Áudio Guia e Vídeos Ilimitados</li>
+              <li class="off">❌ Exportação de Repertórios em PDF</li>
+            </ul>
+            <button id="btnPricingFree" class="btn btn-secondary btn-full">Começar Gratuitamente</button>
           </div>
-          <div class="pricing-price">R$ 0 <span>/ mês</span></div>
-          <ul class="pricing-features">
-            <li>✅ Até 2 Repertórios</li>
-            <li>✅ Até 20 Músicas</li>
-            <li>✅ Transposição de Tom em Tempo Real</li>
-            <li>✅ Rolagem Automática de Palco</li>
-            <li class="disabled">❌ Áudios Guia e Vídeos Ilimitados</li>
-            <li class="disabled">❌ Modo Banda ao Vivo via QR Code</li>
-            <li class="disabled">❌ Exportação de Repertório em PDF</li>
-          </ul>
-          <button id="btnPricingFree" class="btn btn-secondary btn-full">Começar no Free</button>
-        </div>
 
-        <!-- PLANO PRO -->
-        <div class="pricing-card card-pro">
-          <div class="pricing-popular-badge">Mais Escolhido</div>
-          <div class="pricing-header">
-            <h3>CantaAí PRO</h3>
-            <p>Para cantores profissionais, bandas e shows ao vivo.</p>
+          <!-- PLANO PRO -->
+          <div class="pricing-card-box is-pro">
+            <div class="pricing-badge-hot">MAIS ESCOLHIDO</div>
+            <div class="plan-title-head">CantaAí PRO</div>
+            <div class="plan-description-text">Para cantores profissionais, bandas e apresentações frequentes.</div>
+            <div class="plan-price-tag">
+              <span class="price-currency">R$</span>
+              <span class="price-amount">19,90</span>
+              <span class="price-period">/mês</span>
+            </div>
+            <ul class="plan-features-list">
+              <li>⭐ <strong>Repertórios & Músicas Ilimitadas</strong></li>
+              <li>⭐ <strong>Modo Banda no Palco (QR Code & Link Público)</strong></li>
+              <li>⭐ <strong>Transposição Instantânea & Rolagem Fluída</strong></li>
+              <li>⭐ <strong>YouTube Dock & Áudios Guia Ilimitados</strong></li>
+              <li>⭐ <strong>Compartilhamento entre Cantores por ID</strong></li>
+              <li>⭐ <strong>Exportação Completa em PDF Formatado</strong></li>
+              <li>⭐ <strong>Backup Seguro no Banco de Dados Supabase</strong></li>
+            </ul>
+            <button id="btnPricingPro" class="btn btn-canta-primary btn-full">Assinar CantaAí PRO (Pix / Cartão)</button>
           </div>
-          <div class="pricing-price">R$ 19,90 <span>/ mês</span></div>
-          <ul class="pricing-features">
-            <li>⭐ <strong>Repertórios & Músicas Ilimitadas</strong></li>
-            <li>⭐ <strong>Modo Banda no Palco (QR Code & Link)</strong></li>
-            <li>⭐ <strong>Transposição de Tom & Rolagem Fluída</strong></li>
-            <li>⭐ <strong>Upload de Áudios Guia & YouTube Dock</strong></li>
-            <li>⭐ <strong>Compartilhamento entre Cantores por ID</strong></li>
-            <li>⭐ <strong>Exportação Completa em PDF</strong></li>
-            <li>⭐ <strong>Backup Seguro no Banco Supabase</strong></li>
-          </ul>
-          <button id="btnPricingPro" class="btn btn-primary btn-full">Assinar Plano PRO (Pix / Cartão)</button>
         </div>
       </div>
 
-      <!-- FOOTER DA LANDING PAGE -->
-      <footer class="landing-footer">
-        <p>CantaAí PRO © 2026 • A Plataforma Definitiva para Cantores e Músicos no Palco.</p>
+      <!-- FOOTER -->
+      <footer class="landing-footer-main">
+        <p><strong>CantaAí PRO</strong> © 2026 • A Plataforma Oficial para Cantores e Músicos no Palco.</p>
       </footer>
     </section>
 
@@ -680,7 +714,7 @@
   <div id="authModal" class="modal-overlay hidden">
     <div class="modal-card modal-auth-card">
       <div class="modal-header">
-        <h2 id="authModalTitle">🔑 Acessar PrompterCantor PRO</h2>
+        <h2 id="authModalTitle">🔑 Acessar CantaAí PRO</h2>
         <button class="modal-close btn-close-auth">✕</button>
       </div>
       <div class="modal-body">
@@ -707,19 +741,19 @@
 
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=78"></script>
-  <script src="js/supabaseClient.js?v=78"></script>
-  <script src="js/db.js?v=78"></script>
-  <script src="js/auth.js?v=78"></script>
-  <script src="js/adminPanel.js?v=78"></script>
-  <script src="js/textParser.js?v=78"></script>
-  <script src="js/sampleRepertoire.js?v=78"></script>
-  <script src="js/transposer.js?v=78"></script>
-  <script src="js/prompter.js?v=78"></script>
-  <script src="js/mediaPlayer.js?v=78"></script>
-  <script src="js/advancedPlayer.js?v=78"></script>
-  <script src="js/gdrive.js?v=78"></script>
-  <script src="js/gdriveUI.js?v=78"></script>
-  <script src="js/app.js?v=78"></script>
+  <script src="js/config.js?v=79"></script>
+  <script src="js/supabaseClient.js?v=79"></script>
+  <script src="js/db.js?v=79"></script>
+  <script src="js/auth.js?v=79"></script>
+  <script src="js/adminPanel.js?v=79"></script>
+  <script src="js/textParser.js?v=79"></script>
+  <script src="js/sampleRepertoire.js?v=79"></script>
+  <script src="js/transposer.js?v=79"></script>
+  <script src="js/prompter.js?v=79"></script>
+  <script src="js/mediaPlayer.js?v=79"></script>
+  <script src="js/advancedPlayer.js?v=79"></script>
+  <script src="js/gdrive.js?v=79"></script>
+  <script src="js/gdriveUI.js?v=79"></script>
+  <script src="js/app.js?v=79"></script>
 </body>
 </html>
