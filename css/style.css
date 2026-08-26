@@ -1720,7 +1720,7 @@ textarea {
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 3000;
+  z-index: 99999999 !important;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
