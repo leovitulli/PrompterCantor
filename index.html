@@ -17,6 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css?v=59">
+  <link rel="stylesheet" href="css/admin.css?v=77">
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
   <script src="js/polyfills.js?v=76"></script>
@@ -67,6 +68,10 @@
 
       <!-- Botões de Ação do Topo -->
       <div class="header-actions">
+        <div id="headerUserBadge" class="header-user-badge hidden"></div>
+        <button id="btnOpenAdminPanel" class="btn btn-secondary btn-sm hidden" title="Abrir Painel de Governança do Desenvolvedor">👑 Governança Admin</button>
+        <button id="btnAuthToggle" class="btn btn-outline btn-sm">🔑 Entrar / Cadastrar</button>
+
         <!-- Menu Unificado de Adição -->
         <div class="dropdown-add-container">
           <button id="btnDropdownAdd" class="btn btn-primary btn-add-main">
@@ -537,22 +542,50 @@
     </div>
   </div>
 
+  <!-- MODAL DE AUTENTICAÇÃO / LOGIN DA PLATAFORMA SAAS -->
+  <div id="authModal" class="modal-overlay hidden">
+    <div class="modal-card modal-auth-card">
+      <div class="modal-header">
+        <h2 id="authModalTitle">🔑 Acessar PrompterCantor PRO</h2>
+        <button class="modal-close btn-close-auth">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formAuth" onsubmit="return false;">
+          <div class="form-group">
+            <label for="authEmail">E-mail de Cadastro</label>
+            <input type="email" id="authEmail" class="form-control" placeholder="seuemail@exemplo.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="authPassword">Senha de Acesso</label>
+            <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <div class="auth-buttons-group">
+            <button type="button" id="btnSubmitSignIn" class="btn btn-primary btn-full">Entrar na Conta</button>
+            <button type="button" id="btnSubmitSignUp" class="btn btn-secondary btn-full">Criar Nova Conta Grátis</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- NOTIFICAÇÕES TOAST -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=76"></script>
-  <script src="js/supabaseClient.js?v=76"></script>
-  <script src="js/db.js?v=76"></script>
-  <script src="js/textParser.js?v=76"></script>
-  <script src="js/sampleRepertoire.js?v=76"></script>
-  <script src="js/transposer.js?v=76"></script>
-  <script src="js/prompter.js?v=76"></script>
-  <script src="js/mediaPlayer.js?v=76"></script>
-  <script src="js/advancedPlayer.js?v=76"></script>
-  <script src="js/gdrive.js?v=76"></script>
-  <script src="js/gdriveUI.js?v=76"></script>
-  <script src="js/app.js?v=76"></script>
+  <script src="js/config.js?v=77"></script>
+  <script src="js/supabaseClient.js?v=77"></script>
+  <script src="js/db.js?v=77"></script>
+  <script src="js/auth.js?v=77"></script>
+  <script src="js/adminPanel.js?v=77"></script>
+  <script src="js/textParser.js?v=77"></script>
+  <script src="js/sampleRepertoire.js?v=77"></script>
+  <script src="js/transposer.js?v=77"></script>
+  <script src="js/prompter.js?v=77"></script>
+  <script src="js/mediaPlayer.js?v=77"></script>
+  <script src="js/advancedPlayer.js?v=77"></script>
+  <script src="js/gdrive.js?v=77"></script>
+  <script src="js/gdriveUI.js?v=77"></script>
+  <script src="js/app.js?v=77"></script>
 </body>
 </html>

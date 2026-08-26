@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (window.Prompter) Prompter.init();
   if (window.MediaPlayer) MediaPlayer.init();
   if (window.AdvancedPlayer) AdvancedPlayer.init();
+  initAuthAndAdminUI();
 
   PrompterDB.initDB()
     .then(ensureSambaRepertoireExists)
@@ -2498,5 +2499,79 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast('⚠️ Erro ao salvar dados no servidor. Verifique a conexão com Supabase.', 'warning');
       });
     });
+  }
+
+  function initAuthAndAdminUI() {
+    if (window.PrompterAuth) PrompterAuth.init();
+    if (window.PrompterAdmin) PrompterAdmin.init();
+
+    var authModal = document.getElementById('authModal');
+    var btnAuthToggle = document.getElementById('btnAuthToggle');
+    var btnCloseAuth = document.querySelector('.btn-close-auth');
+    var btnSubmitSignIn = document.getElementById('btnSubmitSignIn');
+    var btnSubmitSignUp = document.getElementById('btnSubmitSignUp');
+    var btnOpenAdminPanel = document.getElementById('btnOpenAdminPanel');
+
+    if (btnAuthToggle) {
+      btnAuthToggle.addEventListener('click', function () {
+        if (window.PrompterAuth && window.PrompterAuth.getUser()) {
+          if (confirm('Deseja sair da sua conta?')) {
+            PrompterAuth.signOut();
+          }
+        } else if (authModal) {
+          authModal.classList.remove('hidden');
+        }
+      });
+    }
+
+    if (btnCloseAuth && authModal) {
+      btnCloseAuth.addEventListener('click', function () {
+        authModal.classList.add('hidden');
+      });
+    }
+
+    if (btnSubmitSignIn) {
+      btnSubmitSignIn.addEventListener('click', function () {
+        var email = document.getElementById('authEmail').value;
+        var pass = document.getElementById('authPassword').value;
+        if (!email || !pass) {
+          showToast('Preencha e-mail e senha.', 'warning');
+          return;
+        }
+        showToast('Autenticando...', 'info');
+        PrompterAuth.signIn(email, pass).then(function () {
+          showToast('Login realizado com sucesso!', 'success');
+          if (authModal) authModal.classList.add('hidden');
+          loadRepertoires();
+        }).catch(function (err) {
+          showToast(err.message || 'Erro ao fazer login.', 'warning');
+        });
+      });
+    }
+
+    if (btnSubmitSignUp) {
+      btnSubmitSignUp.addEventListener('click', function () {
+        var email = document.getElementById('authEmail').value;
+        var pass = document.getElementById('authPassword').value;
+        if (!email || !pass) {
+          showToast('Preencha e-mail e senha.', 'warning');
+          return;
+        }
+        showToast('Criando nova conta...', 'info');
+        PrompterAuth.signUp(email, pass).then(function () {
+          showToast('Conta criada com sucesso!', 'success');
+          if (authModal) authModal.classList.add('hidden');
+          loadRepertoires();
+        }).catch(function (err) {
+          showToast(err.message || 'Erro ao criar conta.', 'warning');
+        });
+      });
+    }
+
+    if (btnOpenAdminPanel) {
+      btnOpenAdminPanel.addEventListener('click', function () {
+        if (window.PrompterAdmin) PrompterAdmin.openModal();
+      });
+    }
   }
 });
