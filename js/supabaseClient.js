@@ -233,6 +233,14 @@
 
           // 1. Processar repertórios da nuvem
           cloudReps.forEach(function (cRep) {
+            var cNameClean = (cRep.name || '').trim().toLowerCase();
+            for (var lid in localRepMap) {
+              var lr = localRepMap[lid];
+              if (lr.name && lr.name.trim().toLowerCase() === cNameClean && String(lr.id) !== String(cRep.id)) {
+                savePromises.push(window.PrompterDB.deleteRepertoire(lr.id, true));
+              }
+            }
+
             savePromises.push(window.PrompterDB.saveRepertoire({
               id: cRep.id,
               name: cRep.name,
@@ -258,6 +266,11 @@
               }
             }
 
+            // Se encontrou item local com ID diferente (ex: ID numérico antigo), remove o item antigo
+            if (local && local.id && String(local.id) !== String(cSong.id)) {
+              savePromises.push(window.PrompterDB.deleteSong(local.id, true));
+            }
+
             var keyToUse = cSong.key;
             var rhythmToUse = cSong.rhythm;
             var origKeyToUse = cSong.original_key;
@@ -281,7 +294,7 @@
                   content: local.content || cSong.content || '',
                   artist: local.artist || cSong.artist || '',
                   composer: local.composer || cSong.composer || '',
-                  youtubeUrl: local.youtubeUrl || cSong.youtube_url || '',
+                  youtubeUrl: local.youtubeUrl || cSong.youtube_id || '',
                   youtubeId: local.youtubeId || cSong.youtube_id || '',
                   repertoireId: cSong.repertoire_id || local.repertoireId
                 });

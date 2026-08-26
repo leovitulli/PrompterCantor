@@ -4,6 +4,75 @@
  */
 
 (function() {
+  'use strict';
+
+  // Polyfill globalThis
+  if (typeof globalThis === 'undefined') {
+    (function() {
+      if (typeof self !== 'undefined') { self.globalThis = self; }
+      else if (typeof window !== 'undefined') { window.globalThis = window; }
+      else if (typeof global !== 'undefined') { global.globalThis = global; }
+    })();
+  }
+
+  // Polyfill AbortController (necessário para @supabase/supabase-js em navegadores antigos)
+  if (typeof AbortController === 'undefined') {
+    window.AbortController = function AbortController() {
+      this.signal = { aborted: false, addEventListener: function() {}, removeEventListener: function() {} };
+      this.abort = function() { this.signal.aborted = true; };
+    };
+  }
+
+  // Polyfill crypto.randomUUID
+  if (!window.crypto) window.crypto = {};
+  if (!window.crypto.randomUUID) {
+    window.crypto.randomUUID = function() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    };
+  }
+
+  // Polyfill Promise.prototype.finally
+  if (!Promise.prototype.finally) {
+    Promise.prototype.finally = function(callback) {
+      var P = this.constructor;
+      return this.then(
+        function(value) { return P.resolve(callback()).then(function() { return value; }); },
+        function(reason) { return P.resolve(callback()).then(function() { throw reason; }); }
+      );
+    };
+  }
+
+  // Polyfill Object.values
+  if (!Object.values) {
+    Object.values = function(obj) {
+      if (obj == null) throw new TypeError('Cannot convert undefined or null to object');
+      var res = [];
+      for (var key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          res.push(obj[key]);
+        }
+      }
+      return res;
+    };
+  }
+
+  // Polyfill Object.entries
+  if (!Object.entries) {
+    Object.entries = function(obj) {
+      if (obj == null) throw new TypeError('Cannot convert undefined or null to object');
+      var res = [];
+      for (var key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          res.push([key, obj[key]]);
+        }
+      }
+      return res;
+    };
+  }
+
   // Polyfill Element.prototype.closest
   if (!Element.prototype.closest) {
     Element.prototype.closest = function(s) {
@@ -79,3 +148,4 @@
     };
   }
 })();
+
