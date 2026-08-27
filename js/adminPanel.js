@@ -972,8 +972,6 @@
       var pro = allUserData.filter(function (u) { return u.plan_tier === 'pro'; }).length;
       var free = total - pro;
       var online = allUserData.filter(function (u) { return u.is_online; }).length;
-      var totalSongs = allUserData.reduce(function (acc, u) { return acc + (u.songs_count || 0); }, 0);
-      var totalReps = allUserData.reduce(function (acc, u) { return acc + (u.reps_count || 0); }, 0);
       var estimatedMRR = (pro * (pricingConfig.monthlyPrice || 39.90)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
       var elMRR = document.getElementById('admMetricMRR');
@@ -986,9 +984,7 @@
       if (elMRR) elMRR.innerText = estimatedMRR;
       if (elPro) elPro.innerText = pro;
       if (elOnline) elOnline.innerText = online;
-      if (elSongs) elSongs.innerText = totalSongs.toLocaleString('pt-BR');
       if (elUsersSub) elUsersSub.innerText = total + ' Cantores Cadastrados';
-      if (elRepsSub) elRepsSub.innerText = totalReps + ' Repertórios Criados';
 
       var pAll = document.getElementById('countPillAll');
       var pPro = document.getElementById('countPillPro');
@@ -999,6 +995,18 @@
       if (pPro) pPro.innerText = pro;
       if (pLive) pLive.innerText = online;
       if (pFree) pFree.innerText = free;
+
+      // Buscar contagem real de músicas e repertórios no banco local e nuvem
+      if (window.PrompterDB) {
+        window.PrompterDB.getAllSongs().then(function (songs) {
+          var count = (songs && songs.length) ? songs.length : 0;
+          if (elSongs) elSongs.innerText = count.toLocaleString('pt-BR');
+        });
+        window.PrompterDB.getAllRepertoires().then(function (reps) {
+          var rCount = (reps && reps.length) ? reps.length : 0;
+          if (elRepsSub) elRepsSub.innerText = rCount + ' Repertório' + (rCount !== 1 ? 's' : '') + ' Criados';
+        });
+      }
     },
 
     renderUsersTable: function () {
@@ -1175,6 +1183,132 @@
       if (env) env.value = pricingConfig.mpEnv || 'production';
       if (pubKey) pubKey.value = pricingConfig.mpPublicKey || '';
       if (accToken) accToken.value = pricingConfig.mpAccessToken || '';
+    },
+    // ════════════════════════════════════════
+    //  ACERVO MASTER DE MÚSICAS & CIFRAS (CEO)
+    // ════════════════════════════════════════
+    masterSongsCache: [],
+
+    openMasterSongsModal: function () {
+      var modal = document.getElementById('adminMasterSongsModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        this.loadMasterSongs();
+      }
+    },
+
+    closeMasterSongsModal: function () {
+      var modal = document.getElementById('adminMasterSongsModal');
+      if (modal) modal.classList.add('hidden');
+    },
+
+    loadMasterSongs: function () {
+      var container = document.getElementById('masterSongsListContainer');
+      if (container) container.innerHTML = '<div class="text-center" style="padding: 24px; color: #94a3b8;">Carregando acervo de músicas...</div>';
+
+      if (window.PrompterDB) {
+        window.PrompterDB.getAllSongs().then(function (songs) {
+          PrompterAdmin.masterSongsCache = songs || [];
+          PrompterAdmin.renderMasterSongsList('');
+          PrompterAdmin.updateMetrics();
+        }).catch(function (err) {
+          console.error(err);
+          if (container) container.innerHTML = '<div class="text-center" style="padding: 24px; color: #f87171;">Erro ao carregar acervo.</div>';
+        });
+      }
+    },
+
+    renderMasterSongsList: function (query) {
+      var container = document.getElementById('masterSongsListContainer');
+      if (!container) return;
+
+      var list = PrompterAdmin.masterSongsCache || [];
+      if (query) {
+        list = list.filter(function (s) {
+          var tMatch = (s.title || '').toLowerCase().indexOf(query) !== -1;
+          var aMatch = (s.artist || '').toLowerCase().indexOf(query) !== -1;
+          var rMatch = (s.rhythm || '').toLowerCase().indexOf(query) !== -1;
+          var cMatch = (s.content || '').toLowerCase().indexOf(query) !== -1;
+          return tMatch || aMatch || rMatch || cMatch;
+        });
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="text-center" style="padding: 24px; color: #94a3b8;">Nenhuma música encontrada no acervo com a busca atual.</div>';
+        return;
+      }
+
+      var html = '<div style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 12px;">Exibindo <strong>' + list.length + '</strong> música(s) no acervo global:</div>';
+      list.forEach(function (s, idx) {
+        var sId = s.id || ('s-' + idx);
+        var sTitle = (s.title || 'Sem Título').toUpperCase();
+        var sKey = s.key || s.originalKey || '—';
+        var sRhythm = s.rhythm ? ('🥁 ' + s.rhythm) : '';
+        var sArtist = s.artist || 'Artista Desconhecido';
+
+        html +=
+          '<div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' +
+            '<div style="flex: 1; min-width: 220px;">' +
+              '<div style="font-weight: 800; color: #f1f5f9; font-size: 1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' +
+                escapeHtml(sTitle) +
+                '<span class="badge badge-key" style="font-size: 0.75rem; padding: 2px 8px; background: rgba(56,189,248,0.15); color: #38bdf8; border-radius: 6px;">' + escapeHtml(sKey) + '</span> ' +
+                (sRhythm ? '<span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;font-size:0.75rem; padding: 2px 8px; border-radius: 6px;">' + escapeHtml(sRhythm) + '</span>' : '') +
+              '</div>' +
+              '<div style="color: #94a3b8; font-size: 0.8rem; margin-top: 4px;">👤 ' + escapeHtml(sArtist) + '</div>' +
+            '</div>' +
+            '<div style="display: flex; gap: 8px; flex-wrap: wrap;">' +
+              '<button class="btn btn-outline btn-sm" onclick="PrompterAdmin.copySongContent(\'' + sId + '\')" style="color: #38bdf8; border-color: rgba(56,189,248,0.4); padding: 6px 12px; font-weight: 700;">📋 Copiar Cifra</button>' +
+              '<button class="btn btn-primary btn-sm" onclick="PrompterAdmin.cloneSongToMyRepertoire(\'' + sId + '\')" style="padding: 6px 12px; font-weight: 700;">➕ Importar p/ Mim</button>' +
+            '</div>' +
+          '</div>';
+      });
+
+      container.innerHTML = html;
+    },
+
+    copySongContent: function (songId) {
+      var song = (PrompterAdmin.masterSongsCache || []).find(function(s) { return String(s.id) === String(songId); });
+      if (!song || !song.content) {
+        if (window.showToast) window.showToast('Esta música não possui conteúdo cifrado salvo.', 'warning');
+        return;
+      }
+      var text = (song.title || '').toUpperCase() + '\nTom: ' + (song.key || '') + '\nRitmo: ' + (song.rhythm || '') + '\n\n' + song.content;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+          if (window.showToast) window.showToast('📋 Letra e Cifra de "' + song.title + '" copiada para a área de transferência!', 'success');
+        });
+      }
+    },
+
+    cloneSongToMyRepertoire: function (songId) {
+      var song = (PrompterAdmin.masterSongsCache || []).find(function(s) { return String(s.id) === String(songId); });
+      if (!song) return;
+
+      var user = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
+      var curEmail = user ? user.email : 'leovitulli@gmail.com';
+      var curId = user ? user.id : 'dev-admin-1';
+
+      if (window.PrompterDB) {
+        window.PrompterDB.getAllRepertoires().then(function(reps) {
+          if (!reps || reps.length === 0) {
+            return window.PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'manual', user_email: curEmail });
+          }
+          return reps[0].id;
+        }).then(function(targetRepId) {
+          var clone = Object.assign({}, song, {
+            id: undefined,
+            repertoireId: targetRepId,
+            user_id: curId,
+            user_email: curEmail,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          });
+          return window.PrompterDB.saveSong(clone);
+        }).then(function() {
+          if (window.showToast) window.showToast('🎉 Música "' + song.title + '" importada com sucesso para o seu repertório!', 'success');
+          if (typeof window.loadRepertoires === 'function') window.loadRepertoires();
+        });
+      }
     },
 
     exportCSV: function () {

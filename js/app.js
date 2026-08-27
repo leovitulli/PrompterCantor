@@ -444,7 +444,9 @@ document.addEventListener('DOMContentLoaded', function () {
   // ═══════════════════════════════════════
 
   function openRepertoireSongs(repId) {
-    PrompterDB.getRepertoireById(repId).then(function (rep) {
+    PrompterDB.cleanSambaDuplicates().then(function() {
+      return PrompterDB.getRepertoireById(repId);
+    }).then(function (rep) {
       if (!rep) return;
       state.currentRepertoire = rep;
 
