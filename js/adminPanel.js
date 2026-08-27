@@ -27,6 +27,16 @@
     mpEnv: 'production'
   };
 
+  function escapeHtml(str) {
+    if (!str && str !== 0) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   var PrompterAdmin = {
     init: function () {
       this.loadStoredData();
