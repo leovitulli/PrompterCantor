@@ -4,41 +4,41 @@
    ══════════════════════════════════════════════════════════ */
 
 :root {
-  --bg-primary: #09090b;
-  --bg-secondary: #121217;
-  --bg-card: #181820;
-  --bg-card-hover: #20202c;
+  --bg-primary: #07090e;
+  --bg-secondary: #0f1422;
+  --bg-card: rgba(18, 26, 42, 0.75);
+  --bg-card-hover: rgba(26, 38, 62, 0.85);
   --border-color: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(0, 230, 118, 0.35);
+  --border-hover: rgba(56, 189, 248, 0.35);
 
-  --text-main: #f4f4f5;
-  --text-muted: #9090a8;
-  --text-inverse: #09090b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-inverse: #07090e;
 
-  --accent-color: #00e676;
-  --accent-hover: #00c853;
-  --accent-glow: rgba(0, 230, 118, 0.2);
+  --accent-color: #10b981;
+  --accent-hover: #059669;
+  --accent-glow: rgba(16, 185, 129, 0.25);
 
-  --gdrive-color: #3b82f6;
-  --gdrive-hover: #2563eb;
-  --gdrive-glow: rgba(59, 130, 246, 0.25);
+  --gdrive-color: #06b6d4;
+  --gdrive-hover: #0891b2;
+  --gdrive-glow: rgba(6, 182, 212, 0.25);
 
   --danger-color: #ef4444;
   --warning-color: #f59e0b;
   --indigo-accent: #6366f1;
 
-  --source-local: #00e676;
-  --source-gdrive: #3b82f6;
+  --source-local: #10b981;
+  --source-gdrive: #06b6d4;
   --source-manual: #c084fc;
   --source-sample: #f59e0b;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --header-height: 64px;
+  --header-height: 68px;
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.05);
+  --shadow-lg: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 30px rgba(16, 185, 129, 0.15);
 }
 
 body.light-mode {
@@ -69,7 +69,8 @@ body {
   width: 100%;
   height: 100%;
   font-family: var(--font-sans);
-  background-color: var(--bg-primary);
+  background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.06) 0%, transparent 60%), #07090e;
+  background-attachment: fixed;
   color: var(--text-main);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -93,8 +94,8 @@ textarea {
   top: 0;
   z-index: 100;
   height: var(--header-height);
-  background-color: rgba(9, 9, 11, 0.88);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(7, 9, 14, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   padding: 0 2rem;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -134,12 +135,12 @@ textarea {
 }
 
 .logo-badge {
-  background: linear-gradient(135deg, var(--accent-color), #059669);
-  color: #000;
+  background: linear-gradient(135deg, var(--accent-color), #06b6d4);
+  color: #ffffff;
   font-size: 0.68rem;
   font-weight: 900;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
   letter-spacing: 0.5px;
 }
 
@@ -162,10 +163,10 @@ textarea {
 
 #searchInput {
   width: 100%;
-  padding: 0.55rem 2.5rem 0.55rem 2.5rem;
-  background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
+  padding: 0.6rem 2.5rem 0.6rem 2.6rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9999px;
   color: var(--text-main);
   font-size: 0.9rem;
   outline: none;
@@ -173,14 +174,14 @@ textarea {
 }
 
 #searchInput:focus {
-  background-color: rgba(255, 255, 255, 0.07);
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
 }
 
 #btnClearSearch {
   position: absolute;
-  right: 12px;
+  right: 14px;
   background: none;
   border: none;
   color: var(--text-muted);
@@ -198,29 +199,28 @@ textarea {
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #15151c;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 230, 118, 0.15);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85), 0 0 20px rgba(16, 185, 129, 0.1);
   max-height: 420px;
   overflow-y: auto;
   z-index: 10000;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .search-auto-section-title {
-  padding: 10px 14px 4px 14px;
+  padding: 10px 16px 4px 16px;
   font-size: 0.72rem;
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: rgba(255, 255, 255, 0.02);
 }
 
 .search-auto-item {
-  padding: 10px 14px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -235,7 +235,7 @@ textarea {
 }
 
 .search-auto-item:hover, .search-auto-item.active {
-  background: rgba(0, 230, 118, 0.12);
+  background: rgba(16, 185, 129, 0.12);
 }
 
 .search-auto-item:hover .search-auto-name {
@@ -310,39 +310,36 @@ textarea {
   top: calc(100% + 8px);
   right: 0;
   min-width: 220px;
-  background-color: #12121c;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  padding: 0.45rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(16px);
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  animation: fadeIn 0.15s ease;
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1000;
 }
 
 .dropdown-add-item {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  width: 100%;
-  padding: 0.65rem 0.85rem;
-  background: none;
+  gap: 10px;
+  padding: 10px 14px;
+  background: transparent;
   border: none;
+  border-radius: 10px;
   color: var(--text-main);
   font-size: 0.88rem;
-  font-weight: 700;
-  border-radius: 8px;
-  cursor: pointer;
+  font-weight: 600;
   text-align: left;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .dropdown-add-item:hover {
-  background-color: rgba(0, 230, 118, 0.12);
-  color: var(--accent-color);
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
 }
 
 .dropdown-add-item .item-icon {
@@ -351,8 +348,8 @@ textarea {
 
 .dropdown-divider {
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.08);
-  margin: 0.25rem 0;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
 }
 
 .btn {
@@ -360,13 +357,13 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  padding: 0.55rem 1.15rem;
-  border-radius: 9px;
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   border: none;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   white-space: nowrap;
 }
@@ -377,27 +374,28 @@ textarea {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-color), #00c853);
-  color: #000;
-  font-weight: 800;
-  box-shadow: 0 2px 10px var(--accent-glow);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(16, 185, 129, 0.5);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(0, 230, 118, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
 }
 
 .btn-gdrive {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #fff;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 2px 10px var(--gdrive-glow);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
 }
 
 .btn-gdrive:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
 }
 
 .btn-gdrive-connected {
@@ -411,14 +409,15 @@ textarea {
 }
 
 .btn-secondary {
-  background-color: var(--bg-card);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-main);
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--bg-card-hover);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn-outline {
@@ -521,41 +520,61 @@ textarea {
    ══════════════════════════════════════════════════════ */
 .repertoires-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.75rem;
 }
 
 .repertoire-card {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1.4rem;
+  background: rgba(18, 26, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.6rem;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   position: relative;
-  box-shadow: var(--shadow-sm);
-  animation: cardIn 0.25s ease;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  animation: cardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.repertoire-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), rgba(16, 185, 129, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
 
 @keyframes cardIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .repertoire-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-md), 0 0 20px var(--accent-glow);
+  transform: translateY(-5px);
+  background: rgba(22, 33, 54, 0.85);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 25px rgba(16, 185, 129, 0.18);
+}
+
+.repertoire-card:hover::before {
+  opacity: 1;
 }
 
 .rep-card-header {
@@ -567,69 +586,70 @@ textarea {
 .rep-source-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 20px;
-  font-size: 0.76rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 
 .rep-source-local {
-  background-color: rgba(0, 230, 118, 0.12);
-  color: var(--source-local);
-  border: 1px solid rgba(0, 230, 118, 0.25);
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .rep-source-gdrive {
-  background-color: rgba(59, 130, 246, 0.12);
-  color: var(--source-gdrive);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(6, 182, 212, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 .rep-source-manual {
-  background-color: rgba(192, 132, 252, 0.12);
-  color: var(--source-manual);
-  border: 1px solid rgba(192, 132, 252, 0.25);
+  background: rgba(192, 132, 252, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(192, 132, 252, 0.3);
 }
 
 .rep-source-sample {
-  background-color: rgba(245, 158, 11, 0.12);
-  color: var(--source-sample);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .rep-card-actions-top {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .btn-icon-sm {
-  width: 32px;
-  height: 32px;
-  border-radius: 7px;
-  background: none;
-  border: 1px solid transparent;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   font-size: 0.95rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
-  color: var(--text-muted);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #94a3b8;
 }
 
 .btn-icon-sm:hover {
-  background-color: var(--bg-card-hover);
-  border-color: var(--border-color);
-  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  transform: scale(1.06);
 }
 
 .btn-delete-rep:hover {
-  background-color: rgba(239, 68, 68, 0.15);
-  border-color: var(--danger-color);
-  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
 }
 
 .rep-card-body {
@@ -637,41 +657,50 @@ textarea {
 }
 
 .rep-card-title {
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 0.45rem;
-  line-height: 1.35;
-  letter-spacing: -0.3px;
+  color: #f8fafc;
+  margin-bottom: 0.55rem;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+  transition: color 0.2s ease;
+}
+
+.repertoire-card:hover .rep-card-title {
+  color: #ffffff;
 }
 
 .rep-card-meta {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  font-size: 0.86rem;
-  color: var(--text-muted);
+  gap: 0.9rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
 }
 
 .rep-song-count {
   font-weight: 800;
-  color: var(--accent-color);
+  color: #10b981;
   font-family: var(--font-mono);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .rep-card-footer {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  border-top: 1px solid var(--border-color);
-  padding-top: 1rem;
+  gap: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1.15rem;
 }
 
 /* ══════════════════════════════════════════════════════
    TELA INTERNA: MÚSICAS DO REPERTÓRIO
    ══════════════════════════════════════════════════════ */
 #repertoireSongsView {
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.25s ease;
 }
 
 .rsv-header {
@@ -680,12 +709,14 @@ textarea {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1.25rem;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  padding: 1.25rem 1.5rem;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 1.4rem 1.75rem;
   margin-bottom: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .rsv-nav {
@@ -700,15 +731,17 @@ textarea {
 }
 
 .rsv-title {
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: -0.4px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #ffffff;
 }
 
 .rsv-count {
-  font-size: 0.86rem;
-  color: var(--text-muted);
-  margin-top: 0.15rem;
+  font-size: 0.88rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+  font-weight: 500;
 }
 
 .rsv-actions {
@@ -726,21 +759,23 @@ textarea {
 }
 
 .songs-list-table {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .song-list-row {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.7rem 1.1rem;
-  border-bottom: 1px solid var(--border-color);
+  gap: 0.95rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
@@ -749,40 +784,41 @@ textarea {
 }
 
 .song-list-row:hover {
-  background-color: rgba(255, 255, 255, 0.04);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .song-list-row:active {
-  background-color: rgba(0, 230, 118, 0.06);
+  background: rgba(16, 185, 129, 0.15);
 }
 
 .song-drag-handle {
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  color: #64748b;
+  font-size: 0.95rem;
   cursor: grab;
   padding: 0.2rem 0.3rem;
-  opacity: 0.4;
+  opacity: 0.5;
   transition: opacity 0.15s;
   flex-shrink: 0;
 }
 
 .song-list-row:hover .song-drag-handle {
   opacity: 1;
+  color: #38bdf8;
 }
 
 .song-row-number {
-  min-width: 28px;
-  width: 28px;
-  height: 28px;
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  border-radius: 7px;
-  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 800;
-  color: var(--text-muted);
+  color: #94a3b8;
   flex-shrink: 0;
   font-family: var(--font-mono);
 }
@@ -792,38 +828,39 @@ textarea {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
 }
 
 .song-row-title-line {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   flex-wrap: wrap;
 }
 
 .song-row-title {
-  font-size: 0.96rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: #f8fafc;
   letter-spacing: -0.2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.15s ease;
 }
 
 .song-list-row:hover .song-row-title {
-  color: var(--accent-color);
+  color: #10b981;
 }
 
 .badge-key {
-  background-color: rgba(0, 230, 118, 0.12);
-  color: var(--accent-color);
-  border: 1px solid rgba(0, 230, 118, 0.25);
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
   font-weight: 800;
   font-size: 0.74rem;
-  padding: 0.12rem 0.45rem;
-  border-radius: 5px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
   font-family: var(--font-mono);
   white-space: nowrap;
 }
