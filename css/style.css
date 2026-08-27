@@ -355,6 +355,8 @@ textarea {
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -1139,11 +1139,35 @@ document.addEventListener('DOMContentLoaded', function () {
         reps.forEach(function (r) { repMap[r.id] = r.name; });
 
         var matchedSongs = allSongs.filter(function (s) {
-          var titleMatch = s.title && normalizeSearch(s.title).indexOf(normQ) !== -1;
-          var artistMatch = s.artist && normalizeSearch(s.artist).indexOf(normQ) !== -1;
-          var composerMatch = s.composer && normalizeSearch(s.composer).indexOf(normQ) !== -1;
-          var rhythmMatch = s.rhythm && normalizeSearch(s.rhythm).indexOf(normQ) !== -1;
-          return titleMatch || artistMatch || composerMatch || rhythmMatch;
+          var normTitle = s.title ? normalizeSearch(s.title) : '';
+          var normArtist = s.artist ? normalizeSearch(s.artist) : '';
+          var normComposer = s.composer ? normalizeSearch(s.composer) : '';
+          var normRhythm = s.rhythm ? normalizeSearch(s.rhythm) : '';
+          var normBody = s.body ? normalizeSearch(s.body) : '';
+
+          var titleMatch = normTitle.indexOf(normQ) !== -1;
+          var artistMatch = normArtist.indexOf(normQ) !== -1;
+          var composerMatch = normComposer.indexOf(normQ) !== -1;
+          var rhythmMatch = normRhythm.indexOf(normQ) !== -1;
+          var bodyMatch = normBody.indexOf(normQ) !== -1;
+
+          s._matchedLyricSnippet = null;
+          if (bodyMatch && !titleMatch && !artistMatch && !composerMatch) {
+            var lines = (s.body || '').split('\n');
+            for (var l = 0; l < lines.length; l++) {
+              var lineNorm = normalizeSearch(lines[l]);
+              if (lineNorm.indexOf(normQ) !== -1) {
+                var cleanLine = lines[l].trim();
+                // Ignorar linhas puramente de acordes com espaços longos
+                if (cleanLine.length > 2) {
+                  s._matchedLyricSnippet = cleanLine.slice(0, 50);
+                  break;
+                }
+              }
+            }
+          }
+
+          return titleMatch || artistMatch || composerMatch || rhythmMatch || bodyMatch;
         });
 
         if (!searchDropdown) return;
@@ -1162,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', function () {
             html +=
               '<div class="search-auto-item search-item-rep" data-rep-id="' + r.id + '">' +
                 '<div class="search-auto-info">' +
-                  '<span class="search-auto-name">📂 ' + escapeHtml(r.name) + '</span>' +
+                  '<span class="search-auto-name">📂 ' + escapeHtml((r.name || '').toUpperCase()) + '</span>' +
                   '<span class="search-auto-meta">Abrir repertório</span>' +
                 '</div>' +
               '</div>';
@@ -1171,16 +1195,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (matchedSongs.length > 0) {
           html += '<div class="search-auto-section-title">🎵 Músicas (' + matchedSongs.length + ')</div>';
-          matchedSongs.slice(0, 15).forEach(function (s) {
+          matchedSongs.slice(0, 20).forEach(function (s) {
             var repName = repMap[s.repertoireId] || 'Repertório';
             var metaParts = [repName];
             if (s.rhythm) metaParts.push(s.rhythm);
             if (s.artist) metaParts.push(s.artist);
+            if (s._matchedLyricSnippet) {
+              metaParts.push('💬 "' + s._matchedLyricSnippet + '..."');
+            }
+
+            var upperTitle = (s.title || 'Sem título').toUpperCase();
 
             html +=
               '<div class="search-auto-item search-item-song" data-song-id="' + s.id + '" data-rep-id="' + s.repertoireId + '">' +
                 '<div class="search-auto-info">' +
-                  '<span class="search-auto-name">🎵 ' + escapeHtml(s.title) + '</span>' +
+                  '<span class="search-auto-name">🎵 ' + escapeHtml(upperTitle) + '</span>' +
                   '<span class="search-auto-meta">' + escapeHtml(metaParts.join(' • ')) + '</span>' +
                 '</div>' +
                 '<div class="search-auto-badges">' +

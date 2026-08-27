@@ -820,7 +820,7 @@ var SAMPLE_REPERTOIRE_TEXT = "RESIGNAÇÃO\n" +
 "E jamais termina\n" +
 "Ter você sempre nos meus braços\n" +
 "Corro pro abraço com divinas rimas\n\n\n\n" +
-"Borboleta Cega (C)\n" +
+"BORBOLETA CEGA (C)\n" +
 "Composição: Jorge Aragao, Nilton Barros.\n\n" +
 "A vida valeu, mas será que era pra ser assim?\n" +
 "Sofrimento do princípio ao fim\n" +
