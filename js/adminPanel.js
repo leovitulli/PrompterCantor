@@ -307,8 +307,11 @@
 
                   '<!-- Tabela de Cupons -->' +
                   '<div class="admin-coupons-table-wrapper">' +
-                    '<h4>🎟️ Cupons Ativos no Sistema (<span id="countCouponsActive">0</span>)</h4>' +
-                    '<div class="admin-table-container" style="margin-top: 10px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
+                      '<h4 style="margin: 0;">🎟️ Cupons Ativos no Sistema (<span id="countCouponsActive">0</span>)</h4>' +
+                      '<button type="button" id="btnHeaderRestoreCoupons" class="btn btn-outline btn-sm" style="font-size: 0.76rem; color: #fbbf24; border-color: rgba(251,191,36,0.4); padding: 4px 8px;" title="Restaurar cupons padrão">🔄 Restaurar Padrões</button>' +
+                    '</div>' +
+                    '<div class="admin-table-container" style="margin-top: 6px;">' +
                       '<table class="admin-table">' +
                         '<thead>' +
                           '<tr>' +
@@ -674,6 +677,14 @@
           document.getElementById('inputCouponDesc').value = '';
 
           if (window.showToast) window.showToast('🎟️ Cupom ' + code + ' ativado com sucesso!', 'success');
+        });
+      }
+
+      // Restaurar Cupons Padrão
+      var btnHeaderRest = document.getElementById('btnHeaderRestoreCoupons');
+      if (btnHeaderRest) {
+        btnHeaderRest.addEventListener('click', function () {
+          PrompterAdmin.restoreDefaultCoupons();
         });
       }
 
@@ -1082,7 +1093,13 @@
       if (countEl) countEl.innerText = allCoupons.length;
 
       if (allCoupons.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding: 20px; color: #94a3b8;">Nenhum cupom cadastrado. Crie seu primeiro cupom ao lado!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding: 24px; color: #94a3b8;">Nenhum cupom ativo no momento. <button id="btnRestoreDefaultCoupons" class="btn btn-outline btn-sm" style="margin-left: 8px; color: #fbbf24; border-color: rgba(251,191,36,0.4);">🔄 Restaurar Cupons Padrão</button></td></tr>';
+        var btnRest = document.getElementById('btnRestoreDefaultCoupons');
+        if (btnRest) {
+          btnRest.addEventListener('click', function () {
+            PrompterAdmin.restoreDefaultCoupons();
+          });
+        }
         return;
       }
 
@@ -1095,13 +1112,15 @@
 
         html +=
           '<tr>' +
-            '<td><code class="admin-code-tag" style="color: #fbbf24; font-size: 0.9rem;">' + c.code + '</code></td>' +
+            '<td><code class="admin-code-tag" style="color: #fbbf24; font-size: 0.9rem; font-weight: 800;">' + c.code + '</code></td>' +
             '<td>' + badge + '</td>' +
             '<td><strong>' + c.uses + '</strong> / ' + c.maxUses + ' usos</td>' +
             '<td><span style="color: #cbd5e1; font-size: 0.84rem;">' + c.desc + '</span></td>' +
-            '<td style="text-align: right;">' +
-              '<button class="btn btn-sm btn-outline btn-copy-coupon" data-code="' + c.code + '" title="Copiar código">📋 Copiar</button> ' +
-              '<button class="btn btn-sm btn-outline btn-del-coupon" data-id="' + c.id + '" style="color: #f87171; border-color: rgba(239,68,68,0.4);" title="Excluir cupom">✕</button>' +
+            '<td style="text-align: right; white-space: nowrap;">' +
+              '<div style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">' +
+                '<button class="btn btn-sm btn-outline btn-copy-coupon" data-code="' + c.code + '" title="Copiar código" style="padding: 4px 10px; font-size: 0.76rem; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">📋 Copiar</button>' +
+                '<button class="btn btn-sm btn-outline btn-del-coupon" data-id="' + c.id + '" data-code="' + c.code + '" style="color: #f87171; border-color: rgba(239,68,68,0.4); padding: 4px 8px; font-size: 0.76rem;" title="Excluir cupom">✕</button>' +
+              '</div>' +
             '</td>' +
           '</tr>';
       });
@@ -1122,12 +1141,26 @@
       tbody.querySelectorAll('.btn-del-coupon').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var id = this.getAttribute('data-id');
-          allCoupons = allCoupons.filter(function(c) { return c.id !== id; });
-          PrompterAdmin.saveStoredCoupons();
-          PrompterAdmin.renderCouponsTable();
-          if (window.showToast) window.showToast('Cupom removido.', 'info');
+          var code = this.getAttribute('data-code') || 'selecionado';
+          if (confirm('⚠️ Tem certeza que deseja excluir o cupom "' + code + '" do sistema?\n\nEsta ação não poderá ser desfeita.')) {
+            allCoupons = allCoupons.filter(function(c) { return c.id !== id; });
+            PrompterAdmin.saveStoredCoupons();
+            PrompterAdmin.renderCouponsTable();
+            if (window.showToast) window.showToast('🗑️ Cupom "' + code + '" removido com sucesso.', 'info');
+          }
         });
       });
+    },
+
+    restoreDefaultCoupons: function () {
+      allCoupons = [
+        { id: 'c-1', code: 'VIP100', discount: '100% OFF', type: 'vip', uses: 14, maxUses: 50, status: 'active', desc: 'Acesso VIP Anual Gratuito' },
+        { id: 'c-2', code: 'PRO50', discount: '50% OFF', type: 'percent', uses: 38, maxUses: 100, status: 'active', desc: '50% de Desconto na Assinatura' },
+        { id: 'c-3', code: 'SAMBA30', discount: '30% OFF', type: 'percent', uses: 19, maxUses: 200, status: 'active', desc: '30% OFF de Boas-Vindas' }
+      ];
+      this.saveStoredCoupons();
+      this.renderCouponsTable();
+      if (window.showToast) window.showToast('✨ Cupons padrão (VIP100, PRO50, SAMBA30) restaurados!', 'success');
     },
 
     loadPricingForm: function () {
