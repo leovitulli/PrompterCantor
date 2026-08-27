@@ -1,221 +1,457 @@
 /* ================================================================
-   CANTA AÍ PRO - PAINEL DE GOVERNANÇA ENTERPRISE DO DESENVOLVEDOR
-   Design System Executivo: Obsidian Dark, Glassmorphism, Neon Indicators
+   CANTA AÍ PRO - CEO & FOUNDER EXECUTIVE COMMAND SUITE
+   Design System: Obsidian Dark, Gold Accents, Laser Cyan & Live Telemetry
    ================================================================ */
 
 .admin-modal-card {
-  max-width: 1080px;
-  width: 95%;
-  max-height: 90vh;
-  background: #090d16;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.9), 0 0 50px rgba(16, 185, 129, 0.15);
-  border-radius: 24px;
+  max-width: 1240px;
+  width: 96%;
+  max-height: 92vh;
+  background: radial-gradient(circle at top right, #111a2e, #070a12 80%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  box-shadow: 0 35px 100px -15px rgba(0, 0, 0, 0.95), 0 0 60px rgba(251, 191, 36, 0.15);
+  border-radius: 26px;
   padding: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .admin-header-main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 32px;
-  background: rgba(15, 23, 42, 0.85);
+  padding: 22px 30px;
+  background: rgba(15, 23, 42, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 16px;
 }
 
 .admin-title-group {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.admin-avatar-crown {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+  flex-shrink: 0;
+}
+
+.admin-suite-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.2px;
+}
+
+.badge-ceo {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #0f172a;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 3px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.6px;
+}
+
+.admin-suite-subtitle {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+.admin-header-actions-right {
+  display: flex;
+  align-items: center;
   gap: 14px;
 }
 
-.admin-title-group h2 {
-  font-size: 1.45rem;
+.live-telemetry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  font-size: 0.76rem;
   font-weight: 800;
-  color: #f8fafc;
-  margin: 0;
-  letter-spacing: -0.3px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
+}
+
+.pulse-green-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulseNeon 1.5s infinite;
+}
+
+@keyframes pulseNeon {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
 }
 
 .admin-modal-body {
-  padding: 28px 32px;
+  padding: 24px 30px;
   overflow-y: auto;
-  max-height: calc(90vh - 90px);
+  flex: 1;
 }
 
+/* ── CARDS DE MÉTRICAS SAAS EXECUTIVAS ────────────── */
 .admin-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .metric-card {
-  background: rgba(18, 26, 42, 0.7);
+  background: rgba(18, 26, 46, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 18px;
+  padding: 18px 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
   transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .metric-card:hover {
   transform: translateY(-2px);
   border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6);
+}
+
+.metric-card-mrr {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: radial-gradient(circle at top left, rgba(251, 191, 36, 0.08), rgba(18, 26, 46, 0.7) 70%);
 }
 
 .metric-icon {
-  font-size: 2.2rem;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15));
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  padding: 12px;
+  font-size: 1.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px;
   border-radius: 14px;
+  line-height: 1;
 }
 
 .metric-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .metric-label {
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  font-weight: 700;
-  margin-bottom: 4px;
+  letter-spacing: 0.6px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.metric-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .metric-value {
-  font-size: 1.9rem;
+  font-size: 1.75rem;
   font-weight: 900;
   color: #f8fafc;
   line-height: 1;
+  letter-spacing: -0.5px;
 }
 
-.metric-green {
-  color: #34d399;
-  text-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
-}
+.metric-gold { color: #fbbf24; text-shadow: 0 0 20px rgba(251, 191, 36, 0.35); }
+.metric-green { color: #34d399; text-shadow: 0 0 20px rgba(52, 211, 153, 0.35); }
+.metric-cyan { color: #38bdf8; text-shadow: 0 0 20px rgba(56, 189, 248, 0.35); }
 
-.metric-gold {
-  color: #fbbf24;
-  text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
-}
-
-.admin-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.admin-section-header h3 {
-  font-size: 1.2rem;
+.metric-growth {
+  font-size: 0.75rem;
   font-weight: 800;
-  color: #e2e8f0;
-  margin: 0;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
+.metric-badge-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.metric-badge-live {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.metric-subtext {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+/* ── TOOLBAR DE FILTROS & BUSCA ───────────────────── */
+.admin-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 10px 14px;
+}
+
+.admin-search-wrapper {
+  flex: 1;
+  min-width: 240px;
+}
+
+.admin-search-input {
+  width: 100%;
+  background: rgba(9, 13, 22, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 0.86rem;
+  color: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.admin-search-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.admin-filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-pill:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.filter-pill.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.admin-toolbar-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── TABELA ENTERPRISE DE CLIENTES ───────────────── */
 .admin-table-container {
   overflow-x: auto;
-  background: rgba(12, 17, 29, 0.8);
+  background: rgba(11, 16, 28, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-radius: 18px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .admin-table th {
-  background: rgba(22, 33, 50, 0.9);
+  background: rgba(18, 27, 44, 0.95);
   color: #94a3b8;
-  padding: 16px 20px;
-  font-weight: 700;
-  font-size: 0.82rem;
+  padding: 14px 18px;
+  font-weight: 800;
+  font-size: 0.76rem;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.7px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
 }
 
 .admin-table td {
-  padding: 16px 20px;
+  padding: 14px 18px;
   color: #cbd5e1;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
 }
 
-.admin-table tr:hover {
-  background: rgba(56, 189, 248, 0.05);
+.admin-user-row:hover {
+  background: rgba(56, 189, 248, 0.04);
 }
 
-.status-dot {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
+.admin-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-user-avatar {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  margin-right: 8px;
-}
-
-.dot-online {
-  background-color: #10b981;
-  box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
-}
-
-.dot-offline {
-  background-color: #64748b;
-}
-
-.badge-pro {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  padding: 3px 10px;
-  border-radius: 8px;
-  font-size: 0.75rem;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: #ffffff;
+  font-size: 1rem;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.badge-free {
-  background: rgba(148, 163, 184, 0.15);
-  color: #cbd5e1;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  padding: 3px 10px;
+.admin-user-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-user-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+
+.admin-user-email {
+  font-size: 0.76rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.admin-code-tag {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.status-pill-online {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.status-pill-offline {
+  background: rgba(100, 116, 139, 0.12);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  color: #94a3b8;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulseNeon 1.5s infinite;
+}
+
+.badge-plan-executive {
+  display: inline-block;
+  padding: 4px 10px;
   border-radius: 8px;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.badge-plan-pro {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.badge-plan-free {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.admin-reps-stat {
   font-weight: 700;
+  color: #e2e8f0;
+}
+
+.admin-songs-stat {
+  color: #94a3b8;
+}
+
+.admin-time-ago {
+  font-size: 0.78rem;
+  color: #64748b;
 }
 
 .admin-actions-cell {
   white-space: nowrap;
-  display: flex;
-  gap: 8px;
-}
-
-/* PERFIL DE USUÁRIO EXECUTIVO */
-.header-user-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(18, 26, 42, 0.85);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 9999px;
-  padding: 6px 16px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #f8fafc;
-  backdrop-filter: blur(10px);
 }
