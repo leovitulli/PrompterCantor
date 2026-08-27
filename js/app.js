@@ -2576,6 +2576,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tabRep.classList.remove('hidden');
         tabRep.classList.add('active');
       }
+      if (searchInput) searchInput.value = '';
       loadRepertoires();
     }
 

@@ -352,6 +352,12 @@
             btnProfileAdmin.classList.add('hidden');
           }
         }
+
+        // Limpar qualquer autofill indevido do navegador na barra de busca
+        var sIn = document.getElementById('searchInput');
+        if (sIn && (sIn.value.indexOf('@') !== -1 || (currentUser && sIn.value === currentUser.email))) {
+          sIn.value = '';
+        }
       } else {
         if (profileContainer) profileContainer.classList.add('hidden');
       }
