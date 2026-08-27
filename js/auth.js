@@ -256,7 +256,7 @@
           upmPlanBadge.innerHTML = isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE';
         }
         if (upmPlanDesc) {
-          upmPlanDesc.innerText = isPro ? 'Acesso Total Ilimitado • Nuvem & Palco' : 'Repertórios Básicos • Faça Upgrade para PRO';
+          upmPlanDesc.innerText = isPro ? 'Acesso Total Ilimitado • Palco & 100% Offline' : 'Repertórios Básicos • Faça Upgrade para PRO';
         }
 
         if (btnProfileAdmin) {
