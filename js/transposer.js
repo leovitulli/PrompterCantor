@@ -181,7 +181,7 @@
       if (!text || semitones === 0) return text;
       var self = this;
 
-      var chordRegex = /\b([A-G][#b]?(?:m|maj|min|aug|dim|sus|add|[0-9])*(?:\/[A-G][#b]?)?)\b/g;
+      var chordRegex = /([A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°#b]|\([0-9\+\-º°#b]+\))*(?:\/[A-G][#b]?)?)/g;
 
       var lines = text.split(/\r?\n/);
       var resultLines = [];

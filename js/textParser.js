@@ -645,8 +645,38 @@ var TextParser = {
   },
 
   isChordLine: function(line) {
-    var chordPattern = /^(\s*([A-G][#b]?(m|maj|min|aug|dim|sus|add|[0-9])*)(\/[A-G][#b]?)?\s*)+$/;
-    return chordPattern.test(line);
+    if (!line || !line.trim()) return false;
+    var trimmed = line.trim();
+
+    // Regex abrangente para acordes nacionais e internacionais (7M, 7+, (13), (5-), 6/9, dim, etc.)
+    var CHORD_TOKEN_REGEX = /^[A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°\(\)\#\/b])*(?:\/[A-G][#b]?)?$/i;
+    var COMMON_WORDS = /^(?:o|a|os|as|um|uma|de|do|da|dos|das|em|no|na|nos|nas|por|para|pra|pro|pras|pros|com|sem|sob|sobre|e|ou|mas|se|que|quem|qual|quando|como|onde|porque|por que|meu|minha|meus|minhas|seu|sua|seus|suas|teu|tua|nosso|nossa|ele|ela|eles|elas|eu|tu|voce|você|voces|vocês|não|nao|sim|ja|já|mais|menos|muito|pouco|tudo|nada|amor|coracao|coração|vida|dor|sol|mar|ceu|céu|dia|noite|fim|luz|paz|som|beijo|prazer|sofrer|peito|distancia|distância|verdade|viver|entregar|lugar)$/i;
+
+    var tokens = trimmed.split(/\s+/);
+    if (tokens.length === 0) return false;
+
+    var chordCount = 0;
+    var nonChordCount = 0;
+
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i].trim();
+      if (!token) continue;
+
+      var cleanToken = token.replace(/^[\[\(]/, '').replace(/[\]\),;]$/, '');
+
+      if (COMMON_WORDS.test(cleanToken)) {
+        return false;
+      }
+
+      if (CHORD_TOKEN_REGEX.test(cleanToken)) {
+        chordCount++;
+      } else {
+        nonChordCount++;
+      }
+    }
+
+    if (chordCount === 0) return false;
+    return (chordCount / (chordCount + nonChordCount)) >= 0.7;
   },
 
   /**
