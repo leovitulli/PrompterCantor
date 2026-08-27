@@ -145,6 +145,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // ═══════════════════════════════════════
 
   function ensureSambaRepertoireExists() {
+    var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
+    var isOwner = (user && user.email === 'leovitulli@gmail.com') || (window.PrompterAuth && window.PrompterAuth.isAdmin());
+    if (!isOwner) return Promise.resolve(); // Usuários comuns nunca recebem o repertório de teste SAMBA
+
     return PrompterDB.getAllRepertoires().then(function (reps) {
       var hasSamba = false;
       if (reps && reps.length > 0) {
@@ -157,9 +161,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if (!hasSamba && window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
-        console.log('🎶 Criando repertório SAMBA com as 27 músicas...');
+        console.log('🎶 Criando repertório SAMBA exclusivo para o desenvolvedor...');
         var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
-        return PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample' })
+        return PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample', user_email: 'leovitulli@gmail.com' })
           .then(function (newRepId) {
             for (var s = 0; s < sampleSongs.length; s++) {
               sampleSongs[s].repertoireId = newRepId;
@@ -272,6 +276,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!repertoiresListEl) return;
 
     if (!state.repertoires || state.repertoires.length === 0) {
+      var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
+      var isOwner = (user && user.email === 'leovitulli@gmail.com') || (window.PrompterAuth && window.PrompterAuth.isAdmin());
+      var sampleBtnHtml = isOwner
+        ? '<button id="btnEmptySample" class="btn btn-outline btn-lg">🎶 Restaurar SAMBA (27 Músicas)</button>'
+        : '';
+
       repertoiresListEl.innerHTML =
         '<div class="empty-state">' +
         '<div class="empty-icon">🎵</div>' +
@@ -280,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">' +
         '<button id="btnEmptyImport" class="btn btn-primary btn-lg">📂 Importar Arquivos</button>' +
         '<button id="btnEmptyGDrive" class="btn btn-gdrive btn-lg">☁️ Google Drive</button>' +
-        '<button id="btnEmptySample" class="btn btn-outline btn-lg">🎶 Restaurar SAMBA (27 Músicas)</button>' +
+        sampleBtnHtml +
         '</div>' +
         '</div>';
 
@@ -292,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (bES) bES.addEventListener('click', function () {
         if (window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
           var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
-          PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample' })
+          PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample', user_email: 'leovitulli@gmail.com' })
             .then(function (newRepId) {
               for (var s = 0; s < sampleSongs.length; s++) {
                 sampleSongs[s].repertoireId = newRepId;
