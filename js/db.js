@@ -129,20 +129,23 @@ function getAllRepertoires() {
           var rep = cursor.value;
           
           if (!currentUserId) {
-            // Visitante não autenticado: vê repertórios locais anônimos
+            // Visitante não autenticado: vê apenas repertórios locais anônimos
             if (!rep.user_id || rep.user_id === 'local_anonymous') {
               items.push(rep);
             }
-          } else if (isAdmin || currentUserEmail === 'leovitulli@gmail.com') {
-            // DONO / CEO / DESENVOLVEDOR:
-            // Acesso total a todos os seus repertórios e repertórios locais
-            items.push(rep);
           } else {
-            // USUÁRIO COMUM / NOVO CANTOR:
-            // Isolamento rigoroso: vê ESTRITAMENTE apenas os seus próprios repertórios
+            // USUÁRIO AUTENTICADO:
+            // Cada usuário vê ESTRITAMENTE seus próprios repertórios
+            var repEmail = (rep.user_email || '').toLowerCase();
             var isOwn = (rep.user_id && rep.user_id === currentUserId) ||
-                        (rep.user_email && rep.user_email.toLowerCase() === currentUserEmail);
-            if (isOwn) {
+                        (repEmail && repEmail === currentUserEmail);
+
+            // Se for o dono/desenvolvedor (leovitulli@gmail.com), também inclui repertórios legados locais sem dono
+            var isLegacyDev = (currentUserEmail === 'leovitulli@gmail.com') &&
+                              (!repEmail || rep.user_id === 'local_anonymous' || repEmail === 'leovitulli@gmail.com');
+
+            // NUNCA incluir repertório de outro usuário cadastrado
+            if (isOwn || (isLegacyDev && (!repEmail || repEmail === 'leovitulli@gmail.com'))) {
               items.push(rep);
             }
           }
