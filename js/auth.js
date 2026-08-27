@@ -75,7 +75,7 @@
       var isVipCoupon = coupon === 'VIP100' || coupon === 'CORTESIA' || coupon === 'DEV';
       var isPro = cleanEmail === 'leovitulli@gmail.com' || isVipCoupon;
       var planTier = isPro ? 'pro' : 'free';
-      var planType = isPro ? '👑 PRO VITALÍCIO' : '⚡ PLANO FREE';
+      var planType = isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE';
       var singerCode = cleanEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000));
 
       if (!sb || !sb.auth || typeof sb.auth.signUp !== 'function') {
@@ -259,7 +259,7 @@
         display_name: userEmail ? userEmail.split('@')[0] : 'Cantor',
         role: userEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
         plan_tier: userEmail === 'leovitulli@gmail.com' ? 'pro' : 'free',
-        plan_type: userEmail === 'leovitulli@gmail.com' ? '👑 PRO VITALÍCIO' : '⚡ PLANO FREE',
+        plan_type: userEmail === 'leovitulli@gmail.com' ? '💎 PRO ANUAL' : '⚡ PLANO FREE',
         singer_code: userEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000))
       };
 

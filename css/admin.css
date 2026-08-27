@@ -131,15 +131,46 @@
   align-items: flex-start;
   gap: 16px;
   backdrop-filter: blur(12px);
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
-.metric-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6);
+.metric-card.metric-clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.metric-card.metric-clickable:hover {
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 16px 36px -5px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.2);
+}
+
+.metric-card.metric-clickable:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.metric-header-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.metric-action-hint {
+  font-size: 0.68rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.metric-card:hover .metric-action-hint {
+  opacity: 1;
 }
 
 .metric-card-mrr {
@@ -330,8 +361,17 @@
   vertical-align: middle;
 }
 
+.admin-user-row {
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
 .admin-user-row:hover {
-  background: rgba(56, 189, 248, 0.04);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.admin-user-row:active {
+  background: rgba(56, 189, 248, 0.12);
 }
 
 .admin-user-cell {

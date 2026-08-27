@@ -1,7 +1,7 @@
 /**
  * PrompterCantor PRO - CEO & Founder Executive Command Center
  * Plataforma de Governança SaaS Enterprise para monitoramento de MRR, assinantes PRO,
- * gestão de clientes, cupons VIP e integração Mercado Pago.
+ * gestão individual de clientes, cupons VIP e checkout Mercado Pago.
  */
 
 (function () {
@@ -22,7 +22,6 @@
   var pricingConfig = {
     monthlyPrice: 39.90,
     annualPrice: 299.00,
-    lifetimePrice: 497.00,
     mpPublicKey: '',
     mpAccessToken: '',
     mpEnv: 'production'
@@ -44,7 +43,7 @@
         if (rawCoupons) allCoupons = JSON.parse(rawCoupons);
         else {
           allCoupons = [
-            { id: 'c-1', code: 'VIP100', discount: '100% OFF', type: 'vip', uses: 14, maxUses: 50, status: 'active', desc: 'Acesso VIP Vitalício Gratuito' },
+            { id: 'c-1', code: 'VIP100', discount: '100% OFF', type: 'vip', uses: 14, maxUses: 50, status: 'active', desc: 'Acesso VIP Anual Gratuito' },
             { id: 'c-2', code: 'PRO50', discount: '50% OFF', type: 'percent', uses: 38, maxUses: 100, status: 'active', desc: '50% de Desconto na Assinatura' },
             { id: 'c-3', code: 'SAMBA30', discount: '30% OFF', type: 'percent', uses: 19, maxUses: 200, status: 'active', desc: '30% OFF de Boas-Vindas' }
           ];
@@ -106,12 +105,12 @@
             '</div>' +
 
             '<div class="modal-body admin-modal-body">' +
-              '<!-- CARDS DE MÉTRICAS SAAS EXECUTIVAS -->' +
+              '<!-- CARDS DE MÉTRICAS SAAS (COM ATALHOS INTERATIVOS) -->' +
               '<div class="admin-metrics-grid">' +
-                '<div class="metric-card metric-card-mrr">' +
+                '<div class="metric-card metric-card-mrr metric-clickable" id="shortcutCardMRR" title="Clique para gerenciar Preços e Mercado Pago">' +
                   '<div class="metric-icon">💰</div>' +
                   '<div class="metric-info">' +
-                    '<span class="metric-label">MRR Estimado (Receita Mensal)</span>' +
+                    '<div class="metric-header-sub"><span class="metric-label">MRR (Receita Recorrente)</span><span class="metric-action-hint">⚙️ Ver Planos</span></div>' +
                     '<div class="metric-value-row">' +
                       '<span class="metric-value metric-gold" id="admMetricMRR">R$ 0,00</span>' +
                       '<span class="metric-growth">+28.4% ↗</span>' +
@@ -120,10 +119,10 @@
                   '</div>' +
                 '</div>' +
 
-                '<div class="metric-card">' +
+                '<div class="metric-card metric-clickable" id="shortcutCardPro" title="Clique para filtrar apenas Assinantes PRO">' +
                   '<div class="metric-icon">⭐</div>' +
                   '<div class="metric-info">' +
-                    '<span class="metric-label">Assinantes PRO Ativos</span>' +
+                    '<div class="metric-header-sub"><span class="metric-label">Assinantes PRO Ativos</span><span class="metric-action-hint">🔍 Filtrar PRO</span></div>' +
                     '<div class="metric-value-row">' +
                       '<span class="metric-value metric-green" id="admMetricProUsers">0</span>' +
                       '<span class="metric-badge-pill">99.2% Retenção</span>' +
@@ -132,10 +131,10 @@
                   '</div>' +
                 '</div>' +
 
-                '<div class="metric-card">' +
+                '<div class="metric-card metric-clickable" id="shortcutCardLive" title="Clique para filtrar quem está Em Show Ao Vivo">' +
                   '<div class="metric-icon">⚡</div>' +
                   '<div class="metric-info">' +
-                    '<span class="metric-label">Em Show / Palco Agora</span>' +
+                    '<div class="metric-header-sub"><span class="metric-label">Em Show / Palco Agora</span><span class="metric-action-hint">🟢 Ver Ao Vivo</span></div>' +
                     '<div class="metric-value-row">' +
                       '<span class="metric-value metric-cyan" id="admMetricOnlineUsers">0</span>' +
                       '<span class="metric-badge-live">● AO VIVO</span>' +
@@ -144,10 +143,10 @@
                   '</div>' +
                 '</div>' +
 
-                '<div class="metric-card">' +
+                '<div class="metric-card metric-clickable" id="shortcutCardSongs" title="Clique para ver todos os cantores">' +
                   '<div class="metric-icon">🎵</div>' +
                   '<div class="metric-info">' +
-                    '<span class="metric-label">Músicas & Cifras Ativas</span>' +
+                    '<div class="metric-header-sub"><span class="metric-label">Músicas & Cifras Ativas</span><span class="metric-action-hint">👥 Ver Todos</span></div>' +
                     '<div class="metric-value-row">' +
                       '<span class="metric-value" id="admMetricTotalSongs">0</span>' +
                     '</div>' +
@@ -160,7 +159,7 @@
               '<div id="adminTabClients" class="admin-tab-content">' +
                 '<div class="admin-toolbar-row">' +
                   '<div class="admin-search-wrapper">' +
-                    '<input type="text" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar por cantor, e-mail, telefone, CPF ou código...">' +
+                    '<input type="text" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar por cantor, e-mail, WhatsApp, CPF ou código...">' +
                   '</div>' +
                   '<div class="admin-filter-pills">' +
                     '<button class="filter-pill active" data-filter="all">Todos (<span id="countPillAll">0</span>)</button>' +
@@ -180,12 +179,12 @@
                     '<thead>' +
                       '<tr>' +
                         '<th>Status</th>' +
-                        '<th>Cantor / Contato</th>' +
-                        '<th>Código de Palco</th>' +
-                        '<th>Plano & Assinatura</th>' +
-                        '<th>Documento / Redes</th>' +
+                        '<th>Cantor / E-mail</th>' +
+                        '<th>Código</th>' +
+                        '<th>Plano</th>' +
+                        '<th>WhatsApp / CPF</th>' +
                         '<th>Último Acesso</th>' +
-                        '<th style="text-align: right;">Governança & Ações</th>' +
+                        '<th style="text-align: right; min-width: 170px;">Gerenciamento</th>' +
                       '</tr>' +
                     '</thead>' +
                     '<tbody id="adminUsersTableBody">' +
@@ -201,11 +200,11 @@
                   '<!-- Card Criador de Cupom -->' +
                   '<div class="admin-coupon-creator-card">' +
                     '<h4>✨ Criar Novo Cupom VIP ou Desconto</h4>' +
-                    '<p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 1rem;">Crie cupons para cantores VIPs terem acesso grátis ou descontos em campanhas.</p>' +
+                    '<p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 1rem;">Crie cupons para cantores VIPs terem acesso cortesia ou descontos em campanhas.</p>' +
                     '<form id="formCreateCoupon" onsubmit="return false;">' +
                       '<div class="form-group">' +
                         '<label>Código do Cupom:</label>' +
-                        '<input type="text" id="inputCouponCode" class="form-control" placeholder="Ex: VIPAMIGO, CANTOR100" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;">' +
+                        '<input type="text" id="inputCouponCode" class="form-control" placeholder="Ex: VIP100, CANTOR50" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;">' +
                       '</div>' +
                       '<div class="form-grid-2cols">' +
                         '<div class="form-group">' +
@@ -228,7 +227,7 @@
                         '</div>' +
                         '<div class="form-group">' +
                           '<label>Descrição / Observação:</label>' +
-                          '<input type="text" id="inputCouponDesc" class="form-control" placeholder="Ex: Cortesia para amigos músicos">' +
+                          '<input type="text" id="inputCouponDesc" class="form-control" placeholder="Ex: Cortesia para parceiros">' +
                         '</div>' +
                       '</div>' +
                       '<button type="button" id="btnSaveNewCoupon" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">🎟️ Ativar Cupom no Sistema</button>' +
@@ -259,21 +258,20 @@
               '<!-- ABA 3: MERCADO PAGO & PLANOS -->' +
               '<div id="adminTabPricing" class="admin-tab-content hidden">' +
                 '<div class="admin-pricing-grid">' +
-                  '<!-- Card Configuração de Preços -->' +
+                  '<!-- Card Configuração de Preços Recorrentes -->' +
                   '<div class="admin-card-section">' +
-                    '<h4>💳 Precificação dos Planos SaaS</h4>' +
-                    '<p style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 1rem;">Defina os valores de assinatura cobrados no checkout transparente do Mercado Pago.</p>' +
+                    '<h4>💳 Precificação dos Planos de Assinatura</h4>' +
+                    '<p style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 1rem;">Defina os valores de assinatura recorrente cobrados no checkout transparente do Mercado Pago.</p>' +
                     '<div class="form-group">' +
                       '<label>Plano Mensal (Recorrente):</label>' +
                       '<div class="input-with-prefix"><span class="input-prefix">R$</span><input type="number" step="0.10" id="inputPriceMonthly" class="form-control" value="39.90"></div>' +
                     '</div>' +
                     '<div class="form-group">' +
-                      '<label>Plano Anual (Melhor Custo-Benefício):</label>' +
+                      '<label>Plano Anual (Recorrente - Melhor Valor):</label>' +
                       '<div class="input-with-prefix"><span class="input-prefix">R$</span><input type="number" step="1.00" id="inputPriceAnnual" class="form-control" value="299.00"></div>' +
                     '</div>' +
-                    '<div class="form-group">' +
-                      '<label>Plano Vitalício (Pagamento Único):</label>' +
-                      '<div class="input-with-prefix"><span class="input-prefix">R$</span><input type="number" step="1.00" id="inputPriceLifetime" class="form-control" value="497.00"></div>' +
+                    '<div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; padding: 12px; margin-top: 1.2rem; font-size: 0.82rem; color: #94a3b8;">' +
+                      'ℹ️ <strong>Modelo SaaS Recorrente</strong>: O CantaAí PRO opera em modelo de assinatura mensal e anual, garantindo previsibilidade de receita e sustentabilidade da plataforma.' +
                     '</div>' +
                   '</div>' +
 
@@ -304,12 +302,12 @@
             '</div>' +
           '</div>' +
 
-          '<!-- SUB-MODAL: EDITAR OU CRIAR CANTOR -->' +
+          '<!-- SUB-MODAL: GESTÃO & EDIÇÃO INDIVIDUAL DO CANTOR -->' +
           '<div id="adminEditSingerModal" class="modal hidden" style="z-index: 1000002;">' +
             '<div class="modal-overlay" id="adminEditSingerOverlay"></div>' +
-            '<div class="modal-card" style="max-width: 540px;">' +
+            '<div class="modal-card" style="max-width: 560px;">' +
               '<div class="modal-header">' +
-                '<h3 id="adminEditSingerTitle">✏️ Gerenciar Cantor</h3>' +
+                '<h3 id="adminEditSingerTitle">✏️ Gerenciar Cantor Individual</h3>' +
                 '<button class="modal-close" id="btnCloseEditSingerModal">✕</button>' +
               '</div>' +
               '<div class="modal-body">' +
@@ -341,7 +339,6 @@
                     '<div class="form-group">' +
                       '<label>Plano de Assinatura:</label>' +
                       '<select id="editSingerPlan" class="form-control">' +
-                        '<option value="pro_lifetime">👑 PRO VITALÍCIO</option>' +
                         '<option value="pro_annual">💎 PRO ANUAL</option>' +
                         '<option value="pro_monthly">⚡ PRO MENSAL</option>' +
                         '<option value="free">⚡ PLANO FREE</option>' +
@@ -350,7 +347,7 @@
                     '<div class="form-group">' +
                       '<label>Status do Cantor:</label>' +
                       '<select id="editSingerStatus" class="form-control">' +
-                        '<option value="online">🟢 Conectado / Palco</option>' +
+                        '<option value="online">🟢 Em Show Ao Vivo / Palco</option>' +
                         '<option value="offline">⚪ Offline</option>' +
                       '</select>' +
                     '</div>' +
@@ -359,7 +356,8 @@
                     '<label>Código do Cantor (Palco):</label>' +
                     '<input type="text" id="editSingerCode" class="form-control" placeholder="#CANTOR-0000" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">' +
                   '</div>' +
-                  '<div style="display: flex; gap: 10px; margin-top: 1.5rem;">' +
+                  '<div style="display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap;">' +
+                    '<button type="button" id="btnDirectWhatsApp" class="btn btn-outline" style="color: #34d399; border-color: rgba(16,185,129,0.4);">💬 WhatsApp</button>' +
                     '<button type="button" id="btnDeleteSinger" class="btn btn-outline" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">🗑️ Excluir</button>' +
                     '<button type="button" id="btnSaveSingerData" class="btn btn-primary" style="flex: 1;">💾 Salvar Alterações</button>' +
                   '</div>' +
@@ -389,21 +387,44 @@
         });
       }
 
+      // Atalhos dos Cards de Métricas
+      var scMRR = document.getElementById('shortcutCardMRR');
+      if (scMRR) {
+        scMRR.addEventListener('click', function () {
+          PrompterAdmin.switchTab('pricing');
+        });
+      }
+
+      var scPro = document.getElementById('shortcutCardPro');
+      if (scPro) {
+        scPro.addEventListener('click', function () {
+          PrompterAdmin.switchTab('clients');
+          PrompterAdmin.setFilter('pro');
+        });
+      }
+
+      var scLive = document.getElementById('shortcutCardLive');
+      if (scLive) {
+        scLive.addEventListener('click', function () {
+          PrompterAdmin.switchTab('clients');
+          PrompterAdmin.setFilter('live');
+        });
+      }
+
+      var scSongs = document.getElementById('shortcutCardSongs');
+      if (scSongs) {
+        scSongs.addEventListener('click', function () {
+          PrompterAdmin.switchTab('clients');
+          PrompterAdmin.setFilter('all');
+        });
+      }
+
       // Tabs
       var tabBtns = adminModal ? adminModal.querySelectorAll('.admin-tab-btn') : [];
       tabBtns.forEach(function (btn) {
         btn.addEventListener('click', function () {
-          tabBtns.forEach(function (b) { b.classList.remove('active'); });
-          this.classList.add('active');
-          currentTab = this.getAttribute('data-tab');
-
-          var c1 = document.getElementById('adminTabClients');
-          var c2 = document.getElementById('adminTabCoupons');
-          var c3 = document.getElementById('adminTabPricing');
-
-          if (c1) c1.classList.toggle('hidden', currentTab !== 'clients');
-          if (c2) c2.classList.toggle('hidden', currentTab !== 'coupons');
-          if (c3) c3.classList.toggle('hidden', currentTab !== 'pricing');
+          var t = this.getAttribute('data-tab');
+          PrompterAdmin.switchTab(t);
         });
       });
 
@@ -426,10 +447,8 @@
       var filterPills = document.querySelectorAll('.filter-pill');
       filterPills.forEach(function (pill) {
         pill.addEventListener('click', function () {
-          filterPills.forEach(function (p) { p.classList.remove('active'); });
-          this.classList.add('active');
-          currentFilter = this.getAttribute('data-filter') || 'all';
-          PrompterAdmin.renderUsersTable();
+          var f = this.getAttribute('data-filter') || 'all';
+          PrompterAdmin.setFilter(f);
         });
       });
 
@@ -453,6 +472,24 @@
       if (btnSaveSinger) {
         btnSaveSinger.addEventListener('click', function () {
           PrompterAdmin.saveSingerModalData();
+        });
+      }
+
+      // Botão WhatsApp Direto
+      var btnWhatsApp = document.getElementById('btnDirectWhatsApp');
+      if (btnWhatsApp) {
+        btnWhatsApp.addEventListener('click', function () {
+          var phone = (document.getElementById('editSingerPhone').value || '').replace(/\D/g, '');
+          var name = document.getElementById('editSingerName').value || 'Cantor';
+          if (!phone) {
+            if (window.showToast) window.showToast('Este cantor não possui número de WhatsApp cadastrado.', 'warning');
+            return;
+          }
+          if (phone.length === 10 || phone.length === 11) {
+            phone = '55' + phone;
+          }
+          var msg = encodeURIComponent('Olá ' + name + '! Tudo bem? Aqui é o Leonardo da equipe CantaAí PRO.');
+          window.open('https://wa.me/' + phone + '?text=' + msg, '_blank');
         });
       }
 
@@ -504,7 +541,7 @@
             uses: 0,
             maxUses: maxUses,
             status: 'active',
-            desc: desc || (type === 'vip' ? 'Acesso VIP Vitalício Grátis' : 'Desconto Especial')
+            desc: desc || (type === 'vip' ? 'Acesso VIP Anual Grátis' : 'Desconto Especial')
           };
 
           allCoupons.unshift(newCoupon);
@@ -525,7 +562,6 @@
         btnSavePricing.addEventListener('click', function () {
           pricingConfig.monthlyPrice = parseFloat(document.getElementById('inputPriceMonthly').value) || 39.90;
           pricingConfig.annualPrice = parseFloat(document.getElementById('inputPriceAnnual').value) || 299.00;
-          pricingConfig.lifetimePrice = parseFloat(document.getElementById('inputPriceLifetime').value) || 497.00;
           pricingConfig.mpEnv = document.getElementById('selectMpEnv').value || 'production';
           pricingConfig.mpPublicKey = (document.getElementById('inputMpPublicKey').value || '').trim();
           pricingConfig.mpAccessToken = (document.getElementById('inputMpAccessToken').value || '').trim();
@@ -535,6 +571,31 @@
           if (window.showToast) window.showToast('✅ Configurações de preços e Mercado Pago salvas!', 'success');
         });
       }
+    },
+
+    switchTab: function (tabName) {
+      currentTab = tabName;
+      var tabBtns = adminModal ? adminModal.querySelectorAll('.admin-tab-btn') : [];
+      tabBtns.forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-tab') === tabName);
+      });
+
+      var c1 = document.getElementById('adminTabClients');
+      var c2 = document.getElementById('adminTabCoupons');
+      var c3 = document.getElementById('adminTabPricing');
+
+      if (c1) c1.classList.toggle('hidden', currentTab !== 'clients');
+      if (c2) c2.classList.toggle('hidden', currentTab !== 'coupons');
+      if (c3) c3.classList.toggle('hidden', currentTab !== 'pricing');
+    },
+
+    setFilter: function (filterName) {
+      currentFilter = filterName;
+      var filterPills = document.querySelectorAll('.filter-pill');
+      filterPills.forEach(function (p) {
+        p.classList.toggle('active', p.getAttribute('data-filter') === filterName);
+      });
+      PrompterAdmin.renderUsersTable();
     },
 
     openModal: function () {
@@ -563,7 +624,7 @@
       if (!modal) return;
 
       if (user) {
-        title.innerText = '✏️ Editar Cantor: ' + user.name;
+        title.innerText = '✏️ Gerenciar Cantor: ' + user.name;
         document.getElementById('editSingerId').value = user.id;
         document.getElementById('editSingerName').value = user.name;
         document.getElementById('editSingerEmail').value = user.email;
@@ -572,9 +633,8 @@
         document.getElementById('editSingerInstagram').value = user.instagram || '';
         document.getElementById('editSingerCode').value = user.singer_code;
         
-        var pVal = 'pro_lifetime';
-        if (user.plan_type && user.plan_type.indexOf('ANUAL') !== -1) pVal = 'pro_annual';
-        else if (user.plan_type && user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
+        var pVal = 'pro_annual';
+        if (user.plan_type && user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
         else if (user.plan_tier === 'free') pVal = 'free';
         document.getElementById('editSingerPlan').value = pVal;
 
@@ -589,7 +649,7 @@
         document.getElementById('editSingerCpf').value = '';
         document.getElementById('editSingerInstagram').value = '';
         document.getElementById('editSingerCode').value = '#CANTOR-' + Math.floor(1000 + Math.random() * 9000);
-        document.getElementById('editSingerPlan').value = 'pro_lifetime';
+        document.getElementById('editSingerPlan').value = 'pro_annual';
         document.getElementById('editSingerStatus').value = 'online';
         if (btnDel) btnDel.classList.add('hidden');
       }
@@ -619,9 +679,8 @@
       }
 
       var isPro = planVal !== 'free';
-      var planType = '👑 PRO VITALÍCIO';
-      if (planVal === 'pro_annual') planType = '💎 PRO ANUAL';
-      else if (planVal === 'pro_monthly') planType = '⚡ PRO MENSAL';
+      var planType = '💎 PRO ANUAL';
+      if (planVal === 'pro_monthly') planType = '⚡ PRO MENSAL';
       else if (planVal === 'free') planType = '⚡ PLANO FREE';
 
       if (id) {
@@ -682,7 +741,7 @@
             email: devEmail,
             singer_code: '#DEV-ADMIN',
             plan_tier: 'pro',
-            plan_type: '👑 PRO VITALÍCIO',
+            plan_type: '💎 PRO ANUAL',
             is_online: true,
             status_text: '🟢 Conectado ao Palco',
             phone: '(11) 98888-7777',
@@ -714,7 +773,7 @@
                   instagram: p.instagram || '',
                   singer_code: p.singer_code || '#CANTOR-0000',
                   plan_tier: p.plan_tier || 'free',
-                  plan_type: p.plan_type || (p.plan_tier === 'pro' ? '👑 PRO VITALÍCIO' : '⚡ PLANO FREE'),
+                  plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
                   is_online: true,
                   status_text: '🟢 Conectado ao Palco',
                   reps_count: 0,
@@ -802,14 +861,14 @@
           : '<span class="status-pill status-pill-offline">⚪ Offline</span>';
 
         var planBadge = user.plan_tier === 'pro'
-          ? '<span class="badge-plan-executive badge-plan-pro">' + (user.plan_type || '👑 PRO VITALÍCIO') + '</span>'
+          ? '<span class="badge-plan-executive badge-plan-pro">' + (user.plan_type || '💎 PRO ANUAL') + '</span>'
           : '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>';
 
         var phoneStr = user.phone ? ('📱 ' + user.phone) : 'Sem WhatsApp';
         var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : (user.instagram || 'Sem CPF');
 
         html +=
-          '<tr class="admin-user-row">' +
+          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para editar ' + user.name + '">' +
             '<td>' + statusBadge + '</td>' +
             '<td>' +
               '<div class="admin-user-cell">' +
@@ -825,7 +884,7 @@
             '<td><span class="admin-reps-stat">' + phoneStr + '</span><br><small style="color:#64748b;">' + cpfStr + '</small></td>' +
             '<td><span class="admin-time-ago">' + user.last_seen + '</span></td>' +
             '<td class="admin-actions-cell" style="text-align: right;">' +
-              '<button class="btn btn-sm btn-primary btn-edit-singer" data-user-id="' + user.id + '" title="Editar dados completos do cantor">✏️ Editar</button> ' +
+              '<button class="btn btn-sm btn-primary btn-edit-singer" data-user-id="' + user.id + '" title="Editar dados completos do cantor">✏️ Gerenciar</button> ' +
               '<button class="btn btn-sm btn-outline btn-toggle-plan" data-user-id="' + user.id + '" title="Alternar entre PRO e FREE">⚡ Alternar</button>' +
             '</td>' +
           '</tr>';
@@ -833,8 +892,19 @@
 
       tbody.innerHTML = html;
 
+      // Clique em qualquer parte da linha abre o modal de edição
+      tbody.querySelectorAll('.admin-user-row').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+          if (e.target.closest('.btn-toggle-plan')) return;
+          var uId = this.getAttribute('data-user-id');
+          var userObj = allUserData.find(function(u) { return u.id === uId; });
+          if (userObj) PrompterAdmin.openSingerModal(userObj);
+        });
+      });
+
       tbody.querySelectorAll('.btn-edit-singer').forEach(function (btn) {
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
           var uId = this.getAttribute('data-user-id');
           var userObj = allUserData.find(function(u) { return u.id === uId; });
           if (userObj) PrompterAdmin.openSingerModal(userObj);
@@ -842,12 +912,13 @@
       });
 
       tbody.querySelectorAll('.btn-toggle-plan').forEach(function (btn) {
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
           var uId = this.getAttribute('data-user-id');
           var userObj = allUserData.find(function(u) { return u.id === uId; });
           if (userObj) {
             userObj.plan_tier = userObj.plan_tier === 'pro' ? 'free' : 'pro';
-            userObj.plan_type = userObj.plan_tier === 'pro' ? '👑 PRO VITALÍCIO' : '⚡ PLANO FREE';
+            userObj.plan_type = userObj.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE';
             PrompterAdmin.saveStoredUsers();
             PrompterAdmin.updateMetrics();
             PrompterAdmin.renderUsersTable();
@@ -918,14 +989,12 @@
     loadPricingForm: function () {
       var pM = document.getElementById('inputPriceMonthly');
       var pA = document.getElementById('inputPriceAnnual');
-      var pL = document.getElementById('inputPriceLifetime');
       var env = document.getElementById('selectMpEnv');
       var pubKey = document.getElementById('inputMpPublicKey');
       var accToken = document.getElementById('inputMpAccessToken');
 
       if (pM) pM.value = pricingConfig.monthlyPrice;
       if (pA) pA.value = pricingConfig.annualPrice;
-      if (pL) pL.value = pricingConfig.lifetimePrice;
       if (env) env.value = pricingConfig.mpEnv || 'production';
       if (pubKey) pubKey.value = pricingConfig.mpPublicKey || '';
       if (accToken) accToken.value = pricingConfig.mpAccessToken || '';
