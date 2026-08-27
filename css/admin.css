@@ -345,17 +345,17 @@
 .admin-table th {
   background: rgba(18, 27, 44, 0.95);
   color: #94a3b8;
-  padding: 14px 18px;
+  padding: 12px 14px;
   font-weight: 800;
   font-size: 0.76rem;
   text-transform: uppercase;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   white-space: nowrap;
 }
 
 .admin-table td {
-  padding: 14px 18px;
+  padding: 12px 14px;
   color: #cbd5e1;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;

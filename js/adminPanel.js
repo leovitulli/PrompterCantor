@@ -158,9 +158,10 @@
               '<!-- ABA 1: CANTORES & CLIENTES -->' +
               '<div id="adminTabClients" class="admin-tab-content">' +
                 '<div class="admin-toolbar-row">' +
-                  '<div class="admin-search-wrapper">' +
-                    '<input type="text" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar por cantor, e-mail, WhatsApp, CPF ou código...">' +
-                  '</div>' +
+                  '<form class="admin-search-wrapper" autocomplete="off" onsubmit="return false;" style="margin:0;">' +
+                    '<input type="text" name="fake_admin_user" style="display:none;" tabindex="-1">' +
+                    '<input type="search" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar por cantor, e-mail, WhatsApp, CPF ou código..." autocomplete="off" readonly onfocus="this.removeAttribute(\'readonly\');">' +
+                  '</form>' +
                   '<div class="admin-filter-pills">' +
                     '<button class="filter-pill active" data-filter="all">Todos (<span id="countPillAll">0</span>)</button>' +
                     '<button class="filter-pill" data-filter="pro">Assinantes PRO (<span id="countPillPro">0</span>)</button>' +
@@ -174,17 +175,21 @@
                   '</div>' +
                 '</div>' +
 
+                '<div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">' +
+                  '<span>💡 <strong>Dica</strong>: Clique em qualquer linha para editar o cantor, WhatsApp ou assinatura.</span>' +
+                '</div>' +
+
                 '<div class="admin-table-container">' +
                   '<table class="admin-table">' +
                     '<thead>' +
                       '<tr>' +
-                        '<th>Status</th>' +
+                        '<th style="width: 140px;">Status</th>' +
                         '<th>Cantor / E-mail</th>' +
                         '<th>Código</th>' +
                         '<th>Plano</th>' +
                         '<th>WhatsApp / CPF</th>' +
-                        '<th>Último Acesso</th>' +
-                        '<th style="text-align: right; min-width: 170px;">Gerenciamento</th>' +
+                        '<th>Instagram</th>' +
+                        '<th style="text-align: right;">Último Acesso</th>' +
                       '</tr>' +
                     '</thead>' +
                     '<tbody id="adminUsersTableBody">' +
@@ -431,8 +436,11 @@
       var btnRefresh = document.getElementById('btnRefreshAdminData');
       if (btnRefresh) {
         btnRefresh.addEventListener('click', function () {
+          searchQuery = '';
+          var sInput = document.getElementById('adminSearchInput');
+          if (sInput) sInput.value = '';
           PrompterAdmin.loadDashboardData();
-          if (window.showToast) window.showToast('⚡ Telemetria atualizada com sucesso!', 'success');
+          if (window.showToast) window.showToast('🔄 Lista de cantores atualizada com o banco de dados!', 'success');
         });
       }
 
@@ -606,6 +614,9 @@
 
       if (adminModal) {
         adminModal.classList.remove('hidden');
+        searchQuery = '';
+        var sInput = document.getElementById('adminSearchInput');
+        if (sInput) sInput.value = '';
         this.loadDashboardData();
         this.renderCouponsTable();
         this.loadPricingForm();
@@ -781,6 +792,14 @@
                   last_seen: 'Hoje',
                   created_at: p.created_at || 'Hoje'
                 });
+              } else {
+                if (p.display_name) existing.name = p.display_name;
+                if (p.phone) existing.phone = p.phone;
+                if (p.cpf) existing.cpf = p.cpf;
+                if (p.instagram) existing.instagram = p.instagram;
+                if (p.singer_code) existing.singer_code = p.singer_code;
+                if (p.plan_tier) existing.plan_tier = p.plan_tier;
+                if (p.plan_type) existing.plan_type = p.plan_type;
               }
             });
             PrompterAdmin.saveStoredUsers();
@@ -865,10 +884,11 @@
           : '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>';
 
         var phoneStr = user.phone ? ('📱 ' + user.phone) : 'Sem WhatsApp';
-        var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : (user.instagram || 'Sem CPF');
+        var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : 'Sem CPF';
+        var instaStr = user.instagram ? ('📸 ' + user.instagram) : '—';
 
         html +=
-          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para editar ' + user.name + '">' +
+          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + user.name + '">' +
             '<td>' + statusBadge + '</td>' +
             '<td>' +
               '<div class="admin-user-cell">' +
@@ -882,11 +902,8 @@
             '<td><code class="admin-code-tag">' + user.singer_code + '</code></td>' +
             '<td>' + planBadge + '</td>' +
             '<td><span class="admin-reps-stat">' + phoneStr + '</span><br><small style="color:#64748b;">' + cpfStr + '</small></td>' +
-            '<td><span class="admin-time-ago">' + user.last_seen + '</span></td>' +
-            '<td class="admin-actions-cell" style="text-align: right;">' +
-              '<button class="btn btn-sm btn-primary btn-edit-singer" data-user-id="' + user.id + '" title="Editar dados completos do cantor">✏️ Gerenciar</button> ' +
-              '<button class="btn btn-sm btn-outline btn-toggle-plan" data-user-id="' + user.id + '" title="Alternar entre PRO e FREE">⚡ Alternar</button>' +
-            '</td>' +
+            '<td><span style="color:#38bdf8; font-size:0.82rem;">' + instaStr + '</span></td>' +
+            '<td style="text-align: right;"><span class="admin-time-ago">' + user.last_seen + '</span></td>' +
           '</tr>';
       });
 
@@ -894,38 +911,10 @@
 
       // Clique em qualquer parte da linha abre o modal de edição
       tbody.querySelectorAll('.admin-user-row').forEach(function (row) {
-        row.addEventListener('click', function (e) {
-          if (e.target.closest('.btn-toggle-plan')) return;
+        row.addEventListener('click', function () {
           var uId = this.getAttribute('data-user-id');
           var userObj = allUserData.find(function(u) { return u.id === uId; });
           if (userObj) PrompterAdmin.openSingerModal(userObj);
-        });
-      });
-
-      tbody.querySelectorAll('.btn-edit-singer').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var uId = this.getAttribute('data-user-id');
-          var userObj = allUserData.find(function(u) { return u.id === uId; });
-          if (userObj) PrompterAdmin.openSingerModal(userObj);
-        });
-      });
-
-      tbody.querySelectorAll('.btn-toggle-plan').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var uId = this.getAttribute('data-user-id');
-          var userObj = allUserData.find(function(u) { return u.id === uId; });
-          if (userObj) {
-            userObj.plan_tier = userObj.plan_tier === 'pro' ? 'free' : 'pro';
-            userObj.plan_type = userObj.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE';
-            PrompterAdmin.saveStoredUsers();
-            PrompterAdmin.updateMetrics();
-            PrompterAdmin.renderUsersTable();
-            if (window.showToast) {
-              window.showToast('Plano de ' + userObj.name + ' alterado para ' + userObj.plan_type + '!', 'success');
-            }
-          }
         });
       });
     },
@@ -1011,7 +1000,7 @@
       link.href = URL.createObjectURL(blob);
       link.download = 'canta_ai_relatorio_executivo_ceo_' + new Date().toISOString().slice(0, 10) + '.csv';
       link.click();
-      if (window.showToast) window.showToast('📊 Relatório Executivo CSV exportado com sucesso!', 'success');
+      if (window.showToast) window.showToast('📊 Relatório Executivo CSV exportado com sucesso (' + allUserData.length + ' cantores)!', 'success');
     }
   };
 
