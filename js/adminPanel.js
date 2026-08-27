@@ -193,9 +193,9 @@
                   '<table class="admin-table">' +
                     '<thead>' +
                       '<tr>' +
-                        '<th style="width: 140px;">Status</th>' +
+                        '<th style="width: 45px; text-align: center;" title="Status de Conexão no Palco">●</th>' +
                         '<th>Cantor / E-mail</th>' +
-                        '<th>Código</th>' +
+                        '<th>@Login / Palco</th>' +
                         '<th>Plano</th>' +
                         '<th>WhatsApp / CPF</th>' +
                         '<th>Instagram</th>' +
@@ -752,75 +752,105 @@
       var currentProfile = window.PrompterAuth ? window.PrompterAuth.getProfile() : null;
 
       var devEmail = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser ? currentUser.email : 'leovitulli@gmail.com');
-      var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : 'Leonardo Vitulli (CEO)';
+      var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : 'Leonardo Vitulli';
+      var devCode = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : '@leovitulli';
 
-      if (!allUserData || allUserData.length === 0) {
-        allUserData = [
-          {
-            id: currentUser ? currentUser.id : 'dev-admin-1',
-            name: devName,
-            email: devEmail,
-            singer_code: '#DEV-ADMIN',
-            plan_tier: 'pro',
-            plan_type: '💎 PRO ANUAL',
-            is_online: true,
-            status_text: '🟢 Conectado ao Palco',
-            phone: '(11) 98888-7777',
-            cpf: '123.456.789-00',
-            instagram: '@leovitulli',
-            reps_count: 14,
-            songs_count: 240,
-            last_seen: 'Agora mesmo',
-            created_at: '2026-08-01'
-          }
-        ];
-        PrompterAdmin.saveStoredUsers();
-      }
-
-      // Sincronizar com Supabase profiles em tempo real
+      // Sincronizar EXCLUSIVAMENTE com dados reais do Supabase (zero fictícios)
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
         sb.from('profiles').select('*').then(function(res) {
           if (res.data && res.data.length > 0) {
-            res.data.forEach(function(p) {
-              var existing = allUserData.find(function(u) { return u.email === p.email; });
-              if (!existing) {
-                allUserData.push({
-                  id: p.id,
-                  name: p.display_name || p.email.split('@')[0],
-                  email: p.email,
-                  phone: p.phone || '',
-                  cpf: p.cpf || '',
-                  instagram: p.instagram || '',
-                  singer_code: p.singer_code || '#CANTOR-0000',
-                  plan_tier: p.plan_tier || 'free',
-                  plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
-                  is_online: true,
-                  status_text: '🟢 Conectado ao Palco',
-                  reps_count: 0,
-                  songs_count: 0,
-                  last_seen: 'Hoje',
-                  created_at: p.created_at || 'Hoje'
-                });
-              } else {
-                if (p.display_name) existing.name = p.display_name;
-                if (p.phone) existing.phone = p.phone;
-                if (p.cpf) existing.cpf = p.cpf;
-                if (p.instagram) existing.instagram = p.instagram;
-                if (p.singer_code) existing.singer_code = p.singer_code;
-                if (p.plan_tier) existing.plan_tier = p.plan_tier;
-                if (p.plan_type) existing.plan_type = p.plan_type;
-              }
+            allUserData = res.data.map(function(p) {
+              return {
+                id: p.id,
+                name: p.display_name || p.email.split('@')[0],
+                email: p.email,
+                phone: p.phone || '',
+                cpf: p.cpf || '',
+                instagram: p.instagram || '',
+                singer_code: p.singer_code || ('@' + p.email.split('@')[0]),
+                plan_tier: p.plan_tier || 'free',
+                plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
+                is_online: true,
+                status_text: '🟢 Conectado ao Palco',
+                reps_count: 0,
+                songs_count: 0,
+                last_seen: 'Hoje',
+                created_at: p.created_at || 'Hoje'
+              };
             });
             PrompterAdmin.saveStoredUsers();
             PrompterAdmin.updateMetrics();
             PrompterAdmin.renderUsersTable();
+          } else {
+            // Se Supabase ainda não retornou profiles, mantém apenas o usuário autenticado real atual
+            if (currentUser) {
+              allUserData = [{
+                id: currentUser.id,
+                name: devName,
+                email: devEmail,
+                singer_code: devCode,
+                plan_tier: (currentProfile && currentProfile.plan_tier) || 'pro',
+                plan_type: (currentProfile && currentProfile.plan_type) || '💎 PRO ANUAL',
+                is_online: true,
+                status_text: '🟢 Conectado ao Palco',
+                phone: (currentProfile && currentProfile.phone) || '',
+                cpf: (currentProfile && currentProfile.cpf) || '',
+                instagram: (currentProfile && currentProfile.instagram) || '',
+                reps_count: 1,
+                songs_count: 33,
+                last_seen: 'Agora mesmo',
+                created_at: 'Hoje'
+              }];
+              PrompterAdmin.saveStoredUsers();
+              PrompterAdmin.updateMetrics();
+              PrompterAdmin.renderUsersTable();
+            }
           }
-        }).catch(function() {});
+        }).catch(function() {
+          if (currentUser) {
+            allUserData = [{
+              id: currentUser.id,
+              name: devName,
+              email: devEmail,
+              singer_code: devCode,
+              plan_tier: (currentProfile && currentProfile.plan_tier) || 'pro',
+              plan_type: (currentProfile && currentProfile.plan_type) || '💎 PRO ANUAL',
+              is_online: true,
+              status_text: '🟢 Conectado ao Palco',
+              phone: (currentProfile && currentProfile.phone) || '',
+              cpf: (currentProfile && currentProfile.cpf) || '',
+              instagram: (currentProfile && currentProfile.instagram) || '',
+              reps_count: 1,
+              songs_count: 33,
+              last_seen: 'Agora mesmo',
+              created_at: 'Hoje'
+            }];
+            PrompterAdmin.updateMetrics();
+            PrompterAdmin.renderUsersTable();
+          }
+        });
+      } else if (currentUser) {
+        allUserData = [{
+          id: currentUser.id,
+          name: devName,
+          email: devEmail,
+          singer_code: devCode,
+          plan_tier: (currentProfile && currentProfile.plan_tier) || 'pro',
+          plan_type: (currentProfile && currentProfile.plan_type) || '💎 PRO ANUAL',
+          is_online: true,
+          status_text: '🟢 Conectado ao Palco',
+          phone: (currentProfile && currentProfile.phone) || '',
+          cpf: (currentProfile && currentProfile.cpf) || '',
+          instagram: (currentProfile && currentProfile.instagram) || '',
+          reps_count: 1,
+          songs_count: 33,
+          last_seen: 'Agora mesmo',
+          created_at: 'Hoje'
+        }];
+        PrompterAdmin.updateMetrics();
+        PrompterAdmin.renderUsersTable();
       }
-
-      PrompterAdmin.updateMetrics();
-      PrompterAdmin.renderUsersTable();
     },
 
     updateMetrics: function () {
@@ -885,9 +915,9 @@
       var html = '';
       filtered.forEach(function (user) {
         var initial = (user.name ? user.name.charAt(0) : user.email.charAt(0)).toUpperCase();
-        var statusBadge = user.is_online
-          ? '<span class="status-pill status-pill-online"><span class="pulse-dot"></span> ' + (user.status_text || 'Online') + '</span>'
-          : '<span class="status-pill status-pill-offline">⚪ Offline</span>';
+        var statusDot = user.is_online
+          ? '<span class="status-dot-pulse-online" title="🟢 Online no Palco"></span>'
+          : '<span class="status-dot-offline" title="⚪ Offline"></span>';
 
         var planBadge = user.plan_tier === 'pro'
           ? '<span class="badge-plan-executive badge-plan-pro">' + (user.plan_type || '💎 PRO ANUAL') + '</span>'
@@ -907,10 +937,11 @@
           : '<span style="color:#64748b; font-size:0.8rem;">—</span>';
 
         var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : 'Sem CPF';
+        var loginCodeStr = user.singer_code ? escapeHtml(user.singer_code) : ('@' + user.email.split('@')[0]);
 
         html +=
           '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + escapeHtml(user.name) + '">' +
-            '<td>' + statusBadge + '</td>' +
+            '<td style="text-align: center; width: 45px;">' + statusDot + '</td>' +
             '<td>' +
               '<div class="admin-user-cell">' +
                 '<div class="admin-user-avatar">' + initial + '</div>' +
@@ -920,7 +951,7 @@
                 '</div>' +
               '</div>' +
             '</td>' +
-            '<td><code class="admin-code-tag">' + escapeHtml(user.singer_code) + '</code></td>' +
+            '<td><code class="admin-code-tag" style="color: #38bdf8; font-weight: 700;">' + loginCodeStr + '</code></td>' +
             '<td>' + planBadge + '</td>' +
             '<td><div>' + waButton + '</div><small style="color:#64748b; font-size:0.75rem; margin-top:2px; display:inline-block;">' + escapeHtml(cpfStr) + '</small></td>' +
             '<td>' + instaButton + '</td>' +

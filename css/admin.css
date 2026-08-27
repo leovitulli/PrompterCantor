@@ -374,6 +374,26 @@
   background: rgba(56, 189, 248, 0.12);
 }
 
+.status-dot-pulse-online {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+  animation: pulseGreenDot 2s infinite;
+  vertical-align: middle;
+}
+
+.status-dot-offline {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #475569;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .admin-user-cell {
   display: flex;
   align-items: center;

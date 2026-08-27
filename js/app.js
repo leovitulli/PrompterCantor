@@ -2887,12 +2887,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnSaveProfileSettings) {
       btnSaveProfileSettings.addEventListener('click', function () {
         var newName = (profileDisplayNameInput ? profileDisplayNameInput.value : '').trim();
+        var newCode = (profileSingerCodeInput ? profileSingerCodeInput.value : '').trim();
         if (!newName) {
           showToast('Por favor, informe seu nome artístico ou de cantor.', 'warning');
           return;
         }
-        PrompterAuth.saveDisplayName(newName).then(function () {
-          showToast('✅ Perfil atualizado com sucesso!', 'success');
+        PrompterAuth.saveProfileDetails(newName, newCode).then(function () {
+          showToast('✅ Nome e @Login de Palco atualizados com sucesso!', 'success');
           closeProfileModal();
         }).catch(function (err) {
           showToast(err.message || 'Erro ao salvar alterações.', 'warning');

@@ -363,27 +363,42 @@
       }
     },
 
-    saveDisplayName: function(name) {
+    saveProfileDetails: function(name, singerCode) {
       if (!currentUser) return Promise.reject(new Error('Usuário não logado'));
       if (!currentProfile) currentProfile = {};
+      
+      var cleanCode = (singerCode || '').trim();
+      if (cleanCode && !cleanCode.startsWith('@') && !cleanCode.startsWith('#')) {
+        cleanCode = '@' + cleanCode;
+      }
+      
       currentProfile.display_name = name;
+      if (cleanCode) currentProfile.singer_code = cleanCode;
+
       this.saveSession(currentUser, currentProfile);
       this.updateUIForAuth();
 
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
-        return sb.from('profiles').upsert({
+        var payload = {
           id: currentUser.id,
           email: currentUser.email,
           display_name: name,
           updated_at: new Date().toISOString()
-        }).then(function() {
+        };
+        if (cleanCode) payload.singer_code = cleanCode;
+
+        return sb.from('profiles').upsert(payload).then(function() {
           return true;
         }).catch(function() {
           return true;
         });
       }
       return Promise.resolve(true);
+    },
+
+    saveDisplayName: function(name) {
+      return this.saveProfileDetails(name);
     }
   };
 
