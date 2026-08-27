@@ -187,7 +187,67 @@ var TextParser = {
         .replace(/&quot;/gi, '"');
     }
 
-    // 3. Normalização universal de quebras de linha e caracteres invisíveis
+    // 3. Sanitização inteligente de fragmentos copiados do Cifra Club (ex: ">C/Bb + linhas de letras duplicadas)
+    if (/(?:^|\n)\s*"?>[A-G]/m.test(str)) {
+      var lines = str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+      var out = [];
+
+      for (var i = 0; i < lines.length; i++) {
+        var rawLine = lines[i];
+        var trimmed = rawLine.trim();
+
+        if (/^"?>(.+)$/.test(trimmed)) {
+          var match = trimmed.match(/^"?>(.+)$/);
+          var extraChord = match[1].trim();
+
+          // Procurar próxima linha de letra não vazia para verificar se é duplicada
+          var nextNonEmptyIdx = -1;
+          for (var j = i + 1; j < lines.length; j++) {
+            if (lines[j].trim()) {
+              nextNonEmptyIdx = j;
+              break;
+            }
+          }
+
+          var lastNonEmptyOutIdx = -1;
+          for (var k = out.length - 1; k >= 0; k--) {
+            if (out[k].trim()) {
+              lastNonEmptyOutIdx = k;
+              break;
+            }
+          }
+
+          var lastOutLine = lastNonEmptyOutIdx >= 0 ? out[lastNonEmptyOutIdx].trim() : '';
+
+          if (nextNonEmptyIdx !== -1 && lines[nextNonEmptyIdx].trim() === lastOutLine) {
+            i = nextNonEmptyIdx; // Pula a letra duplicada
+          }
+
+          var prevChordIdx = -1;
+          for (var c = lastNonEmptyOutIdx - 1; c >= 0; c--) {
+            if (out[c].trim()) {
+              prevChordIdx = c;
+              break;
+            }
+          }
+
+          if (prevChordIdx >= 0) {
+            out[prevChordIdx] = out[prevChordIdx] + '   ' + extraChord;
+          } else if (lastNonEmptyOutIdx >= 0) {
+            out.splice(lastNonEmptyOutIdx, 0, extraChord);
+          } else {
+            out.push(extraChord);
+          }
+          continue;
+        }
+
+        out.push(rawLine);
+      }
+
+      str = out.join('\n');
+    }
+
+    // 4. Normalização universal de quebras de linha e caracteres invisíveis
     return str
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')
