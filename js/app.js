@@ -1244,8 +1244,21 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       searchInput.addEventListener('focus', function () {
+        this.removeAttribute('readonly');
         if (this.value) executeGlobalSearch(this.value);
       });
+
+      // Purge definitivo contra autofill indevido de e-mail do Chrome/Safari
+      var purgeSearchAutofill = function () {
+        if (searchInput && searchInput.value && searchInput.value.indexOf('@') !== -1 && document.activeElement !== searchInput) {
+          searchInput.value = '';
+          if (searchDropdown) searchDropdown.classList.add('hidden');
+        }
+      };
+      setTimeout(purgeSearchAutofill, 50);
+      setTimeout(purgeSearchAutofill, 200);
+      setTimeout(purgeSearchAutofill, 600);
+      setTimeout(purgeSearchAutofill, 1200);
     }
 
     if (btnClearSearch) {
