@@ -16,9 +16,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=89">
-  <link rel="stylesheet" href="css/admin.css?v=89">
-  <link rel="stylesheet" href="css/landing.css?v=89">
+  <link rel="stylesheet" href="css/style.css?v=92">
+  <link rel="stylesheet" href="css/admin.css?v=92">
+  <link rel="stylesheet" href="css/landing.css?v=92">
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
   <script src="js/polyfills.js?v=76"></script>
@@ -87,10 +87,6 @@
 
       <!-- Botões de Ação do Topo -->
       <div class="header-actions">
-        <div id="headerUserBadge" class="header-user-badge hidden"></div>
-        <button id="btnOpenAdminPanel" class="btn btn-secondary btn-sm hidden" title="Abrir Painel de Governança do Desenvolvedor">👑 Governança Admin</button>
-        <button id="btnAuthToggle" class="btn btn-outline btn-sm">🚪 Sair</button>
-
         <!-- Menu Unificado de Adição -->
         <div class="dropdown-add-container">
           <button id="btnDropdownAdd" class="btn btn-primary btn-add-main">
@@ -112,9 +108,63 @@
             </button>
           </div>
         </div>
-        <button id="btnToggleTheme" class="btn btn-secondary" title="Alternar Modo Claro/Escuro">
+
+        <button id="btnToggleTheme" class="btn btn-secondary btn-icon-sm" title="Alternar Modo Claro/Escuro">
           🌙
         </button>
+
+        <!-- Dropdown de Perfil do Usuário Enterprise -->
+        <div id="userProfileDropdownContainer" class="user-profile-container hidden">
+          <button id="btnUserProfileTrigger" class="user-profile-trigger" title="Minha Conta">
+            <div class="user-avatar-initial" id="userAvatarInitial">L</div>
+            <div class="user-profile-info-compact">
+              <span class="user-profile-email" id="userProfileHeaderEmail">leovitulli@gmail.com</span>
+              <span class="user-profile-plan-tag" id="userProfileHeaderPlan">PRO</span>
+            </div>
+            <span class="dropdown-arrow">▾</span>
+          </button>
+
+          <div id="userProfileMenu" class="user-profile-menu hidden">
+            <!-- Cabeçalho do Menu de Perfil -->
+            <div class="upm-header">
+              <div class="upm-avatar" id="upmAvatarBig">L</div>
+              <div class="upm-details">
+                <div class="upm-name" id="upmUserEmail">leovitulli@gmail.com</div>
+                <div class="upm-sub-line">
+                  <span class="upm-status-dot"></span>
+                  <span class="upm-singer-code" id="upmSingerCode">#DEV-ADMIN</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card de Assinatura no Menu -->
+            <div class="upm-plan-card">
+              <div class="upm-plan-badge" id="upmPlanBadge">👑 PLANO CANTAAÍ PRO</div>
+              <div class="upm-plan-desc" id="upmPlanDesc">Acesso Ilimitado • Nuvem & Palco</div>
+            </div>
+
+            <div class="upm-divider"></div>
+
+            <!-- Ações do Menu -->
+            <button id="btnProfileAdminGovernance" class="upm-item upm-item-admin hidden">
+              <span class="upm-item-icon">👑</span> Governança Admin
+            </button>
+
+            <button id="btnProfileAccountDetails" class="upm-item">
+              <span class="upm-item-icon">👤</span> Meus Dados & Código
+            </button>
+
+            <button id="btnProfileThemeToggle" class="upm-item">
+              <span class="upm-item-icon" id="upmThemeIcon">🌙</span> Modo Claro / Escuro
+            </button>
+
+            <div class="upm-divider"></div>
+
+            <button id="btnProfileLogout" class="upm-item upm-item-danger">
+              <span class="upm-item-icon">🚪</span> Sair da Conta
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -771,19 +821,19 @@
 
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=91"></script>
-  <script src="js/supabaseClient.js?v=91"></script>
-  <script src="js/db.js?v=91"></script>
-  <script src="js/auth.js?v=91"></script>
-  <script src="js/adminPanel.js?v=91"></script>
-  <script src="js/textParser.js?v=91"></script>
-  <script src="js/sampleRepertoire.js?v=91"></script>
-  <script src="js/transposer.js?v=91"></script>
-  <script src="js/prompter.js?v=91"></script>
-  <script src="js/mediaPlayer.js?v=91"></script>
-  <script src="js/advancedPlayer.js?v=91"></script>
-  <script src="js/gdrive.js?v=91"></script>
-  <script src="js/gdriveUI.js?v=91"></script>
-  <script src="js/app.js?v=91"></script>
+  <script src="js/config.js?v=92"></script>
+  <script src="js/supabaseClient.js?v=92"></script>
+  <script src="js/db.js?v=92"></script>
+  <script src="js/auth.js?v=92"></script>
+  <script src="js/adminPanel.js?v=92"></script>
+  <script src="js/textParser.js?v=92"></script>
+  <script src="js/sampleRepertoire.js?v=92"></script>
+  <script src="js/transposer.js?v=92"></script>
+  <script src="js/prompter.js?v=92"></script>
+  <script src="js/mediaPlayer.js?v=92"></script>
+  <script src="js/advancedPlayer.js?v=92"></script>
+  <script src="js/gdrive.js?v=92"></script>
+  <script src="js/gdriveUI.js?v=92"></script>
+  <script src="js/app.js?v=92"></script>
 </body>
 </html>

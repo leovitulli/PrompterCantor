@@ -1474,14 +1474,43 @@ document.addEventListener('DOMContentLoaded', function () {
       btnScrollToTop.addEventListener('click', handleTopClick, { passive: false });
     }
 
-    // Alternar Tema
+    // Alternar Tema (Claro / Escuro com persistência)
     var btnToggleTheme = document.getElementById('btnToggleTheme');
-    if (btnToggleTheme) {
-      btnToggleTheme.addEventListener('click', function () {
-        document.body.classList.toggle('light-mode');
-        document.body.classList.toggle('dark-mode');
-      });
+    var upmThemeIcon = document.getElementById('upmThemeIcon');
+
+    function applyAppTheme(theme) {
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+        document.body.classList.remove('dark-mode');
+        if (btnToggleTheme) btnToggleTheme.innerText = '☀️';
+        if (upmThemeIcon) upmThemeIcon.innerText = '☀️';
+      } else {
+        document.body.classList.remove('light-mode');
+        document.body.classList.add('dark-mode');
+        if (btnToggleTheme) btnToggleTheme.innerText = '🌙';
+        if (upmThemeIcon) upmThemeIcon.innerText = '🌙';
+      }
     }
+
+    function toggleAppTheme() {
+      var isLight = document.body.classList.contains('light-mode');
+      var newTheme = isLight ? 'dark' : 'light';
+      try {
+        localStorage.setItem('prompter_theme', newTheme);
+      } catch (e) {}
+      applyAppTheme(newTheme);
+    }
+
+    var savedAppTheme = 'dark';
+    try {
+      savedAppTheme = localStorage.getItem('prompter_theme') || 'dark';
+    } catch (e) {}
+    applyAppTheme(savedAppTheme);
+
+    if (btnToggleTheme) {
+      btnToggleTheme.addEventListener('click', toggleAppTheme);
+    }
+    window.toggleAppTheme = toggleAppTheme;
 
     // Fechar tela interna de músicas
     var btnRsvBack = document.getElementById('btnRsvBack');
@@ -2649,20 +2678,61 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    if (btnAuthToggle) {
-      btnAuthToggle.addEventListener('click', function () {
+    // ── CONTROLES DO DROPDOWN DE PERFIL DO USUÁRIO ENTERPRISE ──
+    var btnUserProfileTrigger = document.getElementById('btnUserProfileTrigger');
+    var userProfileMenu = document.getElementById('userProfileMenu');
+    var btnProfileAdmin = document.getElementById('btnProfileAdminGovernance');
+    var btnProfileLogout = document.getElementById('btnProfileLogout');
+    var btnProfileDetails = document.getElementById('btnProfileAccountDetails');
+    var btnProfileThemeToggle = document.getElementById('btnProfileThemeToggle');
+
+    if (btnUserProfileTrigger && userProfileMenu) {
+      btnUserProfileTrigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        userProfileMenu.classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!userProfileMenu.classList.contains('hidden') && !userProfileMenu.contains(e.target) && e.target !== btnUserProfileTrigger) {
+          userProfileMenu.classList.add('hidden');
+        }
+      });
+    }
+
+    if (btnProfileAdmin) {
+      btnProfileAdmin.addEventListener('click', function () {
+        if (userProfileMenu) userProfileMenu.classList.add('hidden');
+        if (window.PrompterAdmin) PrompterAdmin.openModal();
+      });
+    }
+
+    if (btnProfileDetails) {
+      btnProfileDetails.addEventListener('click', function () {
+        if (userProfileMenu) userProfileMenu.classList.add('hidden');
+        var profile = PrompterAuth.getProfile();
+        var user = PrompterAuth.getUser();
+        var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
+        var code = (profile && profile.singer_code) ? profile.singer_code : (PrompterAuth.isAdmin() ? '#DEV-ADMIN' : '#CANTOR-PRO');
+        var plan = (profile && profile.plan_tier) ? profile.plan_tier.toUpperCase() : 'PRO';
+        alert('🎤 MEU PERFIL CANTAAÍ PRO\n\n• E-mail: ' + email + '\n• Código do Cantor: ' + code + '\n• Plano: ' + plan + ' (Nuvem Ativa)\n• Sincronização: Automática');
+      });
+    }
+
+    if (btnProfileThemeToggle) {
+      btnProfileThemeToggle.addEventListener('click', function () {
+        if (window.toggleAppTheme) window.toggleAppTheme();
+      });
+    }
+
+    if (btnProfileLogout) {
+      btnProfileLogout.addEventListener('click', function () {
+        if (userProfileMenu) userProfileMenu.classList.add('hidden');
         if (confirm('Deseja realmente sair da sua conta?')) {
           PrompterAuth.signOut().then(function () {
             showToast('Você saiu da sua conta.', 'info');
             showLanding();
           });
         }
-      });
-    }
-
-    if (btnOpenAdminPanel) {
-      btnOpenAdminPanel.addEventListener('click', function () {
-        if (window.PrompterAdmin) PrompterAdmin.openModal();
       });
     }
 

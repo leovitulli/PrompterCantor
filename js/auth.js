@@ -221,29 +221,51 @@
     //  ATUALIZAÇÃO DA INTERFACE PARA O AUTH
     // ═══════════════════════════════════════
     updateUIForAuth: function () {
-      var btnAuth = document.getElementById('btnAuthToggle');
-      var btnAdmin = document.getElementById('btnOpenAdminPanel');
-      var userBadge = document.getElementById('headerUserBadge');
+      var profileContainer = document.getElementById('userProfileDropdownContainer');
+      var userInitial = document.getElementById('userAvatarInitial');
+      var upmAvatarBig = document.getElementById('upmAvatarBig');
+      var headerEmail = document.getElementById('userProfileHeaderEmail');
+      var headerPlan = document.getElementById('userProfileHeaderPlan');
+      var upmUserEmail = document.getElementById('upmUserEmail');
+      var upmSingerCode = document.getElementById('upmSingerCode');
+      var upmPlanBadge = document.getElementById('upmPlanBadge');
+      var upmPlanDesc = document.getElementById('upmPlanDesc');
+      var btnProfileAdmin = document.getElementById('btnProfileAdminGovernance');
 
       if (currentUser) {
-        if (btnAuth) btnAuth.innerHTML = '🚪 Sair';
-        if (userBadge) {
-          userBadge.classList.remove('hidden');
-          userBadge.innerHTML = '👤 ' + (currentProfile ? currentProfile.email : currentUser.email) +
-            ' <span class="badge-plan ' + (currentProfile && currentProfile.plan_tier === 'pro' ? 'plan-pro' : 'plan-free') + '">' +
-            (currentProfile ? currentProfile.plan_tier.toUpperCase() : 'FREE') + '</span>';
+        var email = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser.email || '');
+        var initial = (email.charAt(0) || 'U').toUpperCase();
+        var isPro = (currentProfile && currentProfile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
+        var isAdm = this.isAdmin();
+        var code = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : (isAdm ? '#DEV-ADMIN' : '#CANTOR-PRO');
+
+        if (profileContainer) profileContainer.classList.remove('hidden');
+        if (userInitial) userInitial.innerText = initial;
+        if (upmAvatarBig) upmAvatarBig.innerText = initial;
+        if (headerEmail) headerEmail.innerText = email;
+        if (headerPlan) {
+          headerPlan.innerText = isPro ? 'PRO' : 'FREE';
+          headerPlan.className = 'user-profile-plan-tag ' + (isPro ? 'plan-pro' : 'plan-free');
         }
-        if (btnAdmin) {
-          if (this.isAdmin()) {
-            btnAdmin.classList.remove('hidden');
+        if (upmUserEmail) upmUserEmail.innerText = email;
+        if (upmSingerCode) upmSingerCode.innerText = code;
+
+        if (upmPlanBadge) {
+          upmPlanBadge.innerHTML = isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE';
+        }
+        if (upmPlanDesc) {
+          upmPlanDesc.innerText = isPro ? 'Acesso Total Ilimitado • Nuvem & Palco' : 'Repertórios Básicos • Faça Upgrade para PRO';
+        }
+
+        if (btnProfileAdmin) {
+          if (isAdm) {
+            btnProfileAdmin.classList.remove('hidden');
           } else {
-            btnAdmin.classList.add('hidden');
+            btnProfileAdmin.classList.add('hidden');
           }
         }
       } else {
-        if (btnAuth) btnAuth.innerHTML = '🔑 Entrar / Cadastrar';
-        if (userBadge) userBadge.classList.add('hidden');
-        if (btnAdmin) btnAdmin.classList.add('hidden');
+        if (profileContainer) profileContainer.classList.add('hidden');
       }
     }
   };

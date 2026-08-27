@@ -44,16 +44,117 @@
 body.light-mode {
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.95);
   --bg-card-hover: #f1f5f9;
   --border-color: #e2e8f0;
-  --border-hover: #059669;
+  --border-hover: #10b981;
   --text-main: #0f172a;
   --text-muted: #64748b;
   --text-inverse: #ffffff;
-  --accent-color: #059669;
-  --accent-hover: #047857;
-  --accent-glow: rgba(5, 150, 105, 0.15);
+  --accent-color: #10b981;
+  --accent-hover: #059669;
+  --accent-glow: rgba(16, 185, 129, 0.15);
+  background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 60%), #f8fafc !important;
+  color: #0f172a !important;
+}
+
+body.light-mode .app-header {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-mode .logo-title {
+  background: linear-gradient(135deg, #0f172a 30%, #475569 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+body.light-mode #searchInput {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.light-mode .repertoire-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .rep-card-title {
+  color: #0f172a !important;
+}
+
+body.light-mode .btn-secondary {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.light-mode .btn-outline {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.light-mode .user-profile-trigger {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.light-mode .user-profile-email {
+  color: #0f172a !important;
+}
+
+body.light-mode .user-profile-menu {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.light-mode .upm-name {
+  color: #0f172a !important;
+}
+
+body.light-mode .upm-item {
+  color: #334155 !important;
+}
+
+body.light-mode .upm-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+body.light-mode .rsv-header,
+body.light-mode .songs-list-table {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .rsv-title {
+  color: #0f172a !important;
+}
+
+body.light-mode .song-row-title {
+  color: #0f172a !important;
+}
+
+body.light-mode .song-list-row {
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+body.light-mode .song-list-row:hover {
+  background: rgba(16, 185, 129, 0.06) !important;
+}
+
+body.light-mode .dropdown-add-menu {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.light-mode .dropdown-add-item {
+  color: #0f172a !important;
 }
 
 /* ── RESET & BASE ────────────────────────────────────── */
@@ -350,6 +451,214 @@ textarea {
   height: 1px;
   background: rgba(255, 255, 255, 0.08);
   margin: 4px 0;
+}
+
+/* ── DROPDOWN DE PERFIL DO USUÁRIO ENTERPRISE ────────── */
+.user-profile-container {
+  position: relative;
+  display: inline-block;
+}
+
+.user-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  padding: 4px 14px 4px 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.user-profile-trigger:hover {
+  background: rgba(22, 33, 54, 0.9);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+.user-avatar-initial {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.user-profile-info-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-profile-email {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #f8fafc;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile-plan-tag {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
+}
+
+.user-profile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 290px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 25px rgba(16, 185, 129, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 1000;
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.upm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.upm-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+.upm-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.upm-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upm-sub-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.upm-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.upm-singer-code {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: var(--font-mono);
+}
+
+.upm-plan-card {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.upm-plan-badge {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #34d399;
+  letter-spacing: 0.4px;
+}
+
+.upm-plan-desc {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.upm-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 8px 0;
+}
+
+.upm-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.upm-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.upm-item-admin {
+  color: #fbbf24;
+}
+
+.upm-item-admin:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fde68a;
+}
+
+.upm-item-danger {
+  color: #f87171;
+}
+
+.upm-item-danger:hover {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
 }
 
 .btn {
