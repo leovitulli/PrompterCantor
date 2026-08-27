@@ -28,7 +28,19 @@ var Prompter = {
     this.scrollSpeedDisplay = document.getElementById('scrollSpeedDisplay');
     this.fontSizeDisplay = document.getElementById('fontSizeDisplay');
 
+    // Responsividade Inteligente de Fonte Padrão:
+    // Celulares: 22px-24px | Tablets/iPads: 28px-32px | Desktop: 32px
+    var screenW = window.innerWidth || document.documentElement.clientWidth || 360;
+    if (screenW <= 480) {
+      this.fontSize = 22;
+    } else if (screenW <= 768) {
+      this.fontSize = 26;
+    } else {
+      this.fontSize = 32;
+    }
+
     this.bindEvents();
+    this.applyFontSize();
   },
 
   bindEvents: function() {
