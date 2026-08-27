@@ -169,46 +169,85 @@ function cleanSambaDuplicates() {
       var repStore = tx.objectStore('repertoires');
       var songStore = tx.objectStore('songs');
 
-      var sambaId = null;
-      var req = repStore.openCursor();
-      req.onsuccess = function(e) {
+      var sambaRep = null;
+      var malandroRep = null;
+      var reps = [];
+
+      var repReq = repStore.openCursor();
+      repReq.onsuccess = function(e) {
         var cursor = e.target.result;
         if (cursor) {
-          if (cursor.value.name === 'SAMBA') {
-            sambaId = String(cursor.value.id);
-          }
-          if (cursor.value.name === 'Malandro e Malandras' && (!cursor.value.user_email || cursor.value.user_email === 'leovitulli@gmail.com')) {
-            var v = cursor.value;
-            v.user_email = 'leoogum23@gmail.com';
-            cursor.update(v);
-          }
+          reps.push(cursor.value);
+          if (cursor.value.name === 'SAMBA') sambaRep = cursor.value;
+          if (cursor.value.name === 'Malandro e Malandras') malandroRep = cursor.value;
           cursor.continue();
         }
       };
 
       tx.oncomplete = function() {
-        if (!sambaId) return resolve(true);
-        // Desduplicar músicas do SAMBA
+        if (!sambaRep) return resolve(true);
+
         initDB().then(function(db2) {
-          var tx2 = db2.transaction('songs', 'readwrite');
-          var sStore = tx2.objectStore('songs');
-          var seenTitles = {};
-          var sReq = sStore.openCursor();
+          var tx2 = db2.transaction(['repertoires', 'songs'], 'readwrite');
+          var rStore2 = tx2.objectStore('repertoires');
+          var sStore2 = tx2.objectStore('songs');
+
+          // Garantir que Malandro e Malandras existe e pertence exclusivamente ao leoogum23@gmail.com
+          var malandroId = malandroRep ? malandroRep.id : ('rep_' + Date.now());
+          if (!malandroRep) {
+            rStore2.put({
+              id: malandroId,
+              name: 'Malandro e Malandras',
+              source: 'manual',
+              user_id: 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0',
+              user_email: 'leoogum23@gmail.com',
+              createdAt: Date.now(),
+              updatedAt: Date.now()
+            });
+          } else if (malandroRep.user_email !== 'leoogum23@gmail.com') {
+            malandroRep.user_email = 'leoogum23@gmail.com';
+            malandroRep.user_id = 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0';
+            rStore2.put(malandroRep);
+          }
+
+          var sambaId = String(sambaRep.id);
+          var authenticMap = {};
+          var sampleList = [
+            "RESIGNAÇÃO", "MAS QUEM DISSE QUE EU TE ESQUEÇO", "YAÔ", "FORA DE OCASIÃO",
+            "FOGO DE SAUDADE", "TENDÊNCIA", "SENTIMENTO DE POSSE", "SEJA MAIS VOCÊ",
+            "VOLTA DE VEZ PRA MIM", "SONHOS", "ALGUMA COISA", "PAZ ENLOUQUECIDA",
+            "DO JEITO QUE A VIDA QUER", "TE GOSTO", "FALSO HERÓI", "ROMANCE DOS ASTROS",
+            "TIMIDEZ", "DEIXE ESTAR", "RESPONDE", "SÓ POR UM MOMENTO", "MUTIRÃO DE AMOR",
+            "DOCE AMIZADE", "AMOR DE VERDADE", "DE SAMPA À SÃO LUIS", "SEM ATAQUE, SEM DEFESA",
+            "NUNCA VI VOCÊ TÃO TRISTE ASSIM", "AMOR E FESTANÇA", "SAUDADE LOUCA",
+            "NOVA ESPERANÇA", "TODOS OS PAGODES", "BORBOLETA CEGA"
+          ];
+          sampleList.forEach(function(t) {
+            authenticMap[t.trim().toUpperCase()] = true;
+          });
+
+          var sReq = sStore2.openCursor();
           sReq.onsuccess = function(ev) {
             var sCursor = ev.target.result;
             if (sCursor) {
               var sVal = sCursor.value;
               if (String(sVal.repertoireId) === sambaId) {
                 var normTitle = (sVal.title || '').trim().toUpperCase();
-                if (seenTitles[normTitle]) {
-                  sCursor.delete();
+                // Se a música NÃO pertence ao SAMBA original (veio da importação de Malandros)
+                if (!authenticMap[normTitle] || sVal.user_email === 'leoogum23@gmail.com') {
+                  sVal.repertoireId = malandroId;
+                  sVal.user_email = 'leoogum23@gmail.com';
+                  sVal.user_id = 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0';
+                  sCursor.update(sVal);
                 } else {
-                  seenTitles[normTitle] = true;
+                  sVal.user_email = 'leovitulli@gmail.com';
+                  sCursor.update(sVal);
                 }
               }
               sCursor.continue();
             }
           };
+
           tx2.oncomplete = function() { resolve(true); };
           tx2.onerror = function() { resolve(false); };
         });
