@@ -279,28 +279,26 @@
                         '<label>Código do Cupom:</label>' +
                         '<input type="text" id="inputCouponCode" class="form-control" placeholder="Ex: VIP100, CANTOR50" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;">' +
                       '</div>' +
-                      '<div class="form-grid-2cols">' +
-                        '<div class="form-group">' +
-                          '<label>Tipo de Benefício:</label>' +
-                          '<select id="selectCouponType" class="form-control">' +
-                            '<option value="vip">👑 100% OFF (Acesso VIP Grátis)</option>' +
-                            '<option value="percent">⚡ Desconto Percentual (%)</option>' +
-                            '<option value="fixed">💰 Desconto Fixo (R$)</option>' +
-                          '</select>' +
-                        '</div>' +
-                        '<div class="form-group">' +
-                          '<label>Valor do Desconto:</label>' +
-                          '<input type="text" id="inputCouponValue" class="form-control" placeholder="Ex: 100%, 50%, R$ 20">' +
-                        '</div>' +
+                      '<div class="form-group">' +
+                        '<label>Tipo de Benefício:</label>' +
+                        '<select id="selectCouponType" class="form-control">' +
+                          '<option value="vip">👑 100% OFF (Acesso VIP Grátis)</option>' +
+                          '<option value="percent">⚡ Desconto Percentual (%)</option>' +
+                          '<option value="fixed">💰 Desconto Fixo (R$)</option>' +
+                        '</select>' +
                       '</div>' +
-                      '<div class="form-grid-2cols">' +
+                      '<div class="form-group">' +
+                        '<label>Valor do Desconto:</label>' +
+                        '<input type="text" id="inputCouponValue" class="form-control" placeholder="Ex: 100%, 50%, R$ 20">' +
+                      '</div>' +
+                      '<div class="form-grid-2cols" style="grid-template-columns: 110px 1fr; gap: 12px;">' +
                         '<div class="form-group">' +
-                          '<label>Limite de Usos:</label>' +
+                          '<label>Limite Usos:</label>' +
                           '<input type="number" id="inputCouponMaxUses" class="form-control" value="50" min="1">' +
                         '</div>' +
                         '<div class="form-group">' +
                           '<label>Descrição / Observação:</label>' +
-                          '<input type="text" id="inputCouponDesc" class="form-control" placeholder="Ex: Cortesia para parceiros">' +
+                          '<input type="text" id="inputCouponDesc" class="form-control" placeholder="Ex: Cortesia parceiros">' +
                         '</div>' +
                       '</div>' +
                       '<button type="button" id="btnSaveNewCoupon" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">🎟️ Ativar Cupom no Sistema</button>' +
