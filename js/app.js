@@ -1143,31 +1143,31 @@ document.addEventListener('DOMContentLoaded', function () {
           var normArtist = s.artist ? normalizeSearch(s.artist) : '';
           var normComposer = s.composer ? normalizeSearch(s.composer) : '';
           var normRhythm = s.rhythm ? normalizeSearch(s.rhythm) : '';
-          var normBody = s.body ? normalizeSearch(s.body) : '';
+          var fullText = s.content || s.body || s.lyrics || s.text || s.rawText || '';
+          var normContent = fullText ? normalizeSearch(fullText) : '';
 
           var titleMatch = normTitle.indexOf(normQ) !== -1;
           var artistMatch = normArtist.indexOf(normQ) !== -1;
           var composerMatch = normComposer.indexOf(normQ) !== -1;
           var rhythmMatch = normRhythm.indexOf(normQ) !== -1;
-          var bodyMatch = normBody.indexOf(normQ) !== -1;
+          var contentMatch = normContent.indexOf(normQ) !== -1;
 
           s._matchedLyricSnippet = null;
-          if (bodyMatch && !titleMatch && !artistMatch && !composerMatch) {
-            var lines = (s.body || '').split('\n');
+          if (contentMatch && !titleMatch && !artistMatch && !composerMatch) {
+            var lines = fullText.split('\n');
             for (var l = 0; l < lines.length; l++) {
               var lineNorm = normalizeSearch(lines[l]);
               if (lineNorm.indexOf(normQ) !== -1) {
                 var cleanLine = lines[l].trim();
-                // Ignorar linhas puramente de acordes com espaços longos
                 if (cleanLine.length > 2) {
-                  s._matchedLyricSnippet = cleanLine.slice(0, 50);
+                  s._matchedLyricSnippet = cleanLine.slice(0, 60);
                   break;
                 }
               }
             }
           }
 
-          return titleMatch || artistMatch || composerMatch || rhythmMatch || bodyMatch;
+          return titleMatch || artistMatch || composerMatch || rhythmMatch || contentMatch;
         });
 
         if (!searchDropdown) return;
