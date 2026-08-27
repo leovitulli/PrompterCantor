@@ -110,6 +110,8 @@
             '<!-- ABAS DE NAVEGAÇÃO EXECUTIVA -->' +
             '<div class="admin-nav-tabs">' +
               '<button class="admin-tab-btn active" data-tab="clients">👥 Cantores & Clientes</button>' +
+              '<button class="admin-tab-btn" data-tab="announcements">📢 Comunicados & Mensagens</button>' +
+              '<button class="admin-tab-btn" data-tab="tickets">🎫 Chamados & Suporte</button>' +
               '<button class="admin-tab-btn" data-tab="coupons">🎟️ Cupons VIP & Descontos</button>' +
               '<button class="admin-tab-btn" data-tab="pricing">💳 Planos & Mercado Pago</button>' +
             '</div>' +
@@ -209,7 +211,63 @@
                 '</div>' +
               '</div>' +
 
-              '<!-- ABA 2: CUPONS VIP & DESCONTOS -->' +
+              '<!-- ABA 2: COMUNICADOS & MENSAGENS -->' +
+              '<div id="adminTabAnnouncements" class="admin-tab-content hidden">' +
+                '<div class="admin-card-section" style="margin-bottom: 1.5rem;">' +
+                  '<h4>📢 Enviar Comunicado aos Cantores</h4>' +
+                  '<p style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 1rem;">Envie mensagens em tempo real para todos os usuários ou direcionadas a um cantor específico.</p>' +
+                  '<form id="formSendAnnouncement" onsubmit="return false;">' +
+                    '<div class="form-grid-2cols">' +
+                      '<div class="form-group">' +
+                        '<label>Destinatário:</label>' +
+                        '<select id="announcementTarget" class="form-control">' +
+                          '<option value="all">🌐 TODOS OS CANTORES (Broadcast Geral)</option>' +
+                        '</select>' +
+                      '</div>' +
+                      '<div class="form-group">' +
+                        '<label>Tipo de Mensagem:</label>' +
+                        '<select id="announcementType" class="form-control">' +
+                          '<option value="update">🚀 Nova Atualização do App</option>' +
+                          '<option value="info">ℹ️ Aviso do Sistema</option>' +
+                          '<option value="promo">🎉 Novidade & Benefício</option>' +
+                          '<option value="alert">⚠️ Alerta Importante</option>' +
+                        '</select>' +
+                      '</div>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                      '<label>Título do Comunicado:</label>' +
+                      '<input type="text" id="announcementTitle" class="form-control" placeholder="Ex: Nova função de Repertório Colaborativo disponível!">' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                      '<label>Conteúdo da Mensagem:</label>' +
+                      '<textarea id="announcementMessage" class="form-control" rows="3" placeholder="Digite sua mensagem que aparecerá para os cantores no app..."></textarea>' +
+                    '</div>' +
+                    '<button type="button" id="btnSendAnnouncement" class="btn btn-primary" style="padding: 10px 20px; font-weight: 700;">🚀 Publicar Comunicado</button>' +
+                  '</form>' +
+                '</div>' +
+                '<div class="admin-card-section">' +
+                  '<h4>📜 Histórico de Comunicados Enviados</h4>' +
+                  '<div id="announcementsListContainer" style="margin-top: 1rem;">' +
+                    '<div style="color: #94a3b8; font-size: 0.85rem;">Nenhum comunicado enviado ainda.</div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+
+              '<!-- ABA 3: CHAMADOS & SUPORTE (COM FOTOS) -->' +
+              '<div id="adminTabTickets" class="admin-tab-content hidden">' +
+                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">' +
+                  '<div>' +
+                    '<h4 style="margin:0;">🎫 Central de Chamados & Feedback de Cantores</h4>' +
+                    '<p style="margin:0; font-size: 0.8rem; color: #94a3b8;">Sugestões de melhorias, dúvidas e problemas relatados pelos usuários com anexos</p>' +
+                  '</div>' +
+                  '<button id="btnRefreshTickets" class="btn btn-outline btn-sm">🔄 Atualizar Chamados</button>' +
+                '</div>' +
+                '<div id="ticketsListContainer" style="margin-top: 1rem;">' +
+                  '<div style="color: #94a3b8; padding: 20px; text-align: center;">Carregando chamados...</div>' +
+                '</div>' +
+              '</div>' +
+
+              '<!-- ABA 4: CUPONS VIP & DESCONTOS -->' +
               '<div id="adminTabCoupons" class="admin-tab-content hidden">' +
                 '<div class="admin-coupon-layout">' +
                   '<!-- Card Criador de Cupom -->' +
@@ -429,8 +487,7 @@
       var scSongs = document.getElementById('shortcutCardSongs');
       if (scSongs) {
         scSongs.addEventListener('click', function () {
-          PrompterAdmin.switchTab('clients');
-          PrompterAdmin.setFilter('all');
+          PrompterAdmin.openMasterSongsModal();
         });
       }
 
@@ -527,13 +584,61 @@
         });
       }
 
-      // Fechar Sub-modal Cantor
-      var btnCloseSinger = document.getElementById('btnCloseEditSingerModal');
-      var overlaySinger = document.getElementById('adminEditSingerOverlay');
-      if (btnCloseSinger) btnCloseSinger.addEventListener('click', PrompterAdmin.closeSingerModal);
-      if (overlaySinger) overlaySinger.addEventListener('click', PrompterAdmin.closeSingerModal);
+      // Fechar Sub-Modal Cantor
+      var btnCloseEdit = document.getElementById('btnCloseEditSingerModal');
+      var overlayEdit = document.getElementById('adminEditSingerOverlay');
+      if (btnCloseEdit) btnCloseEdit.addEventListener('click', PrompterAdmin.closeSingerModal);
+      if (overlayEdit) overlayEdit.addEventListener('click', PrompterAdmin.closeSingerModal);
 
-      // Criar Cupom
+      // Comunicados & Mensagens
+      var btnSendAnnounce = document.getElementById('btnSendAnnouncement');
+      if (btnSendAnnounce) {
+        btnSendAnnounce.addEventListener('click', function () {
+          PrompterAdmin.sendAnnouncement();
+        });
+      }
+
+      // Chamados & Suporte
+      var btnRefTickets = document.getElementById('btnRefreshTickets');
+      if (btnRefTickets) {
+        btnRefTickets.addEventListener('click', function () {
+          PrompterAdmin.loadTickets();
+        });
+      }
+
+      // Acervo Master de Músicas
+      var btnCloseMaster = document.getElementById('btnCloseMasterSongsModal');
+      var overlayMaster = document.getElementById('adminMasterSongsOverlay');
+      if (btnCloseMaster) btnCloseMaster.addEventListener('click', PrompterAdmin.closeMasterSongsModal);
+      if (overlayMaster) overlayMaster.addEventListener('click', PrompterAdmin.closeMasterSongsModal);
+
+      var btnRefMaster = document.getElementById('btnRefreshMasterSongs');
+      if (btnRefMaster) {
+        btnRefMaster.addEventListener('click', function () {
+          PrompterAdmin.loadMasterSongs();
+        });
+      }
+
+      var inputMaster = document.getElementById('inputMasterSearch');
+      if (inputMaster) {
+        inputMaster.addEventListener('input', function (e) {
+          PrompterAdmin.renderMasterSongsList((e.target.value || '').toLowerCase().trim());
+        });
+      }
+
+      // Zoom de imagem
+      var btnCloseImg = document.getElementById('btnCloseImagePreview');
+      var overlayImg = document.getElementById('imagePreviewOverlay');
+      if (btnCloseImg) btnCloseImg.addEventListener('click', function() {
+        var m = document.getElementById('imagePreviewModal');
+        if (m) m.classList.add('hidden');
+      });
+      if (overlayImg) overlayImg.addEventListener('click', function() {
+        var m = document.getElementById('imagePreviewModal');
+        if (m) m.classList.add('hidden');
+      });
+
+      // Salvar Cupom
       var btnSaveCoupon = document.getElementById('btnSaveNewCoupon');
       if (btnSaveCoupon) {
         btnSaveCoupon.addEventListener('click', function () {
@@ -544,7 +649,7 @@
           var desc = (document.getElementById('inputCouponDesc').value || '').trim();
 
           if (!code) {
-            if (window.showToast) window.showToast('Informe o código do cupom.', 'warning');
+            if (window.showToast) window.showToast('Digite um código para o cupom.', 'warning');
             return;
           }
 
@@ -599,12 +704,19 @@
       });
 
       var c1 = document.getElementById('adminTabClients');
-      var c2 = document.getElementById('adminTabCoupons');
-      var c3 = document.getElementById('adminTabPricing');
+      var c2 = document.getElementById('adminTabAnnouncements');
+      var c3 = document.getElementById('adminTabTickets');
+      var c4 = document.getElementById('adminTabCoupons');
+      var c5 = document.getElementById('adminTabPricing');
 
       if (c1) c1.classList.toggle('hidden', currentTab !== 'clients');
-      if (c2) c2.classList.toggle('hidden', currentTab !== 'coupons');
-      if (c3) c3.classList.toggle('hidden', currentTab !== 'pricing');
+      if (c2) c2.classList.toggle('hidden', currentTab !== 'announcements');
+      if (c3) c3.classList.toggle('hidden', currentTab !== 'tickets');
+      if (c4) c4.classList.toggle('hidden', currentTab !== 'coupons');
+      if (c5) c5.classList.toggle('hidden', currentTab !== 'pricing');
+
+      if (currentTab === 'announcements') PrompterAdmin.loadAnnouncements();
+      if (currentTab === 'tickets') PrompterAdmin.loadTickets();
     },
 
     setFilter: function (filterName) {
@@ -669,7 +781,7 @@
         document.getElementById('editSingerPhone').value = '';
         document.getElementById('editSingerCpf').value = '';
         document.getElementById('editSingerInstagram').value = '';
-        document.getElementById('editSingerCode').value = '#CANTOR-' + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('editSingerCode').value = '@cantor_' + Math.floor(1000 + Math.random() * 9000);
         document.getElementById('editSingerPlan').value = 'pro_annual';
         document.getElementById('editSingerStatus').value = 'online';
         if (btnDel) btnDel.classList.add('hidden');
@@ -690,7 +802,7 @@
       var phone = (document.getElementById('editSingerPhone').value || '').trim();
       var cpf = (document.getElementById('editSingerCpf').value || '').trim();
       var instagram = (document.getElementById('editSingerInstagram').value || '').trim();
-      var code = (document.getElementById('editSingerCode').value || '').trim() || ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000));
+      var code = (document.getElementById('editSingerCode').value || '').trim() || ('@' + email.split('@')[0]);
       var planVal = document.getElementById('editSingerPlan').value;
       var statusVal = document.getElementById('editSingerStatus').value;
 
@@ -704,23 +816,21 @@
       if (planVal === 'pro_monthly') planType = '⚡ PRO MENSAL';
       else if (planVal === 'free') planType = '⚡ PLANO FREE';
 
-      if (id) {
-        var existing = allUserData.find(function(u) { return u.id === id; });
-        if (existing) {
-          existing.name = name;
-          existing.email = email;
-          existing.phone = phone;
-          existing.cpf = cpf;
-          existing.instagram = instagram;
-          existing.singer_code = code;
-          existing.plan_tier = isPro ? 'pro' : 'free';
-          existing.plan_type = planType;
-          existing.is_online = statusVal === 'online';
-          existing.status_text = statusVal === 'online' ? '🟢 Conectado ao Palco' : '⚪ Offline';
-        }
+      var existing = allUserData.find(function(u) { return u.id === id || u.email === email; });
+      if (existing) {
+        existing.name = name;
+        existing.email = email;
+        existing.phone = phone;
+        existing.cpf = cpf;
+        existing.instagram = instagram;
+        existing.singer_code = code;
+        existing.plan_tier = isPro ? 'pro' : 'free';
+        existing.plan_type = planType;
+        existing.is_online = statusVal === 'online';
+        existing.status_text = statusVal === 'online' ? '🟢 Conectado ao Palco' : '⚪ Offline';
       } else {
-        var newUser = {
-          id: 'user-' + Date.now(),
+        allUserData.unshift({
+          id: id || ('user-' + Date.now()),
           name: name,
           email: email,
           phone: phone,
@@ -731,12 +841,28 @@
           plan_type: planType,
           is_online: statusVal === 'online',
           status_text: statusVal === 'online' ? '🟢 Conectado ao Palco' : '⚪ Offline',
-          reps_count: 1,
-          songs_count: 12,
+          reps_count: 0,
+          songs_count: 0,
           last_seen: 'Hoje',
           created_at: new Date().toISOString().slice(0, 10)
-        };
-        allUserData.unshift(newUser);
+        });
+      }
+
+      // Persistir diretamente no Supabase profiles
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb && id) {
+        sb.from('profiles').upsert({
+          id: id,
+          email: email,
+          display_name: name,
+          phone: phone,
+          cpf: cpf,
+          instagram: instagram,
+          singer_code: code,
+          plan_tier: isPro ? 'pro' : 'free',
+          plan_type: planType,
+          updated_at: new Date().toISOString()
+        }).catch(function() {});
       }
 
       PrompterAdmin.saveStoredUsers();
@@ -744,7 +870,7 @@
       PrompterAdmin.renderUsersTable();
       PrompterAdmin.closeSingerModal();
 
-      if (window.showToast) window.showToast('✅ Dados do cantor salvos com sucesso!', 'success');
+      if (window.showToast) window.showToast('✅ Dados do cantor salvos no banco com sucesso!', 'success');
     },
 
     loadDashboardData: function () {
@@ -761,14 +887,15 @@
         sb.from('profiles').select('*').then(function(res) {
           if (res.data && res.data.length > 0) {
             allUserData = res.data.map(function(p) {
+              var existing = allUserData.find(function(u) { return u.email === p.email; });
               return {
                 id: p.id,
-                name: p.display_name || p.email.split('@')[0],
+                name: p.display_name || (existing ? existing.name : p.email.split('@')[0]),
                 email: p.email,
-                phone: p.phone || '',
-                cpf: p.cpf || '',
-                instagram: p.instagram || '',
-                singer_code: p.singer_code || ('@' + p.email.split('@')[0]),
+                phone: p.phone || (existing ? existing.phone : ''),
+                cpf: p.cpf || (existing ? existing.cpf : ''),
+                instagram: p.instagram || (existing ? existing.instagram : ''),
+                singer_code: p.singer_code || (existing ? existing.singer_code : ('@' + p.email.split('@')[0])),
                 plan_tier: p.plan_tier || 'free',
                 plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
                 is_online: true,
@@ -782,33 +909,8 @@
             PrompterAdmin.saveStoredUsers();
             PrompterAdmin.updateMetrics();
             PrompterAdmin.renderUsersTable();
-          } else {
-            // Se Supabase ainda não retornou profiles, mantém apenas o usuário autenticado real atual
-            if (currentUser) {
-              allUserData = [{
-                id: currentUser.id,
-                name: devName,
-                email: devEmail,
-                singer_code: devCode,
-                plan_tier: (currentProfile && currentProfile.plan_tier) || 'pro',
-                plan_type: (currentProfile && currentProfile.plan_type) || '💎 PRO ANUAL',
-                is_online: true,
-                status_text: '🟢 Conectado ao Palco',
-                phone: (currentProfile && currentProfile.phone) || '',
-                cpf: (currentProfile && currentProfile.cpf) || '',
-                instagram: (currentProfile && currentProfile.instagram) || '',
-                reps_count: 1,
-                songs_count: 33,
-                last_seen: 'Agora mesmo',
-                created_at: 'Hoje'
-              }];
-              PrompterAdmin.saveStoredUsers();
-              PrompterAdmin.updateMetrics();
-              PrompterAdmin.renderUsersTable();
-            }
-          }
-        }).catch(function() {
-          if (currentUser) {
+            PrompterAdmin.populateAnnouncementTargets();
+          } else if (currentUser) {
             allUserData = [{
               id: currentUser.id,
               name: devName,
@@ -826,10 +928,12 @@
               last_seen: 'Agora mesmo',
               created_at: 'Hoje'
             }];
+            PrompterAdmin.saveStoredUsers();
             PrompterAdmin.updateMetrics();
             PrompterAdmin.renderUsersTable();
+            PrompterAdmin.populateAnnouncementTargets();
           }
-        });
+        }).catch(function() {});
       } else if (currentUser) {
         allUserData = [{
           id: currentUser.id,
@@ -850,6 +954,7 @@
         }];
         PrompterAdmin.updateMetrics();
         PrompterAdmin.renderUsersTable();
+        PrompterAdmin.populateAnnouncementTargets();
       }
     },
 

@@ -16,9 +16,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=116">
-  <link rel="stylesheet" href="css/admin.css?v=116">
-  <link rel="stylesheet" href="css/landing.css?v=116">
+  <link rel="stylesheet" href="css/style.css?v=117">
+  <link rel="stylesheet" href="css/admin.css?v=117">
+  <link rel="stylesheet" href="css/landing.css?v=117">
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
   <script src="js/polyfills.js?v=76"></script>
@@ -153,7 +153,11 @@
             </button>
 
             <button id="btnProfileAccountDetails" class="upm-item">
-              <span class="upm-item-icon">👤</span> Meus Dados & Código
+              <span class="upm-item-icon">👤</span> Meus Dados & @Login
+            </button>
+
+            <button id="btnProfileOpenSupport" class="upm-item" style="color: #38bdf8;">
+              <span class="upm-item-icon">💬</span> Suporte & Sugestões
             </button>
 
             <button id="btnProfileThemeToggle" class="upm-item">
@@ -904,11 +908,113 @@
               </button>
             </div>
           </div>
+
+          <div style="margin-top: 1.25rem;">
+            <button type="button" id="btnProfileModalSupport" class="btn btn-outline" style="width: 100%; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              💬 Abrir Chamado ou Sugerir Melhoria (com Foto)
+            </button>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
         <button id="btnCancelProfileModal" class="btn btn-secondary">Fechar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SUPORTE & ABERTURA DE CHAMADOS (COM UPLOAD DE FOTO/PRINT) -->
+  <div id="userSupportModal" class="modal hidden" style="z-index: 1000010;">
+    <div class="modal-overlay" id="userSupportOverlay"></div>
+    <div class="modal-card" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.5rem;">💬</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.2rem;">Central de Suporte & Sugestões</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Fale diretamente com o desenvolvedor do CantaAí PRO</p>
+          </div>
+        </div>
+        <button class="modal-close" id="btnCloseUserSupportModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+        <form id="formUserSupport" onsubmit="return false;">
+          <div class="form-group">
+            <label for="ticketCategory">Tipo de Solicitação:</label>
+            <select id="ticketCategory" class="form-control">
+              <option value="suggestion">💡 Sugestão de Melhoria</option>
+              <option value="bug">🐛 Relatar Problema / Bug</option>
+              <option value="doubt">❓ Dúvida sobre o App</option>
+              <option value="billing">💳 Assinatura & Planos</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ticketTitle">Assunto / Resumo:</label>
+            <input type="text" id="ticketTitle" class="form-control" placeholder="Ex: Sugestão para o modo palco ou Erro ao transpor tom" required>
+          </div>
+
+          <div class="form-group">
+            <label for="ticketDescription">Detalhes da sua mensagem:</label>
+            <textarea id="ticketDescription" class="form-control" rows="4" placeholder="Descreva com detalhes o que você precisa ou como podemos melhorar..." required></textarea>
+          </div>
+
+          <!-- Upload de Imagem / Print -->
+          <div class="form-group">
+            <label>Anexar Print ou Foto da Tela (Opcional):</label>
+            <div style="border: 2px dashed rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 14px; text-align: center; background: rgba(56, 189, 248, 0.04); cursor: pointer;" id="ticketDropZone">
+              <input type="file" id="ticketFileInput" accept="image/*" style="display: none;">
+              <div id="ticketUploadPrompt">
+                <span style="font-size: 1.5rem;">📸</span>
+                <div style="font-size: 0.85rem; font-weight: 600; color: #38bdf8; margin-top: 4px;">Clique para anexar imagem / print</div>
+                <small style="color: #64748b; font-size: 0.75rem;">Formatos aceitos: JPG, PNG, WEBP</small>
+              </div>
+              <div id="ticketPreviewContainer" class="hidden" style="margin-top: 10px; position: relative;">
+                <img id="ticketImagePreview" src="" alt="Preview" style="max-height: 140px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                <button type="button" id="btnRemoveTicketImage" style="position: absolute; top: -8px; right: 20%; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold;">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" id="btnSubmitTicket" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; margin-top: 0.5rem;">
+            🚀 Enviar Chamado para o Suporte
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MASTER: ACERVO GLOBAL DE MÚSICAS & REPERTÓRIOS (VIEW DO CEO) -->
+  <div id="adminMasterSongsModal" class="modal hidden" style="z-index: 1000008;">
+    <div class="modal-overlay" id="adminMasterSongsOverlay"></div>
+    <div class="modal-card" style="max-width: 840px; max-height: 92vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.6rem;">📚</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.25rem;">Acervo Global de Músicas & Cifras (Master View)</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Acesso direto a todas as músicas do sistema para visualização e cópia rápida</p>
+          </div>
+        </div>
+        <button class="modal-close" id="btnCloseMasterSongsModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+        <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+          <input type="search" id="inputMasterSearch" class="form-control" placeholder="🔍 Buscar por título, cantor, ritmo ou trecho da letra..." style="flex: 1;">
+          <button id="btnRefreshMasterSongs" class="btn btn-outline" title="Atualizar Lista">🔄</button>
+        </div>
+        <div id="masterSongsListContainer" style="max-height: 60vh; overflow-y: auto;">
+          <div class="text-center" style="padding: 24px; color: #94a3b8;">Carregando acervo de músicas...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ZOOM DE IMAGEM / PRINT DE SUPORTE -->
+  <div id="imagePreviewModal" class="modal hidden" style="z-index: 1000020;">
+    <div class="modal-overlay" id="imagePreviewOverlay"></div>
+    <div class="modal-card" style="max-width: 90vw; max-height: 90vh; background: transparent; box-shadow: none; border: none; text-align: center;">
+      <button class="modal-close" id="btnCloseImagePreview" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 36px; height: 36px; z-index: 2;">✕</button>
+      <img id="imagePreviewFull" src="" alt="Print Anexo" style="max-width: 100%; max-height: 85vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
     </div>
   </div>
 
@@ -1051,19 +1157,19 @@
 
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=116"></script>
-  <script src="js/supabaseClient.js?v=116"></script>
-  <script src="js/db.js?v=116"></script>
-  <script src="js/auth.js?v=116"></script>
-  <script src="js/adminPanel.js?v=116"></script>
-  <script src="js/textParser.js?v=116"></script>
-  <script src="js/sampleRepertoire.js?v=116"></script>
-  <script src="js/transposer.js?v=116"></script>
-  <script src="js/prompter.js?v=116"></script>
-  <script src="js/mediaPlayer.js?v=116"></script>
-  <script src="js/advancedPlayer.js?v=116"></script>
-  <script src="js/gdrive.js?v=116"></script>
-  <script src="js/gdriveUI.js?v=116"></script>
-  <script src="js/app.js?v=116"></script>
+  <script src="js/config.js?v=117"></script>
+  <script src="js/supabaseClient.js?v=117"></script>
+  <script src="js/db.js?v=117"></script>
+  <script src="js/auth.js?v=117"></script>
+  <script src="js/adminPanel.js?v=117"></script>
+  <script src="js/textParser.js?v=117"></script>
+  <script src="js/sampleRepertoire.js?v=117"></script>
+  <script src="js/transposer.js?v=117"></script>
+  <script src="js/prompter.js?v=117"></script>
+  <script src="js/mediaPlayer.js?v=117"></script>
+  <script src="js/advancedPlayer.js?v=117"></script>
+  <script src="js/gdrive.js?v=117"></script>
+  <script src="js/gdriveUI.js?v=117"></script>
+  <script src="js/app.js?v=117"></script>
 </body>
 </html>

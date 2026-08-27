@@ -3158,6 +3158,126 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // ── CENTRAL DE SUPORTE, FEEDBACK & CHAMADOS DO CANTOR (COM FOTO/PRINT) ──
+    var userSupportModal = document.getElementById('userSupportModal');
+    var btnCloseUserSupportModal = document.getElementById('btnCloseUserSupportModal');
+    var userSupportOverlay = document.getElementById('userSupportOverlay');
+    var btnProfileOpenSupport = document.getElementById('btnProfileOpenSupport');
+    var btnProfileModalSupport = document.getElementById('btnProfileModalSupport');
+    var btnSubmitTicket = document.getElementById('btnSubmitTicket');
+    var ticketFileInput = document.getElementById('ticketFileInput');
+    var ticketDropZone = document.getElementById('ticketDropZone');
+    var ticketUploadPrompt = document.getElementById('ticketUploadPrompt');
+    var ticketPreviewContainer = document.getElementById('ticketPreviewContainer');
+    var ticketImagePreview = document.getElementById('ticketImagePreview');
+    var btnRemoveTicketImage = document.getElementById('btnRemoveTicketImage');
+    var currentTicketImageBase64 = '';
+
+    function openUserSupportModal() {
+      if (!userSupportModal) return;
+      if (userProfileMenu) userProfileMenu.classList.add('hidden');
+      if (profileModal) profileModal.classList.add('hidden');
+      userSupportModal.classList.remove('hidden');
+    }
+
+    function closeUserSupportModal() {
+      if (userSupportModal) userSupportModal.classList.add('hidden');
+      resetSupportForm();
+    }
+
+    function resetSupportForm() {
+      var tTitle = document.getElementById('ticketTitle');
+      var tDesc = document.getElementById('ticketDescription');
+      if (tTitle) tTitle.value = '';
+      if (tDesc) tDesc.value = '';
+      currentTicketImageBase64 = '';
+      if (ticketPreviewContainer) ticketPreviewContainer.classList.add('hidden');
+      if (ticketUploadPrompt) ticketUploadPrompt.classList.remove('hidden');
+      if (ticketFileInput) ticketFileInput.value = '';
+    }
+
+    if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', openUserSupportModal);
+    if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', openUserSupportModal);
+    if (btnCloseUserSupportModal) btnCloseUserSupportModal.addEventListener('click', closeUserSupportModal);
+    if (userSupportOverlay) userSupportOverlay.addEventListener('click', closeUserSupportModal);
+
+    if (ticketDropZone && ticketFileInput) {
+      ticketDropZone.addEventListener('click', function (e) {
+        if (e.target !== btnRemoveTicketImage) {
+          ticketFileInput.click();
+        }
+      });
+
+      ticketFileInput.addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (evt) {
+          currentTicketImageBase64 = evt.target.result;
+          if (ticketImagePreview) ticketImagePreview.src = currentTicketImageBase64;
+          if (ticketPreviewContainer) ticketPreviewContainer.classList.remove('hidden');
+          if (ticketUploadPrompt) ticketUploadPrompt.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (btnRemoveTicketImage) {
+      btnRemoveTicketImage.addEventListener('click', function (e) {
+        e.stopPropagation();
+        currentTicketImageBase64 = '';
+        if (ticketPreviewContainer) ticketPreviewContainer.classList.add('hidden');
+        if (ticketUploadPrompt) ticketUploadPrompt.classList.remove('hidden');
+        if (ticketFileInput) ticketFileInput.value = '';
+      });
+    }
+
+    if (btnSubmitTicket) {
+      btnSubmitTicket.addEventListener('click', function () {
+        var cat = document.getElementById('ticketCategory').value;
+        var title = (document.getElementById('ticketTitle').value || '').trim();
+        var desc = (document.getElementById('ticketDescription').value || '').trim();
+
+        if (!title || !desc) {
+          showToast('Preencha o assunto e a descrição da mensagem.', 'warning');
+          return;
+        }
+
+        var user = PrompterAuth.getUser();
+        var profile = PrompterAuth.getProfile();
+        var uEmail = (profile && profile.email) ? profile.email : (user ? user.email : 'cantor@cantaaipro.com');
+        var uName = (profile && profile.display_name) ? profile.display_name : (user ? user.email.split('@')[0] : 'Cantor CantaAí');
+
+        var newTicket = {
+          id: 'tkt-' + Date.now(),
+          user_id: user ? user.id : null,
+          user_email: uEmail,
+          user_name: uName,
+          category: cat,
+          title: title,
+          description: desc,
+          image_url: currentTicketImageBase64 || '',
+          status: 'open',
+          created_at: new Date().toISOString()
+        };
+
+        // Salvar localmente
+        var raw = localStorage.getItem('canta_ai_support_tickets');
+        var list = raw ? JSON.parse(raw) : [];
+        list.unshift(newTicket);
+        localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
+
+        // Salvar no Supabase
+        var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+        if (sb) {
+          sb.from('tickets').insert([newTicket]).catch(function() {});
+        }
+
+        closeUserSupportModal();
+        showToast('🚀 Chamado enviado com sucesso! O desenvolvedor analisará sua solicitação.', 'success');
+      });
+    }
+
     if (btnProfileThemeToggle) {
       btnProfileThemeToggle.addEventListener('click', function () {
         if (window.toggleAppTheme) window.toggleAppTheme();

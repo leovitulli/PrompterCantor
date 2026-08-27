@@ -126,3 +126,51 @@ FROM auth.users au
 ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
     role = EXCLUDED.role;
+
+-- 7. TABELA DE CHAMADOS & FEEDBACK (COM FOTO/PRINT)
+CREATE TABLE IF NOT EXISTS public.tickets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_email TEXT NOT NULL,
+    user_name TEXT DEFAULT '',
+    category TEXT DEFAULT 'suggestion', -- 'bug', 'suggestion', 'doubt', 'billing'
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    image_url TEXT DEFAULT '',
+    status TEXT DEFAULT 'open', -- 'open', 'in_progress', 'resolved'
+    admin_response TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Tickets viewable by owner or admin" ON public.tickets;
+CREATE POLICY "Tickets viewable by owner or admin" ON public.tickets
+    FOR SELECT USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+DROP POLICY IF EXISTS "Tickets insertable" ON public.tickets;
+CREATE POLICY "Tickets insertable" ON public.tickets
+    FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Tickets updatable by admin" ON public.tickets;
+CREATE POLICY "Tickets updatable by admin" ON public.tickets
+    FOR UPDATE USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+
+-- 8. TABELA DE COMUNICADOS & MENSAGENS
+CREATE TABLE IF NOT EXISTS public.announcements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    target_user_id UUID DEFAULT NULL, -- NULL para todos os cantores (Broadcast)
+    target_user_email TEXT DEFAULT '', -- Vazio para broadcast geral
+    type TEXT DEFAULT 'update', -- 'update', 'info', 'promo', 'alert'
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_by TEXT DEFAULT 'Leonardo Vitulli (CEO)',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Announcements viewable by target or all" ON public.announcements;
+CREATE POLICY "Announcements viewable by target or all" ON public.announcements
+    FOR SELECT USING (target_user_id IS NULL OR target_user_id = auth.uid() OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+DROP POLICY IF EXISTS "Announcements manageable by admin" ON public.announcements;
+CREATE POLICY "Announcements manageable by admin" ON public.announcements
+    FOR ALL USING (is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
