@@ -160,7 +160,7 @@
               '<div id="adminTabClients" class="admin-tab-content">' +
                 '<div class="admin-toolbar-row">' +
                   '<div class="admin-search-wrapper">' +
-                    '<input type="text" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar por cantor, e-mail, banda ou código...">' +
+                    '<input type="text" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar por cantor, e-mail, telefone, CPF ou código...">' +
                   '</div>' +
                   '<div class="admin-filter-pills">' +
                     '<button class="filter-pill active" data-filter="all">Todos (<span id="countPillAll">0</span>)</button>' +
@@ -179,11 +179,11 @@
                   '<table class="admin-table">' +
                     '<thead>' +
                       '<tr>' +
-                        '<th>Status de Palco</th>' +
-                        '<th>Cantor / E-mail</th>' +
+                        '<th>Status</th>' +
+                        '<th>Cantor / Contato</th>' +
                         '<th>Código de Palco</th>' +
                         '<th>Plano & Assinatura</th>' +
-                        '<th>Repertórios & Músicas</th>' +
+                        '<th>Documento / Redes</th>' +
                         '<th>Último Acesso</th>' +
                         '<th style="text-align: right;">Governança & Ações</th>' +
                       '</tr>' +
@@ -307,7 +307,7 @@
           '<!-- SUB-MODAL: EDITAR OU CRIAR CANTOR -->' +
           '<div id="adminEditSingerModal" class="modal hidden" style="z-index: 1000002;">' +
             '<div class="modal-overlay" id="adminEditSingerOverlay"></div>' +
-            '<div class="modal-card" style="max-width: 520px;">' +
+            '<div class="modal-card" style="max-width: 540px;">' +
               '<div class="modal-header">' +
                 '<h3 id="adminEditSingerTitle">✏️ Gerenciar Cantor</h3>' +
                 '<button class="modal-close" id="btnCloseEditSingerModal">✕</button>' +
@@ -323,25 +323,41 @@
                     '<label>E-mail da Conta:</label>' +
                     '<input type="email" id="editSingerEmail" class="form-control" required placeholder="cantor@exemplo.com">' +
                   '</div>' +
+                  '<div class="form-grid-2cols">' +
+                    '<div class="form-group">' +
+                      '<label>WhatsApp:</label>' +
+                      '<input type="tel" id="editSingerPhone" class="form-control" placeholder="(11) 99999-9999">' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                      '<label>CPF:</label>' +
+                      '<input type="text" id="editSingerCpf" class="form-control" placeholder="000.000.000-00">' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="form-group">' +
+                    '<label>Instagram / Rede Social:</label>' +
+                    '<input type="text" id="editSingerInstagram" class="form-control" placeholder="@cantor_oficial">' +
+                  '</div>' +
+                  '<div class="form-grid-2cols">' +
+                    '<div class="form-group">' +
+                      '<label>Plano de Assinatura:</label>' +
+                      '<select id="editSingerPlan" class="form-control">' +
+                        '<option value="pro_lifetime">👑 PRO VITALÍCIO</option>' +
+                        '<option value="pro_annual">💎 PRO ANUAL</option>' +
+                        '<option value="pro_monthly">⚡ PRO MENSAL</option>' +
+                        '<option value="free">⚡ PLANO FREE</option>' +
+                      '</select>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                      '<label>Status do Cantor:</label>' +
+                      '<select id="editSingerStatus" class="form-control">' +
+                        '<option value="online">🟢 Conectado / Palco</option>' +
+                        '<option value="offline">⚪ Offline</option>' +
+                      '</select>' +
+                    '</div>' +
+                  '</div>' +
                   '<div class="form-group">' +
                     '<label>Código do Cantor (Palco):</label>' +
                     '<input type="text" id="editSingerCode" class="form-control" placeholder="#CANTOR-0000" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">' +
-                  '</div>' +
-                  '<div class="form-group">' +
-                    '<label>Plano de Assinatura:</label>' +
-                    '<select id="editSingerPlan" class="form-control">' +
-                      '<option value="pro_lifetime">👑 PRO VITALÍCIO</option>' +
-                      '<option value="pro_annual">💎 PRO ANUAL</option>' +
-                      '<option value="pro_monthly">⚡ PRO MENSAL</option>' +
-                      '<option value="free">⚡ PLANO FREE</option>' +
-                    '</select>' +
-                  '</div>' +
-                  '<div class="form-group">' +
-                    '<label>Status do Cantor:</label>' +
-                    '<select id="editSingerStatus" class="form-control">' +
-                      '<option value="online">🟢 Em Show Ao Vivo / Palco</option>' +
-                      '<option value="offline">⚪ Offline</option>' +
-                    '</select>' +
                   '</div>' +
                   '<div style="display: flex; gap: 10px; margin-top: 1.5rem;">' +
                     '<button type="button" id="btnDeleteSinger" class="btn btn-outline" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">🗑️ Excluir</button>' +
@@ -551,11 +567,14 @@
         document.getElementById('editSingerId').value = user.id;
         document.getElementById('editSingerName').value = user.name;
         document.getElementById('editSingerEmail').value = user.email;
+        document.getElementById('editSingerPhone').value = user.phone || '';
+        document.getElementById('editSingerCpf').value = user.cpf || '';
+        document.getElementById('editSingerInstagram').value = user.instagram || '';
         document.getElementById('editSingerCode').value = user.singer_code;
         
         var pVal = 'pro_lifetime';
-        if (user.plan_type.indexOf('ANUAL') !== -1) pVal = 'pro_annual';
-        else if (user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
+        if (user.plan_type && user.plan_type.indexOf('ANUAL') !== -1) pVal = 'pro_annual';
+        else if (user.plan_type && user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
         else if (user.plan_tier === 'free') pVal = 'free';
         document.getElementById('editSingerPlan').value = pVal;
 
@@ -566,6 +585,9 @@
         document.getElementById('editSingerId').value = '';
         document.getElementById('editSingerName').value = '';
         document.getElementById('editSingerEmail').value = '';
+        document.getElementById('editSingerPhone').value = '';
+        document.getElementById('editSingerCpf').value = '';
+        document.getElementById('editSingerInstagram').value = '';
         document.getElementById('editSingerCode').value = '#CANTOR-' + Math.floor(1000 + Math.random() * 9000);
         document.getElementById('editSingerPlan').value = 'pro_lifetime';
         document.getElementById('editSingerStatus').value = 'online';
@@ -584,6 +606,9 @@
       var id = document.getElementById('editSingerId').value;
       var name = (document.getElementById('editSingerName').value || '').trim();
       var email = (document.getElementById('editSingerEmail').value || '').trim();
+      var phone = (document.getElementById('editSingerPhone').value || '').trim();
+      var cpf = (document.getElementById('editSingerCpf').value || '').trim();
+      var instagram = (document.getElementById('editSingerInstagram').value || '').trim();
       var code = (document.getElementById('editSingerCode').value || '').trim() || ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000));
       var planVal = document.getElementById('editSingerPlan').value;
       var statusVal = document.getElementById('editSingerStatus').value;
@@ -604,6 +629,9 @@
         if (existing) {
           existing.name = name;
           existing.email = email;
+          existing.phone = phone;
+          existing.cpf = cpf;
+          existing.instagram = instagram;
           existing.singer_code = code;
           existing.plan_tier = isPro ? 'pro' : 'free';
           existing.plan_type = planType;
@@ -615,6 +643,9 @@
           id: 'user-' + Date.now(),
           name: name,
           email: email,
+          phone: phone,
+          cpf: cpf,
+          instagram: instagram,
           singer_code: code,
           plan_tier: isPro ? 'pro' : 'free',
           plan_type: planType,
@@ -654,83 +685,50 @@
             plan_type: '👑 PRO VITALÍCIO',
             is_online: true,
             status_text: '🟢 Conectado ao Palco',
+            phone: '(11) 98888-7777',
+            cpf: '123.456.789-00',
+            instagram: '@leovitulli',
             reps_count: 14,
             songs_count: 240,
             last_seen: 'Agora mesmo',
             created_at: '2026-08-01'
-          },
-          {
-            id: 'singer-02',
-            name: 'Jorge Aragão Samba Show',
-            email: 'jorge.sambashow@cantores.com.br',
-            singer_code: '#CANTOR-4912',
-            plan_tier: 'pro',
-            plan_type: '💎 PRO ANUAL',
-            is_online: true,
-            status_text: '🟢 Em Show Ao Vivo',
-            reps_count: 22,
-            songs_count: 480,
-            last_seen: 'Há 2 min',
-            created_at: '2026-08-10'
-          },
-          {
-            id: 'singer-03',
-            name: 'Banda Revelação Oficial',
-            email: 'contato@revelacao.com.br',
-            singer_code: '#CANTOR-7721',
-            plan_tier: 'pro',
-            plan_type: '💎 PRO ANUAL',
-            is_online: true,
-            status_text: '🟢 Em Show Ao Vivo',
-            reps_count: 35,
-            songs_count: 650,
-            last_seen: 'Há 4 min',
-            created_at: '2026-08-12'
-          },
-          {
-            id: 'singer-04',
-            name: 'Péricles & Grupo Ensaio',
-            email: 'pericles.voz@pagode.com.br',
-            singer_code: '#CANTOR-9910',
-            plan_tier: 'pro',
-            plan_type: '⚡ PRO MENSAL',
-            is_online: false,
-            status_text: '⚪ Offline',
-            reps_count: 18,
-            songs_count: 310,
-            last_seen: 'Hoje às 19:40',
-            created_at: '2026-08-15'
-          },
-          {
-            id: 'singer-05',
-            name: 'Alexandre Pires Acústico',
-            email: 'alexandre@cantores.com.br',
-            singer_code: '#CANTOR-3304',
-            plan_tier: 'pro',
-            plan_type: '👑 PRO VITALÍCIO',
-            is_online: true,
-            status_text: '🟢 Conectado ao Palco',
-            reps_count: 12,
-            songs_count: 290,
-            last_seen: 'Há 8 min',
-            created_at: '2026-08-16'
-          },
-          {
-            id: 'singer-06',
-            name: 'Clube do Samba SP',
-            email: 'clubedosambasp@gmail.com',
-            singer_code: '#CANTOR-1102',
-            plan_tier: 'free',
-            plan_type: '⚡ PLANO FREE',
-            is_online: false,
-            status_text: '⚪ Offline',
-            reps_count: 2,
-            songs_count: 15,
-            last_seen: 'Ontem',
-            created_at: '2026-08-20'
           }
         ];
         PrompterAdmin.saveStoredUsers();
+      }
+
+      // Sincronizar com Supabase profiles em tempo real
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb) {
+        sb.from('profiles').select('*').then(function(res) {
+          if (res.data && res.data.length > 0) {
+            res.data.forEach(function(p) {
+              var existing = allUserData.find(function(u) { return u.email === p.email; });
+              if (!existing) {
+                allUserData.push({
+                  id: p.id,
+                  name: p.display_name || p.email.split('@')[0],
+                  email: p.email,
+                  phone: p.phone || '',
+                  cpf: p.cpf || '',
+                  instagram: p.instagram || '',
+                  singer_code: p.singer_code || '#CANTOR-0000',
+                  plan_tier: p.plan_tier || 'free',
+                  plan_type: p.plan_type || (p.plan_tier === 'pro' ? '👑 PRO VITALÍCIO' : '⚡ PLANO FREE'),
+                  is_online: true,
+                  status_text: '🟢 Conectado ao Palco',
+                  reps_count: 0,
+                  songs_count: 0,
+                  last_seen: 'Hoje',
+                  created_at: p.created_at || 'Hoje'
+                });
+              }
+            });
+            PrompterAdmin.saveStoredUsers();
+            PrompterAdmin.updateMetrics();
+            PrompterAdmin.renderUsersTable();
+          }
+        }).catch(function() {});
       }
 
       PrompterAdmin.updateMetrics();
@@ -784,7 +782,9 @@
           var matchName = (u.name || '').toLowerCase().indexOf(searchQuery) !== -1;
           var matchEmail = (u.email || '').toLowerCase().indexOf(searchQuery) !== -1;
           var matchCode = (u.singer_code || '').toLowerCase().indexOf(searchQuery) !== -1;
-          return matchName || matchEmail || matchCode;
+          var matchPhone = (u.phone || '').toLowerCase().indexOf(searchQuery) !== -1;
+          var matchCpf = (u.cpf || '').toLowerCase().indexOf(searchQuery) !== -1;
+          return matchName || matchEmail || matchCode || matchPhone || matchCpf;
         }
         return true;
       });
@@ -802,8 +802,11 @@
           : '<span class="status-pill status-pill-offline">⚪ Offline</span>';
 
         var planBadge = user.plan_tier === 'pro'
-          ? '<span class="badge-plan-executive badge-plan-pro">' + user.plan_type + '</span>'
+          ? '<span class="badge-plan-executive badge-plan-pro">' + (user.plan_type || '👑 PRO VITALÍCIO') + '</span>'
           : '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>';
+
+        var phoneStr = user.phone ? ('📱 ' + user.phone) : 'Sem WhatsApp';
+        var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : (user.instagram || 'Sem CPF');
 
         html +=
           '<tr class="admin-user-row">' +
@@ -819,7 +822,7 @@
             '</td>' +
             '<td><code class="admin-code-tag">' + user.singer_code + '</code></td>' +
             '<td>' + planBadge + '</td>' +
-            '<td><span class="admin-reps-stat">📂 ' + user.reps_count + ' reps</span> • <span class="admin-songs-stat">🎵 ' + user.songs_count + ' músicas</span></td>' +
+            '<td><span class="admin-reps-stat">' + phoneStr + '</span><br><small style="color:#64748b;">' + cpfStr + '</small></td>' +
             '<td><span class="admin-time-ago">' + user.last_seen + '</span></td>' +
             '<td class="admin-actions-cell" style="text-align: right;">' +
               '<button class="btn btn-sm btn-primary btn-edit-singer" data-user-id="' + user.id + '" title="Editar dados completos do cantor">✏️ Editar</button> ' +
@@ -929,9 +932,9 @@
     },
 
     exportCSV: function () {
-      var csv = 'ID,Nome,Email,Codigo_Cantor,Plano,Status,Repertorios,Musicas,Ultimo_Acesso\n';
+      var csv = 'ID,Nome,Email,Telefone,CPF,Instagram,Codigo_Cantor,Plano,Status,Ultimo_Acesso\n';
       allUserData.forEach(function (u) {
-        csv += '"' + u.id + '","' + u.name + '","' + u.email + '","' + u.singer_code + '","' + u.plan_type + '","' + u.status_text + '",' + u.reps_count + ',' + u.songs_count + ',"' + u.last_seen + '"\n';
+        csv += '"' + u.id + '","' + u.name + '","' + u.email + '","' + (u.phone || '') + '","' + (u.cpf || '') + '","' + (u.instagram || '') + '","' + u.singer_code + '","' + u.plan_type + '","' + u.status_text + '","' + u.last_seen + '"\n';
       });
 
       var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

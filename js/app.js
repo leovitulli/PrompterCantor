@@ -2578,15 +2578,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setAuthMode(mode) {
       currentAuthMode = mode;
+      var signUpFields = document.getElementById('signUpFieldsGroup');
       if (mode === 'signup') {
         if (tabAuthSignUp) tabAuthSignUp.classList.add('active');
         if (tabAuthSignIn) tabAuthSignIn.classList.remove('active');
-        if (btnSubmitAuth) btnSubmitAuth.innerText = 'Criar Minha Conta Grátis';
-        if (authSubtitleText) authSubtitleText.innerText = 'Cadastre-se grátis e comece a usar no palco';
+        if (signUpFields) signUpFields.classList.remove('hidden');
+        if (btnSubmitAuth) btnSubmitAuth.innerText = 'Finalizar Cadastro & Acessar';
+        if (authSubtitleText) authSubtitleText.innerText = 'Preencha seus dados para criar sua conta de cantor';
         if (forgotContainer) forgotContainer.style.display = 'none';
       } else {
         if (tabAuthSignIn) tabAuthSignIn.classList.add('active');
         if (tabAuthSignUp) tabAuthSignUp.classList.remove('active');
+        if (signUpFields) signUpFields.classList.add('hidden');
         if (btnSubmitAuth) btnSubmitAuth.innerText = 'Entrar na Conta';
         if (authSubtitleText) authSubtitleText.innerText = 'Acesse sua conta para ver seus repertórios';
         if (forgotContainer) forgotContainer.style.display = 'block';
@@ -2603,6 +2606,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (window.PrompterAuth) PrompterAuth.init();
     if (window.PrompterAdmin) PrompterAdmin.init();
+
+    // Máscaras de Telefone e CPF
+    var authPhoneInput = document.getElementById('authPhone');
+    if (authPhoneInput) {
+      authPhoneInput.addEventListener('input', function (e) {
+        var v = e.target.value.replace(/\D/g, '');
+        if (v.length > 11) v = v.slice(0, 11);
+        if (v.length > 6) {
+          e.target.value = '(' + v.slice(0, 2) + ') ' + v.slice(2, 7) + '-' + v.slice(7);
+        } else if (v.length > 2) {
+          e.target.value = '(' + v.slice(0, 2) + ') ' + v.slice(2);
+        } else if (v.length > 0) {
+          e.target.value = '(' + v;
+        }
+      });
+    }
+
+    var authCpfInput = document.getElementById('authCpf');
+    if (authCpfInput) {
+      authCpfInput.addEventListener('input', function (e) {
+        var v = e.target.value.replace(/\D/g, '');
+        if (v.length > 11) v = v.slice(0, 11);
+        if (v.length > 9) {
+          e.target.value = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6, 9) + '-' + v.slice(9);
+        } else if (v.length > 6) {
+          e.target.value = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6);
+        } else if (v.length > 3) {
+          e.target.value = v.slice(0, 3) + '.' + v.slice(3);
+        }
+      });
+    }
 
     if (tabAuthSignIn) {
       tabAuthSignIn.addEventListener('click', function () { setAuthMode('signin'); });
@@ -2645,9 +2679,39 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if (currentAuthMode === 'signup') {
-        showToast('Criando sua conta...', 'info');
-        PrompterAuth.signUp(email, pass).then(function () {
-          showToast('🎉 Conta criada com sucesso!', 'success');
+        var nameEl = document.getElementById('authName');
+        var phoneEl = document.getElementById('authPhone');
+        var cpfEl = document.getElementById('authCpf');
+        var instaEl = document.getElementById('authInstagram');
+        var couponEl = document.getElementById('authCouponCode');
+
+        var name = nameEl ? nameEl.value.trim() : '';
+        var phone = phoneEl ? phoneEl.value.trim() : '';
+        var cpf = cpfEl ? cpfEl.value.trim() : '';
+        var instagram = instaEl ? instaEl.value.trim() : '';
+        var couponCode = couponEl ? couponEl.value.trim() : '';
+
+        if (!name) {
+          showToast('Por favor, informe seu Nome Completo ou Artístico.', 'warning');
+          return;
+        }
+
+        if (!phone) {
+          showToast('Por favor, informe seu WhatsApp com DDD.', 'warning');
+          return;
+        }
+
+        showToast('Criando e configurando sua conta...', 'info');
+        PrompterAuth.signUp({
+          name: name,
+          phone: phone,
+          cpf: cpf,
+          instagram: instagram,
+          couponCode: couponCode,
+          email: email,
+          password: pass
+        }).then(function () {
+          showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
           showApp();
         }).catch(function (err) {
           showToast(err.message || 'Erro ao criar conta.', 'warning');

@@ -60,15 +60,42 @@
       return Promise.resolve({ user: currentUser, profile: currentProfile });
     },
 
-    signUp: function (email, password) {
+    signUp: function (payload) {
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      var email = typeof payload === 'string' ? payload : (payload ? payload.email : '');
+      var password = typeof payload === 'string' ? arguments[1] : (payload ? payload.password : '');
       var cleanEmail = (email || '').trim().toLowerCase();
+
+      var name = (payload && payload.name) ? payload.name.trim() : cleanEmail.split('@')[0];
+      var phone = (payload && payload.phone) ? payload.phone.trim() : '';
+      var cpf = (payload && payload.cpf) ? payload.cpf.trim() : '';
+      var instagram = (payload && payload.instagram) ? payload.instagram.trim() : '';
+      var coupon = (payload && payload.couponCode) ? payload.couponCode.trim().toUpperCase() : '';
+
+      var isVipCoupon = coupon === 'VIP100' || coupon === 'CORTESIA' || coupon === 'DEV';
+      var isPro = cleanEmail === 'leovitulli@gmail.com' || isVipCoupon;
+      var planTier = isPro ? 'pro' : 'free';
+      var planType = isPro ? '👑 PRO VITALÍCIO' : '⚡ PLANO FREE';
+      var singerCode = cleanEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000));
 
       if (!sb || !sb.auth || typeof sb.auth.signUp !== 'function') {
         return Promise.reject(new Error('Serviço de autenticação temporariamente indisponível.'));
       }
 
-      return sb.auth.signUp({ email: cleanEmail, password: password }).then(function (res) {
+      return sb.auth.signUp({
+        email: cleanEmail,
+        password: password,
+        options: {
+          data: {
+            display_name: name,
+            phone: phone,
+            cpf: cpf,
+            instagram: instagram,
+            singer_code: singerCode,
+            plan_tier: planTier
+          }
+        }
+      }).then(function (res) {
         if (res.error) {
           if (res.error.message.includes('User already registered') || res.error.message.includes('already exists')) {
             throw new Error('Este e-mail já está cadastrado. Por favor, clique na aba "Entrar".');
@@ -76,8 +103,6 @@
           throw new Error(res.error.message || 'Erro ao realizar cadastro.');
         }
 
-        // No Supabase, quando o usuário já existe e a confirmação está desligada ou ligada,
-        // identities pode vir vazio ou sem user id novo:
         if (res.data && res.data.user && res.data.user.identities && res.data.user.identities.length === 0) {
           throw new Error('Este e-mail já está cadastrado. Por favor, acesse pela aba "Entrar".');
         }
@@ -88,14 +113,68 @@
         }
 
         currentUser = user;
-        return PrompterAuth.fetchProfile(user.id).then(function (profile) {
-          currentProfile = profile;
-          PrompterAuth.saveSession(user, profile);
-          PrompterAuth.updateUIForAuth();
-          PrompterAuth.heartbeatLastSeen();
-          return { user: user, profile: profile };
-        });
+        
+        var profileData = {
+          id: user.id,
+          email: cleanEmail,
+          display_name: name,
+          phone: phone,
+          cpf: cpf,
+          instagram: instagram,
+          singer_code: singerCode,
+          role: cleanEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
+          plan_tier: planTier,
+          plan_type: planType,
+          coupon_used: coupon,
+          is_online: true,
+          created_at: new Date().toISOString()
+        };
+
+        // Salvar profile no Supabase e no sync do painel executivo
+        PrompterAuth.syncNewUserToAdmin(profileData);
+
+        if (sb) {
+          sb.from('profiles').upsert(profileData).catch(function () {});
+        }
+
+        currentProfile = profileData;
+        PrompterAuth.saveSession(user, profileData);
+        PrompterAuth.updateUIForAuth();
+        PrompterAuth.heartbeatLastSeen();
+
+        if (typeof window.loadRepertoires === 'function') {
+          window.loadRepertoires();
+        }
+
+        return { user: user, profile: profileData };
       });
+    },
+
+    syncNewUserToAdmin: function(profile) {
+      try {
+        var raw = localStorage.getItem('canta_ai_admin_users');
+        var list = raw ? JSON.parse(raw) : [];
+        if (!list.some(function(u) { return u.email === profile.email; })) {
+          list.unshift({
+            id: profile.id,
+            name: profile.display_name,
+            email: profile.email,
+            phone: profile.phone,
+            cpf: profile.cpf,
+            instagram: profile.instagram,
+            singer_code: profile.singer_code,
+            plan_tier: profile.plan_tier,
+            plan_type: profile.plan_type,
+            is_online: true,
+            status_text: '🟢 Conectado ao Palco',
+            reps_count: 0,
+            songs_count: 0,
+            last_seen: 'Agora mesmo',
+            created_at: profile.created_at || new Date().toISOString().slice(0, 10)
+          });
+          localStorage.setItem('canta_ai_admin_users', JSON.stringify(list));
+        }
+      } catch (e) {}
     },
 
     signIn: function (email, password) {
@@ -126,6 +205,11 @@
           PrompterAuth.saveSession(user, profile);
           PrompterAuth.updateUIForAuth();
           PrompterAuth.heartbeatLastSeen();
+
+          if (typeof window.loadRepertoires === 'function') {
+            window.loadRepertoires();
+          }
+
           return { user: user, profile: profile };
         });
       });
@@ -162,33 +246,35 @@
     },
 
     // ═══════════════════════════════════════
-    //  PERFIL & ROLES
+    //  PERFIL & ROLES (ISOLAMENTO SEGURO)
     // ═══════════════════════════════════════
     fetchProfile: function (userId) {
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-      if (!sb || !userId) return Promise.resolve(null);
+      var userEmail = currentUser ? currentUser.email : '';
+      if (!userId && !userEmail) return Promise.resolve(null);
+
+      var defaultProfile = {
+        id: userId || 'local_user',
+        email: userEmail,
+        display_name: userEmail ? userEmail.split('@')[0] : 'Cantor',
+        role: userEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
+        plan_tier: userEmail === 'leovitulli@gmail.com' ? 'pro' : 'free',
+        plan_type: userEmail === 'leovitulli@gmail.com' ? '👑 PRO VITALÍCIO' : '⚡ PLANO FREE',
+        singer_code: userEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000))
+      };
+
+      if (!sb) return Promise.resolve(defaultProfile);
 
       return sb.from('profiles').select('*').then(function (res) {
         if (res.data && res.data.length > 0) {
-          var found = res.data.find(function (p) { return p.id === userId; });
-          return found || res.data[0];
+          var found = res.data.find(function (p) {
+            return p.id === userId || (p.email && userEmail && p.email.toLowerCase() === userEmail.toLowerCase());
+          });
+          if (found) return found;
         }
-        // Perfil default se não encontrado na tabela
-        return {
-          id: userId,
-          email: currentUser ? currentUser.email : '',
-          role: (currentUser && currentUser.email === 'leovitulli@gmail.com') ? 'admin' : 'user',
-          plan_tier: (currentUser && currentUser.email === 'leovitulli@gmail.com') ? 'pro' : 'free',
-          singer_code: '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
-        };
+        return defaultProfile;
       }).catch(function () {
-        return {
-          id: userId,
-          email: currentUser ? currentUser.email : '',
-          role: (currentUser && currentUser.email === 'leovitulli@gmail.com') ? 'admin' : 'user',
-          plan_tier: (currentUser && currentUser.email === 'leovitulli@gmail.com') ? 'pro' : 'free',
-          singer_code: '#CANTOR-' + Math.floor(1000 + Math.random() * 9000)
-        };
+        return defaultProfile;
       });
     },
 

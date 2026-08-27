@@ -65,6 +65,7 @@ function initDB() {
 // ════════════════════════════════════════
 
 function saveRepertoire(repertoire, skipCloudSync) {
+  var currentUserId = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser().id : 'local_anonymous';
   return initDB().then(function(db) {
     return new Promise(function(resolve, reject) {
       var tx = db.transaction('repertoires', 'readwrite');
@@ -72,6 +73,7 @@ function saveRepertoire(repertoire, skipCloudSync) {
 
       var data = {
         name: (repertoire.name || 'Repertório').trim(),
+        user_id: repertoire.user_id || currentUserId,
         source: repertoire.source || 'local',
         isOfflinePinned: Boolean(repertoire.isOfflinePinned),
         createdAt: repertoire.createdAt || Date.now(),
@@ -92,7 +94,7 @@ function saveRepertoire(repertoire, skipCloudSync) {
   }).then(function(savedId) {
     if (!skipCloudSync && window.PrompterCloud && typeof window.PrompterCloud.saveRepertoireToCloud === 'function') {
       try {
-        var repToSync = Object.assign({}, repertoire, { id: savedId });
+        var repToSync = Object.assign({}, repertoire, { id: savedId, user_id: currentUserId });
         window.PrompterCloud.saveRepertoireToCloud(repToSync).catch(function(e) {
           console.warn('Sync de repertório em segundo plano falhou:', e);
         });
@@ -105,6 +107,7 @@ function saveRepertoire(repertoire, skipCloudSync) {
 }
 
 function getAllRepertoires() {
+  var currentUserId = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser().id : null;
   return initDB().then(function(db) {
     return new Promise(function(resolve, reject) {
       var tx = db.transaction('repertoires', 'readonly');
@@ -115,10 +118,21 @@ function getAllRepertoires() {
       req.onsuccess = function(e) {
         var cursor = e.target.result;
         if (cursor) {
-          items.push(cursor.value);
+          var rep = cursor.value;
+          if (!currentUserId) {
+            // Visitante não logado: vê apenas repertórios anônimos
+            if (!rep.user_id || rep.user_id === 'local_anonymous') {
+              items.push(rep);
+            }
+          } else {
+            // Usuário logado: vê ESTRITAMENTE os seus próprios repertórios
+            if (rep.user_id === currentUserId) {
+              items.push(rep);
+            }
+          }
           cursor.continue();
         } else {
-          // Ordenar por data de criação decrescente (mais recentes primeiro)
+          // Ordenar por data de criação decrescente
           items.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
           resolve(items);
         }
