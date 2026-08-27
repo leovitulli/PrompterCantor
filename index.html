@@ -16,9 +16,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=110">
-  <link rel="stylesheet" href="css/admin.css?v=110">
-  <link rel="stylesheet" href="css/landing.css?v=110">
+  <link rel="stylesheet" href="css/style.css?v=111">
+  <link rel="stylesheet" href="css/admin.css?v=111">
+  <link rel="stylesheet" href="css/landing.css?v=111">
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
   <script src="js/polyfills.js?v=76"></script>
@@ -912,24 +912,158 @@
     </div>
   </div>
 
+  <!-- MODAL DE CHECKOUT & GOVERNANÇA JURÍDICA / CONTRATO SAAS -->
+  <div id="checkoutSaaSModal" class="modal hidden" style="z-index: 1000005;">
+    <div class="modal-overlay" id="checkoutModalOverlay"></div>
+    <div class="modal-card" style="max-width: 680px; max-height: 92vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.5rem;">👑</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.25rem;">Assinatura CantaAí PRO & Governança Jurídica</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Acesso ilimitado, sincronização de palco e segurança contratual</p>
+          </div>
+        </div>
+        <button class="modal-close" id="btnCloseCheckoutModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+        <form id="formCheckoutSaaS" onsubmit="return false;">
+          
+          <!-- Seleção do Plano -->
+          <label style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.5rem; display: block;">1. Selecione o Plano Desejado:</label>
+          <div class="checkout-plans-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem;">
+            <label class="checkout-plan-card active" id="cardPlanAnnual" style="border: 2px solid #38bdf8; background: rgba(56, 189, 248, 0.08); border-radius: 12px; padding: 14px; cursor: pointer; position: relative;">
+              <input type="radio" name="checkoutPlan" value="annual" checked style="display: none;">
+              <div style="font-size: 0.75rem; background: #38bdf8; color: #0f172a; font-weight: 800; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-bottom: 6px;">💎 MAIS VANTAJOSO (37% OFF)</div>
+              <div style="font-weight: 800; font-size: 1.05rem; color: #ffffff;">PRO ANUAL</div>
+              <div style="font-size: 1.35rem; font-weight: 900; color: #38bdf8; margin: 4px 0;">R$ 299,00 <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">/ano</span></div>
+              <div style="font-size: 0.75rem; color: #94a3b8;">Equivalente a R$ 24,91/mês</div>
+            </label>
+
+            <label class="checkout-plan-card" id="cardPlanMonthly" style="border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(15, 23, 42, 0.6); border-radius: 12px; padding: 14px; cursor: pointer;">
+              <input type="radio" name="checkoutPlan" value="monthly" style="display: none;">
+              <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 6px;">⚡ MENSAL FLEXÍVEL</div>
+              <div style="font-weight: 800; font-size: 1.05rem; color: #ffffff;">PRO MENSAL</div>
+              <div style="font-size: 1.35rem; font-weight: 900; color: #34d399; margin: 4px 0;">R$ 39,90 <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">/mês</span></div>
+              <div style="font-size: 0.75rem; color: #94a3b8;">Cobrança mensal recorrente</div>
+            </label>
+          </div>
+
+          <!-- Cupom de Desconto -->
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1;">2. Cupom de Desconto / Cortesia VIP:</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="inputCheckoutCoupon" class="form-control" placeholder="Ex: VIP100, PRO50" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;">
+              <button type="button" id="btnApplyCheckoutCoupon" class="btn btn-secondary btn-sm" style="white-space: nowrap;">Aplicar Cupom</button>
+            </div>
+            <div id="checkoutCouponAlert" style="font-size: 0.8rem; margin-top: 4px; display: none;"></div>
+          </div>
+
+          <!-- Dados do Titular / Pagador -->
+          <label style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.5rem; display: block;">3. Dados do Titular / Faturamento:</label>
+          <div class="form-grid-2cols" style="margin-bottom: 1rem;">
+            <div class="form-group">
+              <label>Nome Completo:</label>
+              <input type="text" id="chkName" class="form-control" required placeholder="Nome do Titular">
+            </div>
+            <div class="form-group">
+              <label>CPF / CNPJ:</label>
+              <input type="text" id="chkCpf" class="form-control" required placeholder="000.000.000-00">
+            </div>
+          </div>
+          <div class="form-grid-2cols" style="margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label>WhatsApp:</label>
+              <input type="tel" id="chkPhone" class="form-control" required placeholder="(11) 99999-9999">
+            </div>
+            <div class="form-group">
+              <label>E-mail de Acesso:</label>
+              <input type="email" id="chkEmail" class="form-control" required placeholder="seuemail@exemplo.com">
+            </div>
+          </div>
+
+          <!-- Forma de Pagamento -->
+          <label style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.5rem; display: block;">4. Método de Pagamento (Mercado Pago Transparente):</label>
+          <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+            <button type="button" id="btnPayPix" class="btn btn-outline active" style="flex: 1; border-color: #34d399; color: #34d399;">💠 Pix Instantâneo</button>
+            <button type="button" id="btnPayCard" class="btn btn-outline" style="flex: 1;">💳 Cartão de Crédito</button>
+          </div>
+
+          <!-- Bloco PIX -->
+          <div id="checkoutPixBox" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 14px; margin-bottom: 1.25rem; text-align: center;">
+            <div style="font-weight: 700; color: #34d399; margin-bottom: 4px;">⚡ Liberação Instantânea via Pix</div>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin: 0 0 10px 0;">O QR Code dinâmico e o código Copia e Cola serão gerados ao confirmar. O sistema libera o plano PRO em segundos após a confirmação bancária.</p>
+          </div>
+
+          <!-- Bloco Cartão -->
+          <div id="checkoutCardBox" class="hidden" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 14px; margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label>Número do Cartão:</label>
+              <input type="text" id="chkCardNumber" class="form-control" placeholder="0000 0000 0000 0000">
+            </div>
+            <div class="form-grid-2cols">
+              <div class="form-group">
+                <label>Validade:</label>
+                <input type="text" id="chkCardExpiry" class="form-control" placeholder="MM/AA">
+              </div>
+              <div class="form-group">
+                <label>CVV:</label>
+                <input type="text" id="chkCardCvv" class="form-control" placeholder="123">
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTRATO E TERMOS JURÍDICOS (PROTEÇÃO CONTRA PROCESSOS E DEVEDORES) -->
+          <label style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.5rem; display: block;">5. Contrato de Licença SaaS, Termos de Uso & Proteção Jurídica:</label>
+          <div class="legal-contract-box" style="background: rgba(11, 16, 28, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 12px; max-height: 140px; overflow-y: auto; font-size: 0.76rem; color: #94a3b8; line-height: 1.5; margin-bottom: 1rem;">
+            <strong style="color: #e2e8f0;">CONTRATO DE LICENÇA DE SOFTWARE COMO SERVIÇO (SaaS) & TERMOS DE USO - CANTAAÍ PRO</strong><br><br>
+            <strong>CLÁUSULA 1 - DO OBJETO E LICENÇA:</strong> O CantaAí PRO concede ao CONTRATANTE uma licença de software de uso pessoal, não exclusiva, intransferível e revogável para gerenciamento de cifras, letras e repertórios musicais para fins de performance ao vivo e ensaios.<br><br>
+            <strong>CLÁUSULA 2 - DA ISENÇÃO DE RESPONSABILIDADE AUTORAL (LEI 9.610/98):</strong> O CONTRATANTE declara e reconhece expressamente que é o único e exclusivo responsável por todo e qualquer arquivo, cifra, letra, áudio ou conteúdo inserido na plataforma. O CantaAí PRO atua meramente como ferramenta tecnológica de visualização e prompter, não comercializando obras intelectuais e restando integralmente isento de qualquer demanda civil, criminal ou autoral.<br><br>
+            <strong>CLÁUSULA 3 - DO PAGAMENTO, RECORRÊNCIA E INADIMPLÊNCIA:</strong> A assinatura contratada possui renovação automática conforme a periodicidade escolhida (mensal ou anual). Na hipótese de inadimplemento, atraso no pagamento ou estorno indevido (chargeback), o acesso aos recursos PRO será suspenso imediatamente, incidindo juros legais e reserva do direito de cobrança dos valores contratados.<br><br>
+            <strong>CLÁUSULA 4 - DO CANCELAMENTO E NÃO REEMBOLSO:</strong> O cancelamento poderá ser solicitado a qualquer momento diretamente pelo painel, interrompendo cobranças futuras a partir do próximo ciclo. Não há devolução proporcional de períodos já usufruídos.<br><br>
+            <strong>CLÁUSULA 5 - DA PROTEÇÃO DE DADOS (LGPD - LEI 13.709/2018):</strong> Os dados pessoais fornecidos são tratados com estrita confidencialidade para fins exclusivos de autenticação, faturamento e suporte técnico.<br><br>
+            <strong>CLÁUSULA 6 - DO FORO:</strong> Fica eleito o foro da comarca de São Paulo/SP para dirimir quaisquer dúvidas ou litígios decorrentes do presente contrato.
+          </div>
+
+          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.82rem; color: #cbd5e1; cursor: pointer; margin-bottom: 1.25rem;">
+            <input type="checkbox" id="chkAcceptLegalTerms" required style="margin-top: 3px;">
+            <span>Li, compreendo e <strong>concordo integralmente com os Termos de Uso, Contrato de Licença SaaS e Políticas de Privacidade</strong> do CantaAí PRO.</span>
+          </label>
+
+          <!-- Resumo de Valor & Botão de Confirmação -->
+          <div style="background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <div>
+              <div style="font-size: 0.8rem; color: #94a3b8;">Total a Pagar:</div>
+              <div id="checkoutTotalDisplay" style="font-size: 1.4rem; font-weight: 900; color: #38bdf8;">R$ 299,00</div>
+            </div>
+            <button type="button" id="btnConfirmSaaSCheckout" class="btn btn-primary" style="padding: 12px 24px; font-size: 0.95rem; font-weight: 800;">
+              🔒 Confirmar & Ativar PRO
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- NOTIFICAÇÕES TOAST -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=110"></script>
-  <script src="js/supabaseClient.js?v=110"></script>
-  <script src="js/db.js?v=110"></script>
-  <script src="js/auth.js?v=110"></script>
-  <script src="js/adminPanel.js?v=110"></script>
-  <script src="js/textParser.js?v=110"></script>
-  <script src="js/sampleRepertoire.js?v=110"></script>
-  <script src="js/transposer.js?v=110"></script>
-  <script src="js/prompter.js?v=110"></script>
-  <script src="js/mediaPlayer.js?v=110"></script>
-  <script src="js/advancedPlayer.js?v=110"></script>
-  <script src="js/gdrive.js?v=110"></script>
-  <script src="js/gdriveUI.js?v=110"></script>
-  <script src="js/app.js?v=110"></script>
+  <script src="js/config.js?v=111"></script>
+  <script src="js/supabaseClient.js?v=111"></script>
+  <script src="js/db.js?v=111"></script>
+  <script src="js/auth.js?v=111"></script>
+  <script src="js/adminPanel.js?v=111"></script>
+  <script src="js/textParser.js?v=111"></script>
+  <script src="js/sampleRepertoire.js?v=111"></script>
+  <script src="js/transposer.js?v=111"></script>
+  <script src="js/prompter.js?v=111"></script>
+  <script src="js/mediaPlayer.js?v=111"></script>
+  <script src="js/advancedPlayer.js?v=111"></script>
+  <script src="js/gdrive.js?v=111"></script>
+  <script src="js/gdriveUI.js?v=111"></script>
+  <script src="js/app.js?v=111"></script>
 </body>
 </html>

@@ -2001,18 +2001,24 @@ document.addEventListener('DOMContentLoaded', function () {
         ? GDriveImporter.pairSongsWithAudioFiles(allParsedSongs, audioFiles)
         : allParsedSongs;
 
-      // Análise de Duplicidades (no arquivo e no banco)
+      // Análise de Duplicidades (isolada por repertório de destino)
+      var targetRepId = state.targetRepertoireId;
       var seenInBatchTitle = {};
       var seenInBatchLyrics = {};
       var existingTitleMap = {};
       var existingLyricsMap = {};
 
-      existingSongs.forEach(function(s) {
-        var titleKey = normalizeForCompare(TextParser.cleanTitle(s.title));
-        var lyricsKey = getLyricsFingerprint(s.content);
-        if (titleKey) existingTitleMap[titleKey] = s;
-        if (lyricsKey && lyricsKey.length >= 10) existingLyricsMap[lyricsKey] = s;
-      });
+      if (targetRepId) {
+        // Se estamos adicionando a um repertório existente, checa duplicatas apenas dentro dele
+        existingSongs.forEach(function(s) {
+          if (s.repertoireId === targetRepId) {
+            var titleKey = normalizeForCompare(TextParser.cleanTitle(s.title));
+            var lyricsKey = getLyricsFingerprint(s.content);
+            if (titleKey) existingTitleMap[titleKey] = s;
+            if (lyricsKey && lyricsKey.length >= 10) existingLyricsMap[lyricsKey] = s;
+          }
+        });
+      }
 
       var duplicateCount = 0;
       var annotatedSongs = songsToCreate.map(function(song) {
@@ -2033,17 +2039,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (titleKey) seenInBatchTitle[titleKey] = true;
         if (lyricsKey && lyricsKey.length >= 10) seenInBatchLyrics[lyricsKey] = true;
 
-        if (!isDuplicate) {
+        if (!isDuplicate && targetRepId) {
           if (titleKey && existingTitleMap[titleKey]) {
-            var mSong = existingTitleMap[titleKey];
-            var rName = repMap[mSong.repertoireId] ? 'Repertório ' + repMap[mSong.repertoireId] : 'banco de dados';
             isDuplicate = true;
-            dupReason = 'Já existe em ' + rName;
+            dupReason = 'Já existe neste repertório';
           } else if (lyricsKey && lyricsKey.length >= 10 && existingLyricsMap[lyricsKey]) {
-            var mSong2 = existingLyricsMap[lyricsKey];
-            var rName2 = repMap[mSong2.repertoireId] ? 'Repertório ' + repMap[mSong2.repertoireId] : 'banco de dados';
             isDuplicate = true;
-            dupReason = 'Letra igual a "' + (mSong2.title || '') + '" (' + rName2 + ')';
+            dupReason = 'Letra já cadastrada neste repertório';
           }
         }
 
@@ -2062,9 +2064,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (duplicateCount > 0) {
           html +=
             '<div class="import-dup-banner" style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.35);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;color:#facc15;font-size:0.88rem;">' +
-              '<div style="font-weight:700;display:flex;align-items:center;gap:0.4rem;">⚠️ Notificação de Duplicidade: ' + duplicateCount + ' música(s) já cadastradas ou repetidas.</div>' +
+              '<div style="font-weight:700;display:flex;align-items:center;gap:0.4rem;">⚠️ Notificação de Duplicidade: ' + duplicateCount + ' música(s) repetidas no arquivo.</div>' +
               '<label style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;cursor:pointer;color:var(--text-main);font-size:0.84rem;">' +
-                '<input type="checkbox" id="chkIgnoreDuplicates" checked> ' +
+                '<input type="checkbox" id="chkIgnoreDuplicates"> ' +
                 '<span><b>Ignorar duplicadas</b> (salvar apenas as músicas inéditas)</span>' +
               '</label>' +
             '</div>';
@@ -2911,10 +2913,234 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    var checkoutModal = document.getElementById('checkoutSaaSModal');
+    var btnCloseCheckout = document.getElementById('btnCloseCheckoutModal');
+    var checkoutOverlay = document.getElementById('checkoutModalOverlay');
+    var cardPlanAnnual = document.getElementById('cardPlanAnnual');
+    var cardPlanMonthly = document.getElementById('cardPlanMonthly');
+    var btnPayPix = document.getElementById('btnPayPix');
+    var btnPayCard = document.getElementById('btnPayCard');
+    var checkoutPixBox = document.getElementById('checkoutPixBox');
+    var checkoutCardBox = document.getElementById('checkoutCardBox');
+    var btnApplyCoupon = document.getElementById('btnApplyCheckoutCoupon');
+    var inputCoupon = document.getElementById('inputCheckoutCoupon');
+    var couponAlert = document.getElementById('checkoutCouponAlert');
+    var totalDisplay = document.getElementById('checkoutTotalDisplay');
+    var btnConfirmCheckout = document.getElementById('btnConfirmSaaSCheckout');
+
+    var selectedPlan = 'annual'; // 'annual' ou 'monthly'
+    var appliedCoupon = null;
+
+    function calculateCheckoutTotal() {
+      var basePrice = selectedPlan === 'annual' ? 299.00 : 39.90;
+      var finalPrice = basePrice;
+
+      if (appliedCoupon) {
+        if (appliedCoupon.type === 'vip' || appliedCoupon.code === 'VIP100') {
+          finalPrice = 0.00;
+        } else if (appliedCoupon.type === 'percent') {
+          var pct = parseInt(appliedCoupon.discount, 10) || 50;
+          finalPrice = basePrice * ((100 - pct) / 100);
+        }
+      }
+
+      if (totalDisplay) {
+        if (finalPrice === 0) {
+          totalDisplay.innerHTML = '<span style="color:#34d399;">GRÁTIS (CUPOM VIP 100% OFF)</span>';
+        } else {
+          totalDisplay.innerText = finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + (selectedPlan === 'annual' ? ' /ano' : ' /mês');
+        }
+      }
+      return finalPrice;
+    }
+
+    function openCheckoutSaaSModal() {
+      if (!checkoutModal) return;
+      var profile = PrompterAuth.getProfile() || {};
+      var user = PrompterAuth.getUser() || {};
+
+      var chkName = document.getElementById('chkName');
+      var chkEmail = document.getElementById('chkEmail');
+      var chkPhone = document.getElementById('chkPhone');
+      var chkCpf = document.getElementById('chkCpf');
+
+      if (chkName) chkName.value = profile.display_name || (user.email ? user.email.split('@')[0] : '');
+      if (chkEmail) chkEmail.value = profile.email || user.email || '';
+      if (chkPhone) chkPhone.value = profile.phone || '';
+      if (chkCpf) chkCpf.value = profile.cpf || '';
+
+      selectedPlan = 'annual';
+      appliedCoupon = null;
+      if (inputCoupon) inputCoupon.value = '';
+      if (couponAlert) { couponAlert.style.display = 'none'; couponAlert.innerText = ''; }
+
+      if (cardPlanAnnual) {
+        cardPlanAnnual.style.borderColor = '#38bdf8';
+        cardPlanAnnual.style.background = 'rgba(56, 189, 248, 0.08)';
+      }
+      if (cardPlanMonthly) {
+        cardPlanMonthly.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+        cardPlanMonthly.style.background = 'rgba(15, 23, 42, 0.6)';
+      }
+
+      calculateCheckoutTotal();
+      openModal(checkoutModal);
+    }
+
+    function closeCheckoutSaaSModal() {
+      if (checkoutModal) closeModal(checkoutModal);
+    }
+
     if (btnUpgradePlan) {
       btnUpgradePlan.addEventListener('click', function () {
         closeProfileModal();
-        if (window.openAuthModal) openAuthModal('signup');
+        openCheckoutSaaSModal();
+      });
+    }
+
+    if (btnCloseCheckout) btnCloseCheckout.addEventListener('click', closeCheckoutSaaSModal);
+    if (checkoutOverlay) checkoutOverlay.addEventListener('click', closeCheckoutSaaSModal);
+
+    if (cardPlanAnnual) {
+      cardPlanAnnual.addEventListener('click', function () {
+        selectedPlan = 'annual';
+        this.style.borderColor = '#38bdf8';
+        this.style.background = 'rgba(56, 189, 248, 0.08)';
+        if (cardPlanMonthly) {
+          cardPlanMonthly.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          cardPlanMonthly.style.background = 'rgba(15, 23, 42, 0.6)';
+        }
+        calculateCheckoutTotal();
+      });
+    }
+
+    if (cardPlanMonthly) {
+      cardPlanMonthly.addEventListener('click', function () {
+        selectedPlan = 'monthly';
+        this.style.borderColor = '#34d399';
+        this.style.background = 'rgba(16, 185, 129, 0.08)';
+        if (cardPlanAnnual) {
+          cardPlanAnnual.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          cardPlanAnnual.style.background = 'rgba(15, 23, 42, 0.6)';
+        }
+        calculateCheckoutTotal();
+      });
+    }
+
+    if (btnPayPix) {
+      btnPayPix.addEventListener('click', function () {
+        this.classList.add('active');
+        this.style.borderColor = '#34d399';
+        this.style.color = '#34d399';
+        if (btnPayCard) {
+          btnPayCard.classList.remove('active');
+          btnPayCard.style.borderColor = '';
+          btnPayCard.style.color = '';
+        }
+        if (checkoutPixBox) checkoutPixBox.classList.remove('hidden');
+        if (checkoutCardBox) checkoutCardBox.classList.add('hidden');
+      });
+    }
+
+    if (btnPayCard) {
+      btnPayCard.addEventListener('click', function () {
+        this.classList.add('active');
+        this.style.borderColor = '#38bdf8';
+        this.style.color = '#38bdf8';
+        if (btnPayPix) {
+          btnPayPix.classList.remove('active');
+          btnPayPix.style.borderColor = '';
+          btnPayPix.style.color = '';
+        }
+        if (checkoutCardBox) checkoutCardBox.classList.remove('hidden');
+        if (checkoutPixBox) checkoutPixBox.classList.add('hidden');
+      });
+    }
+
+    if (btnApplyCoupon) {
+      btnApplyCoupon.addEventListener('click', function () {
+        var code = (inputCoupon ? inputCoupon.value : '').trim().toUpperCase();
+        if (!code) {
+          showToast('Digite um código de cupom.', 'warning');
+          return;
+        }
+
+        if (code === 'VIP100' || code === 'CANTORVIP') {
+          appliedCoupon = { code: code, type: 'vip', discount: '100% OFF' };
+          if (couponAlert) {
+            couponAlert.style.display = 'block';
+            couponAlert.style.color = '#34d399';
+            couponAlert.innerHTML = '👑 <strong>Cupom VIP Aplicado!</strong> 100% de Desconto (1 Ano Grátis).';
+          }
+        } else if (code === 'PRO50' || code === 'DESCONTO50') {
+          appliedCoupon = { code: code, type: 'percent', discount: '50% OFF' };
+          if (couponAlert) {
+            couponAlert.style.display = 'block';
+            couponAlert.style.color = '#38bdf8';
+            couponAlert.innerHTML = '⚡ <strong>Cupom Aplicado!</strong> 50% de Desconto na Assinatura.';
+          }
+        } else {
+          appliedCoupon = null;
+          if (couponAlert) {
+            couponAlert.style.display = 'block';
+            couponAlert.style.color = '#f87171';
+            couponAlert.innerText = '❌ Cupom inválido ou expirado.';
+          }
+        }
+        calculateCheckoutTotal();
+      });
+    }
+
+    if (btnConfirmCheckout) {
+      btnConfirmCheckout.addEventListener('click', function () {
+        var name = (document.getElementById('chkName') ? document.getElementById('chkName').value : '').trim();
+        var email = (document.getElementById('chkEmail') ? document.getElementById('chkEmail').value : '').trim();
+        var phone = (document.getElementById('chkPhone') ? document.getElementById('chkPhone').value : '').trim();
+        var cpf = (document.getElementById('chkCpf') ? document.getElementById('chkCpf').value : '').trim();
+        var chkAccept = document.getElementById('chkAcceptLegalTerms');
+
+        if (!name || !email || !phone || !cpf) {
+          showToast('Preencha todos os dados de faturamento (Nome, CPF, WhatsApp e E-mail).', 'warning');
+          return;
+        }
+
+        if (!chkAccept || !chkAccept.checked) {
+          showToast('É obrigatório concordar com os Termos de Uso e Contrato de Licença SaaS.', 'warning');
+          return;
+        }
+
+        showToast('Processando assinatura e emitindo contrato...', 'info');
+
+        var user = PrompterAuth.getUser();
+        var profile = PrompterAuth.getProfile() || {};
+        var planTier = 'pro';
+        var planType = selectedPlan === 'annual' ? '💎 PRO ANUAL' : '⚡ PRO MENSAL';
+
+        profile.plan_tier = planTier;
+        profile.plan_type = planType;
+        profile.display_name = name;
+        profile.phone = phone;
+        profile.cpf = cpf;
+
+        PrompterAuth.saveSession(user, profile);
+        PrompterAuth.updateUIForAuth();
+
+        var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+        if (sb && user) {
+          sb.from('profiles').upsert({
+            id: user.id,
+            email: email,
+            display_name: name,
+            phone: phone,
+            cpf: cpf,
+            plan_tier: planTier,
+            plan_type: planType,
+            updated_at: new Date().toISOString()
+          }).catch(function() {});
+        }
+
+        closeCheckoutSaaSModal();
+        showToast('🎉 Parabéns! Sua assinatura CANTAAÍ PRO foi ativada com sucesso!', 'success');
       });
     }
 
