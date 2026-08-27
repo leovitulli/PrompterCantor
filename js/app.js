@@ -221,11 +221,12 @@ document.addEventListener('DOMContentLoaded', function () {
       if (songsView) songsView.classList.add('hidden');
     }
 
-    return PrompterDB.getAllRepertoires()
-      .then(function (reps) {
-        state.repertoires = reps || [];
-        renderRepertoires();
-      });
+    return PrompterDB.cleanSambaDuplicates().then(function() {
+      return PrompterDB.getAllRepertoires();
+    }).then(function (reps) {
+      state.repertoires = reps || [];
+      renderRepertoires();
+    });
   }
 
   function promptCreateRepertoire() {
@@ -2105,7 +2106,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var nameInput = document.getElementById('importRepertoireName');
     var repName = (nameInput && nameInput.value.trim()) || ('Importação ' + formatDate(Date.now()));
-    var targetRepId = state.targetRepertoireId;
+    
+    // Se o usuário está na visão principal (fora de um repertório), SEMPRE cria um novo repertório
+    var targetRepId = state.currentRepertoire ? state.targetRepertoireId : null;
+
+    var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
+    var curEmail = user ? (user.email || '').toLowerCase() : '';
+    var curId = user ? user.id : 'local_anonymous';
 
     var chkIgnore = document.getElementById('chkIgnoreDuplicates');
     var shouldIgnoreDupes = chkIgnore ? chkIgnore.checked : false;
@@ -2125,6 +2132,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function doSave(repId) {
       for (var s = 0; s < songsToSave.length; s++) {
         songsToSave[s].repertoireId = repId;
+        songsToSave[s].user_id = curId;
+        songsToSave[s].user_email = curEmail;
       }
 
       PrompterDB.saveSongsBatch(songsToSave).then(function () {
@@ -2164,10 +2173,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (targetRepId) {
       doSave(targetRepId);
     } else {
-      PrompterDB.saveRepertoire({ name: repName, source: 'local' })
-        .then(function (newRepId) {
-          doSave(newRepId);
-        });
+      PrompterDB.saveRepertoire({
+        name: repName,
+        source: 'local',
+        user_id: curId,
+        user_email: curEmail
+      }).then(function (newRepId) {
+        doSave(newRepId);
+      });
     }
   }
 

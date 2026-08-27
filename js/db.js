@@ -140,12 +140,13 @@ function getAllRepertoires() {
             var isOwn = (rep.user_id && rep.user_id === currentUserId) ||
                         (repEmail && repEmail === currentUserEmail);
 
-            // Se for o dono/desenvolvedor (leovitulli@gmail.com), também inclui repertórios legados locais sem dono
-            var isLegacyDev = (currentUserEmail === 'leovitulli@gmail.com') &&
-                              (!repEmail || rep.user_id === 'local_anonymous' || repEmail === 'leovitulli@gmail.com');
+            // Repertórios do dono (leovitulli@gmail.com):
+            // Só exibe SAMBA, EXU ou repertórios explicitamente dele
+            var isDevOwner = (currentUserEmail === 'leovitulli@gmail.com') &&
+                             (repEmail === 'leovitulli@gmail.com' || (!repEmail && (rep.name === 'SAMBA' || rep.name === 'EXU')));
 
-            // NUNCA incluir repertório de outro usuário cadastrado
-            if (isOwn || (isLegacyDev && (!repEmail || repEmail === 'leovitulli@gmail.com'))) {
+            // NUNCA vazar repertórios de outros cantores
+            if (isOwn || (isDevOwner && repEmail !== 'leoogum23@gmail.com' && rep.name !== 'Malandro e Malandras')) {
               items.push(rep);
             }
           }
@@ -157,6 +158,62 @@ function getAllRepertoires() {
         }
       };
       req.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
+function cleanSambaDuplicates() {
+  return initDB().then(function(db) {
+    return new Promise(function(resolve) {
+      var tx = db.transaction(['repertoires', 'songs'], 'readwrite');
+      var repStore = tx.objectStore('repertoires');
+      var songStore = tx.objectStore('songs');
+
+      var sambaId = null;
+      var req = repStore.openCursor();
+      req.onsuccess = function(e) {
+        var cursor = e.target.result;
+        if (cursor) {
+          if (cursor.value.name === 'SAMBA') {
+            sambaId = String(cursor.value.id);
+          }
+          if (cursor.value.name === 'Malandro e Malandras' && (!cursor.value.user_email || cursor.value.user_email === 'leovitulli@gmail.com')) {
+            var v = cursor.value;
+            v.user_email = 'leoogum23@gmail.com';
+            cursor.update(v);
+          }
+          cursor.continue();
+        }
+      };
+
+      tx.oncomplete = function() {
+        if (!sambaId) return resolve(true);
+        // Desduplicar músicas do SAMBA
+        initDB().then(function(db2) {
+          var tx2 = db2.transaction('songs', 'readwrite');
+          var sStore = tx2.objectStore('songs');
+          var seenTitles = {};
+          var sReq = sStore.openCursor();
+          sReq.onsuccess = function(ev) {
+            var sCursor = ev.target.result;
+            if (sCursor) {
+              var sVal = sCursor.value;
+              if (String(sVal.repertoireId) === sambaId) {
+                var normTitle = (sVal.title || '').trim().toUpperCase();
+                if (seenTitles[normTitle]) {
+                  sCursor.delete();
+                } else {
+                  seenTitles[normTitle] = true;
+                }
+              }
+              sCursor.continue();
+            }
+          };
+          tx2.oncomplete = function() { resolve(true); };
+          tx2.onerror = function() { resolve(false); };
+        });
+      };
+      tx.onerror = function() { resolve(false); };
     });
   });
 }
@@ -579,6 +636,7 @@ window.PrompterDB = {
   countSongsByRepertoire: countSongsByRepertoire,
   toggleRepertoireOffline: toggleRepertoireOffline,
   cleanUpDuplicates: cleanUpDuplicates,
+  cleanSambaDuplicates: cleanSambaDuplicates,
   replaceLocalWithCloud: replaceLocalWithCloud,
   // Músicas
   saveSong: saveSong,
