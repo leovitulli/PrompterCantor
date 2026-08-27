@@ -357,6 +357,7 @@ var Prompter = {
     var area = this.scrollArea || document.getElementById('prompterScrollArea');
     var wasScrolling = this.isScrolling;
 
+    // 1. Cancela qualquer loop de rolagem pendente para evitar aceleração dupla
     if (this.animationFrameId) {
       if (window.cancelAnimationFrame) {
         cancelAnimationFrame(this.animationFrameId);
@@ -364,35 +365,30 @@ var Prompter = {
       this.animationFrameId = null;
     }
 
-    if (area) {
-      var origBehavior = area.style.scrollBehavior;
-      area.style.setProperty('scroll-behavior', 'auto', 'important');
-      area.scrollTop = 0;
-      if (area.scrollTo) {
-        try { area.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (err) { area.scrollTop = 0; }
-      }
-      setTimeout(function() {
-        if (area) {
-          if (origBehavior) {
-            area.style.scrollBehavior = origBehavior;
-          } else {
-            area.style.removeProperty('scroll-behavior');
-          }
-        }
-      }, 50);
-    }
+    // 2. Reseta o acumulador subpixel para zero absoluto
+    this.subpixelScroll = 0;
 
+    // 3. Move para o topo imediatamente
+    if (area) {
+      area.scrollTop = 0;
+    }
     window.scrollTo(0, 0);
     if (document.documentElement) document.documentElement.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
 
+    // 4. Se a rolagem estava ativa, retoma suavemente no topo sem duplicar threads
     if (wasScrolling) {
       var self = this;
       setTimeout(function() {
         if (self.isScrolling) {
+          self.subpixelScroll = 0;
+          if (self.animationFrameId) {
+            cancelAnimationFrame(self.animationFrameId);
+            self.animationFrameId = null;
+          }
           self.step();
         }
-      }, 60);
+      }, 80);
     }
   }
 };

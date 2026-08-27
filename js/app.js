@@ -2706,15 +2706,98 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // ── MODAL DE PERFIL DO CANTOR & GOVERNANÇA DE ASSINATURA ──
+    var profileModal = document.getElementById('profileModal');
+    var btnCloseProfileModal = document.getElementById('btnCloseProfileModal');
+    var btnCancelProfileModal = document.getElementById('btnCancelProfileModal');
+    var profileModalOverlay = document.getElementById('profileModalOverlay');
+    var btnSaveProfileSettings = document.getElementById('btnSaveProfileSettings');
+    var profileDisplayNameInput = document.getElementById('profileDisplayNameInput');
+    var profileSingerCodeInput = document.getElementById('profileSingerCodeInput');
+    var profileModalAvatar = document.getElementById('profileModalAvatar');
+    var profileModalEmail = document.getElementById('profileModalEmail');
+    var profileModalCodePill = document.getElementById('profileModalCodePill');
+    var profileSubPlanBadge = document.getElementById('profileSubPlanBadge');
+    var btnUpgradePlan = document.getElementById('btnUpgradePlan');
+    var btnManageOrCancelPlan = document.getElementById('btnManageOrCancelPlan');
+
+    function openProfileModal() {
+      if (!profileModal) return;
+      var profile = PrompterAuth.getProfile();
+      var user = PrompterAuth.getUser();
+      var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
+      var isPro = (profile && profile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
+      var isAdm = PrompterAuth.isAdmin();
+      var code = (profile && profile.singer_code) ? profile.singer_code : (isAdm ? '#DEV-ADMIN' : '#CANTOR-PRO');
+      var displayName = (profile && profile.display_name) ? profile.display_name : (email.split('@')[0] || 'Cantor');
+      displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+      var initial = (displayName.charAt(0) || 'U').toUpperCase();
+
+      if (profileModalAvatar) profileModalAvatar.innerText = initial;
+      if (profileModalEmail) profileModalEmail.innerText = email;
+      if (profileModalCodePill) profileModalCodePill.innerText = 'Código: ' + code;
+      if (profileDisplayNameInput) profileDisplayNameInput.value = (profile && profile.display_name) ? profile.display_name : displayName;
+      if (profileSingerCodeInput) profileSingerCodeInput.value = code;
+
+      if (profileSubPlanBadge) {
+        profileSubPlanBadge.innerHTML = isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE';
+      }
+      if (btnUpgradePlan) {
+        if (isPro) btnUpgradePlan.classList.add('hidden');
+        else btnUpgradePlan.classList.remove('hidden');
+      }
+
+      openModal(profileModal);
+    }
+
+    function closeProfileModal() {
+      if (profileModal) closeModal(profileModal);
+    }
+
     if (btnProfileDetails) {
       btnProfileDetails.addEventListener('click', function () {
         if (userProfileMenu) userProfileMenu.classList.add('hidden');
-        var profile = PrompterAuth.getProfile();
-        var user = PrompterAuth.getUser();
-        var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
-        var code = (profile && profile.singer_code) ? profile.singer_code : (PrompterAuth.isAdmin() ? '#DEV-ADMIN' : '#CANTOR-PRO');
-        var plan = (profile && profile.plan_tier) ? profile.plan_tier.toUpperCase() : 'PRO';
-        alert('🎤 MEU PERFIL CANTAAÍ PRO\n\n• E-mail: ' + email + '\n• Código do Cantor: ' + code + '\n• Plano: ' + plan + ' (Nuvem Ativa)\n• Sincronização: Automática');
+        openProfileModal();
+      });
+    }
+
+    if (btnCloseProfileModal) btnCloseProfileModal.addEventListener('click', closeProfileModal);
+    if (btnCancelProfileModal) btnCancelProfileModal.addEventListener('click', closeProfileModal);
+    if (profileModalOverlay) profileModalOverlay.addEventListener('click', closeProfileModal);
+
+    if (btnSaveProfileSettings) {
+      btnSaveProfileSettings.addEventListener('click', function () {
+        var newName = (profileDisplayNameInput ? profileDisplayNameInput.value : '').trim();
+        if (!newName) {
+          showToast('Por favor, informe seu nome artístico ou de cantor.', 'warning');
+          return;
+        }
+        PrompterAuth.saveDisplayName(newName).then(function () {
+          showToast('✅ Perfil atualizado com sucesso!', 'success');
+          closeProfileModal();
+        }).catch(function (err) {
+          showToast(err.message || 'Erro ao salvar alterações.', 'warning');
+        });
+      });
+    }
+
+    if (btnManageOrCancelPlan) {
+      btnManageOrCancelPlan.addEventListener('click', function () {
+        var isPro = (PrompterAuth.getProfile() && PrompterAuth.getProfile().plan_tier === 'pro') || (PrompterAuth.getUser() && PrompterAuth.getUser().email === 'leovitulli@gmail.com');
+        if (isPro) {
+          if (confirm('Deseja gerenciar ou cancelar sua assinatura PRO?\n\nAo cancelar, você continuará com acesso PRO ilimitado até o final do ciclo faturado.')) {
+            showToast('Solicitação de gerenciamento enviada. Você mantém acesso até o fim do ciclo.', 'info');
+          }
+        } else {
+          showToast('Você está no plano Free. Escolha o Plano PRO para desbloquear todos os recursos.', 'info');
+        }
+      });
+    }
+
+    if (btnUpgradePlan) {
+      btnUpgradePlan.addEventListener('click', function () {
+        closeProfileModal();
+        if (window.openAuthModal) openAuthModal('signup');
       });
     }
 

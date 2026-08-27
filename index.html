@@ -16,9 +16,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=95">
-  <link rel="stylesheet" href="css/admin.css?v=95">
-  <link rel="stylesheet" href="css/landing.css?v=95">
+  <link rel="stylesheet" href="css/style.css?v=96">
+  <link rel="stylesheet" href="css/admin.css?v=96">
+  <link rel="stylesheet" href="css/landing.css?v=96">
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
   <script src="js/polyfills.js?v=76"></script>
@@ -816,24 +816,88 @@
     </div>
   </div>
 
+  <!-- ─── MODAL DE PERFIL DO CANTOR & GOVERNANÇA DE ASSINATURA ─── -->
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-overlay" id="profileModalOverlay"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>👤 Meu Perfil & Assinatura</h3>
+        <button class="modal-close" id="btnCloseProfileModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formProfileSettings" onsubmit="return false;">
+          <!-- Card de Identificação do Cantor -->
+          <div class="profile-card-header-box">
+            <div class="profile-avatar-big" id="profileModalAvatar">L</div>
+            <div class="profile-header-info">
+              <div class="profile-email-title" id="profileModalEmail">leovitulli@gmail.com</div>
+              <div class="profile-code-pill" id="profileModalCodePill">Código: #DEV-ADMIN</div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 1.25rem;">
+            <label for="profileDisplayNameInput">Nome Artístico / Cantor</label>
+            <input type="text" id="profileDisplayNameInput" class="form-control" placeholder="Ex: Leonardo Vitulli">
+          </div>
+
+          <div class="form-group">
+            <label for="profileSingerCodeInput">Código do Cantor (Identificador de Palco)</label>
+            <input type="text" id="profileSingerCodeInput" class="form-control" readonly style="opacity: 0.85; cursor: not-allowed; font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">
+            <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;">Este código conecta seus tablets e celulares com a banda no palco sem precisar de login.</small>
+          </div>
+
+          <button type="button" id="btnSaveProfileSettings" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">💾 Salvar Alterações</button>
+        </form>
+
+        <div class="dropdown-divider" style="margin: 1.5rem 0;"></div>
+
+        <!-- Governança de Assinatura & Planos -->
+        <div class="profile-subscription-section">
+          <div class="editor-section-title" style="margin-bottom: 0.8rem;">💎 Governança de Assinatura & Plano</div>
+          <div class="subscription-status-card" id="subscriptionStatusCard">
+            <div class="sub-status-header">
+              <span class="sub-plan-badge" id="profileSubPlanBadge">👑 PLANO CANTAAÍ PRO</span>
+              <span class="sub-status-pill" id="profileSubStatusPill">🟢 Ativa</span>
+            </div>
+            <div class="sub-benefits-list" id="profileSubBenefitsList">
+              <div>✓ Armazenamento Ilimitado na Nuvem</div>
+              <div>✓ Transposição Inteligente de Tom Instantânea</div>
+              <div>✓ Sincronização em Tempo Real no Palco</div>
+              <div>✓ Áudio Guia e Picture-in-Picture</div>
+            </div>
+            <div class="sub-actions-row" style="margin-top: 1.2rem; display: flex; gap: 10px; flex-wrap: wrap;">
+              <button id="btnUpgradePlan" class="btn btn-primary btn-sm hidden">⚡ Fazer Upgrade para PRO</button>
+              <button id="btnManageOrCancelPlan" class="btn btn-outline btn-sm" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">
+                ✕ Gerenciar ou Cancelar Plano
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelProfileModal" class="btn btn-secondary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- NOTIFICAÇÕES TOAST -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=95"></script>
-  <script src="js/supabaseClient.js?v=95"></script>
-  <script src="js/db.js?v=95"></script>
-  <script src="js/auth.js?v=95"></script>
-  <script src="js/adminPanel.js?v=95"></script>
-  <script src="js/textParser.js?v=95"></script>
-  <script src="js/sampleRepertoire.js?v=95"></script>
-  <script src="js/transposer.js?v=95"></script>
-  <script src="js/prompter.js?v=95"></script>
-  <script src="js/mediaPlayer.js?v=95"></script>
-  <script src="js/advancedPlayer.js?v=95"></script>
-  <script src="js/gdrive.js?v=95"></script>
-  <script src="js/gdriveUI.js?v=95"></script>
-  <script src="js/app.js?v=95"></script>
+  <script src="js/config.js?v=96"></script>
+  <script src="js/supabaseClient.js?v=96"></script>
+  <script src="js/db.js?v=96"></script>
+  <script src="js/auth.js?v=96"></script>
+  <script src="js/adminPanel.js?v=96"></script>
+  <script src="js/textParser.js?v=96"></script>
+  <script src="js/sampleRepertoire.js?v=96"></script>
+  <script src="js/transposer.js?v=96"></script>
+  <script src="js/prompter.js?v=96"></script>
+  <script src="js/mediaPlayer.js?v=96"></script>
+  <script src="js/advancedPlayer.js?v=96"></script>
+  <script src="js/gdrive.js?v=96"></script>
+  <script src="js/gdriveUI.js?v=96"></script>
+  <script src="js/app.js?v=96"></script>
 </body>
 </html>

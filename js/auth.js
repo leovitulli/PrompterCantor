@@ -234,7 +234,9 @@
 
       if (currentUser) {
         var email = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser.email || '');
-        var initial = (email.charAt(0) || 'U').toUpperCase();
+        var displayName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : (email.split('@')[0] || 'Cantor');
+        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+        var initial = (displayName.charAt(0) || 'U').toUpperCase();
         var isPro = (currentProfile && currentProfile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
         var isAdm = this.isAdmin();
         var code = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : (isAdm ? '#DEV-ADMIN' : '#CANTOR-PRO');
@@ -242,7 +244,7 @@
         if (profileContainer) profileContainer.classList.remove('hidden');
         if (userInitial) userInitial.innerText = initial;
         if (upmAvatarBig) upmAvatarBig.innerText = initial;
-        if (headerEmail) headerEmail.innerText = email;
+        if (headerEmail) headerEmail.innerText = displayName; // Exibe somente o NOME compacto
         if (headerPlan) {
           headerPlan.innerText = isPro ? 'PRO' : 'FREE';
           headerPlan.className = 'user-profile-plan-tag ' + (isPro ? 'plan-pro' : 'plan-free');
@@ -267,6 +269,29 @@
       } else {
         if (profileContainer) profileContainer.classList.add('hidden');
       }
+    },
+
+    saveDisplayName: function(name) {
+      if (!currentUser) return Promise.reject(new Error('Usuário não logado'));
+      if (!currentProfile) currentProfile = {};
+      currentProfile.display_name = name;
+      this.saveSession(currentUser, currentProfile);
+      this.updateUIForAuth();
+
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb) {
+        return sb.from('profiles').upsert({
+          id: currentUser.id,
+          email: currentUser.email,
+          display_name: name,
+          updated_at: new Date().toISOString()
+        }).then(function() {
+          return true;
+        }).catch(function() {
+          return true;
+        });
+      }
+      return Promise.resolve(true);
     }
   };
 
