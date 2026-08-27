@@ -883,27 +883,38 @@
           ? '<span class="badge-plan-executive badge-plan-pro">' + (user.plan_type || '💎 PRO ANUAL') + '</span>'
           : '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>';
 
-        var phoneStr = user.phone ? ('📱 ' + user.phone) : 'Sem WhatsApp';
+        var cleanPhone = (user.phone || '').replace(/\D/g, '');
+        if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = '55' + cleanPhone;
+        var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent('Olá ' + user.name + '! Tudo bem? Aqui é o Leonardo da equipe CantaAí PRO.');
+        var waButton = cleanPhone
+          ? '<a href="' + waUrl + '" target="_blank" class="admin-table-btn-link admin-btn-wa" title="Chamar no WhatsApp direto" onclick="event.stopPropagation();">💬 ' + escapeHtml(user.phone) + '</a>'
+          : '<span style="color:#64748b; font-size:0.8rem;">Sem WhatsApp</span>';
+
+        var cleanInsta = (user.instagram || '').replace('@', '').trim();
+        var instaUrl = 'https://instagram.com/' + cleanInsta;
+        var instaButton = cleanInsta
+          ? '<a href="' + instaUrl + '" target="_blank" class="admin-table-btn-link admin-btn-insta" title="Abrir Instagram direto" onclick="event.stopPropagation();">📸 @' + escapeHtml(cleanInsta) + '</a>'
+          : '<span style="color:#64748b; font-size:0.8rem;">—</span>';
+
         var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : 'Sem CPF';
-        var instaStr = user.instagram ? ('📸 ' + user.instagram) : '—';
 
         html +=
-          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + user.name + '">' +
+          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + escapeHtml(user.name) + '">' +
             '<td>' + statusBadge + '</td>' +
             '<td>' +
               '<div class="admin-user-cell">' +
                 '<div class="admin-user-avatar">' + initial + '</div>' +
                 '<div class="admin-user-details">' +
-                  '<span class="admin-user-name">' + user.name + '</span>' +
-                  '<span class="admin-user-email">' + user.email + '</span>' +
+                  '<span class="admin-user-name">' + escapeHtml(user.name) + '</span>' +
+                  '<span class="admin-user-email">' + escapeHtml(user.email) + '</span>' +
                 '</div>' +
               '</div>' +
             '</td>' +
-            '<td><code class="admin-code-tag">' + user.singer_code + '</code></td>' +
+            '<td><code class="admin-code-tag">' + escapeHtml(user.singer_code) + '</code></td>' +
             '<td>' + planBadge + '</td>' +
-            '<td><span class="admin-reps-stat">' + phoneStr + '</span><br><small style="color:#64748b;">' + cpfStr + '</small></td>' +
-            '<td><span style="color:#38bdf8; font-size:0.82rem;">' + instaStr + '</span></td>' +
-            '<td style="text-align: right;"><span class="admin-time-ago">' + user.last_seen + '</span></td>' +
+            '<td><div>' + waButton + '</div><small style="color:#64748b; font-size:0.75rem; margin-top:2px; display:inline-block;">' + escapeHtml(cpfStr) + '</small></td>' +
+            '<td>' + instaButton + '</td>' +
+            '<td style="text-align: right;"><span class="admin-time-ago">' + escapeHtml(user.last_seen || 'Hoje') + '</span></td>' +
           '</tr>';
       });
 
