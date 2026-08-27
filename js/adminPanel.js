@@ -467,6 +467,7 @@
       link.download = 'canta_ai_relatorio_executivo_ceo_' + new Date().toISOString().slice(0, 10) + '.csv';
       link.click();
       if (window.showToast) window.showToast('📊 Relatório Executivo CSV exportado com sucesso!', 'success');
+    }
   };
 
   window.PrompterAdmin = PrompterAdmin;
