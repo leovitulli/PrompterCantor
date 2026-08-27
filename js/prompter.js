@@ -6,6 +6,7 @@
 var Prompter = {
   isScrolling: false,
   scrollSpeed: 3,
+  subpixelScroll: 0,
   fontSize: 32,
   animationFrameId: null,
 
@@ -41,28 +42,44 @@ var Prompter = {
 
     this.bindEvents();
     this.applyFontSize();
+    this.adjustSpeed(0); // Sincroniza display de velocidade
+  },
+
+  bindFastTouch: function(el, callback) {
+    if (!el) return;
+    var lastTap = 0;
+    var handler = function(e) {
+      var now = Date.now();
+      if (now - lastTap < 150) return;
+      lastTap = now;
+      if (e && e.preventDefault && e.type !== 'click') e.preventDefault();
+      if (e && e.stopPropagation) e.stopPropagation();
+      callback(e);
+    };
+    el.addEventListener('touchend', handler, { passive: false });
+    el.addEventListener('click', handler, { passive: false });
   },
 
   bindEvents: function() {
     var self = this;
 
     if (this.btnToggleScroll) {
-      this.btnToggleScroll.addEventListener('click', function() { self.toggleScroll(); });
+      this.bindFastTouch(this.btnToggleScroll, function() { self.toggleScroll(); });
     }
 
     var btnSpeedFaster = document.getElementById('btnSpeedFaster');
     var btnSpeedSlower = document.getElementById('btnSpeedSlower');
 
     if (btnSpeedFaster) {
-      btnSpeedFaster.onclick = function() { self.adjustSpeed(1); };
+      this.bindFastTouch(btnSpeedFaster, function() { self.adjustSpeed(1); });
     }
     if (btnSpeedSlower) {
-      btnSpeedSlower.onclick = function() { self.adjustSpeed(-1); };
+      this.bindFastTouch(btnSpeedSlower, function() { self.adjustSpeed(-1); });
     }
 
     if (this.scrollSpeedRange) {
       this.scrollSpeedRange.addEventListener('input', function(e) {
-        self.scrollSpeed = parseInt(e.target.value, 10);
+        self.scrollSpeed = Math.max(1, parseInt(e.target.value, 10) || 1);
         if (self.scrollSpeedDisplay) {
           self.scrollSpeedDisplay.textContent = self.scrollSpeed + 'x';
         }
@@ -73,37 +90,20 @@ var Prompter = {
     var btnFontSmaller = document.getElementById('btnFontSmaller');
 
     if (btnFontBigger) {
-      btnFontBigger.onclick = function() { self.changeFontSize(2); };
+      this.bindFastTouch(btnFontBigger, function() { self.changeFontSize(2); });
     }
     if (btnFontSmaller) {
-      btnFontSmaller.onclick = function() { self.changeFontSize(-2); };
+      this.bindFastTouch(btnFontSmaller, function() { self.changeFontSize(-2); });
     }
 
     var btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
     if (btnToggleFullscreen) {
-      btnToggleFullscreen.onclick = function() {
-        if (!document.fullscreenElement) {
-          if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-          }
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          }
-        }
-      };
+      this.bindFastTouch(btnToggleFullscreen, function() { self.toggleFullscreen(); });
     }
 
     var btnScrollToTop = document.getElementById('btnScrollToTop');
     if (btnScrollToTop) {
-      var handleTop = function(e) {
-        if (e && e.preventDefault) e.preventDefault();
-        if (e && e.stopPropagation) e.stopPropagation();
-        self.scrollToTop();
-      };
-      btnScrollToTop.addEventListener('pointerdown', handleTop, { passive: false });
-      btnScrollToTop.addEventListener('touchstart', handleTop, { passive: false });
-      btnScrollToTop.addEventListener('click', handleTop, { passive: false });
+      this.bindFastTouch(btnScrollToTop, function() { self.scrollToTop(); });
     }
 
  
@@ -240,6 +240,7 @@ var Prompter = {
   startScroll: function() {
     if (this.isScrolling) return;
     this.isScrolling = true;
+    this.subpixelScroll = this.scrollArea ? this.scrollArea.scrollTop : 0;
     this.updateScrollUI();
     this.step();
   },
@@ -259,11 +260,13 @@ var Prompter = {
     var self = this;
     if (!this.isScrolling) return;
 
-    var pixelsPerFrame = this.scrollSpeed * 0.4;
+    // Velocidade 1x é suave e lenta (aprox 20px/s), escalando progressivamente até 10x (200px/s)
+    var pixelsPerFrame = Math.max(0.2, this.scrollSpeed * 0.35);
     if (this.scrollArea) {
-      this.scrollArea.scrollTop += pixelsPerFrame;
+      this.subpixelScroll += pixelsPerFrame;
+      this.scrollArea.scrollTop = Math.round(this.subpixelScroll);
       var maxScroll = this.scrollArea.scrollHeight - this.scrollArea.clientHeight;
-      if (this.scrollArea.scrollTop >= maxScroll - 5) {
+      if (this.scrollArea.scrollTop >= maxScroll - 4) {
         this.stopScroll();
         return;
       }
@@ -288,7 +291,7 @@ var Prompter = {
   },
 
   changeFontSize: function(delta) {
-    this.fontSize = Math.max(18, Math.min(72, this.fontSize + delta));
+    this.fontSize = Math.max(16, Math.min(72, this.fontSize + delta));
     this.applyFontSize();
   },
 
@@ -308,6 +311,45 @@ var Prompter = {
     }
     if (this.scrollSpeedDisplay) {
       this.scrollSpeedDisplay.textContent = this.scrollSpeed + 'x';
+    }
+  },
+
+  toggleFullscreen: function() {
+    var elem = document.documentElement;
+    var isDocFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    var prompterView = document.getElementById('prompterView');
+    var isPseudoFullscreen = prompterView && prompterView.classList.contains('prompter-fullscreen-mode');
+    var btn = document.getElementById('btnToggleFullscreen');
+
+    if (!isDocFullscreen && !isPseudoFullscreen) {
+      // Tentar Fullscreen API padrão
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(function() {});
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+
+      // Ativa o modo de palco fullscreen visual garantido para iOS/iPad/Android
+      if (prompterView) prompterView.classList.add('prompter-fullscreen-mode');
+      if (btn) btn.innerHTML = '🗗';
+      try { window.scrollTo(0, 1); } catch (e) {}
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(function() {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+
+      if (prompterView) prompterView.classList.remove('prompter-fullscreen-mode');
+      if (btn) btn.innerHTML = '⛶';
     }
   },
 
