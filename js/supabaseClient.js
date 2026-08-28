@@ -124,6 +124,70 @@
         });
       }
 
+      function createQueryBuilder(table) {
+        var queryParams = {
+          select: '*',
+          filters: [],
+          orders: [],
+          isSingle: false
+        };
+
+        var builder = {
+          select: function(cols) {
+            if (cols) queryParams.select = cols;
+            return builder;
+          },
+          eq: function(col, val) {
+            queryParams.filters.push(encodeURIComponent(col) + '=eq.' + encodeURIComponent(val));
+            return builder;
+          },
+          neq: function(col, val) {
+            queryParams.filters.push(encodeURIComponent(col) + '=neq.' + encodeURIComponent(val));
+            return builder;
+          },
+          order: function(col, opts) {
+            var asc = (!opts || opts.ascending !== false) ? 'asc' : 'desc';
+            var nulls = (opts && opts.nullsFirst) ? '.nullsfirst' : '';
+            queryParams.orders.push(encodeURIComponent(col) + '.' + asc + nulls);
+            return builder;
+          },
+          single: function() {
+            queryParams.isSingle = true;
+            return builder;
+          },
+          limit: function(num) {
+            queryParams.limit = num;
+            return builder;
+          },
+          then: function(onResolve, onReject) {
+            var queryStringParts = ['select=' + encodeURIComponent(queryParams.select)];
+            if (queryParams.filters.length > 0) {
+              queryStringParts.push(queryParams.filters.join('&'));
+            }
+            if (queryParams.orders.length > 0) {
+              queryStringParts.push('order=' + queryParams.orders.join(','));
+            }
+            if (queryParams.limit) {
+              queryStringParts.push('limit=' + queryParams.limit);
+            }
+
+            var fullQuery = queryStringParts.join('&');
+            return restRequest('GET', table, fullQuery).then(function(res) {
+              if (queryParams.isSingle) {
+                var singleData = (res && res.data && res.data[0]) ? res.data[0] : (res && res.data && !Array.isArray(res.data) ? res.data : null);
+                return { data: singleData, error: res ? res.error : null };
+              }
+              return res;
+            }).then(onResolve, onReject);
+          },
+          catch: function(onReject) {
+            return builder.then(null, onReject);
+          }
+        };
+
+        return builder;
+      }
+
       client = {
         auth: {
           signInWithPassword: function(credentials) {
@@ -181,30 +245,40 @@
         from: function(table) {
           return {
             select: function(cols) {
-              var p = restRequest('GET', table, 'select=' + encodeURIComponent(cols || '*'));
-              p.select = function() { return p; };
-              p.eq = function(col, val) {
-                return restRequest('GET', table, 'select=' + encodeURIComponent(cols || '*') + '&' + col + '=eq.' + encodeURIComponent(val));
-              };
-              p.single = function() { return p; };
-              p.order = function() { return p; };
-              return p;
+              var qb = createQueryBuilder(table);
+              return qb.select(cols);
             },
             upsert: function(payload) {
-              var headers = { 'Prefer': 'resolution=merge-duplicates,return=representation' };
-              var p = restRequest('POST', table, '', payload, headers);
-              p.select = function() { return p; };
-              return p;
-            },
-            delete: function() {
-              var currentTable = table;
-              return {
-                eq: function(col, val) {
-                  var p = restRequest('DELETE', currentTable, col + '=eq.' + encodeURIComponent(val));
-                  p.select = function() { return p; };
-                  return p;
+              var builder = {
+                select: function() {
+                  return builder;
+                },
+                then: function(onResolve, onReject) {
+                  var headers = { 'Prefer': 'resolution=merge-duplicates,return=representation' };
+                  return restRequest('POST', table, '', payload, headers).then(onResolve, onReject);
+                },
+                catch: function(onReject) {
+                  return builder.then(null, onReject);
                 }
               };
+              return builder;
+            },
+            delete: function() {
+              var filters = [];
+              var builder = {
+                eq: function(col, val) {
+                  filters.push(encodeURIComponent(col) + '=eq.' + encodeURIComponent(val));
+                  return builder;
+                },
+                then: function(onResolve, onReject) {
+                  var fullQuery = filters.join('&');
+                  return restRequest('DELETE', table, fullQuery).then(onResolve, onReject);
+                },
+                catch: function(onReject) {
+                  return builder.then(null, onReject);
+                }
+              };
+              return builder;
             }
           };
         },
