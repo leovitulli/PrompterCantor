@@ -262,18 +262,7 @@
           return currentUserEmail === 'leovitulli@gmail.com';
         });
 
-        // Deduplicar músicas por título dentro do mesmo repertório
-        var seenSongTitles = {};
-        var uniqueSongs = [];
-        userFiltered.forEach(function(s) {
-          var normTitle = (s.title || '').trim().toUpperCase();
-          if (!seenSongTitles[normTitle]) {
-            seenSongTitles[normTitle] = true;
-            uniqueSongs.push(s);
-          }
-        });
-
-        var songs = uniqueSongs.map(function(s, idx) {
+        var songs = userFiltered.map(function(s, idx) {
           return {
             id: s.id,
             repertoireId: s.repertoire_id,
