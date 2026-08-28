@@ -72,54 +72,30 @@
         var rawList = res.data || [];
         var currentUserEmail = (user.email || '').toLowerCase();
 
-        // Filtrar repertórios do usuário com suporte a schema legado e novo
+        // Filtrar repertórios do usuário
         var filteredList = rawList.filter(function(r) {
-          if (r.user_id) return String(r.user_id) === String(user.id);
-          if (currentUserEmail === 'leovitulli@gmail.com') {
-            return r.name === 'SAMBA' || r.name === 'EXU' || !r.user_id;
+          if (r.user_id) {
+            return String(r.user_id) === String(user.id) || (currentUserEmail === 'leovitulli@gmail.com' && (r.user_id === 'a597be32-b59a-4a79-94ed-34dfd5f939ef' || r.user_id === 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0'));
           }
+          if (currentUserEmail === 'leovitulli@gmail.com') return true;
           return false;
         });
 
         var offStore = getOfflineStore(user.id);
-        var seenNames = {};
-        var uniqueReps = [];
-        var duplicateRepsToDelete = [];
-
-        filteredList.forEach(function(r) {
-          var normName = (r.name || '').trim().toUpperCase();
-          if (!seenNames[normName]) {
-            var isPinned = Boolean(offStore.repertoires && offStore.repertoires[r.id]);
-            var repObj = {
-              id: r.id,
-              name: r.name,
-              source: r.source || 'manual',
-              user_id: r.user_id || user.id,
-              isOfflinePinned: isPinned || Boolean(r.is_offline_pinned),
-              createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now(),
-              updatedAt: r.updated_at ? new Date(r.updated_at).getTime() : Date.now()
-            };
-            seenNames[normName] = repObj;
-            uniqueReps.push(repObj);
-          } else {
-            // Duplicata encontrada: mover músicas para o principal e deletar da nuvem
-            duplicateRepsToDelete.push({
-              duplicateId: r.id,
-              primaryId: seenNames[normName].id
-            });
-          }
+        var reps = filteredList.map(function(r) {
+          var isPinned = Boolean(offStore.repertoires && offStore.repertoires[r.id]);
+          return {
+            id: r.id,
+            name: r.name,
+            source: r.source || 'manual',
+            user_id: r.user_id || user.id,
+            isOfflinePinned: isPinned || Boolean(r.is_offline_pinned),
+            createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now(),
+            updatedAt: r.updated_at ? new Date(r.updated_at).getTime() : Date.now()
+          };
         });
 
-        // Limpar duplicatas no Supabase em background
-        if (duplicateRepsToDelete.length > 0 && sb) {
-          duplicateRepsToDelete.forEach(function(dup) {
-            sb.from('songs').update({ repertoire_id: dup.primaryId }).eq('repertoire_id', dup.duplicateId).then(function() {
-              return sb.from('repertoires').delete().eq('id', dup.duplicateId);
-            }).catch(function() {});
-          });
-        }
-
-        return uniqueReps;
+        return reps;
       }).catch(function(err) {
         console.warn('Falha de rede ao buscar repertórios:', err);
         var offStore = getOfflineStore(user.id);
@@ -254,15 +230,8 @@
         }
 
         var rawList = res.data || [];
-        var currentUserEmail = (user.email || '').toLowerCase();
 
-        // Filtrar pelo usuário atual se user_id existir nas linhas
-        var userFiltered = rawList.filter(function(s) {
-          if (s.user_id) return String(s.user_id) === String(user.id);
-          return currentUserEmail === 'leovitulli@gmail.com';
-        });
-
-        var songs = userFiltered.map(function(s, idx) {
+        var songs = rawList.map(function(s, idx) {
           return {
             id: s.id,
             repertoireId: s.repertoire_id,

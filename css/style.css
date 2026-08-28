@@ -3495,3 +3495,21 @@ textarea {
     line-height: 1.3 !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ESTABILIDADE DE CARREGAMENTO & ZERO-FLICKER (FOUC PREVENTION)
+   ══════════════════════════════════════════════════════════════ */
+html.canta-auth-active #landingPageSection,
+html.canta-auth-active #landingHeaderNav,
+html.canta-auth-active .landing-hero-section,
+html.canta-auth-active .landing-navbar {
+  display: none !important;
+}
+
+html.canta-auth-active #appHeader {
+  display: flex !important;
+}
+
+html.canta-auth-active #tabRepertoire {
+  display: block !important;
+}

@@ -2675,6 +2675,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var currentAuthMode = 'signin'; // 'signin' ou 'signup'
 
     function showLanding() {
+      document.documentElement.classList.remove('canta-auth-active');
       if (landingNav) landingNav.classList.remove('hidden');
       if (landingSec) landingSec.classList.remove('hidden');
       if (appHeader) appHeader.classList.add('hidden');
@@ -2685,6 +2686,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showApp() {
+      document.documentElement.classList.add('canta-auth-active');
       if (authModal) authModal.classList.add('hidden');
       if (landingNav) landingNav.classList.add('hidden');
       if (landingSec) landingSec.classList.add('hidden');

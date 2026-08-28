@@ -20,6 +20,18 @@
   <link rel="stylesheet" href="css/admin.css?v=121">
   <link rel="stylesheet" href="css/landing.css?v=121">
 
+  <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
+  <script>
+    (function() {
+      try {
+        var user = localStorage.getItem('prompter_auth_user');
+        if (user) {
+          document.documentElement.classList.add('canta-auth-active');
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
   <script src="js/polyfills.js?v=76"></script>
 
