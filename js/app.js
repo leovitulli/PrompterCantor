@@ -2018,14 +2018,31 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
+    // Se houver 1 arquivo de texto, sugerir o nome do arquivo para o Repertório
+    if (textFiles.length === 1 && !state.targetRepertoireId) {
+      var rawName = textFiles[0].name.replace(/\.[^/.]+$/, '').trim();
+      var repNameInput = document.getElementById('importRepertoireName');
+      if (repNameInput && rawName) {
+        repNameInput.value = rawName;
+      }
+    }
+
     var parsePromises = textFiles.map(function(tf) {
       return TextParser.parseFile(tf);
     });
 
+    var getSongsPromise = (window.PrompterDB && typeof PrompterDB.getAllSongs === 'function')
+      ? PrompterDB.getAllSongs()
+      : Promise.resolve([]);
+
+    var getRepsPromise = (window.PrompterDB && typeof PrompterDB.getAllRepertoires === 'function')
+      ? PrompterDB.getAllRepertoires()
+      : Promise.resolve([]);
+
     Promise.all([
       Promise.all(parsePromises),
-      PrompterDB.getAllSongs(),
-      PrompterDB.getAllRepertoires()
+      getSongsPromise,
+      getRepsPromise
     ]).then(function(allResults) {
       var results = allResults[0] || [];
       var existingSongs = allResults[1] || [];

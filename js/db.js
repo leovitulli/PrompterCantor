@@ -464,6 +464,34 @@
     });
   }
 
+  function getAllSongs() {
+    return getSongsByRepertoire(null);
+  }
+
+  function toggleSongOffline(songId, pin) {
+    var user = getCurrentUser();
+    var userId = user ? user.id : 'guest';
+    var offStore = getOfflineStore(userId);
+    if (!offStore.songs) offStore.songs = {};
+
+    return getSongById(songId).then(function(song) {
+      if (song) {
+        var repId = song.repertoireId || 'misc';
+        if (!offStore.songs[repId]) offStore.songs[repId] = [];
+        var idx = offStore.songs[repId].findIndex(function(s) { return s.id === songId; });
+        if (pin) {
+          if (idx === -1) offStore.songs[repId].push(song);
+          else offStore.songs[repId][idx] = song;
+        } else {
+          if (idx !== -1) offStore.songs[repId].splice(idx, 1);
+        }
+        saveOfflineStore(userId, offStore);
+        return pin;
+      }
+      return false;
+    });
+  }
+
   function initDB() {
     return Promise.resolve(true);
   }
@@ -482,7 +510,9 @@
     saveSongsBatch: saveSongsBatch,
     getSongById: getSongById,
     getSong: getSongById,
+    getAllSongs: getAllSongs,
     getSongsByRepertoire: getSongsByRepertoire,
+    toggleSongOffline: toggleSongOffline,
     deleteSong: deleteSong
   };
 
