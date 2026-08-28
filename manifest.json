@@ -1,6 +1,6 @@
 {
-  "name": "PrompterCantor",
-  "short_name": "Prompter",
+  "name": "CantaAí PRO",
+  "short_name": "CantaAí",
   "description": "Teleprompter e Gestor de Repertório para Palco e Ensaios",
   "start_url": "./index.html",
   "display": "standalone",

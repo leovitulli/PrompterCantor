@@ -2663,6 +2663,55 @@ textarea {
   transition: all 0.3s ease !important;
 }
 
+/* Dock Flutuante do Spotify (Embed CantaAí) */
+.spotify-player-dock {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  width: 400px !important;
+  max-width: 92vw !important;
+  background: #121212 !important;
+  border: 2px solid #1db954 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(29, 185, 84, 0.3) !important;
+  z-index: 99995 !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease !important;
+}
+
+.spotify-dock-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0.5rem 0.8rem !important;
+  background: #181818 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.spotify-dock-title {
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  color: #1db954 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 240px !important;
+}
+
+.spotify-player-container {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #121212 !important;
+  height: 80px !important;
+  overflow: hidden !important;
+}
+
+.spotify-player-container iframe {
+  width: 100% !important;
+  height: 80px !important;
+  border: 0 !important;
+}
+
 .youtube-player-dock.minimized {
   width: 320px !important;
   max-width: 90vw !important;

@@ -174,3 +174,48 @@ CREATE POLICY "Announcements viewable by target or all" ON public.announcements
 DROP POLICY IF EXISTS "Announcements manageable by admin" ON public.announcements;
 CREATE POLICY "Announcements manageable by admin" ON public.announcements
     FOR ALL USING (is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+
+-- 9. TABELA DE REPERTÓRIOS (MULTI-TENANT POR USER_ID)
+CREATE TABLE IF NOT EXISTS public.repertoires (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    source TEXT DEFAULT 'manual',
+    is_offline_pinned BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.repertoires ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.repertoires ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Repertoires isolated by user" ON public.repertoires;
+CREATE POLICY "Repertoires isolated by user" ON public.repertoires
+    FOR ALL USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+
+-- 10. TABELA DE MÚSICAS (MULTI-TENANT POR USER_ID & REPERTOIRE_ID)
+CREATE TABLE IF NOT EXISTS public.songs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    repertoire_id UUID REFERENCES public.repertoires(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    artist TEXT DEFAULT '',
+    composer TEXT DEFAULT '',
+    key TEXT DEFAULT '',
+    original_key TEXT DEFAULT '',
+    rhythm TEXT DEFAULT '',
+    youtube_url TEXT DEFAULT '',
+    youtube_id TEXT DEFAULT '',
+    spotify_url TEXT DEFAULT '',
+    content TEXT DEFAULT '',
+    track_number INTEGER DEFAULT NULL,
+    "order" INTEGER DEFAULT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.songs ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.songs ADD COLUMN IF NOT EXISTS spotify_url TEXT DEFAULT '';
+ALTER TABLE public.songs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Songs isolated by user" ON public.songs;
+CREATE POLICY "Songs isolated by user" ON public.songs
+    FOR ALL USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');

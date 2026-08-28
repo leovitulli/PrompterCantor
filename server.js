@@ -57,7 +57,7 @@ function startServer(portToUse) {
   });
 
   server.listen(portToUse, () => {
-    console.log(`🚀 PrompterCantor HTTP Server running at http://localhost:${portToUse}`);
+    console.log(`🚀 CantaAí HTTP Server running at http://localhost:${portToUse}`);
   });
 }
 

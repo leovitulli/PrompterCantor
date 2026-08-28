@@ -1,4 +1,4 @@
-# 🎤 PrompterCantor
+# 🎤 CantaAí PRO
 
 Aplicativo Web Progressive Web App (PWA) de **Teleprompter, Cifras e Gestão de Repertórios / Setlists** para músicos e cantores em palco e ensaios.
 

@@ -227,6 +227,9 @@
       }
 
       this.updateUIForAuth();
+      if (window.CantaApp && typeof window.CantaApp.resetActiveState === 'function') {
+        window.CantaApp.resetActiveState();
+      }
       if (typeof window.loadRepertoires === 'function') {
         window.loadRepertoires();
       }
