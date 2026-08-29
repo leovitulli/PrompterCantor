@@ -189,14 +189,19 @@
     var sb = getSupabaseClient();
 
     var offStore = getOfflineStore(user ? user.id : 'guest');
-    delete offStore.repertoires[id];
-    delete offStore.songs[id];
+    if (offStore.repertoires) delete offStore.repertoires[id];
+    if (offStore.songs) delete offStore.songs[id];
     saveOfflineStore(user ? user.id : 'guest', offStore);
 
     if (!user || !user.id || !sb) return Promise.resolve(true);
 
-    return sb.from('repertoires').delete().eq('id', id).then(function(res) {
-      if (res.error) console.warn('Erro ao deletar repertório na nuvem:', res.error);
+    return sb.from('songs').delete().eq('repertoire_id', id).then(function() {
+      return sb.from('repertoires').delete().eq('id', id);
+    }).then(function(res) {
+      if (res && res.error) console.warn('Erro ao deletar repertório na nuvem:', res.error);
+      return true;
+    }).catch(function(err) {
+      console.warn('Erro na exclusão do repertório:', err);
       return true;
     });
   }

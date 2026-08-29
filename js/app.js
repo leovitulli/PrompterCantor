@@ -586,10 +586,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 state.currentRepertoireSongs[s].order = s + 1;
               }
               PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
-                return PrompterCloud.saveSongsBatchToCloud(state.currentRepertoireSongs).then(function() {
-                  renderSongsList(state.currentRepertoireSongs);
-                  showToast('Ordem salva no banco!', 'success');
-                });
+                renderSongsList(state.currentRepertoireSongs);
+                showToast('Ordem salva no banco!', 'success');
               });
             }
           }
@@ -735,9 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
     renderSongsList(state.currentRepertoireSongs);
 
     PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
-      return PrompterCloud.saveSongsBatchToCloud(state.currentRepertoireSongs).then(function() {
-        showToast('Nova ordem salva no banco!', 'success');
-      });
+      showToast('Nova ordem salva no banco!', 'success');
     });
   }
 
@@ -1055,15 +1051,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     showToast('Excluindo repertório...', 'info');
 
-    PrompterCloud.deleteRepertoireFromCloud(repId, name)
-      .then(function() {
-        return PrompterDB.deleteRepertoire(repId, true);
-      })
+    PrompterDB.deleteRepertoire(repId)
       .then(function () {
-        return PrompterCloud.syncAllWithCloud();
-      })
-      .then(function () {
-        showToast('Repertório excluído!', 'success');
+        showToast('Repertório excluído com sucesso!', 'success');
         loadRepertoires();
       })
       .catch(function (err) {
@@ -1075,18 +1065,9 @@ document.addEventListener('DOMContentLoaded', function () {
   function confirmDeleteSong(songId) {
     if (!confirm('Excluir esta música do repertório?')) return;
 
-    var song = findSongById(songId, state.currentRepertoireSongs);
-    var songTitle = song ? song.title : null;
-
     showToast('Excluindo música...', 'info');
 
-    PrompterCloud.deleteSongFromCloud(songId, songTitle)
-      .then(function() {
-        return PrompterDB.deleteSong(songId, true);
-      })
-      .then(function() {
-        return PrompterCloud.syncAllWithCloud();
-      })
+    PrompterDB.deleteSong(songId)
       .then(function () {
         showToast('Música excluída!', 'success');
         if (state.currentRepertoire) {
@@ -1367,10 +1348,8 @@ document.addEventListener('DOMContentLoaded', function () {
           state.currentRepertoireSongs[s].order = s + 1;
         }
         PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
-          return PrompterCloud.saveSongsBatchToCloud(state.currentRepertoireSongs).then(function() {
-            renderSongsList(state.currentRepertoireSongs);
-            showToast('Músicas ordenadas de A a Z e salvas no banco!', 'success');
-          });
+          renderSongsList(state.currentRepertoireSongs);
+          showToast('Músicas ordenadas de A a Z e salvas no banco!', 'success');
         });
       });
     }
@@ -2663,14 +2642,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var btnPushCloud = document.getElementById('btnPushToCloud');
   if (btnPushCloud) {
     btnPushCloud.addEventListener('click', function () {
-      if (!window.PrompterCloud) return;
-      showToast('☁️ Salvando todos os repertórios e músicas no servidor...', 'info');
-      window.PrompterCloud.pushAllLocalToCloud().then(function (res) {
-        showToast('🎉 Todos os dados (' + res.reps + ' repertório(s), ' + res.songs + ' música(s)) foram salvos no Supabase!', 'success');
-        loadRepertoiresGrid();
-      }).catch(function (err) {
-        showToast('⚠️ Erro ao salvar dados no servidor. Verifique a conexão com Supabase.', 'warning');
-      });
+      showToast('☁️ Sincronização em tempo real ativa no Supabase!', 'info');
+      loadRepertoiresGrid();
     });
   }
 
