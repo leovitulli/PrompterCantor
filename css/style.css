@@ -973,6 +973,62 @@ textarea {
   opacity: 1;
 }
 
+.repertoire-card.dragging {
+  opacity: 0.45;
+  transform: scale(0.96);
+  border: 2px dashed #10b981 !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.35);
+}
+
+.repertoire-card.drag-over {
+  border-color: #10b981 !important;
+  transform: scale(1.03) translateY(-4px);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.45);
+}
+
+.rep-drag-handle {
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rep-drag-handle:hover,
+.rep-drag-handle:active {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  cursor: grabbing;
+}
+
+.btn-move-rep-left,
+.btn-move-rep-right {
+  font-size: 0.75rem;
+  padding: 4px 7px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  transition: all 0.18s ease;
+}
+
+.btn-move-rep-left:hover,
+.btn-move-rep-right:hover {
+  color: #ffffff;
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: scale(1.08);
+}
+
 .rep-card-header {
   display: flex;
   align-items: center;

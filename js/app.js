@@ -279,10 +279,15 @@ document.addEventListener('DOMContentLoaded', function () {
       var repId = rep.id;
 
       html +=
-        '<div class="repertoire-card" data-rep-id="' + repId + '">' +
+        '<div class="repertoire-card" data-rep-id="' + repId + '" draggable="true" data-rep-index="' + i + '">' +
         '<div class="rep-card-header">' +
+        '<div style="display:flex;align-items:center;gap:0.5rem;">' +
+        '<span class="rep-drag-handle" title="Segure para arrastar e reordenar">⋮⋮</span>' +
         '<div class="rep-source-badge rep-source-' + sourceClass + '">' + sourceIcon + ' ' + sourceLabel + '</div>' +
+        '</div>' +
         '<div class="rep-card-actions-top">' +
+        '<button class="btn-icon-sm btn-move-rep-left" data-rep-id="' + repId + '" title="Mover para a esquerda (anterior)">◀</button>' +
+        '<button class="btn-icon-sm btn-move-rep-right" data-rep-id="' + repId + '" title="Mover para a direita (próximo)">▶</button>' +
         '<button class="btn-icon-sm btn-print-rep" data-rep-id="' + repId + '" title="Imprimir Repertório">🖨️</button>' +
         '<button class="btn-icon-sm btn-delete-rep" data-rep-id="' + repId + '" title="Excluir Repertório">🗑️</button>' +
         '</div>' +
@@ -316,6 +321,125 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function bindRepertoireCardEvents() {
+    var dragSrcCard = null;
+    var cards = document.querySelectorAll('.repertoire-card');
+
+    // Drag-and-Drop nos cards do Repertório
+    for (var c = 0; c < cards.length; c++) {
+      (function (card) {
+        card.addEventListener('dragstart', function (e) {
+          dragSrcCard = card;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', card.getAttribute('data-rep-id'));
+          card.classList.add('dragging');
+        });
+
+        card.addEventListener('dragover', function (e) {
+          if (e.preventDefault) e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          return false;
+        });
+
+        card.addEventListener('dragenter', function (e) {
+          if (card !== dragSrcCard) card.classList.add('drag-over');
+        });
+
+        card.addEventListener('dragleave', function (e) {
+          card.classList.remove('drag-over');
+        });
+
+        card.addEventListener('drop', function (e) {
+          if (e.stopPropagation) e.stopPropagation();
+          card.classList.remove('drag-over');
+          if (dragSrcCard && dragSrcCard !== card) {
+            var srcId = dragSrcCard.getAttribute('data-rep-id');
+            var targetId = card.getAttribute('data-rep-id');
+
+            var fromIdx = -1;
+            var toIdx = -1;
+            for (var i = 0; i < state.repertoires.length; i++) {
+              if (String(state.repertoires[i].id) === String(srcId)) fromIdx = i;
+              if (String(state.repertoires[i].id) === String(targetId)) toIdx = i;
+            }
+
+            if (fromIdx !== -1 && toIdx !== -1) {
+              var moved = state.repertoires.splice(fromIdx, 1)[0];
+              state.repertoires.splice(toIdx, 0, moved);
+
+              var orderIds = state.repertoires.map(function (r) { return r.id; });
+              PrompterDB.saveRepertoiresOrder(orderIds).then(function () {
+                renderRepertoires();
+                showToast('Ordem dos repertórios salva!', 'success');
+              });
+            }
+          }
+          return false;
+        });
+
+        card.addEventListener('dragend', function () {
+          card.classList.remove('dragging');
+          var allCards = document.querySelectorAll('.repertoire-card');
+          for (var k = 0; k < allCards.length; k++) allCards[k].classList.remove('drag-over');
+        });
+
+        // Clique no card inteiro também abre (exceto se clicou nos botões ou drag handle)
+        card.addEventListener('click', function (e) {
+          if (e.target.closest('.btn-icon-sm') || e.target.closest('.btn') || e.target.closest('.rep-drag-handle')) return;
+          openRepertoireSongs(card.getAttribute('data-rep-id'));
+        });
+      })(cards[c]);
+    }
+
+    // Botões de mover para a esquerda
+    var moveLeftBtns = document.querySelectorAll('.btn-move-rep-left');
+    for (var ml = 0; ml < moveLeftBtns.length; ml++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = btn.getAttribute('data-rep-id');
+          var idx = -1;
+          for (var i = 0; i < state.repertoires.length; i++) {
+            if (String(state.repertoires[i].id) === String(id)) { idx = i; break; }
+          }
+          if (idx > 0) {
+            var temp = state.repertoires[idx];
+            state.repertoires[idx] = state.repertoires[idx - 1];
+            state.repertoires[idx - 1] = temp;
+            var orderIds = state.repertoires.map(function (r) { return r.id; });
+            PrompterDB.saveRepertoiresOrder(orderIds).then(function () {
+              renderRepertoires();
+              showToast('Ordem atualizada!', 'success');
+            });
+          }
+        });
+      })(moveLeftBtns[ml]);
+    }
+
+    // Botões de mover para a direita
+    var moveRightBtns = document.querySelectorAll('.btn-move-rep-right');
+    for (var mr = 0; mr < moveRightBtns.length; mr++) {
+      (function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = btn.getAttribute('data-rep-id');
+          var idx = -1;
+          for (var i = 0; i < state.repertoires.length; i++) {
+            if (String(state.repertoires[i].id) === String(id)) { idx = i; break; }
+          }
+          if (idx !== -1 && idx < state.repertoires.length - 1) {
+            var temp = state.repertoires[idx];
+            state.repertoires[idx] = state.repertoires[idx + 1];
+            state.repertoires[idx + 1] = temp;
+            var orderIds = state.repertoires.map(function (r) { return r.id; });
+            PrompterDB.saveRepertoiresOrder(orderIds).then(function () {
+              renderRepertoires();
+              showToast('Ordem atualizada!', 'success');
+            });
+          }
+        });
+      })(moveRightBtns[mr]);
+    }
+
     // Abrir repertório
     var openBtns = document.querySelectorAll('.btn-open-rep');
     for (var i = 0; i < openBtns.length; i++) {
@@ -374,17 +498,6 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         });
       })(repOfflineBtns[ro]);
-    }
-
-    // Clique no card inteiro também abre
-    var cards = document.querySelectorAll('.repertoire-card');
-    for (var c = 0; c < cards.length; c++) {
-      (function (card) {
-        card.addEventListener('click', function (e) {
-          if (e.target.closest('.btn-icon-sm') || e.target.closest('.btn') || e.target.closest('.btn-offline-toggle')) return;
-          openRepertoireSongs(card.getAttribute('data-rep-id'));
-        });
-      })(cards[c]);
     }
   }
 

@@ -95,12 +95,47 @@
           };
         });
 
+        var customOrder = [];
+        try {
+          var rawOrder = localStorage.getItem('canta_ai_rep_order_' + user.id);
+          if (rawOrder) customOrder = JSON.parse(rawOrder);
+        } catch(e) {}
+
+        if (customOrder && customOrder.length > 0) {
+          reps.sort(function(a, b) {
+            var idxA = customOrder.indexOf(a.id);
+            var idxB = customOrder.indexOf(b.id);
+            if (idxA === -1) idxA = 9999;
+            if (idxB === -1) idxB = 9999;
+            if (idxA !== idxB) return idxA - idxB;
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        }
+
         return reps;
       }).catch(function(err) {
         console.warn('Falha de rede ao buscar repertórios:', err);
         var offStore = getOfflineStore(user.id);
         var list = Object.keys(offStore.repertoires || {}).map(function(k) { return offStore.repertoires[k]; });
-        list.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+        
+        var customOrder = [];
+        try {
+          var rawOrder = localStorage.getItem('canta_ai_rep_order_' + user.id);
+          if (rawOrder) customOrder = JSON.parse(rawOrder);
+        } catch(e) {}
+
+        if (customOrder && customOrder.length > 0) {
+          list.sort(function(a, b) {
+            var idxA = customOrder.indexOf(a.id);
+            var idxB = customOrder.indexOf(b.id);
+            if (idxA === -1) idxA = 9999;
+            if (idxB === -1) idxB = 9999;
+            if (idxA !== idxB) return idxA - idxB;
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        } else {
+          list.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+        }
         return list;
       });
   }
@@ -497,6 +532,15 @@
     });
   }
 
+  function saveRepertoiresOrder(orderIds) {
+    var user = getCurrentUser();
+    var userId = user ? user.id : 'guest';
+    try {
+      localStorage.setItem('canta_ai_rep_order_' + userId, JSON.stringify(orderIds || []));
+    } catch(e) {}
+    return Promise.resolve(true);
+  }
+
   function initDB() {
     return Promise.resolve(true);
   }
@@ -508,6 +552,7 @@
     getAllRepertoires: getAllRepertoires,
     getRepertoireById: getRepertoireById,
     deleteRepertoire: deleteRepertoire,
+    saveRepertoiresOrder: saveRepertoiresOrder,
     countSongsByRepertoire: countSongsByRepertoire,
     toggleRepertoireOffline: toggleRepertoireOffline,
     // Músicas
