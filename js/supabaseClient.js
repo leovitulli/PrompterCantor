@@ -263,6 +263,24 @@
               };
               return builder;
             },
+            update: function(payload) {
+              var filters = [];
+              var builder = {
+                eq: function(col, val) {
+                  filters.push(encodeURIComponent(col) + '=eq.' + encodeURIComponent(val));
+                  return builder;
+                },
+                then: function(onResolve, onReject) {
+                  var fullQuery = filters.join('&');
+                  var headers = { 'Prefer': 'return=representation' };
+                  return restRequest('PATCH', table, fullQuery, payload, headers).then(onResolve, onReject);
+                },
+                catch: function(onReject) {
+                  return builder.then(null, onReject);
+                }
+              };
+              return builder;
+            },
             delete: function() {
               var filters = [];
               var builder = {

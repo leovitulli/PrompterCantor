@@ -535,9 +535,29 @@
   function saveRepertoiresOrder(orderIds) {
     var user = getCurrentUser();
     var userId = user ? user.id : 'guest';
+    var sb = getSupabaseClient();
+
+    // 1. Salvar no cache local para resposta visual imediata (0ms)
     try {
       localStorage.setItem('canta_ai_rep_order_' + userId, JSON.stringify(orderIds || []));
     } catch(e) {}
+
+    // 2. Se conectado ao Supabase, atualizar ordem na nuvem (multi-dispositivo)
+    if (sb && Array.isArray(orderIds) && orderIds.length > 0) {
+      var baseTime = Date.now() + (orderIds.length * 2000);
+      var updatePromises = orderIds.map(function(repId, idx) {
+        var repTime = new Date(baseTime - (idx * 2000)).toISOString();
+        return sb.from('repertoires').update({ created_at: repTime }).eq('id', repId);
+      });
+      return Promise.all(updatePromises).then(function() {
+        console.log('☁️ Ordem dos repertórios sincronizada no Supabase Cloud!');
+        return true;
+      }).catch(function(err) {
+        console.warn('Aviso ao sincronizar ordem de repertórios na nuvem:', err);
+        return true;
+      });
+    }
+
     return Promise.resolve(true);
   }
 
