@@ -866,29 +866,50 @@ document.addEventListener('DOMContentLoaded', function () {
   // ═══════════════════════════════════════
 
   function navigateSong(direction) {
+    if (!state.currentSong) return;
+
+    var ensureListPromise = Promise.resolve();
     var songList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
       ? state.currentSetlistSongs
       : (state.currentRepertoireSongs || []);
 
-    if (!songList || songList.length === 0 || !state.currentSong) return;
+    var rId = state.currentSong.repertoireId || (state.currentRepertoire ? state.currentRepertoire.id : null);
 
-    var curId = String(state.currentSong.id);
-    var currentIndex = songList.findIndex(function (s) { return String(s.id) === curId; });
-
-    if (currentIndex === -1) currentIndex = 0;
-
-    var newIndex = currentIndex + direction;
-    if (newIndex >= 0 && newIndex < songList.length) {
-      if (state.currentSetlist) {
-        state.currentSetlistIndex = newIndex;
-      }
-      openPrompterView(songList[newIndex]);
-
-      var scrollArea = document.getElementById('prompterScrollArea');
-      if (scrollArea) scrollArea.scrollTop = 0;
-
-      showToast((direction > 0 ? '▶ Próxima: ' : '◀ Anterior: ') + (songList[newIndex].title || 'Música'), 'info');
+    if ((!songList || songList.length <= 1) && rId) {
+      ensureListPromise = PrompterDB.getSongsByRepertoire(rId).then(function(songs) {
+        if (songs && songs.length > 0) {
+          state.currentRepertoireSongs = songs;
+        }
+        return state.currentRepertoireSongs || [];
+      });
     }
+
+    ensureListPromise.then(function() {
+      var activeList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
+        ? state.currentSetlistSongs
+        : (state.currentRepertoireSongs || []);
+
+      if (!activeList || activeList.length === 0 || !state.currentSong) return;
+
+      var curId = String(state.currentSong.id);
+      var currentIndex = activeList.findIndex(function (s) { return String(s.id) === curId; });
+
+      if (currentIndex === -1) currentIndex = 0;
+
+      var newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < activeList.length) {
+        if (state.currentSetlist) {
+          state.currentSetlistIndex = newIndex;
+        }
+        var targetSong = activeList[newIndex];
+        openPrompterView(targetSong);
+
+        var scrollArea = document.getElementById('prompterScrollArea');
+        if (scrollArea) scrollArea.scrollTop = 0;
+
+        showToast((direction > 0 ? '▶ ' : '◀ ') + (targetSong.title || 'Música'), 'info');
+      }
+    });
   }
 
   function openPrompterView(song) {
@@ -1020,66 +1041,95 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Configurar Navegação de Palco (Repertório e Setlist)
-    var songList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
+    function updatePrompterNavUI(list) {
+      var activeList = list || [];
+      var curIndex = -1;
+      if (activeList.length > 0) {
+        curIndex = activeList.findIndex(function (s) { return String(s.id) === String(song.id); });
+      }
+
+      var btnPrev = document.getElementById('btnPrompterPrevSong');
+      var btnNext = document.getElementById('btnPrompterNextSong');
+      var showPos = document.getElementById('prompterShowPos');
+      var nextBanner = document.getElementById('prompterNextSongBanner');
+      var pnsbTitle = document.getElementById('pnsbTitle');
+      var pnsbKey = document.getElementById('pnsbKey');
+      var pnsbArtist = document.getElementById('pnsbArtist');
+      var pnsbBtnGo = document.getElementById('pnsbBtnGo');
+
+      if (curIndex !== -1 && activeList.length > 1) {
+        if (btnPrev) {
+          btnPrev.classList.remove('hidden');
+          btnPrev.disabled = (curIndex === 0);
+          btnPrev.classList.toggle('disabled', curIndex === 0);
+          btnPrev.onclick = function(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            navigateSong(-1);
+          };
+        }
+        if (btnNext) {
+          btnNext.classList.remove('hidden');
+          btnNext.disabled = (curIndex >= activeList.length - 1);
+          btnNext.classList.toggle('disabled', curIndex >= activeList.length - 1);
+          btnNext.onclick = function(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            navigateSong(1);
+          };
+        }
+        if (showPos) {
+          showPos.classList.remove('hidden');
+          showPos.textContent = (curIndex + 1) + ' / ' + activeList.length;
+        }
+
+        // Configurar banner de Próxima Música no fim da página
+        if (curIndex < activeList.length - 1 && nextBanner) {
+          var nextSong = activeList[curIndex + 1];
+          nextBanner.classList.remove('hidden');
+          if (pnsbTitle) pnsbTitle.textContent = (curIndex + 2) + '. ' + (nextSong.title || 'Próxima');
+          if (pnsbKey) {
+            pnsbKey.textContent = nextSong.key ? 'Tom: ' + nextSong.key : 'Sem Tom';
+            pnsbKey.style.display = nextSong.key ? 'inline-block' : 'none';
+          }
+          if (pnsbArtist) {
+            pnsbArtist.textContent = nextSong.artist ? '🎤 ' + nextSong.artist : '';
+            pnsbArtist.style.display = nextSong.artist ? 'inline-block' : 'none';
+          }
+          if (pnsbBtnGo) {
+            pnsbBtnGo.onclick = function(e) {
+              if (e) { e.preventDefault(); e.stopPropagation(); }
+              navigateSong(1);
+            };
+          }
+        } else if (nextBanner) {
+          nextBanner.classList.add('hidden');
+        }
+      } else {
+        if (btnPrev) btnPrev.classList.add('hidden');
+        if (btnNext) btnNext.classList.add('hidden');
+        if (showPos) showPos.classList.add('hidden');
+        if (nextBanner) nextBanner.classList.add('hidden');
+      }
+    }
+
+    var initialList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
       ? state.currentSetlistSongs
       : (state.currentRepertoireSongs || []);
 
-    var curIndex = -1;
-    if (songList && songList.length > 0) {
-      curIndex = songList.findIndex(function (s) { return String(s.id) === String(song.id); });
-    }
+    var repIdForSong = song.repertoireId || (state.currentRepertoire ? state.currentRepertoire.id : null);
 
-    var btnPrev = document.getElementById('btnPrompterPrevSong');
-    var btnNext = document.getElementById('btnPrompterNextSong');
-    var showPos = document.getElementById('prompterShowPos');
-    var nextBanner = document.getElementById('prompterNextSongBanner');
-    var pnsbTitle = document.getElementById('pnsbTitle');
-    var pnsbKey = document.getElementById('pnsbKey');
-    var pnsbArtist = document.getElementById('pnsbArtist');
-    var pnsbBtnGo = document.getElementById('pnsbBtnGo');
-
-    if (curIndex !== -1 && songList.length > 1) {
-      if (btnPrev) {
-        btnPrev.classList.remove('hidden');
-        btnPrev.disabled = (curIndex === 0);
-        btnPrev.classList.toggle('disabled', curIndex === 0);
-        btnPrev.onclick = function() { navigateSong(-1); };
-      }
-      if (btnNext) {
-        btnNext.classList.remove('hidden');
-        btnNext.disabled = (curIndex >= songList.length - 1);
-        btnNext.classList.toggle('disabled', curIndex >= songList.length - 1);
-        btnNext.onclick = function() { navigateSong(1); };
-      }
-      if (showPos) {
-        showPos.classList.remove('hidden');
-        showPos.textContent = (curIndex + 1) + ' / ' + songList.length;
-      }
-
-      // Configurar banner de Próxima Música no fim da página
-      if (curIndex < songList.length - 1 && nextBanner) {
-        var nextSong = songList[curIndex + 1];
-        nextBanner.classList.remove('hidden');
-        if (pnsbTitle) pnsbTitle.textContent = (curIndex + 2) + '. ' + (nextSong.title || 'Próxima');
-        if (pnsbKey) {
-          pnsbKey.textContent = nextSong.key ? 'Tom: ' + nextSong.key : 'Sem Tom';
-          pnsbKey.style.display = nextSong.key ? 'inline-block' : 'none';
+    if ((!initialList || initialList.length <= 1) && repIdForSong) {
+      PrompterDB.getSongsByRepertoire(repIdForSong).then(function(loaded) {
+        if (loaded && loaded.length > 0) {
+          state.currentRepertoireSongs = loaded;
+          updatePrompterNavUI(loaded);
+        } else {
+          updatePrompterNavUI(initialList);
         }
-        if (pnsbArtist) {
-          pnsbArtist.textContent = nextSong.artist ? '🎤 ' + nextSong.artist : '';
-          pnsbArtist.style.display = nextSong.artist ? 'inline-block' : 'none';
-        }
-        if (pnsbBtnGo) {
-          pnsbBtnGo.onclick = function() { navigateSong(1); };
-        }
-      } else if (nextBanner) {
-        nextBanner.classList.add('hidden');
-      }
+      }).catch(function() {
+        updatePrompterNavUI(initialList);
+      });
     } else {
-      if (btnPrev) btnPrev.classList.add('hidden');
-      if (btnNext) btnNext.classList.add('hidden');
-      if (showPos) showPos.classList.add('hidden');
-      if (nextBanner) nextBanner.classList.add('hidden');
+      updatePrompterNavUI(initialList);
     }
 
     Prompter.loadContent(song.content, song.key, song.originalKey);
@@ -2134,15 +2184,21 @@ document.addEventListener('DOMContentLoaded', function () {
             state.currentSong = song;
             var rId = song.repertoireId || targetRepId;
             if (rId) {
-              PrompterDB.getRepertoireById(rId).then(function (rep) {
+              return PrompterDB.getSongsByRepertoire(rId).then(function (songs) {
+                state.currentRepertoireSongs = songs || [];
+                return PrompterDB.getRepertoireById(rId);
+              }).then(function (rep) {
                 if (rep) state.currentRepertoire = rep;
+                openPrompterView(song);
+                return true;
+              }).catch(function () {
+                openPrompterView(song);
+                return true;
               });
-              PrompterDB.getSongsByRepertoire(rId).then(function (songs) {
-                state.currentRepertoireSongs = songs;
-              });
+            } else {
+              openPrompterView(song);
+              return true;
             }
-            openPrompterView(song);
-            return true;
           } else if (targetRepId) {
             openRepertoireSongs(targetRepId);
             return true;
