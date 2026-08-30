@@ -2701,6 +2701,124 @@ textarea {
   transform: scale(0.95) !important;
 }
 
+/* ── NAVEGAÇÃO ENTRE MÚSICAS NO PROMPTER DE PALCO ── */
+.prompter-nav-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 3px 5px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.prompter-nav-btn {
+  font-weight: 700 !important;
+  padding: 4px 11px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.prompter-nav-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.25) !important;
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3) !important;
+}
+
+.prompter-nav-btn:disabled,
+.prompter-nav-btn.disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.prompter-pos-badge {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2)) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  font-weight: 800 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.82rem !important;
+  padding: 4px 9px !important;
+  border-radius: 8px !important;
+  white-space: nowrap !important;
+}
+
+/* ── BANNER GIGANTE DE PRÓXIMA MÚSICA NO FIM DA LETRA ── */
+.prompter-next-song-banner {
+  margin: 3.5rem auto 1.5rem auto !important;
+  max-width: 820px !important;
+  width: 95% !important;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(22, 33, 54, 0.9)) !important;
+  border: 2px solid rgba(16, 185, 129, 0.45) !important;
+  border-radius: 20px !important;
+  padding: 1.5rem 2rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1.5rem !important;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.85), 0 0 30px rgba(16, 185, 129, 0.22) !important;
+  animation: cardIn 0.35s ease !important;
+  backdrop-filter: blur(14px) !important;
+  box-sizing: border-box !important;
+}
+
+.pnsb-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.4rem !important;
+}
+
+.pnsb-label {
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px !important;
+  color: #34d399 !important;
+  text-transform: uppercase !important;
+}
+
+.pnsb-title {
+  font-size: 1.45rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  line-height: 1.25 !important;
+}
+
+.pnsb-btn {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  padding: 0.85rem 1.85rem !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(52, 211, 153, 0.5) !important;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45) !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.pnsb-btn:hover {
+  transform: scale(1.04) !important;
+  box-shadow: 0 6px 26px rgba(16, 185, 129, 0.65) !important;
+  background: linear-gradient(135deg, #34d399, #10b981) !important;
+}
+
 /* ══════════════════════════════════════════════════════
    DOCK FLUTUANTE DE VÍDEO DO YOUTUBE (PICTURE-IN-PICTURE)
    ══════════════════════════════════════════════════════ */

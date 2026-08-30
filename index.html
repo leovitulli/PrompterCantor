@@ -449,9 +449,11 @@
                   <option value="Bm">Bm (Si m)</option>
                 </optgroup>
               </select>
-              <button id="btnPrompterPrevSong" class="btn btn-secondary btn-sm hidden" title="Música Anterior do Show">‹ Anterior</button>
-              <span id="prompterShowPos" class="badge badge-submeta hidden" style="background:#3b82f6; color:#fff; font-weight:800;">Show 1/1</span>
-              <button id="btnPrompterNextSong" class="btn btn-secondary btn-sm hidden" title="Próxima Música do Show">Próxima ›</button>
+              <div class="prompter-nav-group">
+                <button id="btnPrompterPrevSong" class="btn btn-secondary btn-sm prompter-nav-btn" title="Música Anterior (Seta Esquerda / Pedal)">‹ Anterior</button>
+                <span id="prompterShowPos" class="badge badge-submeta prompter-pos-badge" title="Posição da música">1 / 1</span>
+                <button id="btnPrompterNextSong" class="btn btn-secondary btn-sm prompter-nav-btn" title="Próxima Música (Seta Direita / Pedal)">Próxima ›</button>
+              </div>
               <button id="btnPrompterYoutube" class="btn btn-secondary btn-sm hidden" title="Áudio Guia de Referência no YouTube">🎵 Áudio YT</button>
               <button id="btnPrompterSpotify" class="btn btn-secondary btn-sm hidden" title="Abrir no Spotify" style="border-color:#1db954;color:#1db954;">🟢 Spotify</button>
               <button id="btnPrompterEdit" class="btn btn-secondary btn-sm" title="Editar Letra e Cifra">✏️ Editar</button>
@@ -560,6 +562,22 @@
         <div id="prompterTextContent" class="prompter-text-content">
           <!-- Conteúdo da letra / cifra é renderizado aqui -->
         </div>
+
+        <!-- Banner de Palco: Próxima Música -->
+        <div id="prompterNextSongBanner" class="prompter-next-song-banner hidden">
+          <div class="pnsb-content">
+            <span class="pnsb-label">👉 Próxima Música</span>
+            <h3 id="pnsbTitle" class="pnsb-title">Nome da Música</h3>
+            <div id="pnsbMeta" style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+              <span id="pnsbKey" class="badge badge-key">Tom: G</span>
+              <span id="pnsbArtist" class="badge-submeta" style="color:var(--text-muted);"></span>
+            </div>
+          </div>
+          <button id="pnsbBtnGo" class="btn btn-primary pnsb-btn" title="Ir para a próxima música">
+            <span>Cantar Agora</span> ▶
+          </button>
+        </div>
+
         <div class="prompter-bottom-spacer"></div>
       </div>
 

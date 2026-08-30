@@ -865,6 +865,32 @@ document.addEventListener('DOMContentLoaded', function () {
   //  MODO PALCO / PROMPTER
   // ═══════════════════════════════════════
 
+  function navigateSong(direction) {
+    var songList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
+      ? state.currentSetlistSongs
+      : (state.currentRepertoireSongs || []);
+
+    if (!songList || songList.length === 0 || !state.currentSong) return;
+
+    var curId = String(state.currentSong.id);
+    var currentIndex = songList.findIndex(function (s) { return String(s.id) === curId; });
+
+    if (currentIndex === -1) currentIndex = 0;
+
+    var newIndex = currentIndex + direction;
+    if (newIndex >= 0 && newIndex < songList.length) {
+      if (state.currentSetlist) {
+        state.currentSetlistIndex = newIndex;
+      }
+      openPrompterView(songList[newIndex]);
+
+      var scrollArea = document.getElementById('prompterScrollArea');
+      if (scrollArea) scrollArea.scrollTop = 0;
+
+      showToast((direction > 0 ? '▶ Próxima: ' : '◀ Anterior: ') + (songList[newIndex].title || 'Música'), 'info');
+    }
+  }
+
   function openPrompterView(song) {
     if (!song) return;
     state.currentSong = song;
@@ -993,30 +1019,67 @@ document.addEventListener('DOMContentLoaded', function () {
       composerEl.style.display = song.composer ? 'inline-block' : 'none';
     }
 
-    // Configurar Navegação de Show se estiver em modo Setlist
+    // Configurar Navegação de Palco (Repertório e Setlist)
+    var songList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
+      ? state.currentSetlistSongs
+      : (state.currentRepertoireSongs || []);
+
+    var curIndex = -1;
+    if (songList && songList.length > 0) {
+      curIndex = songList.findIndex(function (s) { return String(s.id) === String(song.id); });
+    }
+
     var btnPrev = document.getElementById('btnPrompterPrevSong');
     var btnNext = document.getElementById('btnPrompterNextSong');
     var showPos = document.getElementById('prompterShowPos');
+    var nextBanner = document.getElementById('prompterNextSongBanner');
+    var pnsbTitle = document.getElementById('pnsbTitle');
+    var pnsbKey = document.getElementById('pnsbKey');
+    var pnsbArtist = document.getElementById('pnsbArtist');
+    var pnsbBtnGo = document.getElementById('pnsbBtnGo');
 
-    if (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0) {
+    if (curIndex !== -1 && songList.length > 1) {
       if (btnPrev) {
         btnPrev.classList.remove('hidden');
-        btnPrev.onclick = function() { navigatePrompterShow(-1); };
-        btnPrev.style.opacity = (state.currentSetlistIndex === 0) ? '0.4' : '1';
+        btnPrev.disabled = (curIndex === 0);
+        btnPrev.classList.toggle('disabled', curIndex === 0);
+        btnPrev.onclick = function() { navigateSong(-1); };
       }
       if (btnNext) {
         btnNext.classList.remove('hidden');
-        btnNext.onclick = function() { navigatePrompterShow(1); };
-        btnNext.style.opacity = (state.currentSetlistIndex >= state.currentSetlistSongs.length - 1) ? '0.4' : '1';
+        btnNext.disabled = (curIndex >= songList.length - 1);
+        btnNext.classList.toggle('disabled', curIndex >= songList.length - 1);
+        btnNext.onclick = function() { navigateSong(1); };
       }
       if (showPos) {
         showPos.classList.remove('hidden');
-        showPos.textContent = 'Show: ' + (state.currentSetlistIndex + 1) + '/' + state.currentSetlistSongs.length;
+        showPos.textContent = (curIndex + 1) + ' / ' + songList.length;
+      }
+
+      // Configurar banner de Próxima Música no fim da página
+      if (curIndex < songList.length - 1 && nextBanner) {
+        var nextSong = songList[curIndex + 1];
+        nextBanner.classList.remove('hidden');
+        if (pnsbTitle) pnsbTitle.textContent = (curIndex + 2) + '. ' + (nextSong.title || 'Próxima');
+        if (pnsbKey) {
+          pnsbKey.textContent = nextSong.key ? 'Tom: ' + nextSong.key : 'Sem Tom';
+          pnsbKey.style.display = nextSong.key ? 'inline-block' : 'none';
+        }
+        if (pnsbArtist) {
+          pnsbArtist.textContent = nextSong.artist ? '🎤 ' + nextSong.artist : '';
+          pnsbArtist.style.display = nextSong.artist ? 'inline-block' : 'none';
+        }
+        if (pnsbBtnGo) {
+          pnsbBtnGo.onclick = function() { navigateSong(1); };
+        }
+      } else if (nextBanner) {
+        nextBanner.classList.add('hidden');
       }
     } else {
       if (btnPrev) btnPrev.classList.add('hidden');
       if (btnNext) btnNext.classList.add('hidden');
       if (showPos) showPos.classList.add('hidden');
+      if (nextBanner) nextBanner.classList.add('hidden');
     }
 
     Prompter.loadContent(song.content, song.key, song.originalKey);
@@ -1826,7 +1889,51 @@ document.addEventListener('DOMContentLoaded', function () {
           closeModal(openModals[openModals.length - 1]);
         }
       }
+
+      // Atalhos de Palco e Pedais Bluetooth (Avançar / Voltar Música)
+      var prompterView = document.getElementById('prompterView');
+      var isPrompterActive = prompterView && !prompterView.classList.contains('hidden') && prompterView.style.display !== 'none';
+      var isEditingText = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable);
+
+      if (isPrompterActive && !isEditingText) {
+        // Seta Direita / PageDown / 'n' -> Próxima Música
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === 'n' || e.key === 'N') {
+          navigateSong(1);
+        }
+        // Seta Esquerda / PageUp / 'p' -> Música Anterior
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'p' || e.key === 'P') {
+          navigateSong(-1);
+        }
+      }
     });
+
+    // Suporte a Gesto de Swipe no iPad (Deslizar para mudar de música)
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var prompterScrollArea = document.getElementById('prompterScrollArea');
+    if (prompterScrollArea) {
+      prompterScrollArea.addEventListener('touchstart', function(e) {
+        if (e.touches && e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      prompterScrollArea.addEventListener('touchend', function(e) {
+        if (e.changedTouches && e.changedTouches.length === 1) {
+          var deltaX = e.changedTouches[0].clientX - touchStartX;
+          var deltaY = e.changedTouches[0].clientY - touchStartY;
+          // Gesto horizontal nítido (> 80px horizontal e < 60px vertical)
+          if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 60) {
+            if (deltaX < 0) {
+              navigateSong(1); // Swipe esquerda -> Próxima
+            } else {
+              navigateSong(-1); // Swipe direita -> Anterior
+            }
+          }
+        }
+      }, { passive: true });
+    }
   }
 
   // ═══════════════════════════════════════
