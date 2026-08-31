@@ -368,6 +368,13 @@
       <!-- FOOTER -->
       <footer class="landing-footer-main">
         <p><strong>CantaAí PRO</strong> © 2026 • A Plataforma Oficial para Cantores e Músicos no Palco.</p>
+        <div style="display: flex; gap: 14px; justify-content: center; align-items: center; margin-top: 10px; font-size: 0.78rem; flex-wrap: wrap;">
+          <a href="#" class="btn-open-legal-modal" data-legal-tab="terms" style="color: #94a3b8; text-decoration: underline;">Termos de Uso & Direitos Autorais</a>
+          <span style="color: #475569;">•</span>
+          <a href="#" class="btn-open-legal-modal" data-legal-tab="privacy" style="color: #94a3b8; text-decoration: underline;">Política de Privacidade (LGPD)</a>
+          <span style="color: #475569;">•</span>
+          <a href="#" class="btn-open-legal-modal" data-legal-tab="contract" style="color: #94a3b8; text-decoration: underline;">Contrato de Licença SaaS</a>
+        </div>
       </footer>
     </section>
 
@@ -889,6 +896,14 @@
               <input type="text" id="authCouponCode" class="auth-input" placeholder="Ex: VIP100" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700; color: #fbbf24;">
             </div>
           </div>
+
+          <!-- CHECKBOX DE CONFORMIDADE LEGAL & PRIVACIDADE OBRIGATÓRIA -->
+          <div class="form-group" style="margin-top: 0.75rem; margin-bottom: 0.75rem; background: rgba(15, 23, 42, 0.7); padding: 12px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2);">
+            <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; color: #cbd5e1; cursor: pointer; line-height: 1.45;">
+              <input type="checkbox" id="authAcceptTerms" style="margin-top: 3px;" required>
+              <span>Li, compreendo e <strong>concordo integralmente com os <a href="#" class="btn-open-legal-modal" data-legal-tab="terms" style="color: #38bdf8; text-decoration: underline; font-weight: 700;">Termos de Uso</a>, a <a href="#" class="btn-open-legal-modal" data-legal-tab="privacy" style="color: #38bdf8; text-decoration: underline; font-weight: 700;">Política de Privacidade (LGPD)</a> e a isenção de responsabilidade autoral</strong> (Lei 9.610/98).</span>
+            </label>
+          </div>
         </div>
 
         <div class="form-group">
@@ -1208,6 +1223,89 @@
           </div>
 
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL COMPLETO: DOCUMENTOS JURÍDICOS, LGPD & CONTRATOS ─── -->
+  <div id="legalDocumentModal" class="modal hidden" style="z-index: 10000080 !important;">
+    <div class="modal-overlay" id="legalDocumentOverlay"></div>
+    <div class="modal-card" style="max-width: 780px; max-height: 88vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3 id="legalModalTitle">📜 Governança Jurídica & Privacidade</h3>
+        <button class="modal-close" id="btnCloseLegalModal">✕</button>
+      </div>
+
+      <!-- Abas de Navegação Jurídica -->
+      <div style="display: flex; gap: 8px; padding: 10px 1.5rem; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); overflow-x: auto;">
+        <button type="button" class="btn-legal-tab active" data-tab-target="termsTab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; cursor: pointer;">📜 Termos de Uso</button>
+        <button type="button" class="btn-legal-tab" data-tab-target="privacyTab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">🛡️ Política de Privacidade (LGPD)</button>
+        <button type="button" class="btn-legal-tab" data-tab-target="contractTab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">📑 Contrato SaaS</button>
+      </div>
+
+      <div class="modal-body" style="overflow-y: auto; padding: 1.5rem; color: #cbd5e1; font-size: 0.86rem; line-height: 1.65;">
+        
+        <!-- ABA 1: TERMOS DE USO & ISENÇÃO AUTORAL -->
+        <div id="termsTab" class="legal-tab-pane">
+          <h4 style="color: #38bdf8; margin-bottom: 1rem;">Termos de Uso e Condições Gerais do CantaAí PRO</h4>
+          <p><strong>Última Atualização:</strong> 31 de Agosto de 2026</p>
+          
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">1. Natureza do Serviço e Objeto</h5>
+          <p>O <strong>CantaAí PRO</strong> é uma plataforma tecnológica de software utilitário desenvolvida especificamente para músicos, cantores e bandas, fornecendo ferramentas de <em>teleprompter</em> de palco, rolagem de letras, transposição de tom em tempo real e organização de repertórios.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">2. Isenção Total de Responsabilidade Autoral (Lei Federal 9.610/98)</h5>
+          <p>O CantaAí PRO <strong>não comercializa, não licencia, não edita e não detém direitos autorais</strong> sobre quaisquer composições, letras, arranjos musicais ou cifras inseridas pelos usuários. O usuário declara e garante que é o legítimo possuidor ou autorizado a utilizar o conteúdo textual e multimídia importado para seu uso pessoal ou apresentação ao vivo.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">3. Uso Aceitável e Segurança</h5>
+          <p>É estritamente proibido utilizar o sistema para práticas ilícitas, engenharia reversa, invasão de contas de terceiros, sobrecarga deliberada da infraestrutura ou distribuição não autorizada de acessos VIP.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">4. Disponibilidade do Serviço</h5>
+          <p>A plataforma conta com arquitetura de alta disponibilidade e redundância offline (Modo Palco Offline). No entanto, manutenções programadas de infraestrutura em nuvem podem ocorrer com aviso prévio.</p>
+        </div>
+
+        <!-- ABA 2: POLÍTICA DE PRIVACIDADE (LGPD) -->
+        <div id="privacyTab" class="legal-tab-pane hidden">
+          <h4 style="color: #34d399; margin-bottom: 1rem;">Política de Privacidade & Proteção de Dados (LGPD - Lei 13.709/2018)</h4>
+          <p><strong>Compromisso de Privacidade:</strong> O CantaAí PRO trata seus dados com estrita confidencialidade e segurança de ponta a ponta.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">1. Dados Coletados e Finalidade</h5>
+          <ul style="padding-left: 1.2rem;">
+            <li><strong>Nome / Nome Artístico:</strong> Identificação na conta e compartilhamento entre músicos parceiros.</li>
+            <li><strong>E-mail e Senha Criptografada:</strong> Autenticação segura na plataforma.</li>
+            <li><strong>WhatsApp / Telefone:</strong> Comunicação operacional, suporte técnico direto e notificações de assinatura.</li>
+            <li><strong>CPF:</strong> Emissão de comprovantes fiscais e validação de faturamento no Mercado Pago.</li>
+            <li><strong>@Login / Palco:</strong> Handle público exclusivo para acesso rápido e compartilhamento no palco.</li>
+            <li><strong>Repertórios e Músicas:</strong> Armazenamento isolado e criptografado por usuário no banco de dados.</li>
+          </ul>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">2. Criptografia e Segurança dos Dados</h5>
+          <p>Todas as comunicações utilizam criptografia TLS/HTTPS de 256 bits. O banco de dados opera com políticas de isolamento de segurança a nível de linha (<em>Row Level Security - RLS</em>), garantindo que nenhum outro cantor consiga acessar seus repertórios privados sem autorização.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">3. Seus Direitos como Titular (Art. 18 da LGPD)</h5>
+          <p>Você pode a qualquer momento consultar seus dados, retificá-los pelo painel de perfil, exportar seus repertórios em PDF ou solicitar a exclusão definitiva de sua conta e informações através de nosso canal de suporte.</p>
+        </div>
+
+        <!-- ABA 3: CONTRATO DE LICENÇA SAAS -->
+        <div id="contractTab" class="legal-tab-pane hidden">
+          <h4 style="color: #fbbf24; margin-bottom: 1rem;">Contrato de Licença de Software como Serviço (SaaS)</h4>
+          
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">CLÁUSULA 1 - DA CONCESSÃO DA LICENÇA</h5>
+          <p>Pelo presente instrumento, a CONTRATADA concede ao CONTRATANTE uma licença de software de uso pessoal, não exclusiva, intransferível e revogável para acesso aos recursos do ecossistema CantaAí PRO.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">CLÁUSULA 2 - DO PLANO E FATURAMENTO RECORRENTE</h5>
+          <p>A assinatura contratada opera em modelo SaaS recorrente (Mensal ou Anual). O processamento seguro dos pagamentos é realizado de forma transparente pelo gateway Mercado Pago via Pix ou Cartão de Crédito.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">CLÁUSULA 3 - DO CANCELAMENTO E CHARGEBACKS</h5>
+          <p>O CONTRATANTE pode cancelar a renovação da assinatura a qualquer momento diretamente pelo painel. O cancelamento interrompe cobranças futuras ao término do ciclo vigente. Tentativas de chargeback fraudulento ensejam cancelamento imediato da conta e cobrança dos valores devidos com encargos legais.</p>
+
+          <h5 style="color: #e2e8f0; margin-top: 1.2rem;">CLÁUSULA 4 - DO FORO</h5>
+          <p>Fica eleito o foro da comarca de São Paulo/SP para dirimir quaisquer litígios oriundos do presente contrato, com expressa renúncia a qualquer outro.</p>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="padding: 12px 1.5rem; background: rgba(15, 23, 42, 0.95); border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-primary" id="btnUnderstandLegalTerms" style="padding: 8px 24px;">Entendido e Concordo</button>
       </div>
     </div>
   </div>

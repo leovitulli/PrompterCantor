@@ -143,7 +143,9 @@
             cpf: cpf,
             instagram: instagram,
             singer_code: singerCode,
-            plan_tier: planTier
+            plan_tier: planTier,
+            terms_accepted_at: new Date().toISOString(),
+            privacy_accepted_at: new Date().toISOString()
           }
         }
       }).then(function (res) {
@@ -178,6 +180,8 @@
           plan_type: planType,
           coupon_used: coupon,
           is_online: true,
+          terms_accepted_at: new Date().toISOString(),
+          privacy_accepted_at: new Date().toISOString(),
           created_at: new Date().toISOString()
         };
 

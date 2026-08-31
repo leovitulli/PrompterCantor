@@ -3121,6 +3121,12 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
+        var chkTerms = document.getElementById('authAcceptTerms');
+        if (chkTerms && !chkTerms.checked) {
+          showToast('⚠️ É obrigatório concordar com os Termos de Uso e Política de Privacidade (LGPD).', 'warning');
+          return;
+        }
+
         showToast('Verificando @Login / Palco...', 'info');
         PrompterAuth.checkSingerCodeAvailability(singerCode, null).then(function (checkRes) {
           if (!checkRes.available) {
@@ -3510,6 +3516,9 @@ document.addEventListener('DOMContentLoaded', function () {
             cpf: cpf,
             plan_tier: planTier,
             plan_type: planType,
+            terms_accepted_at: new Date().toISOString(),
+            privacy_accepted_at: new Date().toISOString(),
+            contract_accepted_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }).catch(function() {});
         }
@@ -3518,6 +3527,62 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast('🎉 Parabéns! Sua assinatura CANTAAÍ PRO foi ativada com sucesso!', 'success');
       });
     }
+
+    // ── GESTÃO DE DOCUMENTOS JURÍDICOS, LGPD E CONTRATOS ──
+    var legalModal = document.getElementById('legalDocumentModal');
+    var btnCloseLegalModal = document.getElementById('btnCloseLegalModal');
+    var legalOverlay = document.getElementById('legalDocumentOverlay');
+    var btnUnderstandLegal = document.getElementById('btnUnderstandLegalTerms');
+
+    function openLegalModal(tabName) {
+      if (!legalModal) return;
+      switchLegalTab(tabName || 'terms');
+      openModal(legalModal);
+    }
+
+    function closeLegalModal() {
+      if (legalModal) closeModal(legalModal);
+    }
+
+    function switchLegalTab(tabName) {
+      var tabId = tabName === 'privacy' ? 'privacyTab' : (tabName === 'contract' ? 'contractTab' : 'termsTab');
+      document.querySelectorAll('.legal-tab-pane').forEach(function(pane) {
+        pane.classList.toggle('hidden', pane.id !== tabId);
+      });
+      document.querySelectorAll('.btn-legal-tab').forEach(function(btn) {
+        var isTarget = btn.getAttribute('data-tab-target') === tabId;
+        btn.classList.toggle('active', isTarget);
+        if (isTarget) {
+          btn.style.borderColor = '#38bdf8';
+          btn.style.background = 'rgba(56, 189, 248, 0.15)';
+          btn.style.color = '#38bdf8';
+        } else {
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          btn.style.background = 'transparent';
+          btn.style.color = '#94a3b8';
+        }
+      });
+    }
+
+    document.querySelectorAll('.btn-open-legal-modal').forEach(function(el) {
+      el.addEventListener('click', function(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        var tab = this.getAttribute('data-legal-tab') || 'terms';
+        openLegalModal(tab);
+      });
+    });
+
+    document.querySelectorAll('.btn-legal-tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = this.getAttribute('data-tab-target');
+        var tabKey = target === 'privacyTab' ? 'privacy' : (target === 'contractTab' ? 'contract' : 'terms');
+        switchLegalTab(tabKey);
+      });
+    });
+
+    if (btnCloseLegalModal) btnCloseLegalModal.addEventListener('click', closeLegalModal);
+    if (legalOverlay) legalOverlay.addEventListener('click', closeLegalModal);
+    if (btnUnderstandLegal) btnUnderstandLegal.addEventListener('click', closeLegalModal);
 
     // ── CENTRAL DE SUPORTE, FEEDBACK & CHAMADOS DO CANTOR (COM FOTO/PRINT) ──
     var userSupportModal = document.getElementById('userSupportModal');
