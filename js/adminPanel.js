@@ -986,9 +986,9 @@
       var currentUser = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
       var currentProfile = window.PrompterAuth ? window.PrompterAuth.getProfile() : null;
 
-      var devEmail = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser ? currentUser.email : 'leovitulli@gmail.com');
-      var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : 'Leonardo Vitulli';
-      var devCode = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : '@leovitulli';
+      var devEmail = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser ? currentUser.email : 'admin@cantaaipro.com');
+      var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : 'Administrador';
+      var devCode = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : '@admin';
 
       // Sincronizar EXCLUSIVAMENTE com dados reais do Supabase (zero fictícios)
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
