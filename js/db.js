@@ -537,6 +537,20 @@
     });
   }
 
+  function deleteSongsBatch(ids) {
+    if (!ids || ids.length === 0) return Promise.resolve(true);
+    var user = getCurrentUser();
+    var sb = getSupabaseClient();
+    invalidateCache();
+
+    if (!user || !user.id || !sb) return Promise.resolve(true);
+
+    return sb.from('songs').delete().in('id', ids).then(function(res) {
+      if (res.error) console.warn('Erro ao deletar lote de músicas:', res.error);
+      return true;
+    });
+  }
+
   // ════════════════════════════════════════
   //  MODO PALCO OFFLINE ("BAIXAR PARA O PALCO")
   // ════════════════════════════════════════
@@ -717,7 +731,8 @@
     getAllSongsGlobal: getAllSongsGlobal,
     getSongsByRepertoire: getSongsByRepertoire,
     toggleSongOffline: toggleSongOffline,
-    deleteSong: deleteSong
+    deleteSong: deleteSong,
+    deleteSongsBatch: deleteSongsBatch
   };
 
 })();

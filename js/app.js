@@ -1502,12 +1502,23 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnDropdownAdd = document.getElementById('btnDropdownAdd');
     var dropdownAddMenu = document.getElementById('dropdownAddMenu');
     if (btnDropdownAdd && dropdownAddMenu) {
-      btnDropdownAdd.addEventListener('click', function (e) {
-        e.stopPropagation();
+      var handleToggleAddMenu = function (e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         dropdownAddMenu.classList.toggle('hidden');
-      });
+      };
+
+      btnDropdownAdd.addEventListener('click', handleToggleAddMenu);
+      btnDropdownAdd.addEventListener('touchend', handleToggleAddMenu);
 
       document.addEventListener('click', function (e) {
+        if (dropdownAddMenu && !dropdownAddMenu.classList.contains('hidden') && !btnDropdownAdd.contains(e.target) && !dropdownAddMenu.contains(e.target)) {
+          dropdownAddMenu.classList.add('hidden');
+        }
+      });
+      document.addEventListener('touchend', function (e) {
         if (dropdownAddMenu && !dropdownAddMenu.classList.contains('hidden') && !btnDropdownAdd.contains(e.target) && !dropdownAddMenu.contains(e.target)) {
           dropdownAddMenu.classList.add('hidden');
         }
@@ -1739,6 +1750,12 @@ document.addEventListener('DOMContentLoaded', function () {
       btnRsvCreateManual.addEventListener('click', function () {
         openEditorModal(null);
       });
+    }
+
+    // Botão Limpar Músicas Duplicadas do Repertório Atual
+    var btnRsvCleanDuplicates = document.getElementById('btnRsvCleanDuplicates');
+    if (btnRsvCleanDuplicates) {
+      btnRsvCleanDuplicates.addEventListener('click', cleanDuplicateSongsInCurrentRepertoire);
     }
 
     // Botão Batch: Detectar Tons e Vídeos no Repertório
@@ -2156,6 +2173,78 @@ document.addEventListener('DOMContentLoaded', function () {
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]/g, '')
       .trim();
+  }
+
+  function getLyricsFingerprint(content) {
+    if (!content) return '';
+    var lines = content.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(function(l) {
+      return l && !/^(\s*([A-G][#b]?(m|maj|min|aug|dim|sus|add|[0-9])*)(\/[A-G][#b]?)?\s*)+$/.test(l);
+    });
+    return normalizeForCompare(lines.slice(0, 4).join(' '));
+  }
+
+  function cleanDuplicateSongsInCurrentRepertoire() {
+    if (!state.currentRepertoire) {
+      showToast('Nenhum repertório selecionado.', 'warning');
+      return;
+    }
+
+    var repId = state.currentRepertoire.id;
+    PrompterDB.getSongsByRepertoire(repId).then(function(songs) {
+      if (!songs || songs.length === 0) {
+        showToast('Nenhuma música encontrada neste repertório.', 'info');
+        return;
+      }
+
+      var seenTitles = {};
+      var seenLyrics = {};
+      var uniqueSongs = [];
+      var duplicateIdsToDelete = [];
+
+      songs.forEach(function(s) {
+        var tKey = normalizeForCompare(window.TextParser ? TextParser.cleanTitle(s.title) : s.title);
+        var lKey = getLyricsFingerprint(s.content);
+        var isDupe = false;
+
+        if (tKey && seenTitles[tKey]) {
+          isDupe = true;
+        } else if (lKey && lKey.length >= 15 && seenLyrics[lKey]) {
+          isDupe = true;
+        }
+
+        if (isDupe) {
+          duplicateIdsToDelete.push(s.id);
+        } else {
+          if (tKey) seenTitles[tKey] = true;
+          if (lKey && lKey.length >= 15) seenLyrics[lKey] = true;
+          uniqueSongs.push(s);
+        }
+      });
+
+      if (duplicateIdsToDelete.length === 0) {
+        showToast('✨ Nenhuma música duplicada encontrada neste repertório!', 'success');
+        return;
+      }
+
+      if (!confirm('Foram encontradas ' + duplicateIdsToDelete.length + ' música(s) duplicada(s).\n\nDeseja removê-las e reordenar o repertório de 1 a ' + uniqueSongs.length + '?')) {
+        return;
+      }
+
+      showToast('🧹 Removendo ' + duplicateIdsToDelete.length + ' duplicada(s)...', 'info');
+
+      PrompterDB.deleteSongsBatch(duplicateIdsToDelete).then(function() {
+        for (var i = 0; i < uniqueSongs.length; i++) {
+          uniqueSongs[i].trackNumber = i + 1;
+        }
+        return PrompterDB.saveSongsBatch(uniqueSongs);
+      }).then(function() {
+        showToast('🎉 Limpeza concluída! Agora o repertório tem ' + uniqueSongs.length + ' músicas únicas.', 'success');
+        return openRepertoireSongs(repId);
+      }).catch(function(err) {
+        console.error('Erro ao limpar duplicadas:', err);
+        showToast('Erro ao remover músicas duplicadas.', 'warning');
+      });
+    });
   }
 
   function openImportModal(repIdOrNull) {
@@ -3177,13 +3266,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnProfileThemeToggle = document.getElementById('btnProfileThemeToggle');
 
     if (btnUserProfileTrigger && userProfileMenu) {
-      btnUserProfileTrigger.addEventListener('click', function (e) {
-        e.stopPropagation();
+      var handleProfileTrigger = function (e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         userProfileMenu.classList.toggle('hidden');
-      });
+      };
+
+      btnUserProfileTrigger.addEventListener('click', handleProfileTrigger);
+      btnUserProfileTrigger.addEventListener('touchend', handleProfileTrigger);
 
       document.addEventListener('click', function (e) {
-        if (!userProfileMenu.classList.contains('hidden') && !userProfileMenu.contains(e.target) && e.target !== btnUserProfileTrigger) {
+        if (!userProfileMenu.classList.contains('hidden') && !userProfileMenu.contains(e.target) && !btnUserProfileTrigger.contains(e.target)) {
+          userProfileMenu.classList.add('hidden');
+        }
+      });
+      document.addEventListener('touchend', function (e) {
+        if (!userProfileMenu.classList.contains('hidden') && !userProfileMenu.contains(e.target) && !btnUserProfileTrigger.contains(e.target)) {
           userProfileMenu.classList.add('hidden');
         }
       });
