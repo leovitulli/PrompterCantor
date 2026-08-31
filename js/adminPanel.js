@@ -42,6 +42,7 @@
       this.loadStoredData();
       this.createAdminModalHTML();
       this.bindEvents();
+      this.updateLandingPricingUI();
     },
 
     loadStoredData: function () {
@@ -362,11 +363,20 @@
                     '</div>' +
                     '<div class="form-group">' +
                       '<label>Mercado Pago Public Key (Chave Pública):</label>' +
-                      '<input type="text" id="inputMpPublicKey" class="form-control" placeholder="APP_USR-xxxx-xxxx...">' +
+                      '<input type="text" id="inputMpPublicKey" name="canta_mp_public_key_custom" autocomplete="off" data-lpignore="true" class="form-control" placeholder="Ex: APP_USR-6b83f0... ou TEST-...">' +
                     '</div>' +
                     '<div class="form-group">' +
                       '<label>Mercado Pago Access Token (Privado):</label>' +
-                      '<input type="password" id="inputMpAccessToken" class="form-control" placeholder="APP_USR-xxxx-xxxx...">' +
+                      '<input type="text" id="inputMpAccessToken" name="canta_mp_access_token_custom" autocomplete="off" data-lpignore="true" class="form-control" placeholder="Ex: APP_USR-1234567890..." style="font-family: var(--font-mono);">' +
+                    '</div>' +
+                    '<div style="background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 12px; padding: 12px 14px; margin-top: 1rem; font-size: 0.8rem; color: #cbd5e1;">' +
+                      '<div style="font-weight: 700; color: #fbbf24; margin-bottom: 6px;">📘 Onde encontrar suas credenciais do Mercado Pago?</div>' +
+                      '<ol style="margin: 0; padding-left: 1.2rem; line-height: 1.5; color: #94a3b8;">' +
+                        '<li>Acesse o <a href="https://www.mercadopago.com.br/developers/panel/app" target="_blank" style="color: #38bdf8; text-decoration: underline; font-weight: 700;">Painel de Desenvolvedores do Mercado Pago ↗</a>.</li>' +
+                        '<li>Crie ou selecione sua aplicação (ex: <em>CantaAí PRO</em>).</li>' +
+                        '<li>No menu lateral esquerdo, clique em <strong>Credenciais de Produção</strong>.</li>' +
+                        '<li>Copie a <strong>Public Key</strong> e o <strong>Access Token</strong> e cole nos campos acima.</li>' +
+                      '</ol>' +
                     '</div>' +
                     '<button type="button" id="btnSavePricingConfig" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">💾 Salvar Configurações de Cobrança</button>' +
                   '</div>' +
@@ -727,7 +737,8 @@
 
           PrompterAdmin.saveStoredPricing();
           PrompterAdmin.updateMetrics();
-          if (window.showToast) window.showToast('✅ Configurações de preços e Mercado Pago salvas!', 'success');
+          PrompterAdmin.updateLandingPricingUI();
+          if (window.showToast) window.showToast('✅ Configurações de preços e Mercado Pago salvas e atualizadas na página de vendas!', 'success');
         });
       }
 
@@ -1272,6 +1283,26 @@
       this.saveStoredCoupons();
       this.renderCouponsTable();
       if (window.showToast) window.showToast('✨ Cupons padrão (VIP100, PRO50, SAMBA30) restaurados!', 'success');
+    },
+
+    updateLandingPricingUI: function () {
+      var mPrice = pricingConfig.monthlyPrice || 39.90;
+      var aPrice = pricingConfig.annualPrice || 299.00;
+
+      var mFormatted = mPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var aFormatted = aPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      var elLandingMonthly = document.getElementById('landingPriceMonthly');
+      if (elLandingMonthly) elLandingMonthly.innerText = mFormatted;
+
+      var elLandingAnnual = document.getElementById('landingPriceAnnual');
+      if (elLandingAnnual) elLandingAnnual.innerText = aFormatted;
+
+      var elLandingAnnualSub = document.getElementById('landingPriceAnnualSub');
+      if (elLandingAnnualSub) {
+        var monthlyEquiv = (aPrice / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        elLandingAnnualSub.innerText = '(Equivalente a R$ ' + monthlyEquiv + '/mês)';
+      }
     },
 
     loadPricingForm: function () {
