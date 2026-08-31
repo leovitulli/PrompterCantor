@@ -72,12 +72,11 @@
         var rawList = res.data || [];
         var currentUserEmail = (user.email || '').toLowerCase();
 
-        // Filtrar repertórios do usuário
+        // Filtrar estritamente apenas os repertórios do usuário logado
         var filteredList = rawList.filter(function(r) {
           if (r.user_id) {
-            return String(r.user_id) === String(user.id) || (currentUserEmail === 'leovitulli@gmail.com' && (r.user_id === 'a597be32-b59a-4a79-94ed-34dfd5f939ef' || r.user_id === 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0'));
+            return String(r.user_id) === String(user.id);
           }
-          if (currentUserEmail === 'leovitulli@gmail.com') return true;
           return false;
         });
 
@@ -561,6 +560,66 @@
     return Promise.resolve(true);
   }
 
+  function getAllRepertoiresGlobal() {
+    var sb = getSupabaseClient();
+    if (!sb) return getAllRepertoires();
+
+    return sb.from('repertoires')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(function(res) {
+        if (res.error) return [];
+        var rawList = res.data || [];
+        return rawList.map(function(r) {
+          return {
+            id: r.id,
+            name: r.name,
+            source: r.source || 'manual',
+            user_id: r.user_id,
+            createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now(),
+            updatedAt: r.updated_at ? new Date(r.updated_at).getTime() : Date.now()
+          };
+        });
+      }).catch(function() {
+        return [];
+      });
+  }
+
+  function getAllSongsGlobal() {
+    var sb = getSupabaseClient();
+    if (!sb) return getAllSongs();
+
+    return sb.from('songs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(function(res) {
+        if (res.error) return [];
+        var rawList = res.data || [];
+        return rawList.map(function(s, idx) {
+          return {
+            id: s.id,
+            repertoireId: s.repertoire_id,
+            title: s.title,
+            key: s.key || '',
+            originalKey: s.original_key || '',
+            rhythm: s.rhythm || '',
+            artist: s.artist || '',
+            composer: s.composer || '',
+            youtubeUrl: s.youtube_url || '',
+            youtubeId: s.youtube_id || '',
+            spotifyUrl: s.spotify_url || '',
+            content: s.content || '',
+            trackNumber: (s.track_number !== undefined && s.track_number !== null) ? s.track_number : (idx + 1),
+            user_id: s.user_id,
+            createdAt: s.created_at ? new Date(s.created_at).getTime() : Date.now(),
+            updatedAt: s.updated_at ? new Date(s.updated_at).getTime() : Date.now()
+          };
+        });
+      }).catch(function() {
+        return [];
+      });
+  }
+
   function initDB() {
     return Promise.resolve(true);
   }
@@ -570,6 +629,7 @@
     // Repertórios
     saveRepertoire: saveRepertoire,
     getAllRepertoires: getAllRepertoires,
+    getAllRepertoiresGlobal: getAllRepertoiresGlobal,
     getRepertoireById: getRepertoireById,
     deleteRepertoire: deleteRepertoire,
     saveRepertoiresOrder: saveRepertoiresOrder,
@@ -581,6 +641,7 @@
     getSongById: getSongById,
     getSong: getSongById,
     getAllSongs: getAllSongs,
+    getAllSongsGlobal: getAllSongsGlobal,
     getSongsByRepertoire: getSongsByRepertoire,
     toggleSongOffline: toggleSongOffline,
     deleteSong: deleteSong

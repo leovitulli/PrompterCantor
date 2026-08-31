@@ -703,6 +703,28 @@
           if (window.showToast) window.showToast('✅ Configurações de preços e Mercado Pago salvas!', 'success');
         });
       }
+
+      // Master Songs View Events
+      var btnCloseMaster = document.getElementById('btnCloseMasterSongsModal');
+      var overlayMaster = document.getElementById('adminMasterSongsOverlay');
+      if (btnCloseMaster) btnCloseMaster.addEventListener('click', function() { PrompterAdmin.closeMasterSongsModal(); });
+      if (overlayMaster) overlayMaster.addEventListener('click', function() { PrompterAdmin.closeMasterSongsModal(); });
+
+      var searchMaster = document.getElementById('inputMasterSearch');
+      if (searchMaster) {
+        searchMaster.addEventListener('input', function(e) {
+          var q = (e.target.value || '').toLowerCase().trim();
+          PrompterAdmin.renderMasterSongsList(q);
+        });
+      }
+
+      var btnRefMaster = document.getElementById('btnRefreshMasterSongs');
+      if (btnRefMaster) {
+        btnRefMaster.addEventListener('click', function() {
+          PrompterAdmin.loadMasterSongs();
+          if (window.showToast) window.showToast('🔄 Acervo global atualizado!', 'info');
+        });
+      }
     },
 
     switchTab: function (tabName) {
@@ -1188,6 +1210,7 @@
     //  ACERVO MASTER DE MÚSICAS & CIFRAS (CEO)
     // ════════════════════════════════════════
     masterSongsCache: [],
+    masterRepsCache: [],
 
     openMasterSongsModal: function () {
       var modal = document.getElementById('adminMasterSongsModal');
@@ -1204,16 +1227,20 @@
 
     loadMasterSongs: function () {
       var container = document.getElementById('masterSongsListContainer');
-      if (container) container.innerHTML = '<div class="text-center" style="padding: 24px; color: #94a3b8;">Carregando acervo de músicas...</div>';
+      if (container) container.innerHTML = '<div class="text-center" style="padding: 24px; color: #94a3b8;">Carregando acervo de repertórios e músicas por cantor...</div>';
 
       if (window.PrompterDB) {
-        window.PrompterDB.getAllSongs().then(function (songs) {
-          PrompterAdmin.masterSongsCache = songs || [];
+        Promise.all([
+          window.PrompterDB.getAllRepertoiresGlobal(),
+          window.PrompterDB.getAllSongsGlobal()
+        ]).then(function (results) {
+          PrompterAdmin.masterRepsCache = results[0] || [];
+          PrompterAdmin.masterSongsCache = results[1] || [];
           PrompterAdmin.renderMasterSongsList('');
           PrompterAdmin.updateMetrics();
         }).catch(function (err) {
           console.error(err);
-          if (container) container.innerHTML = '<div class="text-center" style="padding: 24px; color: #f87171;">Erro ao carregar acervo.</div>';
+          if (container) container.innerHTML = '<div class="text-center" style="padding: 24px; color: #f87171;">Erro ao carregar acervo global.</div>';
         });
       }
     },
@@ -1222,48 +1249,193 @@
       var container = document.getElementById('masterSongsListContainer');
       if (!container) return;
 
-      var list = PrompterAdmin.masterSongsCache || [];
-      if (query) {
-        list = list.filter(function (s) {
-          var tMatch = (s.title || '').toLowerCase().indexOf(query) !== -1;
-          var aMatch = (s.artist || '').toLowerCase().indexOf(query) !== -1;
-          var rMatch = (s.rhythm || '').toLowerCase().indexOf(query) !== -1;
-          var cMatch = (s.content || '').toLowerCase().indexOf(query) !== -1;
-          return tMatch || aMatch || rMatch || cMatch;
+      var allReps = PrompterAdmin.masterRepsCache || [];
+      var allSongs = PrompterAdmin.masterSongsCache || [];
+      var users = allUserData || [];
+
+      // Mapa de usuários por ID
+      var userMap = {};
+      users.forEach(function (u) {
+        userMap[u.id] = u;
+      });
+
+      // Agrupar repertórios e músicas por user_id
+      var userGroups = {};
+
+      allReps.forEach(function (r) {
+        var uId = r.user_id || 'unknown';
+        if (!userGroups[uId]) {
+          userGroups[uId] = {
+            user: userMap[uId] || { name: 'Cantor (' + uId.slice(0, 8) + ')', email: uId, plan_type: '⚡ PLANO FREE' },
+            repertoires: {}
+          };
+        }
+        userGroups[uId].repertoires[r.id] = {
+          id: r.id,
+          name: r.name,
+          source: r.source,
+          songs: []
+        };
+      });
+
+      allSongs.forEach(function (s) {
+        var rId = s.repertoireId;
+        var uId = s.user_id || 'unknown';
+
+        if (rId && userGroups[uId] && userGroups[uId].repertoires[rId]) {
+          userGroups[uId].repertoires[rId].songs.push(s);
+        } else {
+          // Encontrar o repertório correspondente
+          var found = false;
+          for (var groupUId in userGroups) {
+            if (userGroups[groupUId].repertoires[rId]) {
+              userGroups[groupUId].repertoires[rId].songs.push(s);
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            if (!userGroups[uId]) {
+              userGroups[uId] = {
+                user: userMap[uId] || { name: 'Cantor (' + uId.slice(0, 8) + ')', email: uId, plan_type: '⚡ PLANO FREE' },
+                repertoires: {}
+              };
+            }
+            if (!userGroups[uId].repertoires['misc']) {
+              userGroups[uId].repertoires['misc'] = {
+                id: 'misc',
+                name: 'Músicas Avulsas',
+                source: 'manual',
+                songs: []
+              };
+            }
+            userGroups[uId].repertoires['misc'].songs.push(s);
+          }
+        }
+      });
+
+      var html = '';
+      var totalRepsCount = 0;
+      var totalSongsCount = 0;
+
+      for (var uid in userGroups) {
+        var group = userGroups[uid];
+        var uInfo = group.user;
+        var repKeys = Object.keys(group.repertoires);
+
+        // Filtrar se houver busca
+        var filteredReps = [];
+        repKeys.forEach(function (rk) {
+          var repObj = group.repertoires[rk];
+          var repSongs = repObj.songs || [];
+          if (query) {
+            var repMatch = (repObj.name || '').toLowerCase().indexOf(query) !== -1;
+            var singerMatch = (uInfo.name || '').toLowerCase().indexOf(query) !== -1 || (uInfo.email || '').toLowerCase().indexOf(query) !== -1;
+            var matchedSongs = repSongs.filter(function (s) {
+              return (s.title || '').toLowerCase().indexOf(query) !== -1 ||
+                (s.artist || '').toLowerCase().indexOf(query) !== -1 ||
+                (s.rhythm || '').toLowerCase().indexOf(query) !== -1 ||
+                (s.content || '').toLowerCase().indexOf(query) !== -1;
+            });
+            if (repMatch || singerMatch || matchedSongs.length > 0) {
+              filteredReps.push({
+                id: repObj.id,
+                name: repObj.name,
+                source: repObj.source,
+                songs: (matchedSongs.length > 0 && !repMatch && !singerMatch) ? matchedSongs : repSongs
+              });
+            }
+          } else {
+            filteredReps.push(repObj);
+          }
         });
+
+        if (filteredReps.length === 0) continue;
+
+        var userTotalSongs = filteredReps.reduce(function (sum, r) { return sum + r.songs.length; }, 0);
+        totalRepsCount += filteredReps.length;
+        totalSongsCount += userTotalSongs;
+
+        var userInitial = (uInfo.name || uInfo.email || 'C').charAt(0).toUpperCase();
+
+        html +=
+          '<div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 18px 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">' +
+            '<!-- CABEÇALHO DO CANTOR -->' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">' +
+              '<div style="display: flex; align-items: center; gap: 12px;">' +
+                '<div class="user-avatar-initial" style="width: 40px; height: 40px; font-size: 1.1rem;">' + escapeHtml(userInitial) + '</div>' +
+                '<div>' +
+                  '<div style="font-weight: 800; font-size: 1.1rem; color: #f8fafc; display: flex; align-items: center; gap: 8px;">' +
+                    escapeHtml(uInfo.name || uInfo.email) +
+                    '<span class="badge" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">' + escapeHtml(uInfo.plan_type || 'FREE') + '</span>' +
+                  '</div>' +
+                  '<div style="font-size: 0.8rem; color: #94a3b8;">' + escapeHtml(uInfo.email) + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div style="font-size: 0.82rem; font-weight: 700; color: #34d399; background: rgba(16, 185, 129, 0.1); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.25);">' +
+                filteredReps.length + ' Repertório(s) • ' + userTotalSongs + ' Música(s)' +
+              '</div>' +
+            '</div>' +
+            '<!-- LISTA DE REPERTÓRIOS DO CANTOR -->' +
+            '<div style="display: flex; flex-direction: column; gap: 14px;">';
+
+        filteredReps.forEach(function (r) {
+          var repSongs = r.songs || [];
+          html +=
+            '<div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px 16px;">' +
+              '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">' +
+                '<div style="display: flex; align-items: center; gap: 8px;">' +
+                  '<span style="font-size: 1.2rem;">📁</span>' +
+                  '<strong style="font-size: 1rem; color: #ffffff;">' + escapeHtml(r.name) + '</strong>' +
+                  '<span style="font-size: 0.78rem; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px;">' + repSongs.length + ' músicas</span>' +
+                '</div>' +
+                '<div style="display: flex; gap: 8px;">' +
+                  '<button class="btn btn-primary btn-sm" onclick="PrompterAdmin.cloneEntireRepertoire(\'' + r.id + '\', \'' + escapeHtml(r.name).replace(/'/g, "\\'") + '\')" style="font-weight: 800; padding: 6px 14px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">' +
+                    '📥 Importar Repertório Completo' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+              '<!-- MÚSICAS DO REPERTÓRIO -->' +
+              '<div style="display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding-right: 4px;">';
+
+          if (repSongs.length === 0) {
+            html += '<div style="color: #64748b; font-size: 0.8rem; font-style: italic; padding: 6px 0;">Nenhuma música neste repertório.</div>';
+          } else {
+            repSongs.forEach(function (s, sIdx) {
+              var sId = s.id || ('s-' + sIdx);
+              var sTitle = (s.title || 'Sem Título').toUpperCase();
+              var sKey = s.key || s.originalKey || '—';
+              var sArtist = s.artist || '';
+
+              html +=
+                '<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">' +
+                  '<div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">' +
+                    '<span style="color: #64748b; font-size: 0.8rem; font-family: var(--font-mono);">' + (sIdx + 1) + '.</span>' +
+                    '<strong style="color: #f1f5f9; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis;">' + escapeHtml(sTitle) + '</strong>' +
+                    '<span class="badge badge-key" style="font-size: 0.72rem; padding: 1px 6px; background: rgba(56,189,248,0.15); color: #38bdf8; border-radius: 4px;">' + escapeHtml(sKey) + '</span>' +
+                    (sArtist ? ('<span style="color: #94a3b8; font-size: 0.78rem;">• ' + escapeHtml(sArtist) + '</span>') : '') +
+                  '</div>' +
+                  '<div style="display: flex; gap: 6px;">' +
+                    '<button class="btn btn-outline btn-xs" onclick="PrompterAdmin.copySongContent(\'' + sId + '\')" style="color: #38bdf8; border-color: rgba(56,189,248,0.3); padding: 3px 8px; font-size: 0.75rem; border-radius: 6px;" title="Copiar letra e cifra">📋 Copiar</button>' +
+                    '<button class="btn btn-secondary btn-xs" onclick="PrompterAdmin.cloneSongToMyRepertoire(\'' + sId + '\')" style="padding: 3px 8px; font-size: 0.75rem; border-radius: 6px;" title="Importar apenas esta música">➕ Importar</button>' +
+                  '</div>' +
+                '</div>';
+            });
+          }
+
+          html += '</div></div>';
+        });
+
+        html += '</div></div>';
       }
 
-      if (list.length === 0) {
-        container.innerHTML = '<div class="text-center" style="padding: 24px; color: #94a3b8;">Nenhuma música encontrada no acervo com a busca atual.</div>';
+      if (!html) {
+        container.innerHTML = '<div class="text-center" style="padding: 24px; color: #94a3b8;">Nenhum repertório ou música encontrado com a busca atual.</div>';
         return;
       }
 
-      var html = '<div style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 12px;">Exibindo <strong>' + list.length + '</strong> música(s) no acervo global:</div>';
-      list.forEach(function (s, idx) {
-        var sId = s.id || ('s-' + idx);
-        var sTitle = (s.title || 'Sem Título').toUpperCase();
-        var sKey = s.key || s.originalKey || '—';
-        var sRhythm = s.rhythm ? ('🥁 ' + s.rhythm) : '';
-        var sArtist = s.artist || 'Artista Desconhecido';
-
-        html +=
-          '<div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' +
-            '<div style="flex: 1; min-width: 220px;">' +
-              '<div style="font-weight: 800; color: #f1f5f9; font-size: 1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' +
-                escapeHtml(sTitle) +
-                '<span class="badge badge-key" style="font-size: 0.75rem; padding: 2px 8px; background: rgba(56,189,248,0.15); color: #38bdf8; border-radius: 6px;">' + escapeHtml(sKey) + '</span> ' +
-                (sRhythm ? '<span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;font-size:0.75rem; padding: 2px 8px; border-radius: 6px;">' + escapeHtml(sRhythm) + '</span>' : '') +
-              '</div>' +
-              '<div style="color: #94a3b8; font-size: 0.8rem; margin-top: 4px;">👤 ' + escapeHtml(sArtist) + '</div>' +
-            '</div>' +
-            '<div style="display: flex; gap: 8px; flex-wrap: wrap;">' +
-              '<button class="btn btn-outline btn-sm" onclick="PrompterAdmin.copySongContent(\'' + sId + '\')" style="color: #38bdf8; border-color: rgba(56,189,248,0.4); padding: 6px 12px; font-weight: 700;">📋 Copiar Cifra</button>' +
-              '<button class="btn btn-primary btn-sm" onclick="PrompterAdmin.cloneSongToMyRepertoire(\'' + sId + '\')" style="padding: 6px 12px; font-weight: 700;">➕ Importar p/ Mim</button>' +
-            '</div>' +
-          '</div>';
-      });
-
-      container.innerHTML = html;
+      var summaryHeader = '<div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 14px;">Acervo Global: <strong>' + totalRepsCount + '</strong> repertório(s) e <strong>' + totalSongsCount + '</strong> música(s) organizados por cantor:</div>';
+      container.innerHTML = summaryHeader + html;
     },
 
     copySongContent: function (songId) {
@@ -1280,33 +1452,88 @@
       }
     },
 
+    cloneEntireRepertoire: function (repId, repName) {
+      var allSongs = PrompterAdmin.masterSongsCache || [];
+      var repSongs = allSongs.filter(function (s) { return String(s.repertoireId) === String(repId); });
+
+      if (repSongs.length === 0) {
+        if (window.showToast) window.showToast('Este repertório não possui músicas para importar.', 'warning');
+        return;
+      }
+
+      if (!confirm('Deseja clonar o repertório "' + repName + '" com ' + repSongs.length + ' música(s) para a sua conta principal?')) {
+        return;
+      }
+
+      var user = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
+      var curId = user ? user.id : 'guest';
+
+      if (window.showToast) window.showToast('📥 Clonando repertório "' + repName + '" para a sua conta...', 'info');
+
+      window.PrompterDB.saveRepertoire({ name: repName, source: 'import' }).then(function (newRepId) {
+        var clonedSongs = repSongs.map(function (s, idx) {
+          return {
+            repertoireId: newRepId,
+            title: s.title,
+            key: s.key,
+            originalKey: s.originalKey,
+            rhythm: s.rhythm,
+            artist: s.artist,
+            composer: s.composer,
+            youtubeUrl: s.youtubeUrl,
+            youtubeId: s.youtubeId,
+            spotifyUrl: s.spotifyUrl,
+            content: s.content,
+            trackNumber: idx + 1,
+            user_id: curId
+          };
+        });
+
+        return window.PrompterDB.saveSongsBatch(clonedSongs);
+      }).then(function () {
+        if (window.showToast) window.showToast('🎉 Repertório "' + repName + '" (' + repSongs.length + ' músicas) clonado com sucesso para a sua conta!', 'success');
+        if (typeof window.loadRepertoires === 'function') window.loadRepertoires();
+      }).catch(function (err) {
+        console.error('Erro ao clonar repertório:', err);
+        if (window.showToast) window.showToast('Erro ao clonar repertório.', 'warning');
+      });
+    },
+
     cloneSongToMyRepertoire: function (songId) {
       var song = (PrompterAdmin.masterSongsCache || []).find(function(s) { return String(s.id) === String(songId); });
       if (!song) return;
 
       var user = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
-      var curEmail = user ? user.email : 'leovitulli@gmail.com';
-      var curId = user ? user.id : 'dev-admin-1';
+      var curId = user ? user.id : 'guest';
 
       if (window.PrompterDB) {
         window.PrompterDB.getAllRepertoires().then(function(reps) {
           if (!reps || reps.length === 0) {
-            return window.PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'manual', user_email: curEmail });
+            return window.PrompterDB.saveRepertoire({ name: 'Músicas Importadas', source: 'import' });
           }
           return reps[0].id;
         }).then(function(targetRepId) {
-          var clone = Object.assign({}, song, {
-            id: undefined,
+          var clone = {
             repertoireId: targetRepId,
-            user_id: curId,
-            user_email: curEmail,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-          });
+            title: song.title,
+            key: song.key,
+            originalKey: song.originalKey,
+            rhythm: song.rhythm,
+            artist: song.artist,
+            composer: song.composer,
+            youtubeUrl: song.youtubeUrl,
+            youtubeId: song.youtubeId,
+            spotifyUrl: song.spotifyUrl,
+            content: song.content,
+            user_id: curId
+          };
           return window.PrompterDB.saveSong(clone);
         }).then(function() {
           if (window.showToast) window.showToast('🎉 Música "' + song.title + '" importada com sucesso para o seu repertório!', 'success');
           if (typeof window.loadRepertoires === 'function') window.loadRepertoires();
+        }).catch(function(err) {
+          console.error(err);
+          if (window.showToast) window.showToast('Erro ao importar música.', 'warning');
         });
       }
     },
