@@ -112,56 +112,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ═══════════════════════════════════════
-  //  INICIALIZAÇÃO E MIGRAÇÃO DE REPERTÓRIOS
-  // ═══════════════════════════════════════
-
-  function ensureSambaRepertoireExists() {
-    var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
-    var userEmail = user ? (user.email || '').toLowerCase() : '';
-    if (user && userEmail !== 'leovitulli@gmail.com') return Promise.resolve();
-
-    return PrompterDB.getAllRepertoires().then(function (reps) {
-      var sambaRep = null;
-      if (reps && reps.length > 0) {
-        for (var i = 0; i < reps.length; i++) {
-          if (reps[i].name === 'SAMBA') {
-            sambaRep = reps[i];
-            break;
-          }
-        }
-      }
-
-      if (sambaRep) {
-        // Verificar se tem músicas no SAMBA
-        return PrompterDB.getSongsByRepertoire(sambaRep.id).then(function (songs) {
-          if ((!songs || songs.length === 0) && window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
-            console.log('🎶 Populando as 27 músicas do SAMBA no Supabase...');
-            var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
-            for (var s = 0; s < sampleSongs.length; s++) {
-              sampleSongs[s].repertoireId = sambaRep.id;
-              sampleSongs[s].trackNumber = s + 1;
-            }
-            return PrompterDB.saveSongsBatch(sampleSongs);
-          }
-        });
-      } else if (window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
-        console.log('🎶 Criando repertório SAMBA no Supabase...');
-        var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
-        return PrompterDB.saveRepertoire({ 
-          name: 'SAMBA', 
-          source: 'sample' 
-        }).then(function (newRepId) {
-          for (var s = 0; s < sampleSongs.length; s++) {
-            sampleSongs[s].repertoireId = newRepId;
-            sampleSongs[s].trackNumber = s + 1;
-          }
-          return PrompterDB.saveSongsBatch(sampleSongs);
-        });
-      }
-    });
-  }
-
-  // ═══════════════════════════════════════
   //  CARREGAMENTO DE REPERTÓRIOS
   // ═══════════════════════════════════════
 
@@ -197,10 +147,16 @@ document.addEventListener('DOMContentLoaded', function () {
     var name = prompt('Digite o nome do novo Repertório:', defaultName);
     if (name && name.trim()) {
       var repName = name.trim();
-      PrompterDB.saveRepertoire({ name: repName, source: 'manual' }).then(function (newId) {
+      var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
+      PrompterDB.saveRepertoire({
+        name: repName,
+        source: 'manual',
+        user_id: user ? user.id : 'guest',
+        user_email: user ? user.email : ''
+      }).then(function (newId) {
         showToast('Repertório "' + repName + '" criado com sucesso!', 'success');
         return loadRepertoires().then(function () {
-          openRepertoireSongsView(newId);
+          openRepertoireSongs(newId);
         });
       }).catch(function (err) {
         console.error('Erro ao criar repertório:', err);
@@ -236,46 +192,24 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!repertoiresListEl) return;
 
     if (!state.repertoires || state.repertoires.length === 0) {
-      var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
-      var isOwner = (user && user.email === 'leovitulli@gmail.com') || (window.PrompterAuth && window.PrompterAuth.isAdmin());
-      var sampleBtnHtml = isOwner
-        ? '<button id="btnEmptySample" class="btn btn-outline btn-lg">🎶 Restaurar SAMBA (27 Músicas)</button>'
-        : '';
-
       repertoiresListEl.innerHTML =
         '<div class="empty-state">' +
         '<div class="empty-icon">🎵</div>' +
-        '<h2>Nenhum repertório ainda</h2>' +
-        '<p>Importe músicas do seu computador ou Google Drive para criar seu primeiro repertório.</p>' +
-        '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">' +
+        '<h2>Nenhum repertório criado ainda</h2>' +
+        '<p>Organize suas músicas para o palco importando arquivos ou criando um repertório novo.</p>' +
+        '<div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">' +
         '<button id="btnEmptyImport" class="btn btn-primary btn-lg">📂 Importar Arquivos</button>' +
         '<button id="btnEmptyGDrive" class="btn btn-gdrive btn-lg">☁️ Google Drive</button>' +
-        sampleBtnHtml +
+        '<button id="btnEmptyCreateManual" class="btn btn-outline btn-lg">➕ Criar Repertório</button>' +
         '</div>' +
         '</div>';
 
       var bEI = document.getElementById('btnEmptyImport');
-      if (bEI) bEI.addEventListener('click', function () { openModal(importModal); });
+      if (bEI) bEI.addEventListener('click', function () { openImportModal(null); });
       var bEG = document.getElementById('btnEmptyGDrive');
       if (bEG) bEG.addEventListener('click', function () { openModal(gDriveModal); });
-      var bES = document.getElementById('btnEmptySample');
-      if (bES) bES.addEventListener('click', function () {
-        if (window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
-          var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
-          PrompterDB.saveRepertoire({ name: 'SAMBA', source: 'sample' })
-            .then(function (newRepId) {
-              for (var s = 0; s < sampleSongs.length; s++) {
-                sampleSongs[s].repertoireId = newRepId;
-                sampleSongs[s].trackNumber = s + 1;
-              }
-              return PrompterDB.saveSongsBatch(sampleSongs);
-            })
-            .then(function () {
-              showToast('Repertório SAMBA restaurado com sucesso!', 'success');
-              loadRepertoires();
-            });
-        }
-      });
+      var bEM = document.getElementById('btnEmptyCreateManual');
+      if (bEM) bEM.addEventListener('click', promptCreateRepertoire);
       return;
     }
 
@@ -1600,9 +1534,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnMenuImportLocal) {
       btnMenuImportLocal.addEventListener('click', function () {
         if (dropdownAddMenu) dropdownAddMenu.classList.add('hidden');
-        state.targetRepertoireId = null;
-        openModal(importModal);
-        suggestRepertoireName('import');
+        openImportModal(null);
       });
     }
 
@@ -1783,16 +1715,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnRsvAddSong = document.getElementById('btnRsvAddSong');
     if (btnRsvAddSong) {
       btnRsvAddSong.addEventListener('click', function () {
-        // Abre o modal de importação vinculado ao repertório atual
         if (state.currentRepertoire) {
-          state.targetRepertoireId = state.currentRepertoire.id;
-          openModal(importModal);
-          // Preencher nome do repertório com o atual
-          var nameInput = document.getElementById('importRepertoireName');
-          if (nameInput) {
-            nameInput.value = state.currentRepertoire.name;
-            nameInput.setAttribute('disabled', 'true');
-          }
+          openImportModal(state.currentRepertoire.id);
+        } else {
+          openImportModal(null);
         }
       });
     }
@@ -2232,12 +2158,35 @@ document.addEventListener('DOMContentLoaded', function () {
       .trim();
   }
 
-  function getLyricsFingerprint(content) {
-    if (!content) return '';
-    var lines = content.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(function(l) {
-      return l && !/^(\s*([A-G][#b]?(m|maj|min|aug|dim|sus|add|[0-9])*)(\/[A-G][#b]?)?\s*)+$/.test(l);
-    });
-    return normalizeForCompare(lines.slice(0, 3).join(' '));
+  function openImportModal(repIdOrNull) {
+    if (!importModal) return;
+    var nameInput = document.getElementById('importRepertoireName');
+    var modalHeader = importModal.querySelector('.modal-header h3');
+
+    if (repIdOrNull) {
+      state.targetRepertoireId = repIdOrNull;
+      var foundRep = (state.repertoires || []).find(function(r) { return r.id === repIdOrNull; }) || state.currentRepertoire;
+      if (nameInput) {
+        nameInput.value = foundRep ? foundRep.name : 'Repertório Atual';
+        nameInput.setAttribute('disabled', 'true');
+      }
+      if (modalHeader) modalHeader.textContent = '📂 Adicionar Músicas a: ' + (foundRep ? foundRep.name : 'Repertório');
+    } else {
+      state.targetRepertoireId = null;
+      if (nameInput) {
+        nameInput.value = '';
+        nameInput.removeAttribute('disabled');
+      }
+      if (modalHeader) modalHeader.textContent = '📂 Importar Novo Repertório';
+    }
+
+    var previewList = document.getElementById('importPreviewList');
+    if (previewList) previewList.innerHTML = '';
+    var btnSave = document.getElementById('btnSaveImportedSongs');
+    if (btnSave) btnSave.setAttribute('disabled', 'true');
+    state.pendingImportSongs = [];
+
+    openModal(importModal);
   }
 
   function handleFilesToImport(files) {
@@ -2405,10 +2354,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!state.pendingImportSongs || state.pendingImportSongs.length === 0) return;
 
     var nameInput = document.getElementById('importRepertoireName');
-    var repName = (nameInput && nameInput.value.trim()) || ('Importação ' + formatDate(Date.now()));
+    var repName = (nameInput && nameInput.value.trim()) || ('Repertório ' + formatDate(Date.now()));
     
-    // Se o usuário está na visão principal (fora de um repertório), SEMPRE cria um novo repertório
-    var targetRepId = state.currentRepertoire ? state.targetRepertoireId : null;
+    // Se o usuário está adicionando a um repertório específico
+    var targetRepId = state.targetRepertoireId;
 
     var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
     var curEmail = user ? (user.email || '').toLowerCase() : '';
@@ -2463,16 +2412,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         showToast(successMsg, 'success');
 
-        if (state.currentRepertoire && state.currentRepertoire.id === repId) {
+        loadRepertoires().then(function() {
           openRepertoireSongs(repId);
-        } else {
-          var mainView = document.getElementById('mainRepertoireView');
-          var songsView = document.getElementById('repertoireSongsView');
-          if (mainView) mainView.classList.remove('hidden');
-          if (songsView) songsView.classList.add('hidden');
-          state.currentRepertoire = null;
-          loadRepertoires();
-        }
+        });
       }).catch(function (err) {
         console.error('Erro ao salvar músicas:', err);
         showToast('Erro ao salvar músicas no banco.', 'warning');
@@ -2506,6 +2448,10 @@ document.addEventListener('DOMContentLoaded', function () {
   function onDriveStreamBatch(songsBatch) {
     if (!songsBatch || songsBatch.length === 0) return;
 
+    var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
+    var curEmail = user ? (user.email || '').toLowerCase() : '';
+    var curId = user ? user.id : 'local_anonymous';
+
     var defaultNameInput = document.getElementById('gdriveRepertoireName');
     var defaultName = (defaultNameInput && defaultNameInput.value.trim()) || ('Drive ' + formatDate(Date.now()));
 
@@ -2523,7 +2469,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (repCache[gName]) {
         var repId = repCache[gName];
-        songsInGroup.forEach(function (s) { s.repertoireId = repId; });
+        songsInGroup.forEach(function (s) {
+          s.repertoireId = repId;
+          s.user_id = curId;
+          s.user_email = curEmail;
+        });
         return PrompterDB.saveSongsBatch(songsInGroup).then(function () {
           if (state.currentRepertoire && state.currentRepertoire.id === repId) {
             openRepertoireSongs(repId);
@@ -2532,21 +2482,28 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         });
       } else {
-        return PrompterDB.saveRepertoire({ name: gName, source: 'gdrive' })
-          .then(function (newRepId) {
-            repCache[gName] = newRepId;
-            songsInGroup.forEach(function (s) { s.repertoireId = newRepId; });
-            return PrompterDB.saveSongsBatch(songsInGroup);
-          })
-          .then(function () {
-            if (!state.currentRepertoire && repCache[gName]) {
-              openRepertoireSongs(repCache[gName]);
-            } else if (state.currentRepertoire && state.currentRepertoire.id === repCache[gName]) {
-              openRepertoireSongs(repCache[gName]);
-            } else {
-              loadRepertoires();
-            }
+        return PrompterDB.saveRepertoire({
+          name: gName,
+          source: 'gdrive',
+          user_id: curId,
+          user_email: curEmail
+        }).then(function (newRepId) {
+          repCache[gName] = newRepId;
+          songsInGroup.forEach(function (s) {
+            s.repertoireId = newRepId;
+            s.user_id = curId;
+            s.user_email = curEmail;
           });
+          return PrompterDB.saveSongsBatch(songsInGroup);
+        }).then(function () {
+          if (!state.currentRepertoire && repCache[gName]) {
+            openRepertoireSongs(repCache[gName]);
+          } else if (state.currentRepertoire && state.currentRepertoire.id === repCache[gName]) {
+            openRepertoireSongs(repCache[gName]);
+          } else {
+            loadRepertoires();
+          }
+        });
       }
     });
 

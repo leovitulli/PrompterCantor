@@ -236,6 +236,15 @@
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       var cleanId = (identifier || '').trim().toLowerCase();
 
+      // Limpar estado residual de sessão anterior
+      localStorage.removeItem('prompter_active_state');
+      if (window.PrompterDB && typeof PrompterDB.invalidateCache === 'function') {
+        PrompterDB.invalidateCache();
+      }
+      if (window.CantaApp && typeof window.CantaApp.resetActiveState === 'function') {
+        window.CantaApp.resetActiveState();
+      }
+
       if (!sb || !sb.auth || typeof sb.auth.signInWithPassword !== 'function') {
         return Promise.reject(new Error('Serviço de autenticação temporariamente indisponível.'));
       }
@@ -294,8 +303,13 @@
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       localStorage.removeItem('prompter_auth_user');
       localStorage.removeItem('prompter_auth_profile');
+      localStorage.removeItem('prompter_active_state');
       currentUser = null;
       currentProfile = null;
+
+      if (window.PrompterDB && typeof PrompterDB.invalidateCache === 'function') {
+        PrompterDB.invalidateCache();
+      }
 
       if (sb && sb.auth && typeof sb.auth.signOut === 'function') {
         sb.auth.signOut().catch(function () {});

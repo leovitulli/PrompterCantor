@@ -2359,12 +2359,14 @@ textarea {
     padding: 0.4rem 0.75rem !important;
   }
 
-  /* LINHA DA MÚSICA (SONG ROW) - ULTRA COMPACTO NO MOBILE */
+  /* LINHA DA MÚSICA (SONG ROW) - OTIMIZADO PARA TOQUE NO PALCO */
   .song-list-row {
     flex-direction: row !important;
     align-items: center !important;
-    gap: 0.6rem !important;
-    padding: 0.6rem 0.75rem !important;
+    gap: 0.75rem !important;
+    padding: 0.85rem 0.85rem !important;
+    min-height: 52px !important;
+    border-radius: 12px !important;
   }
 
   .song-drag-handle {
@@ -2372,33 +2374,69 @@ textarea {
   }
 
   .song-row-number {
-    min-width: 24px !important;
-    width: 24px !important;
-    height: 24px !important;
-    font-size: 0.72rem !important;
+    min-width: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
   }
 
   .song-row-title {
-    font-size: 0.92rem !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #f8fafc !important;
   }
 
   .song-row-actions {
     width: auto !important;
     border-top: none !important;
     padding-top: 0 !important;
-    gap: 0.25rem !important;
+    gap: 0.4rem !important;
   }
 
   .btn-icon-action {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    font-size: 0.82rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    font-size: 0.9rem !important;
+    border-radius: 8px !important;
   }
 
-  /* Cards de Repertório */
+  /* Cards de Repertório no Mobile */
   .repertoires-grid {
     grid-template-columns: 1fr !important;
+    gap: 1.15rem !important;
+  }
+
+  .repertoire-card {
+    padding: 1.25rem !important;
+    border-radius: 16px !important;
+    gap: 1rem !important;
+  }
+
+  .rep-card-title {
+    font-size: 1.18rem !important;
+    font-weight: 800 !important;
+  }
+
+  .rep-card-footer {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+  }
+
+  .rep-card-footer .btn {
+    flex: 1 !important;
+    min-height: 40px !important;
+    font-size: 0.88rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .btn-move-rep-left,
+  .btn-move-rep-right {
+    min-width: 32px !important;
+    min-height: 32px !important;
+    font-size: 0.85rem !important;
   }
 
   .gdrive-folder-input-row {
@@ -2406,10 +2444,17 @@ textarea {
   }
 
   /* Modais no Mobile */
+  .modal-card {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 92vh !important;
+    border-radius: 18px !important;
+  }
+
   .editor-modal-card {
-    width: 98vw !important;
-    max-height: 95vh !important;
-    border-radius: 14px !important;
+    width: 96vw !important;
+    max-height: 94vh !important;
+    border-radius: 16px !important;
   }
 
   .form-grid-3cols,
@@ -2433,6 +2478,7 @@ textarea {
 
   .editor-modal-footer .btn {
     width: 100% !important;
+    min-height: 44px !important;
   }
 
   .btn-floating-top {
@@ -2979,30 +3025,30 @@ textarea {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 0.4rem !important;
+    gap: 0.5rem !important;
   }
 
   #prompterSongTitle {
-    font-size: 0.96rem !important;
+    font-size: 1.05rem !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: 140px !important;
+    max-width: 180px !important;
     font-weight: 800 !important;
   }
 
   .song-badges {
     display: flex !important;
     align-items: center !important;
-    gap: 0.25rem !important;
+    gap: 0.35rem !important;
     flex-wrap: nowrap !important;
   }
 
   .key-selector-dropdown {
-    padding: 0.2rem 0.35rem !important;
-    font-size: 0.76rem !important;
-    height: 28px !important;
-    max-width: 85px !important;
+    padding: 0.25rem 0.45rem !important;
+    font-size: 0.82rem !important;
+    height: 32px !important;
+    max-width: 95px !important;
   }
 
   .prompter-song-submeta {
@@ -3014,13 +3060,13 @@ textarea {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    gap: 0.35rem !important;
+    gap: 0.4rem !important;
   }
 
   .control-group {
-    padding: 0.25rem 0.45rem !important;
-    gap: 0.25rem !important;
-    border-radius: 7px !important;
+    padding: 0.3rem 0.5rem !important;
+    gap: 0.35rem !important;
+    border-radius: 8px !important;
   }
 
   .control-label {
@@ -3028,23 +3074,28 @@ textarea {
   }
 
   .btn-circle {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 0.78rem !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    border-radius: 8px !important;
   }
 
   #fontSizeDisplay, #scrollSpeedDisplay {
-    font-size: 0.78rem !important;
-    min-width: 26px !important;
+    font-size: 0.82rem !important;
+    min-width: 28px !important;
+    font-weight: 800 !important;
   }
 
   .btn-scroll-play {
     flex: 1 !important;
     justify-content: center !important;
-    padding: 0.35rem 0.5rem !important;
-    height: 28px !important;
-    font-size: 0.78rem !important;
+    padding: 0.35rem 0.6rem !important;
+    height: 34px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
     white-space: nowrap !important;
+    border-radius: 8px !important;
   }
 
   #scrollPlayText {
@@ -3052,12 +3103,13 @@ textarea {
   }
 
   #btnToggleFullscreen {
-    width: 28px !important;
-    height: 28px !important;
+    width: 34px !important;
+    height: 34px !important;
     padding: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    border-radius: 8px !important;
   }
 
   .prompter-scroll-area {
