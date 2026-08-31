@@ -866,34 +866,35 @@
         <div id="signUpFieldsGroup" class="hidden">
           <div class="form-group">
             <label for="authName" class="auth-label">Nome Completo / Artístico *</label>
-            <input type="text" id="authName" class="auth-input" placeholder="Ex: Jorge Aragão">
+            <input type="text" id="authName" name="canta_signup_name" class="auth-input" placeholder="Ex: Jorge Aragão" autocomplete="off">
           </div>
 
           <div class="form-group">
-            <label for="authSingerCode" class="auth-label">@Login / Palco (Seu Código de Cantor Único) *</label>
-            <input type="text" id="authSingerCode" class="auth-input" placeholder="Ex: @jorgecantor" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">
+            <label for="authSingerCode" class="auth-label">@Login / Palco (Seu @ exclusivo para entrar e no palco) *</label>
+            <input type="text" id="authSingerCode" name="canta_singer_handle_signup" class="auth-input" placeholder="Ex: @jorgecantor" autocomplete="off" data-lpignore="true" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">
+            <small style="color: #94a3b8; font-size: 0.76rem; margin-top: 3px; display: block;">💡 Você poderá usar este @ para entrar na sua conta e para compartilhar no palco.</small>
             <div id="authSingerCodeFeedback" style="font-size: 0.78rem; margin-top: 4px; display: none;"></div>
           </div>
           
           <div class="form-grid-2cols">
             <div class="form-group">
               <label for="authPhone" class="auth-label">WhatsApp com DDD *</label>
-              <input type="tel" id="authPhone" class="auth-input" placeholder="(11) 99999-9999">
+              <input type="tel" id="authPhone" name="canta_signup_phone" class="auth-input" placeholder="(11) 99999-9999" autocomplete="off">
             </div>
             <div class="form-group">
               <label for="authCpf" class="auth-label">CPF (para Faturamento) *</label>
-              <input type="text" id="authCpf" class="auth-input" placeholder="000.000.000-00">
+              <input type="text" id="authCpf" name="canta_signup_cpf" class="auth-input" placeholder="000.000.000-00" autocomplete="off">
             </div>
           </div>
 
           <div class="form-grid-2cols">
             <div class="form-group">
               <label for="authInstagram" class="auth-label">Instagram / Rede Social</label>
-              <input type="text" id="authInstagram" class="auth-input" placeholder="@seunomecantor">
+              <input type="text" id="authInstagram" name="canta_signup_insta" class="auth-input" placeholder="@seunomecantor" autocomplete="off">
             </div>
             <div class="form-group">
               <label for="authCouponCode" class="auth-label">Cupom VIP / Desconto</label>
-              <input type="text" id="authCouponCode" class="auth-input" placeholder="Ex: VIP100" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700; color: #fbbf24;">
+              <input type="text" id="authCouponCode" name="canta_signup_coupon" class="auth-input" placeholder="Ex: VIP100" autocomplete="off" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700; color: #fbbf24;">
             </div>
           </div>
 
@@ -907,12 +908,12 @@
         </div>
 
         <div class="form-group">
-          <label for="authEmail" class="auth-label">E-mail *</label>
-          <input type="email" id="authEmail" class="auth-input" placeholder="seuemail@exemplo.com" required autocomplete="email">
+          <label for="authEmail" class="auth-label" id="authEmailLabel">E-mail ou @Login de Palco *</label>
+          <input type="text" id="authEmail" name="canta_auth_user_ident" class="auth-input" placeholder="seuemail@exemplo.com ou @cantor" required autocomplete="username">
         </div>
         <div class="form-group">
           <label for="authPassword" class="auth-label">Senha *</label>
-          <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" required autocomplete="current-password">
+          <input type="password" id="authPassword" name="canta_auth_user_pwd" class="auth-input" placeholder="••••••••" required autocomplete="current-password">
         </div>
         <div id="forgotPasswordContainer" style="text-align: right; margin-top: -8px; margin-bottom: 4px;">
           <a href="#" id="btnForgotPassword" style="color: #94a3b8; font-size: 0.82rem; text-decoration: none;">Esqueci minha senha</a>

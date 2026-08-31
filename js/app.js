@@ -2959,6 +2959,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function setAuthMode(mode) {
       currentAuthMode = mode;
       var signUpFields = document.getElementById('signUpFieldsGroup');
+      var emailLabel = document.getElementById('authEmailLabel');
+      var emailInput = document.getElementById('authEmail');
+      var passInput = document.getElementById('authPassword');
+      var singerCodeInput = document.getElementById('authSingerCode');
+      var singerCodeFeedback = document.getElementById('authSingerCodeFeedback');
+      var nameInput = document.getElementById('authName');
+      var phoneInput = document.getElementById('authPhone');
+      var cpfInput = document.getElementById('authCpf');
+      var instaInput = document.getElementById('authInstagram');
+      var couponInput = document.getElementById('authCouponCode');
+      var termsCheck = document.getElementById('authAcceptTerms');
+
       if (mode === 'signup') {
         if (tabAuthSignUp) tabAuthSignUp.classList.add('active');
         if (tabAuthSignIn) tabAuthSignIn.classList.remove('active');
@@ -2966,6 +2978,24 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btnSubmitAuth) btnSubmitAuth.innerText = 'Finalizar Cadastro & Acessar';
         if (authSubtitleText) authSubtitleText.innerText = 'Preencha seus dados para criar sua conta de cantor';
         if (forgotContainer) forgotContainer.style.display = 'none';
+
+        if (emailLabel) emailLabel.innerText = 'E-mail Pessoal / Faturamento *';
+        if (emailInput) {
+          emailInput.placeholder = 'seuemail@exemplo.com';
+          emailInput.value = '';
+        }
+        if (passInput) {
+          passInput.value = '';
+          passInput.setAttribute('autocomplete', 'new-password');
+        }
+        if (singerCodeInput) singerCodeInput.value = '';
+        if (singerCodeFeedback) singerCodeFeedback.style.display = 'none';
+        if (nameInput) nameInput.value = '';
+        if (phoneInput) phoneInput.value = '';
+        if (cpfInput) cpfInput.value = '';
+        if (instaInput) instaInput.value = '';
+        if (couponInput) couponInput.value = '';
+        if (termsCheck) termsCheck.checked = false;
       } else {
         if (tabAuthSignIn) tabAuthSignIn.classList.add('active');
         if (tabAuthSignUp) tabAuthSignUp.classList.remove('active');
@@ -2973,6 +3003,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btnSubmitAuth) btnSubmitAuth.innerText = 'Entrar na Conta';
         if (authSubtitleText) authSubtitleText.innerText = 'Acesse sua conta para ver seus repertórios';
         if (forgotContainer) forgotContainer.style.display = 'block';
+
+        if (emailLabel) emailLabel.innerText = 'E-mail ou @Login de Palco *';
+        if (emailInput) emailInput.placeholder = 'seuemail@exemplo.com ou @cantor';
+        if (passInput) passInput.setAttribute('autocomplete', 'current-password');
       }
     }
 

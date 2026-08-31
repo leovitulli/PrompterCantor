@@ -232,18 +232,38 @@
       } catch (e) {}
     },
 
-    signIn: function (email, password) {
+    signIn: function (identifier, password) {
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-      var cleanEmail = (email || '').trim().toLowerCase();
+      var cleanId = (identifier || '').trim().toLowerCase();
 
       if (!sb || !sb.auth || typeof sb.auth.signInWithPassword !== 'function') {
         return Promise.reject(new Error('Serviço de autenticação temporariamente indisponível.'));
       }
 
-      return sb.auth.signInWithPassword({ email: cleanEmail, password: password }).then(function (res) {
+      // Se for formato de e-mail tradicional (sem começar com @ e contendo ponto e @)
+      var isEmail = cleanId.indexOf('@') !== -1 && cleanId.indexOf('.') !== -1 && !cleanId.startsWith('@');
+
+      var resolveEmailPromise = isEmail
+        ? Promise.resolve(cleanId)
+        : (function () {
+            var formattedCode = PrompterAuth.formatSingerCode(cleanId);
+            return sb.from('profiles').select('email').eq('singer_code', formattedCode).single().then(function (res) {
+              if (res.data && res.data.email) return res.data.email;
+              throw new Error('Nenhum cantor encontrado com o login "' + formattedCode + '".');
+            }).catch(function () {
+              return sb.from('profiles').select('email').ilike('singer_code', '%' + cleanId.replace('@', '')).limit(1).then(function (res2) {
+                if (res2.data && res2.data[0] && res2.data[0].email) return res2.data[0].email;
+                throw new Error('Não encontramos nenhum cantor com o login "' + cleanId + '".');
+              });
+            });
+          })();
+
+      return resolveEmailPromise.then(function (resolvedEmail) {
+        return sb.auth.signInWithPassword({ email: resolvedEmail, password: password });
+      }).then(function (res) {
         if (res.error) {
           if (res.error.message.includes('Invalid login credentials') || res.error.message.includes('invalid_grant')) {
-            throw new Error('E-mail ou senha incorretos.');
+            throw new Error('Login/E-mail ou senha incorretos.');
           }
           if (res.error.message.includes('Email not confirmed')) {
             throw new Error('E-mail ainda não confirmado. Desative a confirmação no painel do Supabase ou confirme seu e-mail.');
