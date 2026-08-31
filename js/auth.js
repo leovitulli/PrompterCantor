@@ -60,6 +60,55 @@
       return Promise.resolve({ user: currentUser, profile: currentProfile });
     },
 
+    formatSingerCode: function (code) {
+      if (!code) return '';
+      var clean = String(code).trim().toLowerCase().replace(/\s+/g, '_');
+      if (!clean.startsWith('@') && !clean.startsWith('#')) {
+        clean = '@' + clean;
+      }
+      return clean;
+    },
+
+    checkSingerCodeAvailability: function (code, currentUserId) {
+      var formatted = this.formatSingerCode(code);
+      if (!formatted || formatted.length < 3) {
+        return Promise.resolve({ available: false, message: 'O código deve ter pelo menos 2 letras.' });
+      }
+
+      // 1. Verificar no cache local de usuários admin
+      try {
+        var raw = localStorage.getItem('canta_ai_admin_users');
+        if (raw) {
+          var list = JSON.parse(raw);
+          var exists = list.some(function(u) {
+            var uCode = (u.singer_code || '').toLowerCase();
+            return uCode === formatted.toLowerCase() && String(u.id) !== String(currentUserId);
+          });
+          if (exists) {
+            return Promise.resolve({ available: false, code: formatted, message: formatted + ' já está em uso por outro cantor.' });
+          }
+        }
+      } catch(e) {}
+
+      // 2. Verificar no Supabase profiles
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb) {
+        return sb.from('profiles').select('id, singer_code').eq('singer_code', formatted).then(function(res) {
+          if (res.data && res.data.length > 0) {
+            var isOther = res.data.some(function(p) { return String(p.id) !== String(currentUserId); });
+            if (isOther) {
+              return { available: false, code: formatted, message: formatted + ' já está em uso por outro cantor.' };
+            }
+          }
+          return { available: true, code: formatted, message: formatted + ' está disponível!' };
+        }).catch(function() {
+          return { available: true, code: formatted, message: formatted + ' está disponível!' };
+        });
+      }
+
+      return Promise.resolve({ available: true, code: formatted, message: formatted + ' está disponível!' });
+    },
+
     signUp: function (payload) {
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       var email = typeof payload === 'string' ? payload : (payload ? payload.email : '');
@@ -76,7 +125,9 @@
       var isPro = cleanEmail === 'leovitulli@gmail.com' || isVipCoupon;
       var planTier = isPro ? 'pro' : 'free';
       var planType = isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE';
-      var singerCode = cleanEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000));
+      
+      var customSingerCode = (payload && payload.singerCode) ? PrompterAuth.formatSingerCode(payload.singerCode) : '';
+      var singerCode = customSingerCode || (cleanEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('@' + cleanEmail.split('@')[0]));
 
       if (!sb || !sb.auth || typeof sb.auth.signUp !== 'function') {
         return Promise.reject(new Error('Serviço de autenticação temporariamente indisponível.'));

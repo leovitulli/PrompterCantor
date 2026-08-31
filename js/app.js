@@ -3034,6 +3034,39 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    var authSingerCodeInput = document.getElementById('authSingerCode');
+    var authSingerCodeFeedback = document.getElementById('authSingerCodeFeedback');
+    var singerCodeDebounce = null;
+
+    if (authSingerCodeInput && authSingerCodeFeedback) {
+      authSingerCodeInput.addEventListener('input', function (e) {
+        var val = (e.target.value || '').trim();
+        clearTimeout(singerCodeDebounce);
+        if (!val) {
+          authSingerCodeFeedback.style.display = 'none';
+          return;
+        }
+
+        authSingerCodeFeedback.style.display = 'block';
+        authSingerCodeFeedback.style.color = '#94a3b8';
+        authSingerCodeFeedback.innerText = '🔍 Verificando disponibilidade...';
+
+        singerCodeDebounce = setTimeout(function () {
+          PrompterAuth.checkSingerCodeAvailability(val, null).then(function (res) {
+            if (res.available) {
+              authSingerCodeFeedback.style.display = 'block';
+              authSingerCodeFeedback.style.color = '#34d399';
+              authSingerCodeFeedback.innerText = '✅ ' + res.message;
+            } else {
+              authSingerCodeFeedback.style.display = 'block';
+              authSingerCodeFeedback.style.color = '#f87171';
+              authSingerCodeFeedback.innerText = '❌ ' + res.message;
+            }
+          });
+        }, 300);
+      });
+    }
+
     if (tabAuthSignIn) {
       tabAuthSignIn.addEventListener('click', function () { setAuthMode('signin'); });
     }
@@ -3076,12 +3109,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (currentAuthMode === 'signup') {
         var nameEl = document.getElementById('authName');
+        var singerCodeEl = document.getElementById('authSingerCode');
         var phoneEl = document.getElementById('authPhone');
         var cpfEl = document.getElementById('authCpf');
         var instaEl = document.getElementById('authInstagram');
         var couponEl = document.getElementById('authCouponCode');
 
         var name = nameEl ? nameEl.value.trim() : '';
+        var singerCode = singerCodeEl ? singerCodeEl.value.trim() : '';
         var phone = phoneEl ? phoneEl.value.trim() : '';
         var cpf = cpfEl ? cpfEl.value.trim() : '';
         var instagram = instaEl ? instaEl.value.trim() : '';
@@ -3092,23 +3127,37 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
+        if (!singerCode) {
+          showToast('Por favor, escolha seu @Login / Palco.', 'warning');
+          return;
+        }
+
         if (!phone) {
           showToast('Por favor, informe seu WhatsApp com DDD.', 'warning');
           return;
         }
 
-        showToast('Criando e configurando sua conta...', 'info');
-        PrompterAuth.signUp({
-          name: name,
-          phone: phone,
-          cpf: cpf,
-          instagram: instagram,
-          couponCode: couponCode,
-          email: email,
-          password: pass
-        }).then(function () {
-          showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
-          showApp();
+        showToast('Verificando @Login / Palco...', 'info');
+        PrompterAuth.checkSingerCodeAvailability(singerCode, null).then(function (checkRes) {
+          if (!checkRes.available) {
+            showToast(checkRes.message || 'Este @Login / Palco já está em uso.', 'warning');
+            return;
+          }
+
+          showToast('Criando e configurando sua conta...', 'info');
+          return PrompterAuth.signUp({
+            name: name,
+            singerCode: singerCode,
+            phone: phone,
+            cpf: cpf,
+            instagram: instagram,
+            couponCode: couponCode,
+            email: email,
+            password: pass
+          }).then(function () {
+            showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
+            showApp();
+          });
         }).catch(function (err) {
           showToast(err.message || 'Erro ao criar conta.', 'warning');
         });

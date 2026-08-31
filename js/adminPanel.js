@@ -377,7 +377,7 @@
           '</div>' +
 
           '<!-- SUB-MODAL: GESTÃO & EDIÇÃO INDIVIDUAL DO CANTOR -->' +
-          '<div id="adminEditSingerModal" class="modal hidden" style="z-index: 1000002;">' +
+          '<div id="adminEditSingerModal" class="modal hidden" style="z-index: 10000060 !important;">' +
             '<div class="modal-overlay" id="adminEditSingerOverlay"></div>' +
             '<div class="modal-card" style="max-width: 560px;">' +
               '<div class="modal-header">' +
@@ -390,6 +390,11 @@
                   '<div class="form-group">' +
                     '<label>Nome do Cantor / Artístico:</label>' +
                     '<input type="text" id="editSingerName" class="form-control" required placeholder="Ex: Jorge Aragão">' +
+                  '</div>' +
+                  '<div class="form-group">' +
+                    '<label>@Login / Palco (Nome de Usuário Único):</label>' +
+                    '<input type="text" id="editSingerCode" class="form-control" placeholder="@cantor_oficial" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">' +
+                    '<div id="editSingerCodeFeedback" style="font-size: 0.78rem; margin-top: 4px; display: none;"></div>' +
                   '</div>' +
                   '<div class="form-group">' +
                     '<label>E-mail da Conta:</label>' +
@@ -425,10 +430,6 @@
                         '<option value="offline">⚪ Offline</option>' +
                       '</select>' +
                     '</div>' +
-                  '</div>' +
-                  '<div class="form-group">' +
-                    '<label>Código do Cantor (Palco):</label>' +
-                    '<input type="text" id="editSingerCode" class="form-control" placeholder="#CANTOR-0000" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">' +
                   '</div>' +
                   '<div style="display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap;">' +
                     '<button type="button" id="btnDirectWhatsApp" class="btn btn-outline" style="color: #34d399; border-color: rgba(16,185,129,0.4);">💬 WhatsApp</button>' +
@@ -574,14 +575,40 @@
       if (btnDeleteSinger) {
         btnDeleteSinger.addEventListener('click', function () {
           var id = document.getElementById('editSingerId').value;
-          if (confirm('Deseja realmente remover este cantor do sistema?')) {
-            allUserData = allUserData.filter(function(u) { return u.id !== id; });
-            PrompterAdmin.saveStoredUsers();
-            PrompterAdmin.updateMetrics();
-            PrompterAdmin.renderUsersTable();
-            PrompterAdmin.closeSingerModal();
-            if (window.showToast) window.showToast('Cantor removido com sucesso.', 'info');
+          PrompterAdmin.deleteSinger(id);
+        });
+      }
+
+      // Verificação em tempo real do @Login / Palco no modal de edição
+      var editCodeInput = document.getElementById('editSingerCode');
+      var editCodeFeedback = document.getElementById('editSingerCodeFeedback');
+      var editCodeDebounce = null;
+      if (editCodeInput && editCodeFeedback) {
+        editCodeInput.addEventListener('input', function (e) {
+          var val = (e.target.value || '').trim();
+          var curId = document.getElementById('editSingerId').value;
+          clearTimeout(editCodeDebounce);
+          if (!val) {
+            editCodeFeedback.style.display = 'none';
+            return;
           }
+          editCodeFeedback.style.display = 'block';
+          editCodeFeedback.style.color = '#94a3b8';
+          editCodeFeedback.innerText = '🔍 Verificando...';
+
+          editCodeDebounce = setTimeout(function () {
+            if (window.PrompterAuth) {
+              window.PrompterAuth.checkSingerCodeAvailability(val, curId).then(function (res) {
+                if (res.available) {
+                  editCodeFeedback.style.color = '#34d399';
+                  editCodeFeedback.innerText = '✅ ' + res.message;
+                } else {
+                  editCodeFeedback.style.color = '#f87171';
+                  editCodeFeedback.innerText = '❌ ' + res.message;
+                }
+              });
+            }
+          }, 300);
         });
       }
 
@@ -815,6 +842,8 @@
         document.getElementById('editSingerCode').value = '@cantor_' + Math.floor(1000 + Math.random() * 9000);
         document.getElementById('editSingerPlan').value = 'pro_annual';
         document.getElementById('editSingerStatus').value = 'online';
+        var editCodeFeedback = document.getElementById('editSingerCodeFeedback');
+        if (editCodeFeedback) editCodeFeedback.style.display = 'none';
         if (btnDel) btnDel.classList.add('hidden');
       }
 
@@ -826,6 +855,29 @@
       if (modal) modal.classList.add('hidden');
     },
 
+    deleteSinger: function (id) {
+      if (!id) return;
+      var userObj = allUserData.find(function (u) { return u.id === id; });
+      var name = userObj ? (userObj.name || userObj.email) : 'este cantor';
+      if (!confirm('Deseja realmente excluir ' + name + ' do sistema?')) return;
+
+      allUserData = allUserData.filter(function (u) { return u.id !== id; });
+      PrompterAdmin.saveStoredUsers();
+
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb) {
+        sb.from('profiles').delete().eq('id', id).catch(function () {});
+        if (userObj && userObj.email) {
+          sb.from('profiles').delete().eq('email', userObj.email).catch(function () {});
+        }
+      }
+
+      PrompterAdmin.updateMetrics();
+      PrompterAdmin.renderUsersTable();
+      PrompterAdmin.closeSingerModal();
+      if (window.showToast) window.showToast('🗑️ Cantor "' + name + '" excluído com sucesso.', 'success');
+    },
+
     saveSingerModalData: function () {
       var id = document.getElementById('editSingerId').value;
       var name = (document.getElementById('editSingerName').value || '').trim();
@@ -833,7 +885,8 @@
       var phone = (document.getElementById('editSingerPhone').value || '').trim();
       var cpf = (document.getElementById('editSingerCpf').value || '').trim();
       var instagram = (document.getElementById('editSingerInstagram').value || '').trim();
-      var code = (document.getElementById('editSingerCode').value || '').trim() || ('@' + email.split('@')[0]);
+      var rawCode = (document.getElementById('editSingerCode').value || '').trim() || ('@' + email.split('@')[0]);
+      var code = window.PrompterAuth ? window.PrompterAuth.formatSingerCode(rawCode) : rawCode;
       var planVal = document.getElementById('editSingerPlan').value;
       var statusVal = document.getElementById('editSingerStatus').value;
 
@@ -842,6 +895,20 @@
         return;
       }
 
+      if (window.PrompterAuth) {
+        window.PrompterAuth.checkSingerCodeAvailability(code, id).then(function (checkRes) {
+          if (!checkRes.available) {
+            if (window.showToast) window.showToast(checkRes.message || 'Este @Login / Palco já está em uso.', 'warning');
+            return;
+          }
+          PrompterAdmin.executeSaveSinger(id, name, email, phone, cpf, instagram, code, planVal, statusVal);
+        });
+      } else {
+        PrompterAdmin.executeSaveSinger(id, name, email, phone, cpf, instagram, code, planVal, statusVal);
+      }
+    },
+
+    executeSaveSinger: function (id, name, email, phone, cpf, instagram, code, planVal, statusVal) {
       var isPro = planVal !== 'free';
       var planType = '💎 PRO ANUAL';
       if (planVal === 'pro_monthly') planType = '⚡ PRO MENSAL';
@@ -1099,7 +1166,12 @@
             '<td>' + planBadge + '</td>' +
             '<td><div>' + waButton + '</div><small style="color:#64748b; font-size:0.75rem; margin-top:2px; display:inline-block;">' + escapeHtml(cpfStr) + '</small></td>' +
             '<td>' + instaButton + '</td>' +
-            '<td style="text-align: right;"><span class="admin-time-ago">' + escapeHtml(user.last_seen || 'Hoje') + '</span></td>' +
+            '<td style="text-align: right;">' +
+              '<div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">' +
+                '<span class="admin-time-ago">' + escapeHtml(user.last_seen || 'Hoje') + '</span>' +
+                '<button type="button" class="btn btn-outline btn-xs btn-del-singer-row" data-user-id="' + user.id + '" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); padding: 2px 7px; border-radius: 6px; font-size: 0.75rem;" title="Excluir Cantor">🗑️</button>' +
+              '</div>' +
+            '</td>' +
           '</tr>';
       });
 
@@ -1111,6 +1183,15 @@
           var uId = this.getAttribute('data-user-id');
           var userObj = allUserData.find(function(u) { return u.id === uId; });
           if (userObj) PrompterAdmin.openSingerModal(userObj);
+        });
+      });
+
+      // Botão direto de exclusão na linha
+      tbody.querySelectorAll('.btn-del-singer-row').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var uId = this.getAttribute('data-user-id');
+          PrompterAdmin.deleteSinger(uId);
         });
       });
     },
