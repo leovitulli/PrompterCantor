@@ -42,14 +42,14 @@ document.addEventListener('DOMContentLoaded', function () {
   if (window.AdvancedPlayer) AdvancedPlayer.init();
   initAuthAndAdminUI();
 
-  ensureSambaRepertoireExists()
-    .then(function() {
-      return loadRepertoires();
-    })
+  loadRepertoires()
     .then(function() {
       restoreActiveState();
       if (window.PrompterCloud) {
         PrompterCloud.initRealtimeListeners(function(table, payload) {
+          if (window.PrompterDB && typeof PrompterDB.invalidateCache === 'function') {
+            PrompterDB.invalidateCache();
+          }
           if (state.currentRepertoire) {
             PrompterDB.getSongsByRepertoire(state.currentRepertoire.id).then(function (songs) {
               state.currentRepertoireSongs = songs || [];
@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .catch(function (err) {
       console.error('Erro ao inicializar app:', err);
-      showToast('Aviso ao carregar dados do Supabase.', 'warning');
     });
 
   // Clique no Badge de Nuvem para atualizar imediatamente
@@ -71,13 +70,21 @@ document.addEventListener('DOMContentLoaded', function () {
   if (syncBadgeEl) {
     syncBadgeEl.style.cursor = 'pointer';
     syncBadgeEl.addEventListener('click', function () {
-      showToast('⚡ Conectado diretamente à nuvem Supabase.', 'info');
+      if (window.PrompterDB && typeof PrompterDB.invalidateCache === 'function') {
+        PrompterDB.invalidateCache();
+      }
+      showToast('⚡ Atualizando dados da nuvem...', 'info');
       loadRepertoires();
     });
   }
 
-  // Atualizar dados ao alternar para a aba
+  // Atualizar dados ao alternar para a aba com throttle inteligente (4s)
+  var lastFocusSync = 0;
   window.addEventListener('focus', function () {
+    var now = Date.now();
+    if (now - lastFocusSync < 4000) return;
+    lastFocusSync = now;
+
     if (state.currentRepertoire) {
       PrompterDB.getSongsByRepertoire(state.currentRepertoire.id).then(function (songs) {
         state.currentRepertoireSongs = songs || [];
@@ -171,7 +178,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (songsView) songsView.classList.add('hidden');
     }
 
-    return PrompterDB.getAllRepertoires().then(function (reps) {
+    var loadPromise = (PrompterDB.getRepertoiresWithCounts && typeof PrompterDB.getRepertoiresWithCounts === 'function')
+      ? PrompterDB.getRepertoiresWithCounts()
+      : PrompterDB.getAllRepertoires();
+
+    return loadPromise.then(function (reps) {
       state.repertoires = reps || [];
       renderRepertoires();
     });
@@ -268,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // Renderizar HTML dos cards com badge unificado e consistente
+    // Renderizar HTML dos cards com badge unificado e contagem instantânea (0ms)
     var html = '';
     for (var i = 0; i < filtered.length; i++) {
       var rep = filtered[i];
@@ -277,6 +288,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var sourceLabel = rep.source === 'gdrive' ? 'Google Drive' : rep.source === 'manual' ? 'Criado Manual' : 'Importação Local';
       var dateStr = formatDate(rep.createdAt);
       var repId = rep.id;
+      var count = (rep.songsCount !== undefined) ? rep.songsCount : 0;
+      var countStr = count + ' música' + (count !== 1 ? 's' : '');
 
       html +=
         '<div class="repertoire-card" data-rep-id="' + repId + '" draggable="true" data-rep-index="' + i + '">' +
@@ -295,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="rep-card-body">' +
         '<h3 class="rep-card-title" id="rep-title-' + repId + '">' + escapeHtml(rep.name) + '</h3>' +
         '<div class="rep-card-meta">' +
-        '<span class="rep-song-count" id="rep-count-' + repId + '">... músicas</span>' +
+        '<span class="rep-song-count" id="rep-count-' + repId + '">' + countStr + '</span>' +
         '<span class="rep-date">' + dateStr + '</span>' +
         '</div>' +
         '</div>' +
@@ -308,16 +321,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     repertoiresListEl.innerHTML = html;
     bindRepertoireCardEvents();
-
-    // Atualizar contagens assincronamente sem bloquear a renderização dos cards
-    filtered.forEach(function (rep) {
-      PrompterDB.countSongsByRepertoire(rep.id).then(function (count) {
-        var countEl = document.getElementById('rep-count-' + rep.id);
-        if (countEl) {
-          countEl.textContent = count + ' música' + (count !== 1 ? 's' : '');
-        }
-      }).catch(function () { });
-    });
   }
 
   function bindRepertoireCardEvents() {
@@ -506,15 +509,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // ═══════════════════════════════════════
 
   function openRepertoireSongs(repId) {
-    PrompterDB.getRepertoireById(repId).then(function (rep) {
-      if (!rep && state.repertoires) {
-        for (var i = 0; i < state.repertoires.length; i++) {
-          if (state.repertoires[i].id === repId) {
-            rep = state.repertoires[i];
-            break;
-          }
-        }
-      }
+    var foundRep = (state.repertoires || []).find(function (r) { return r.id === repId; });
+    var repPromise = foundRep ? Promise.resolve(foundRep) : PrompterDB.getRepertoireById(repId);
+
+    repPromise.then(function (rep) {
       if (!rep) {
         showToast('Repertório não encontrado.', 'warning');
         return;
@@ -522,19 +520,6 @@ document.addEventListener('DOMContentLoaded', function () {
       state.currentRepertoire = rep;
 
       return PrompterDB.getSongsByRepertoire(rep.id).then(function (songs) {
-        if ((!songs || songs.length === 0) && rep.name === 'SAMBA' && window.TextParser && window.SAMPLE_REPERTOIRE_TEXT) {
-          var sampleSongs = TextParser.splitMultipleSongs(window.SAMPLE_REPERTOIRE_TEXT, 'Repertório Principal.txt');
-          for (var s = 0; s < sampleSongs.length; s++) {
-            sampleSongs[s].repertoireId = rep.id;
-            sampleSongs[s].trackNumber = s + 1;
-          }
-          return PrompterDB.saveSongsBatch(sampleSongs).then(function () {
-            return PrompterDB.getSongsByRepertoire(rep.id);
-          }).then(function (loadedSongs) {
-            state.currentRepertoireSongs = loadedSongs || [];
-            showRepertoireSongsView(rep, state.currentRepertoireSongs);
-          });
-        }
         state.currentRepertoireSongs = songs || [];
         showRepertoireSongsView(rep, state.currentRepertoireSongs);
       });
@@ -589,7 +574,6 @@ document.addEventListener('DOMContentLoaded', function () {
     state.currentSong = null;
     state.currentRepertoireSongs = [];
     state.targetRepertoireId = null;
-    state.repertoires = [];
     saveActiveState('main', {});
     var mainView = document.getElementById('mainRepertoireView');
     var songsView = document.getElementById('repertoireSongsView');

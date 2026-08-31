@@ -237,10 +237,13 @@ var Prompter = {
     }
   },
 
+  cachedMaxScroll: 0,
+
   startScroll: function() {
     if (this.isScrolling) return;
     this.isScrolling = true;
     this.subpixelScroll = this.scrollArea ? this.scrollArea.scrollTop : 0;
+    this.cachedMaxScroll = this.scrollArea ? (this.scrollArea.scrollHeight - this.scrollArea.clientHeight) : 0;
     this.updateScrollUI();
     this.step();
   },
@@ -265,7 +268,7 @@ var Prompter = {
     if (this.scrollArea) {
       this.subpixelScroll += pixelsPerFrame;
       this.scrollArea.scrollTop = Math.round(this.subpixelScroll);
-      var maxScroll = this.scrollArea.scrollHeight - this.scrollArea.clientHeight;
+      var maxScroll = this.cachedMaxScroll || (this.scrollArea.scrollHeight - this.scrollArea.clientHeight);
       if (this.scrollArea.scrollTop >= maxScroll - 4) {
         this.stopScroll();
         return;

@@ -23,6 +23,32 @@
       : null;
   }
 
+  var memCache = {
+    userId: null,
+    repertoires: null,
+    songsByRep: {},
+    allSongs: null,
+    countsByRep: {}
+  };
+
+  function checkCacheUser(user) {
+    var curId = user ? user.id : 'guest';
+    if (memCache.userId !== curId) {
+      memCache.userId = curId;
+      memCache.repertoires = null;
+      memCache.songsByRep = {};
+      memCache.allSongs = null;
+      memCache.countsByRep = {};
+    }
+  }
+
+  function invalidateCache() {
+    memCache.repertoires = null;
+    memCache.songsByRep = {};
+    memCache.allSongs = null;
+    memCache.countsByRep = {};
+  }
+
   function getOfflineKey(userId) {
     return 'canta_offline_stage_' + (userId || 'guest');
   }
@@ -43,45 +69,43 @@
   }
 
   // ════════════════════════════════════════
-  //  REPERTÓRIOS (100% SUPABASE)
+  //  REPERTÓRIOS (100% SUPABASE COM CACHE)
   // ════════════════════════════════════════
 
   function getAllRepertoires() {
     var user = getCurrentUser();
     var sb = getSupabaseClient();
+    checkCacheUser(user);
+
+    if (memCache.repertoires) {
+      return Promise.resolve(memCache.repertoires);
+    }
 
     if (!user || !user.id || !sb) {
       var offStore = getOfflineStore(user ? user.id : 'guest');
       var list = Object.keys(offStore.repertoires || {}).map(function(k) { return offStore.repertoires[k]; });
       list.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      memCache.repertoires = list;
       return Promise.resolve(list);
     }
 
     return sb.from('repertoires')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .then(function(res) {
         if (res.error) {
-          console.warn('Aviso ao carregar repertórios do Supabase, usando cache local de palco:', res.error);
+          console.warn('Aviso ao carregar repertórios do Supabase, usando cache local:', res.error);
           var offStore = getOfflineStore(user.id);
           var list = Object.keys(offStore.repertoires || {}).map(function(k) { return offStore.repertoires[k]; });
           list.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+          memCache.repertoires = list;
           return list;
         }
 
         var rawList = res.data || [];
-        var currentUserEmail = (user.email || '').toLowerCase();
-
-        // Filtrar estritamente apenas os repertórios do usuário logado
-        var filteredList = rawList.filter(function(r) {
-          if (r.user_id) {
-            return String(r.user_id) === String(user.id);
-          }
-          return false;
-        });
-
         var offStore = getOfflineStore(user.id);
-        var reps = filteredList.map(function(r) {
+        var reps = rawList.map(function(r) {
           var isPinned = Boolean(offStore.repertoires && offStore.repertoires[r.id]);
           return {
             id: r.id,
@@ -111,32 +135,55 @@
           });
         }
 
+        memCache.repertoires = reps;
         return reps;
       }).catch(function(err) {
         console.warn('Falha de rede ao buscar repertórios:', err);
         var offStore = getOfflineStore(user.id);
         var list = Object.keys(offStore.repertoires || {}).map(function(k) { return offStore.repertoires[k]; });
-        
-        var customOrder = [];
-        try {
-          var rawOrder = localStorage.getItem('canta_ai_rep_order_' + user.id);
-          if (rawOrder) customOrder = JSON.parse(rawOrder);
-        } catch(e) {}
-
-        if (customOrder && customOrder.length > 0) {
-          list.sort(function(a, b) {
-            var idxA = customOrder.indexOf(a.id);
-            var idxB = customOrder.indexOf(b.id);
-            if (idxA === -1) idxA = 9999;
-            if (idxB === -1) idxB = 9999;
-            if (idxA !== idxB) return idxA - idxB;
-            return (b.createdAt || 0) - (a.createdAt || 0);
-          });
-        } else {
-          list.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-        }
+        list.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+        memCache.repertoires = list;
         return list;
       });
+  }
+
+  function getRepertoiresWithCounts() {
+    var user = getCurrentUser();
+    var sb = getSupabaseClient();
+    checkCacheUser(user);
+
+    if (!user || !user.id || !sb) {
+      return getAllRepertoires().then(function(reps) {
+        var offStore = getOfflineStore(user ? user.id : 'guest');
+        return reps.map(function(r) {
+          var count = (offStore.songs && offStore.songs[r.id] && offStore.songs[r.id].length) || 0;
+          return Object.assign({}, r, { songsCount: count });
+        });
+      });
+    }
+
+    return Promise.all([
+      getAllRepertoires(),
+      sb.from('songs').select('repertoire_id').eq('user_id', user.id)
+    ]).then(function(results) {
+      var reps = results[0] || [];
+      var songsRows = (results[1] && results[1].data) || [];
+      var countMap = {};
+      songsRows.forEach(function(row) {
+        var rId = row.repertoire_id;
+        if (rId) countMap[rId] = (countMap[rId] || 0) + 1;
+      });
+      memCache.countsByRep = countMap;
+      return reps.map(function(r) {
+        return Object.assign({}, r, { songsCount: countMap[r.id] || 0 });
+      });
+    }).catch(function() {
+      return getAllRepertoires().then(function(reps) {
+        return reps.map(function(r) {
+          return Object.assign({}, r, { songsCount: memCache.countsByRep[r.id] || 0 });
+        });
+      });
+    });
   }
 
   function getRepertoireById(id) {
@@ -202,6 +249,7 @@
     }
 
     return sb.from('repertoires').upsert(payload).select().then(function(res) {
+      invalidateCache();
       if (res.error) {
         if (res.error.code === 'PGRST204' || (res.error.message && res.error.message.indexOf('user_id') !== -1)) {
           delete payload.user_id;
@@ -221,6 +269,7 @@
   function deleteRepertoire(id) {
     var user = getCurrentUser();
     var sb = getSupabaseClient();
+    invalidateCache();
 
     var offStore = getOfflineStore(user ? user.id : 'guest');
     if (offStore.repertoires) delete offStore.repertoires[id];
@@ -241,22 +290,31 @@
   }
 
   // ════════════════════════════════════════
-  //  MÚSICAS (100% SUPABASE)
+  //  MÚSICAS (100% SUPABASE COM CACHE)
   // ════════════════════════════════════════
 
   function getSongsByRepertoire(repertoireId) {
     var user = getCurrentUser();
     var sb = getSupabaseClient();
+    checkCacheUser(user);
+
+    var cacheKey = repertoireId || 'ALL_USER_SONGS';
+    if (memCache.songsByRep[cacheKey]) {
+      return Promise.resolve(memCache.songsByRep[cacheKey]);
+    }
 
     if (!user || !user.id || !sb) {
       var offStore = getOfflineStore(user ? user.id : 'guest');
       var localList = offStore.songs[repertoireId] || [];
+      memCache.songsByRep[cacheKey] = localList;
       return Promise.resolve(localList);
     }
 
     var query = sb.from('songs').select('*');
     if (repertoireId) {
       query = query.eq('repertoire_id', repertoireId);
+    } else {
+      query = query.eq('user_id', user.id);
     }
 
     return query.order('track_number', { ascending: true, nullsFirst: false })
@@ -265,7 +323,9 @@
         if (res.error) {
           console.warn('Aviso ao buscar músicas do Supabase:', res.error);
           var offStore = getOfflineStore(user.id);
-          return offStore.songs[repertoireId] || [];
+          var list = offStore.songs[repertoireId] || [];
+          memCache.songsByRep[cacheKey] = list;
+          return list;
         }
 
         var rawList = res.data || [];
@@ -292,17 +352,29 @@
           };
         });
 
+        memCache.songsByRep[cacheKey] = songs;
         return songs;
       }).catch(function(err) {
         console.warn('Falha de rede ao buscar músicas:', err);
         var offStore = getOfflineStore(user.id);
-        return offStore.songs[repertoireId] || [];
+        var list = offStore.songs[repertoireId] || [];
+        memCache.songsByRep[cacheKey] = list;
+        return list;
       });
   }
 
   function getSongById(id) {
     var user = getCurrentUser();
     var sb = getSupabaseClient();
+    checkCacheUser(user);
+
+    // Checar primeiro na memória rápida (0ms)
+    for (var k in memCache.songsByRep) {
+      var arr = memCache.songsByRep[k] || [];
+      for (var j = 0; j < arr.length; j++) {
+        if (arr[j].id === id) return Promise.resolve(arr[j]);
+      }
+    }
 
     if (!user || !user.id || !sb) {
       var offStore = getOfflineStore(user ? user.id : 'guest');
@@ -347,6 +419,7 @@
   function saveSong(song) {
     var user = getCurrentUser();
     var sb = getSupabaseClient();
+    invalidateCache();
 
     if (!user || !user.id || !sb) {
       var sId = song.id || ('song-guest-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5));
@@ -400,6 +473,7 @@
     if (!songsArray || songsArray.length === 0) return Promise.resolve([]);
     var user = getCurrentUser();
     var sb = getSupabaseClient();
+    invalidateCache();
 
     if (!user || !user.id || !sb) {
       var offStore = getOfflineStore('guest');
@@ -453,6 +527,7 @@
   function deleteSong(id) {
     var user = getCurrentUser();
     var sb = getSupabaseClient();
+    invalidateCache();
 
     if (!user || !user.id || !sb) return Promise.resolve(true);
 
@@ -478,7 +553,6 @@
       return Promise.resolve(false);
     }
 
-    // Baixar snapshot do Supabase para o cache seguro de palco
     return Promise.all([
       getRepertoireById(repId),
       getSongsByRepertoire(repId)
@@ -490,7 +564,6 @@
         offStore.repertoires[repId] = Object.assign({}, rep, { isOfflinePinned: true });
         offStore.songs[repId] = songs;
         saveOfflineStore(userId, offStore);
-        console.log('⚡ Repertório baixado para o palco com sucesso (' + songs.length + ' músicas)!');
         return true;
       }
       return false;
@@ -535,13 +608,12 @@
     var user = getCurrentUser();
     var userId = user ? user.id : 'guest';
     var sb = getSupabaseClient();
+    invalidateCache();
 
-    // 1. Salvar no cache local para resposta visual imediata (0ms)
     try {
       localStorage.setItem('canta_ai_rep_order_' + userId, JSON.stringify(orderIds || []));
     } catch(e) {}
 
-    // 2. Se conectado ao Supabase, atualizar ordem na nuvem (multi-dispositivo)
     if (sb && Array.isArray(orderIds) && orderIds.length > 0) {
       var baseTime = Date.now() + (orderIds.length * 2000);
       var updatePromises = orderIds.map(function(repId, idx) {
@@ -549,7 +621,6 @@
         return sb.from('repertoires').update({ created_at: repTime }).eq('id', repId);
       });
       return Promise.all(updatePromises).then(function() {
-        console.log('☁️ Ordem dos repertórios sincronizada no Supabase Cloud!');
         return true;
       }).catch(function(err) {
         console.warn('Aviso ao sincronizar ordem de repertórios na nuvem:', err);
@@ -626,9 +697,11 @@
 
   window.PrompterDB = {
     initDB: initDB,
+    invalidateCache: invalidateCache,
     // Repertórios
     saveRepertoire: saveRepertoire,
     getAllRepertoires: getAllRepertoires,
+    getRepertoiresWithCounts: getRepertoiresWithCounts,
     getAllRepertoiresGlobal: getAllRepertoiresGlobal,
     getRepertoireById: getRepertoireById,
     deleteRepertoire: deleteRepertoire,
