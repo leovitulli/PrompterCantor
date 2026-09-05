@@ -441,8 +441,19 @@ textarea {
 }
 
 .dropdown-add-item:hover {
-  background: rgba(16, 185, 129, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.dropdown-add-item.item-import-local:hover {
+  background: rgba(16, 185, 129, 0.16);
   color: #34d399;
+}
+
+.dropdown-add-item.item-import-drive:hover {
+  background: rgba(6, 182, 212, 0.16);
+  color: #38bdf8;
 }
 
 .dropdown-add-item .item-icon {

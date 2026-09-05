@@ -1585,7 +1585,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnMenuImportLocal) {
       btnMenuImportLocal.addEventListener('click', function () {
         if (dropdownAddMenu) dropdownAddMenu.classList.add('hidden');
-        openImportModal(null);
+        openImportModal(state.currentRepertoire ? state.currentRepertoire.id : null);
       });
     }
 
