@@ -497,6 +497,16 @@ document.addEventListener('DOMContentLoaded', function () {
       };
     }
 
+    // Resetar estado de ordenação A-Z
+    state.isSortedAZ = false;
+    state.originalSongsSnapshot = null;
+    var btnSortAZ = document.getElementById('btnRsvSortAZ');
+    if (btnSortAZ) {
+      btnSortAZ.innerHTML = '🔤 Ordem A-Z';
+      btnSortAZ.classList.remove('btn-active-sort');
+      btnSortAZ.title = 'Organizar músicas em ordem alfabética (A-Z)';
+    }
+
     renderSongsList(songs);
     saveActiveState('repertoire', { repertoireId: rep.id });
   }
@@ -508,6 +518,13 @@ document.addEventListener('DOMContentLoaded', function () {
     state.currentSong = null;
     state.currentRepertoireSongs = [];
     state.targetRepertoireId = null;
+    state.isSortedAZ = false;
+    state.originalSongsSnapshot = null;
+    var btnSortAZReset = document.getElementById('btnRsvSortAZ');
+    if (btnSortAZReset) {
+      btnSortAZReset.innerHTML = '🔤 Ordem A-Z';
+      btnSortAZReset.classList.remove('btn-active-sort');
+    }
     saveActiveState('main', {});
     var mainView = document.getElementById('mainRepertoireView');
     var songsView = document.getElementById('repertoireSongsView');
@@ -556,6 +573,10 @@ document.addEventListener('DOMContentLoaded', function () {
       if (song.composer) metaParts.push('✍️ ' + escapeHtml(song.composer));
       if (preview) metaParts.push('💬 ' + escapeHtml(preview));
 
+      var svgUp = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
+      var svgDown = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+      var svgTrash = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+
       html +=
         '<div class="song-list-row" data-song-id="' + song.id + '" draggable="true" title="Clique para abrir no Prompter">' +
           '<div class="song-drag-handle" title="Arraste para reposicionar">⋮⋮</div>' +
@@ -572,10 +593,9 @@ document.addEventListener('DOMContentLoaded', function () {
             (metaParts.length > 0 ? '<div class="song-row-meta">' + metaParts.join(' <span class="meta-sep">•</span> ') + '</div>' : '') +
           '</div>' +
           '<div class="song-row-actions">' +
-            '<button class="btn-icon-action btn-move-up" data-song-id="' + song.id + '" title="Mover para Cima">⬆️</button>' +
-            '<button class="btn-icon-action btn-move-down" data-song-id="' + song.id + '" title="Mover para Baixo">⬇️</button>' +
-            '<button class="btn-icon-action btn-edit-song" data-song-id="' + song.id + '" title="Editar Música">✏️</button>' +
-            '<button class="btn-icon-action btn-delete-song" data-song-id="' + song.id + '" title="Excluir Música">🗑️</button>' +
+            '<button class="btn-icon-action btn-move-up" data-song-id="' + song.id + '" title="Mover para Cima">' + svgUp + '</button>' +
+            '<button class="btn-icon-action btn-move-down" data-song-id="' + song.id + '" title="Mover para Baixo">' + svgDown + '</button>' +
+            '<button class="btn-icon-action btn-delete-song" data-song-id="' + song.id + '" title="Excluir Música">' + svgTrash + '</button>' +
           '</div>' +
         '</div>';
     }
@@ -684,18 +704,6 @@ document.addEventListener('DOMContentLoaded', function () {
           moveSongPosition(id, 1);
         });
       })(moveDownBtns[d]);
-    }
-
-    var editBtns = listEl.querySelectorAll('.btn-edit-song');
-    for (var e = 0; e < editBtns.length; e++) {
-      (function (btn) {
-        btn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var id = btn.getAttribute('data-song-id');
-          var song = findSongById(id, state.currentRepertoireSongs);
-          if (song) openEditorModal(song);
-        });
-      })(editBtns[e]);
     }
 
     var deleteBtns = listEl.querySelectorAll('.btn-delete-song');
@@ -1492,22 +1500,41 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // Botão Ordenar A-Z no Repertório
+    // Botão Ordenar A-Z com Alternância para Ordem do Show (Original)
     var btnSortAZ = document.getElementById('btnRsvSortAZ');
     if (btnSortAZ) {
       btnSortAZ.addEventListener('click', function () {
         if (!state.currentRepertoireSongs || state.currentRepertoireSongs.length === 0) return;
-        state.currentRepertoireSongs.sort(function (a, b) {
-          return (a.title || '').localeCompare(b.title || '', 'pt', { sensitivity: 'base' });
-        });
-        for (var s = 0; s < state.currentRepertoireSongs.length; s++) {
-          state.currentRepertoireSongs[s].trackNumber = s + 1;
-          state.currentRepertoireSongs[s].order = s + 1;
-        }
-        PrompterDB.saveSongsBatch(state.currentRepertoireSongs).then(function () {
+
+        if (!state.isSortedAZ) {
+          // Salva snapshot da ordem atual do repertório antes de ordenar
+          state.originalSongsSnapshot = state.currentRepertoireSongs.slice();
+          state.currentRepertoireSongs.sort(function (a, b) {
+            return (a.title || '').localeCompare(b.title || '', 'pt', { sensitivity: 'base' });
+          });
+          state.isSortedAZ = true;
+          btnSortAZ.innerHTML = '🔢 Ordem do Show';
+          btnSortAZ.classList.add('btn-active-sort');
+          btnSortAZ.title = 'Restaurar para a ordem original das faixas do show';
           renderSongsList(state.currentRepertoireSongs);
-          showToast('Músicas ordenadas de A a Z e salvas no banco!', 'success');
-        });
+          showToast('🔤 Músicas em ordem A-Z. Clique em "Ordem do Show" para restaurar.', 'info');
+        } else {
+          // Restaura a ordem original
+          if (state.originalSongsSnapshot && state.originalSongsSnapshot.length > 0) {
+            state.currentRepertoireSongs = state.originalSongsSnapshot.slice();
+          } else {
+            state.currentRepertoireSongs.sort(function(a, b) {
+              return (a.trackNumber || 0) - (b.trackNumber || 0);
+            });
+          }
+          state.isSortedAZ = false;
+          state.originalSongsSnapshot = null;
+          btnSortAZ.innerHTML = '🔤 Ordem A-Z';
+          btnSortAZ.classList.remove('btn-active-sort');
+          btnSortAZ.title = 'Organizar músicas em ordem alfabética (A-Z)';
+          renderSongsList(state.currentRepertoireSongs);
+          showToast('🔢 Ordem original do repertório restaurada!', 'success');
+        }
       });
     }
 
@@ -2958,12 +2985,22 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!printArea) return;
 
     var repName = (rep.name || 'REPERTÓRIO').toUpperCase();
+    var printDate = new Date().toLocaleDateString('pt-BR');
 
     var html =
       '<div class="stage-setlist-container">' +
         '<div class="stage-setlist-header">' +
-          '<h1 class="stage-setlist-title">SETLIST: ' + escapeHtml(repName) + '</h1>' +
-          '<div class="stage-setlist-meta">' + songs.length + ' MÚSICAS</div>' +
+          '<div class="stage-setlist-brand-block">' +
+            '<div class="stage-setlist-logo">🎤 CantaAí <span class="stage-setlist-logo-pro">PRO</span></div>' +
+            '<div class="stage-setlist-slogan">Plataforma para Cantores e Músicos no Palco</div>' +
+          '</div>' +
+          '<div class="stage-setlist-info-block">' +
+            '<h1 class="stage-setlist-title">' + escapeHtml(repName) + '</h1>' +
+            '<div class="stage-setlist-meta">' +
+              '<span class="stage-setlist-count">' + songs.length + ' MÚSICAS</span>' +
+              '<span class="stage-setlist-date">' + printDate + '</span>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
         '<div class="stage-setlist-list">';
 
@@ -2992,6 +3029,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     html +=
+        '</div>' +
+        '<div class="stage-setlist-footer">' +
+          '<span>Gerado no CantaAí PRO • cantaai.com.br • Seu repertório e teleprompter no palco</span>' +
         '</div>' +
       '</div>';
 
