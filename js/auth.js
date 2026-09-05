@@ -225,7 +225,7 @@
           plan_tier: profile.plan_tier || 'pro',
           plan_type: profile.plan_type || '💎 PRO ANUAL',
           is_online: true,
-          status_text: '🟢 Conectado ao Palco',
+          status_text: '🟢 Conectado e Ativo',
           reps_count: (existingIdx >= 0 && list[existingIdx].reps_count) || 0,
           songs_count: (existingIdx >= 0 && list[existingIdx].songs_count) || 0,
           last_seen: 'Agora mesmo',
@@ -494,7 +494,7 @@
           upmPlanBadge.innerHTML = isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE';
         }
         if (upmPlanDesc) {
-          upmPlanDesc.innerText = isPro ? 'Acesso Total Ilimitado • Palco & 100% Offline' : 'Repertórios Básicos • Faça Upgrade para PRO';
+          upmPlanDesc.innerText = isPro ? 'Acesso Total Ilimitado • Modo Offline & Ao Vivo' : 'Repertórios Básicos • Faça Upgrade para PRO';
         }
 
         if (btnProfileAdmin) {

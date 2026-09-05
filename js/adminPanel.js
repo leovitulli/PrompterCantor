@@ -69,7 +69,7 @@
             plan_tier: 'pro',
             plan_type: '💎 PRO ANUAL',
             is_online: true,
-            status_text: '🟢 Conectado ao Palco',
+            status_text: '🟢 Conectado e Ativo',
             reps_count: 2,
             songs_count: 45,
             last_seen: 'Agora mesmo',
@@ -86,7 +86,7 @@
             plan_tier: 'pro',
             plan_type: '💎 PRO ANUAL',
             is_online: true,
-            status_text: '🟢 Conectado ao Palco',
+            status_text: '🟢 Conectado e Ativo',
             reps_count: 1,
             songs_count: 33,
             last_seen: 'Hoje',
@@ -205,7 +205,7 @@
                 '<div class="metric-card metric-clickable" id="shortcutCardLive" title="Clique para filtrar quem está Em Show Ao Vivo">' +
                   '<div class="metric-icon">⚡</div>' +
                   '<div class="metric-info">' +
-                    '<div class="metric-header-sub"><span class="metric-label">Em Show / Palco Agora</span><span class="metric-action-hint">🟢 Ver Ao Vivo</span></div>' +
+                    '<div class="metric-header-sub"><span class="metric-label">Cantores Ativos Agora</span><span class="metric-action-hint">🟢 Ver Ao Vivo</span></div>' +
                     '<div class="metric-value-row">' +
                       '<span class="metric-value metric-cyan" id="admMetricOnlineUsers">0</span>' +
                       '<span class="metric-badge-live">● AO VIVO</span>' +
@@ -236,7 +236,7 @@
                   '<div class="admin-filter-pills">' +
                     '<button class="filter-pill active" data-filter="all">Todos (<span id="countPillAll">0</span>)</button>' +
                     '<button class="filter-pill" data-filter="pro">Assinantes PRO (<span id="countPillPro">0</span>)</button>' +
-                    '<button class="filter-pill" data-filter="live">No Palco (<span id="countPillLive">0</span>)</button>' +
+                    '<button class="filter-pill" data-filter="live">Ativos / Ao Vivo (<span id="countPillLive">0</span>)</button>' +
                     '<button class="filter-pill" data-filter="free">Plano Free (<span id="countPillFree">0</span>)</button>' +
                   '</div>' +
                   '<div class="admin-toolbar-buttons">' +
@@ -254,9 +254,9 @@
                   '<table class="admin-table">' +
                     '<thead>' +
                       '<tr>' +
-                        '<th style="width: 45px; text-align: center;" title="Status de Conexão no Palco">●</th>' +
+                        '<th style="width: 45px; text-align: center;" title="Status de Conexão">●</th>' +
                         '<th>Cantor / E-mail</th>' +
-                        '<th>@Login / Palco</th>' +
+                        '<th>@Login do Cantor</th>' +
                         '<th>Plano</th>' +
                         '<th>WhatsApp / CPF</th>' +
                         '<th>Instagram</th>' +
@@ -460,7 +460,7 @@
                     '<input type="text" id="editSingerName" class="form-control" required placeholder="Ex: Jorge Aragão">' +
                   '</div>' +
                   '<div class="form-group">' +
-                    '<label>@Login / Palco (Nome de Usuário Único):</label>' +
+                    '<label>@Login do Cantor (Nome de Usuário Único):</label>' +
                     '<input type="text" id="editSingerCode" class="form-control" placeholder="@cantor_oficial" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">' +
                     '<div id="editSingerCodeFeedback" style="font-size: 0.78rem; margin-top: 4px; display: none;"></div>' +
                   '</div>' +
@@ -494,7 +494,7 @@
                     '<div class="form-group">' +
                       '<label>Status do Cantor:</label>' +
                       '<select id="editSingerStatus" class="form-control">' +
-                        '<option value="online">🟢 Em Show Ao Vivo / Palco</option>' +
+                        '<option value="online">🟢 Ativo / Em Apresentação</option>' +
                         '<option value="offline">⚪ Offline</option>' +
                       '</select>' +
                     '</div>' +
@@ -647,7 +647,7 @@
         });
       }
 
-      // Verificação em tempo real do @Login / Palco no modal de edição
+      // Verificação em tempo real do @Login do Cantor no modal de edição
       var editCodeInput = document.getElementById('editSingerCode');
       var editCodeFeedback = document.getElementById('editSingerCodeFeedback');
       var editCodeDebounce = null;
@@ -971,7 +971,7 @@
       if (window.PrompterAuth) {
         window.PrompterAuth.checkSingerCodeAvailability(code, id).then(function (checkRes) {
           if (!checkRes.available) {
-            if (window.showToast) window.showToast(checkRes.message || 'Este @Login / Palco já está em uso.', 'warning');
+            if (window.showToast) window.showToast(checkRes.message || 'Este @Login já está em uso.', 'warning');
             return;
           }
           PrompterAdmin.executeSaveSinger(id, name, email, phone, cpf, instagram, code, planVal, statusVal);
@@ -1004,7 +1004,7 @@
         plan_tier: isPro ? 'pro' : 'free',
         plan_type: planType,
         is_online: statusVal === 'online',
-        status_text: statusVal === 'online' ? '🟢 Conectado ao Palco' : '⚪ Offline',
+        status_text: statusVal === 'online' ? '🟢 Conectado e Ativo' : '⚪ Offline',
         reps_count: existing ? existing.reps_count : 0,
         songs_count: existing ? existing.songs_count : 0,
         last_seen: 'Hoje',
@@ -1089,7 +1089,7 @@
           plan_tier: (currentProfile && currentProfile.plan_tier) || 'pro',
           plan_type: (currentProfile && currentProfile.plan_type) || '💎 PRO ANUAL',
           is_online: true,
-          status_text: '🟢 Conectado ao Palco',
+          status_text: '🟢 Conectado e Ativo',
           phone: (currentProfile && currentProfile.phone) || (myIdx >= 0 ? allUserData[myIdx].phone : ''),
           cpf: (currentProfile && currentProfile.cpf) || (myIdx >= 0 ? allUserData[myIdx].cpf : ''),
           instagram: (currentProfile && currentProfile.instagram) || (myIdx >= 0 ? allUserData[myIdx].instagram : ''),
@@ -1272,7 +1272,7 @@
       filtered.forEach(function (user) {
         var initial = (user.name ? user.name.charAt(0) : user.email.charAt(0)).toUpperCase();
         var statusDot = user.is_online
-          ? '<span class="status-dot-pulse-online" title="🟢 Online no Palco"></span>'
+          ? '<span class="status-dot-pulse-online" title="🟢 Online e Ativo"></span>'
           : '<span class="status-dot-offline" title="⚪ Offline"></span>';
 
         var planBadge = user.plan_tier === 'pro'

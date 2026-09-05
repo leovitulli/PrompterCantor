@@ -1,20 +1,20 @@
 # 🎤 CantaAí PRO
 
-Aplicativo Web Progressive Web App (PWA) de **Teleprompter, Cifras e Gestão de Repertórios / Setlists** para músicos e cantores em palco e ensaios.
+Aplicativo Web Progressive Web App (PWA) de **Teleprompter, Cifras e Gestão de Repertórios / Setlists** para músicos, cantores e bandas.
 
 ## 🚀 Principais Recursos
 
-- **Modo Palco / Teleprompter**:
+- **Modo Teleprompter / Apresentação**:
   - Rolagem automática suave com controle de velocidade e tamanho de fonte.
-  - Formato de alto contraste para visibilidade sob pouca luz.
+  - Formato de alto contraste para visibilidade sob qualquer iluminação.
   - Transposição harmônica de cifras em tempo real.
 - **Gestão de Repertórios & Setlists**:
   - Organização manual de faixas, reordenação e ordenação alfabética.
   - Detecção automática de duplicidades na importação de letras.
   - Extração inteligente de ritmos/toques e tons.
-  - Modo 100% Offline com download local para shows.
+  - Modo 100% Offline com download local para apresentações ao vivo.
 - **Setlist para Impressão**:
-  - Geração de setlist impresso profissional em coluna única com fontes grandes para visualização no chão do palco.
+  - Geração de setlist impresso profissional em coluna única com fontes grandes e legíveis.
 - **Player de Áudio Guia Avançado**:
   - Detecção automática de tom via Web Audio API.
   - Ajuste de semitons (Pitch Shift) com preservação de tempo e velocidade.

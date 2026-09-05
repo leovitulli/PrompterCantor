@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="empty-state">' +
         '<div class="empty-icon">🎵</div>' +
         '<h2>Nenhum repertório criado ainda</h2>' +
-        '<p>Organize suas músicas para o palco importando arquivos ou criando um repertório novo.</p>' +
+        '<p>Organize suas músicas com praticidade importando arquivos ou criando um repertório novo.</p>' +
         '<div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">' +
         '<button id="btnEmptyImport" class="btn btn-primary btn-lg">📂 Importar Arquivos</button>' +
         '<button id="btnEmptyGDrive" class="btn btn-gdrive btn-lg">☁️ Google Drive</button>' +
@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
           var repId = btn.getAttribute('data-rep-id');
           var isCurrentlyPinned = btn.classList.contains('pinned');
           PrompterDB.toggleRepertoireOffline(repId, !isCurrentlyPinned).then(function (newState) {
-            showToast(newState ? '⚡ Repertório salvo offline para uso no palco!' : '⚡ Repertório removido do modo offline', newState ? 'success' : 'info');
+            showToast(newState ? '⚡ Repertório salvo para uso 100% offline!' : '⚡ Repertório removido do modo offline', newState ? 'success' : 'info');
             loadRepertoiresGrid();
           });
         });
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var isCurrentlyPinned = rep.isOfflinePinned;
         PrompterDB.toggleRepertoireOffline(rep.id, !isCurrentlyPinned).then(function (newState) {
           rep.isOfflinePinned = newState;
-          showToast(newState ? '⚡ Repertório salvo offline para uso no palco!' : '⚡ Repertório removido do modo offline', newState ? 'success' : 'info');
+          showToast(newState ? '⚡ Repertório salvo para uso 100% offline!' : '⚡ Repertório removido do modo offline', newState ? 'success' : 'info');
           openRepertoireSongs(rep.id);
         });
       };
@@ -2992,7 +2992,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="stage-setlist-header">' +
           '<div class="stage-setlist-brand-block">' +
             '<div class="stage-setlist-logo">🎤 CantaAí <span class="stage-setlist-logo-pro">PRO</span></div>' +
-            '<div class="stage-setlist-slogan">Plataforma para Cantores e Músicos no Palco</div>' +
+            '<div class="stage-setlist-slogan">Plataforma Profissional para Cantores e Músicos</div>' +
           '</div>' +
           '<div class="stage-setlist-info-block">' +
             '<h1 class="stage-setlist-title">' + escapeHtml(repName) + '</h1>' +
@@ -3031,7 +3031,7 @@ document.addEventListener('DOMContentLoaded', function () {
     html +=
         '</div>' +
         '<div class="stage-setlist-footer">' +
-          '<span>Gerado no CantaAí PRO • cantaai.com.br • Seu repertório e teleprompter no palco</span>' +
+          '<span>Gerado no CantaAí PRO • cantaai.com.br • Teleprompter e Gestão Inteligente de Repertórios</span>' +
         '</div>' +
       '</div>';
 
@@ -3180,7 +3180,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (authSubtitleText) authSubtitleText.innerText = 'Acesse sua conta para ver seus repertórios';
         if (forgotContainer) forgotContainer.style.display = 'block';
 
-        if (emailLabel) emailLabel.innerText = 'E-mail ou @Login de Palco *';
+        if (emailLabel) emailLabel.innerText = 'E-mail ou @Login *';
         if (emailInput) emailInput.placeholder = 'seuemail@exemplo.com ou @cantor';
         if (passInput) passInput.setAttribute('autocomplete', 'current-password');
       }
@@ -3322,7 +3322,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!singerCode) {
-          showToast('Por favor, escolha seu @Login / Palco.', 'warning');
+          showToast('Por favor, escolha seu @Login de usuário.', 'warning');
           return;
         }
 
@@ -3337,10 +3337,10 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        showToast('Verificando @Login / Palco...', 'info');
+        showToast('Verificando @Login de usuário...', 'info');
         PrompterAuth.checkSingerCodeAvailability(singerCode, null).then(function (checkRes) {
           if (!checkRes.available) {
-            showToast(checkRes.message || 'Este @Login / Palco já está em uso.', 'warning');
+            showToast(checkRes.message || 'Este @Login já está em uso.', 'warning');
             return;
           }
 
@@ -3494,7 +3494,7 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
         PrompterAuth.saveProfileDetails(newName, newCode).then(function () {
-          showToast('✅ Nome e @Login de Palco atualizados com sucesso!', 'success');
+          showToast('✅ Nome e @Login atualizados com sucesso!', 'success');
           closeProfileModal();
         }).catch(function (err) {
           showToast(err.message || 'Erro ao salvar alterações.', 'warning');

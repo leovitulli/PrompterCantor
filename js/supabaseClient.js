@@ -321,8 +321,8 @@
       badge.innerHTML = '<span class="sync-dot dot-online"></span><span class="sync-label">Supabase Cloud ⚡</span>';
       badge.title = 'Conectado à nuvem Supabase em tempo real.';
     } else {
-      badge.innerHTML = '<span class="sync-dot dot-offline"></span><span class="sync-label">Modo Palco (Offline)</span>';
-      badge.title = 'Operando no modo palco offline.';
+      badge.innerHTML = '<span class="sync-dot dot-offline"></span><span class="sync-label">Modo Offline</span>';
+      badge.title = 'Operando em modo 100% offline.';
     }
   }
 
