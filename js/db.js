@@ -103,7 +103,9 @@
           return list;
         }
 
-        var rawList = res.data || [];
+        var rawList = (res.data || []).filter(function(r) {
+          return r.source !== 'system' && r.name !== '__CANTA_AI_SYSTEM_REGISTRY__';
+        });
         var offStore = getOfflineStore(user.id);
         var reps = rawList.map(function(r) {
           var isPinned = Boolean(offStore.repertoires && offStore.repertoires[r.id]);
@@ -698,7 +700,9 @@
       .order('created_at', { ascending: false })
       .then(function(res) {
         if (res.error) return [];
-        var rawList = res.data || [];
+        var rawList = (res.data || []).filter(function(r) {
+          return r.source !== 'system' && r.name !== '__CANTA_AI_SYSTEM_REGISTRY__';
+        });
         return rawList.map(function(r) {
           return {
             id: r.id,
@@ -723,7 +727,9 @@
       .order('created_at', { ascending: false })
       .then(function(res) {
         if (res.error) return [];
-        var rawList = res.data || [];
+        var rawList = (res.data || []).filter(function(s) {
+          return s.repertoire_id !== '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+        });
         return rawList.map(function(s, idx) {
           return {
             id: s.id,

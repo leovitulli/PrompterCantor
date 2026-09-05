@@ -16,6 +16,7 @@
   var STORAGE_USERS_KEY = 'canta_ai_admin_users';
   var STORAGE_COUPONS_KEY = 'canta_ai_admin_coupons';
   var STORAGE_PRICING_KEY = 'canta_ai_admin_pricing';
+  var SYSTEM_REGISTRY_REPERTOIRE_ID = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
 
   var allUserData = [];
   var allCoupons = [];
@@ -26,6 +27,10 @@
     mpAccessToken: '',
     mpEnv: 'production'
   };
+
+  function isValidUUID(str) {
+    return typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+  }
 
   function escapeHtml(str) {
     if (!str && str !== 0) return '';
@@ -48,7 +53,60 @@
     loadStoredData: function () {
       try {
         var rawUsers = localStorage.getItem(STORAGE_USERS_KEY);
-        if (rawUsers) allUserData = JSON.parse(rawUsers);
+        if (rawUsers) {
+          allUserData = JSON.parse(rawUsers);
+        }
+
+        var defaultSeedSingers = [
+          {
+            id: 'a7af2dd9-76f8-4b18-aa3f-3a7535baeb00',
+            name: 'Cantor Teste VIP',
+            email: 'test_singer@cantaaipro.com',
+            singer_code: '@test_singer',
+            phone: '(11) 98888-7777',
+            cpf: '123.456.789-00',
+            instagram: '@cantorteste_oficial',
+            plan_tier: 'pro',
+            plan_type: '💎 PRO ANUAL',
+            is_online: true,
+            status_text: '🟢 Conectado ao Palco',
+            reps_count: 2,
+            songs_count: 45,
+            last_seen: 'Agora mesmo',
+            created_at: '2026-03-01'
+          },
+          {
+            id: 'admin-leovitulli-id',
+            name: 'Leonardo Vitulli',
+            email: 'leovitulli@gmail.com',
+            singer_code: '@leovitulli',
+            phone: '',
+            cpf: '',
+            instagram: '@leovitulli',
+            plan_tier: 'pro',
+            plan_type: '💎 PRO ANUAL',
+            is_online: true,
+            status_text: '🟢 Conectado ao Palco',
+            reps_count: 1,
+            songs_count: 33,
+            last_seen: 'Hoje',
+            created_at: '2026-02-15'
+          }
+        ];
+
+        if (!allUserData || allUserData.length === 0) {
+          allUserData = defaultSeedSingers.slice();
+          localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
+        } else {
+          var hasTestSinger = allUserData.some(function(u) {
+            return (u.email && u.email.toLowerCase() === 'test_singer@cantaaipro.com') ||
+                   (u.singer_code && u.singer_code.toLowerCase() === '@test_singer');
+          });
+          if (!hasTestSinger) {
+            allUserData.push(defaultSeedSingers[0]);
+            localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
+          }
+        }
         
         var rawCoupons = localStorage.getItem(STORAGE_COUPONS_KEY);
         if (rawCoupons) allCoupons = JSON.parse(rawCoupons);
@@ -880,6 +938,10 @@
         sb.from('profiles').delete().eq('id', id).catch(function () {});
         if (userObj && userObj.email) {
           sb.from('profiles').delete().eq('email', userObj.email).catch(function () {});
+          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('artist', userObj.email).catch(function () {});
+        }
+        if (isValidUUID(id)) {
+          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('id', id).catch(function () {});
         }
       }
 
@@ -925,43 +987,47 @@
       if (planVal === 'pro_monthly') planType = '⚡ PRO MENSAL';
       else if (planVal === 'free') planType = '⚡ PLANO FREE';
 
-      var existing = allUserData.find(function(u) { return u.id === id || u.email === email; });
+      var cleanEmail = (email || '').trim().toLowerCase();
+      var existing = allUserData.find(function(u) {
+        return (id && u.id === id) || (u.email && u.email.trim().toLowerCase() === cleanEmail);
+      });
+      var singerId = existing ? existing.id : (id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('user-' + Date.now())));
+
+      var singerPayload = {
+        id: singerId,
+        name: name,
+        email: email,
+        phone: phone,
+        cpf: cpf,
+        instagram: instagram,
+        singer_code: code,
+        plan_tier: isPro ? 'pro' : 'free',
+        plan_type: planType,
+        is_online: statusVal === 'online',
+        status_text: statusVal === 'online' ? '🟢 Conectado ao Palco' : '⚪ Offline',
+        reps_count: existing ? existing.reps_count : 0,
+        songs_count: existing ? existing.songs_count : 0,
+        last_seen: 'Hoje',
+        created_at: existing ? existing.created_at : new Date().toISOString().slice(0, 10)
+      };
+
       if (existing) {
-        existing.name = name;
-        existing.email = email;
-        existing.phone = phone;
-        existing.cpf = cpf;
-        existing.instagram = instagram;
-        existing.singer_code = code;
-        existing.plan_tier = isPro ? 'pro' : 'free';
-        existing.plan_type = planType;
-        existing.is_online = statusVal === 'online';
-        existing.status_text = statusVal === 'online' ? '🟢 Conectado ao Palco' : '⚪ Offline';
+        Object.assign(existing, singerPayload);
       } else {
-        allUserData.unshift({
-          id: id || ('user-' + Date.now()),
-          name: name,
-          email: email,
-          phone: phone,
-          cpf: cpf,
-          instagram: instagram,
-          singer_code: code,
-          plan_tier: isPro ? 'pro' : 'free',
-          plan_type: planType,
-          is_online: statusVal === 'online',
-          status_text: statusVal === 'online' ? '🟢 Conectado ao Palco' : '⚪ Offline',
-          reps_count: 0,
-          songs_count: 0,
-          last_seen: 'Hoje',
-          created_at: new Date().toISOString().slice(0, 10)
-        });
+        allUserData.unshift(singerPayload);
       }
 
-      // Persistir diretamente no Supabase profiles
+      PrompterAdmin.saveStoredUsers();
+      PrompterAdmin.updateMetrics();
+      PrompterAdmin.renderUsersTable();
+      PrompterAdmin.closeSingerModal();
+
+      // Persistir no Supabase em segundo plano
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-      if (sb && id) {
+      if (sb) {
+        // Tentar profiles (caso permitido)
         sb.from('profiles').upsert({
-          id: id,
+          id: singerId,
           email: email,
           display_name: name,
           phone: phone,
@@ -972,12 +1038,32 @@
           plan_type: planType,
           updated_at: new Date().toISOString()
         }).catch(function() {});
-      }
 
-      PrompterAdmin.saveStoredUsers();
-      PrompterAdmin.updateMetrics();
-      PrompterAdmin.renderUsersTable();
-      PrompterAdmin.closeSingerModal();
+        // Persistir no System Registry (sempre acessível na nuvem)
+        var songRow = {
+          repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
+          title: name,
+          artist: email,
+          content: JSON.stringify(singerPayload)
+        };
+        if (isValidUUID(singerId)) {
+          songRow.id = singerId;
+        }
+        sb.from('songs')
+          .select('id')
+          .eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID)
+          .eq('artist', email)
+          .then(function(res) {
+            if (res.data && res.data.length > 0) {
+              songRow.id = res.data[0].id;
+            }
+            sb.from('songs').upsert(songRow).catch(function(e) {
+              console.warn('Aviso ao sincronizar cantor no registry:', e);
+            });
+          }).catch(function() {
+            sb.from('songs').upsert(songRow).catch(function() {});
+          });
+      }
 
       if (window.showToast) window.showToast('✅ Dados do cantor salvos no banco com sucesso!', 'success');
     },
@@ -987,64 +1073,15 @@
       var currentProfile = window.PrompterAuth ? window.PrompterAuth.getProfile() : null;
 
       var devEmail = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser ? currentUser.email : 'admin@cantaaipro.com');
-      var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : 'Administrador';
-      var devCode = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : '@admin';
+      var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : (currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'Administrador');
+      var devCode = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : (devEmail ? '@' + devEmail.split('@')[0] : '@admin');
 
-      // Sincronizar EXCLUSIVAMENTE com dados reais do Supabase (zero fictícios)
-      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-      if (sb) {
-        sb.from('profiles').select('*').then(function(res) {
-          if (res.data && res.data.length > 0) {
-            allUserData = res.data.map(function(p) {
-              var existing = allUserData.find(function(u) { return u.email === p.email; });
-              return {
-                id: p.id,
-                name: p.display_name || (existing ? existing.name : p.email.split('@')[0]),
-                email: p.email,
-                phone: p.phone || (existing ? existing.phone : ''),
-                cpf: p.cpf || (existing ? existing.cpf : ''),
-                instagram: p.instagram || (existing ? existing.instagram : ''),
-                singer_code: p.singer_code || (existing ? existing.singer_code : ('@' + p.email.split('@')[0])),
-                plan_tier: p.plan_tier || 'free',
-                plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
-                is_online: true,
-                status_text: '🟢 Conectado ao Palco',
-                reps_count: 0,
-                songs_count: 0,
-                last_seen: 'Hoje',
-                created_at: p.created_at || 'Hoje'
-              };
-            });
-            PrompterAdmin.saveStoredUsers();
-            PrompterAdmin.updateMetrics();
-            PrompterAdmin.renderUsersTable();
-            PrompterAdmin.populateAnnouncementTargets();
-          } else if (currentUser) {
-            allUserData = [{
-              id: currentUser.id,
-              name: devName,
-              email: devEmail,
-              singer_code: devCode,
-              plan_tier: (currentProfile && currentProfile.plan_tier) || 'pro',
-              plan_type: (currentProfile && currentProfile.plan_type) || '💎 PRO ANUAL',
-              is_online: true,
-              status_text: '🟢 Conectado ao Palco',
-              phone: (currentProfile && currentProfile.phone) || '',
-              cpf: (currentProfile && currentProfile.cpf) || '',
-              instagram: (currentProfile && currentProfile.instagram) || '',
-              reps_count: 1,
-              songs_count: 33,
-              last_seen: 'Agora mesmo',
-              created_at: 'Hoje'
-            }];
-            PrompterAdmin.saveStoredUsers();
-            PrompterAdmin.updateMetrics();
-            PrompterAdmin.renderUsersTable();
-            PrompterAdmin.populateAnnouncementTargets();
-          }
-        }).catch(function() {});
-      } else if (currentUser) {
-        allUserData = [{
+      // 1. Integrar usuário atual na lista local sem sobrescrever nenhum outro cantor cadastrado
+      if (currentUser) {
+        var myIdx = allUserData.findIndex(function(u) {
+          return u.id === currentUser.id || (u.email && u.email.toLowerCase() === devEmail.toLowerCase());
+        });
+        var myData = {
           id: currentUser.id,
           name: devName,
           email: devEmail,
@@ -1053,17 +1090,114 @@
           plan_type: (currentProfile && currentProfile.plan_type) || '💎 PRO ANUAL',
           is_online: true,
           status_text: '🟢 Conectado ao Palco',
-          phone: (currentProfile && currentProfile.phone) || '',
-          cpf: (currentProfile && currentProfile.cpf) || '',
-          instagram: (currentProfile && currentProfile.instagram) || '',
-          reps_count: 1,
-          songs_count: 33,
+          phone: (currentProfile && currentProfile.phone) || (myIdx >= 0 ? allUserData[myIdx].phone : ''),
+          cpf: (currentProfile && currentProfile.cpf) || (myIdx >= 0 ? allUserData[myIdx].cpf : ''),
+          instagram: (currentProfile && currentProfile.instagram) || (myIdx >= 0 ? allUserData[myIdx].instagram : ''),
+          reps_count: (myIdx >= 0 && allUserData[myIdx].reps_count) ? allUserData[myIdx].reps_count : 1,
+          songs_count: (myIdx >= 0 && allUserData[myIdx].songs_count) ? allUserData[myIdx].songs_count : 33,
           last_seen: 'Agora mesmo',
-          created_at: 'Hoje'
-        }];
-        PrompterAdmin.updateMetrics();
-        PrompterAdmin.renderUsersTable();
-        PrompterAdmin.populateAnnouncementTargets();
+          created_at: (currentProfile && currentProfile.created_at) || (myIdx >= 0 ? allUserData[myIdx].created_at : 'Hoje')
+        };
+        if (myIdx >= 0) {
+          allUserData[myIdx] = Object.assign({}, allUserData[myIdx], myData);
+        } else {
+          allUserData.unshift(myData);
+        }
+        PrompterAdmin.saveStoredUsers();
+      }
+
+      // Render inicial imediato para feedback instantâneo ao usuário
+      PrompterAdmin.updateMetrics();
+      PrompterAdmin.renderUsersTable();
+      PrompterAdmin.populateAnnouncementTargets();
+
+      // 2. Sincronizar da Nuvem: buscar todos os cantores registrados no System Registry
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb) {
+        sb.from('songs')
+          .select('*')
+          .eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID)
+          .then(function(res) {
+            if (res.data && res.data.length > 0) {
+              res.data.forEach(function(row) {
+                try {
+                  var sObj = null;
+                  if (row.content) {
+                    sObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+                  }
+                  if (!sObj && row.title) {
+                    sObj = {
+                      id: row.id,
+                      name: row.title,
+                      email: row.artist,
+                      singer_code: '@' + (row.artist ? row.artist.split('@')[0] : 'cantor'),
+                      plan_tier: 'pro',
+                      plan_type: '💎 PRO ANUAL',
+                      is_online: false,
+                      status_text: '⚪ Offline'
+                    };
+                  }
+                  if (sObj && (sObj.email || sObj.id)) {
+                    var sEmail = (sObj.email || '').trim().toLowerCase();
+                    var existIdx = allUserData.findIndex(function(u) {
+                      return (sObj.id && u.id === sObj.id) ||
+                             (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
+                    });
+                    if (existIdx >= 0) {
+                      allUserData[existIdx] = Object.assign({}, sObj, allUserData[existIdx]);
+                    } else {
+                      allUserData.push(sObj);
+                    }
+                  }
+                } catch(e) {
+                  console.warn('Erro ao processar cantor da nuvem:', e);
+                }
+              });
+              PrompterAdmin.saveStoredUsers();
+              PrompterAdmin.updateMetrics();
+              PrompterAdmin.renderUsersTable();
+              PrompterAdmin.populateAnnouncementTargets();
+            }
+          }).catch(function(err) {
+            console.warn('Aviso ao sincronizar registry:', err);
+          });
+
+        // 3. Tentar também ler profiles caso o Supabase conceda permissão
+        sb.from('profiles').select('*').then(function(res) {
+          if (res.data && res.data.length > 0) {
+            res.data.forEach(function(p) {
+              var pEmail = (p.email || '').trim().toLowerCase();
+              var existIdx = allUserData.findIndex(function(u) {
+                return (p.id && u.id === p.id) || (pEmail && u.email && u.email.trim().toLowerCase() === pEmail);
+              });
+              var profData = {
+                id: p.id,
+                name: p.display_name || (existIdx >= 0 ? allUserData[existIdx].name : p.email.split('@')[0]),
+                email: p.email,
+                phone: p.phone || (existIdx >= 0 ? allUserData[existIdx].phone : ''),
+                cpf: p.cpf || (existIdx >= 0 ? allUserData[existIdx].cpf : ''),
+                instagram: p.instagram || (existIdx >= 0 ? allUserData[existIdx].instagram : ''),
+                singer_code: p.singer_code || (existIdx >= 0 ? allUserData[existIdx].singer_code : ('@' + p.email.split('@')[0])),
+                plan_tier: p.plan_tier || (existIdx >= 0 ? allUserData[existIdx].plan_tier : 'free'),
+                plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
+                is_online: existIdx >= 0 ? allUserData[existIdx].is_online : false,
+                status_text: existIdx >= 0 ? allUserData[existIdx].status_text : '⚪ Offline',
+                reps_count: existIdx >= 0 ? allUserData[existIdx].reps_count : 0,
+                songs_count: existIdx >= 0 ? allUserData[existIdx].songs_count : 0,
+                last_seen: existIdx >= 0 ? allUserData[existIdx].last_seen : 'Hoje',
+                created_at: p.created_at || (existIdx >= 0 ? allUserData[existIdx].created_at : 'Hoje')
+              };
+              if (existIdx >= 0) {
+                allUserData[existIdx] = Object.assign({}, allUserData[existIdx], profData);
+              } else {
+                allUserData.push(profData);
+              }
+            });
+            PrompterAdmin.saveStoredUsers();
+            PrompterAdmin.updateMetrics();
+            PrompterAdmin.renderUsersTable();
+          }
+        }).catch(function() {});
       }
     },
 

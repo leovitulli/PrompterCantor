@@ -206,30 +206,65 @@
     },
 
     syncNewUserToAdmin: function(profile) {
+      if (!profile || !profile.email) return;
       try {
         var raw = localStorage.getItem('canta_ai_admin_users');
         var list = raw ? JSON.parse(raw) : [];
-        if (!list.some(function(u) { return u.email === profile.email; })) {
-          list.unshift({
-            id: profile.id,
-            name: profile.display_name,
-            email: profile.email,
-            phone: profile.phone,
-            cpf: profile.cpf,
-            instagram: profile.instagram,
-            singer_code: profile.singer_code,
-            plan_tier: profile.plan_tier,
-            plan_type: profile.plan_type,
-            is_online: true,
-            status_text: '🟢 Conectado ao Palco',
-            reps_count: 0,
-            songs_count: 0,
-            last_seen: 'Agora mesmo',
-            created_at: profile.created_at || new Date().toISOString().slice(0, 10)
-          });
-          localStorage.setItem('canta_ai_admin_users', JSON.stringify(list));
+        var cleanEmail = profile.email.trim().toLowerCase();
+        var existingIdx = list.findIndex(function(u) {
+          return (u.email && u.email.trim().toLowerCase() === cleanEmail) || (profile.id && u.id === profile.id);
+        });
+        var singerItem = {
+          id: profile.id || ('user-' + Date.now()),
+          name: profile.display_name || profile.name || profile.email.split('@')[0],
+          email: profile.email,
+          phone: profile.phone || '',
+          cpf: profile.cpf || '',
+          instagram: profile.instagram || '',
+          singer_code: profile.singer_code || ('@' + profile.email.split('@')[0]),
+          plan_tier: profile.plan_tier || 'pro',
+          plan_type: profile.plan_type || '💎 PRO ANUAL',
+          is_online: true,
+          status_text: '🟢 Conectado ao Palco',
+          reps_count: (existingIdx >= 0 && list[existingIdx].reps_count) || 0,
+          songs_count: (existingIdx >= 0 && list[existingIdx].songs_count) || 0,
+          last_seen: 'Agora mesmo',
+          created_at: profile.created_at || (existingIdx >= 0 ? list[existingIdx].created_at : new Date().toISOString().slice(0, 10))
+        };
+
+        if (existingIdx >= 0) {
+          list[existingIdx] = Object.assign({}, list[existingIdx], singerItem);
+        } else {
+          list.unshift(singerItem);
         }
-      } catch (e) {}
+        localStorage.setItem('canta_ai_admin_users', JSON.stringify(list));
+
+        // Sincronizar no System Registry na nuvem
+        var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+        if (sb) {
+          var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+          var songRow = {
+            repertoire_id: regId,
+            title: singerItem.name,
+            artist: singerItem.email,
+            content: JSON.stringify(singerItem)
+          };
+          sb.from('songs')
+            .select('id')
+            .eq('repertoire_id', regId)
+            .eq('artist', singerItem.email)
+            .then(function(res) {
+              if (res.data && res.data.length > 0) {
+                songRow.id = res.data[0].id;
+              }
+              sb.from('songs').upsert(songRow).catch(function() {});
+            }).catch(function() {
+              sb.from('songs').upsert(songRow).catch(function() {});
+            });
+        }
+      } catch (e) {
+        console.warn('Erro em syncNewUserToAdmin:', e);
+      }
     },
 
     signIn: function (identifier, password) {
@@ -264,6 +299,30 @@
                 if (res2.data && res2.data[0] && res2.data[0].email) return res2.data[0].email;
                 throw new Error('Não encontramos nenhum cantor com o login "' + cleanId + '".');
               });
+            }).catch(function() {
+              // Fallback resiliente: verificar no registro central (sem restrição RLS)
+              return sb.from('songs').select('artist, content').eq('repertoire_id', '3e42c00c-f10c-4b05-96b6-b782403d1d17').then(function(sRes) {
+                if (sRes.data && sRes.data.length > 0) {
+                  for (var i = 0; i < sRes.data.length; i++) {
+                    try {
+                      var c = typeof sRes.data[i].content === 'string' ? JSON.parse(sRes.data[i].content) : sRes.data[i].content;
+                      if (c && c.singer_code && c.singer_code.toLowerCase() === formattedCode.toLowerCase()) {
+                        return c.email || sRes.data[i].artist;
+                      }
+                    } catch(e) {}
+                  }
+                }
+                // Fallback local caso offline
+                try {
+                  var raw = localStorage.getItem('canta_ai_admin_users');
+                  var uList = raw ? JSON.parse(raw) : [];
+                  var match = uList.find(function(u) {
+                    return u.singer_code && u.singer_code.toLowerCase() === formattedCode.toLowerCase();
+                  });
+                  if (match && match.email) return match.email;
+                } catch(e) {}
+                throw new Error('Não encontramos nenhum cantor com o login "' + cleanId + '".');
+              });
             });
           })();
 
@@ -289,6 +348,7 @@
           PrompterAuth.saveSession(user, profile);
           PrompterAuth.updateUIForAuth();
           PrompterAuth.heartbeatLastSeen();
+          if (profile) PrompterAuth.syncNewUserToAdmin(profile);
 
           if (typeof window.loadRepertoires === 'function') {
             window.loadRepertoires();
