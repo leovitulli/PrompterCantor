@@ -1,7 +1,7 @@
 {
   "name": "cantaai",
   "version": "1.0.0",
-  "description": "CantaAí PRO - Teleprompter e Repertório Inteligente para Cantores e Músicos",
+  "description": "CantaAí PRO - Teleprompter e Repertório Inteligente para Cantores e Instrumentistas",
   "scripts": {
     "dev": "node server.js",
     "serve": "node server.js"

@@ -1,7 +1,7 @@
 {
   "name": "CantaAí PRO",
   "short_name": "CantaAí",
-  "description": "Teleprompter e Gestor de Repertório Profissional para Cantores e Músicos",
+  "description": "Teleprompter e Gestor de Repertório Profissional para Cantores e Instrumentistas",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "any",

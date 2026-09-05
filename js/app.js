@@ -2992,7 +2992,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="stage-setlist-header">' +
           '<div class="stage-setlist-brand-block">' +
             '<div class="stage-setlist-logo">🎤 CantaAí <span class="stage-setlist-logo-pro">PRO</span></div>' +
-            '<div class="stage-setlist-slogan">Plataforma Profissional para Cantores e Músicos</div>' +
+            '<div class="stage-setlist-slogan">Plataforma Profissional para Cantores e Instrumentistas</div>' +
           '</div>' +
           '<div class="stage-setlist-info-block">' +
             '<h1 class="stage-setlist-title">' + escapeHtml(repName) + '</h1>' +
