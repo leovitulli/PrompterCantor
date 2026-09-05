@@ -402,6 +402,7 @@
           </div>
           <div class="rsv-actions">
             <button id="btnRsvAddSong" class="btn btn-sm btn-primary">➕ Importar Arquivo</button>
+            <button id="btnRsvAddGDrive" class="btn btn-sm btn-gdrive" title="Importar músicas do Google Drive para este repertório">☁️ Google Drive</button>
             <button id="btnRsvCreateManual" class="btn btn-sm btn-outline">✏️ Nova Música</button>
             <button id="btnRsvCleanDuplicates" class="btn btn-sm btn-secondary" title="Remover músicas duplicadas deste repertório">🧹 Limpar Duplicadas</button>
             <button id="btnRsvSortAZ" class="btn btn-sm btn-secondary" title="Organizar músicas em ordem alfabética (A-Z)">🔤 Ordem A-Z</button>
@@ -714,6 +715,12 @@
             <div class="form-group form-col-full">
               <label for="editSongTitle">Nome da Música *</label>
               <input type="text" id="editSongTitle" required class="form-control" placeholder="Ex: A cobra Piou">
+            </div>
+            <div class="form-group">
+              <label for="editSongRepertoire">Repertório de Destino *</label>
+              <select id="editSongRepertoire" class="form-control">
+                <option value="">Selecione o Repertório...</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="editSongRhythm">Toque / Ritmo</label>

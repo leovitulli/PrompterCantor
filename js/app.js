@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var bEI = document.getElementById('btnEmptyImport');
       if (bEI) bEI.addEventListener('click', function () { openImportModal(null); });
       var bEG = document.getElementById('btnEmptyGDrive');
-      if (bEG) bEG.addEventListener('click', function () { openModal(gDriveModal); });
+      if (bEG) bEG.addEventListener('click', function () { openGDriveModal(null); });
       var bEM = document.getElementById('btnEmptyCreateManual');
       if (bEM) bEM.addEventListener('click', promptCreateRepertoire);
       return;
@@ -786,24 +786,26 @@ document.addEventListener('DOMContentLoaded', function () {
   function navigateSong(direction) {
     if (!state.currentSong) return;
 
+    var isSetlist = !!(state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0);
     var ensureListPromise = Promise.resolve();
-    var songList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
-      ? state.currentSetlistSongs
-      : (state.currentRepertoireSongs || []);
 
-    var rId = state.currentSong.repertoireId || (state.currentRepertoire ? state.currentRepertoire.id : null);
+    if (!isSetlist) {
+      var rId = state.currentSong.repertoireId || (state.currentRepertoire ? state.currentRepertoire.id : null);
+      var needsReload = !state.currentRepertoireSongs ||
+        state.currentRepertoireSongs.length === 0 ||
+        (rId && (!state.currentRepertoire || String(state.currentRepertoire.id) !== String(rId))) ||
+        !state.currentRepertoireSongs.some(function(s) { return String(s.id) === String(state.currentSong.id); });
 
-    if ((!songList || songList.length <= 1) && rId) {
-      ensureListPromise = PrompterDB.getSongsByRepertoire(rId).then(function(songs) {
-        if (songs && songs.length > 0) {
-          state.currentRepertoireSongs = songs;
-        }
-        return state.currentRepertoireSongs || [];
-      });
+      if (needsReload && rId) {
+        ensureListPromise = PrompterDB.getSongsByRepertoire(rId).then(function(songs) {
+          state.currentRepertoireSongs = songs || [];
+          return state.currentRepertoireSongs;
+        });
+      }
     }
 
     ensureListPromise.then(function() {
-      var activeList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
+      var activeList = isSetlist
         ? state.currentSetlistSongs
         : (state.currentRepertoireSongs || []);
 
@@ -816,7 +818,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       var newIndex = currentIndex + direction;
       if (newIndex >= 0 && newIndex < activeList.length) {
-        if (state.currentSetlist) {
+        if (isSetlist) {
           state.currentSetlistIndex = newIndex;
         }
         var targetSong = activeList[newIndex];
@@ -1029,25 +1031,31 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    var initialList = (state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0)
-      ? state.currentSetlistSongs
-      : (state.currentRepertoireSongs || []);
-
+    var isSetlistActive = !!(state.currentSetlist && state.currentSetlistSongs && state.currentSetlistSongs.length > 0);
     var repIdForSong = song.repertoireId || (state.currentRepertoire ? state.currentRepertoire.id : null);
 
-    if ((!initialList || initialList.length <= 1) && repIdForSong) {
-      PrompterDB.getSongsByRepertoire(repIdForSong).then(function(loaded) {
-        if (loaded && loaded.length > 0) {
-          state.currentRepertoireSongs = loaded;
-          updatePrompterNavUI(loaded);
-        } else {
-          updatePrompterNavUI(initialList);
-        }
-      }).catch(function() {
-        updatePrompterNavUI(initialList);
-      });
+    if (isSetlistActive) {
+      updatePrompterNavUI(state.currentSetlistSongs);
+    } else if (repIdForSong) {
+      var isSameRep = state.currentRepertoire && String(state.currentRepertoire.id) === String(repIdForSong);
+      var hasMatchingList = isSameRep && state.currentRepertoireSongs && state.currentRepertoireSongs.length > 0 &&
+        state.currentRepertoireSongs.some(function(s) { return String(s.id) === String(song.id); });
+
+      if (hasMatchingList) {
+        updatePrompterNavUI(state.currentRepertoireSongs);
+      } else {
+        PrompterDB.getRepertoireById(repIdForSong).then(function(rep) {
+          if (rep) state.currentRepertoire = rep;
+          return PrompterDB.getSongsByRepertoire(repIdForSong);
+        }).then(function(loaded) {
+          state.currentRepertoireSongs = loaded || [];
+          updatePrompterNavUI(state.currentRepertoireSongs);
+        }).catch(function() {
+          updatePrompterNavUI([song]);
+        });
+      }
     } else {
-      updatePrompterNavUI(initialList);
+      updatePrompterNavUI([song]);
     }
 
     Prompter.loadContent(song.content, song.key, song.originalKey);
@@ -1370,15 +1378,20 @@ document.addEventListener('DOMContentLoaded', function () {
             if (btnClearSearch) btnClearSearch.classList.add('hidden');
 
             PrompterDB.getSongById(sId).then(function (song) {
-              if (song) {
-                if (rId) {
-                  PrompterDB.getRepertoireById(rId).then(function (rep) {
-                    if (rep) state.currentRepertoire = rep;
-                  });
-                  PrompterDB.getSongsByRepertoire(rId).then(function (songs) {
-                    state.currentRepertoireSongs = songs || [];
-                  });
-                }
+              if (!song) return;
+              var targetRepId = song.repertoireId || rId;
+              if (targetRepId) {
+                return Promise.all([
+                  PrompterDB.getRepertoireById(targetRepId),
+                  PrompterDB.getSongsByRepertoire(targetRepId)
+                ]).then(function(res) {
+                  if (res[0]) state.currentRepertoire = res[0];
+                  state.currentRepertoireSongs = res[1] || [];
+                  openPrompterView(song);
+                }).catch(function() {
+                  openPrompterView(song);
+                });
+              } else {
                 openPrompterView(song);
               }
             }).catch(function (err) {
@@ -1553,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnMenuImportDrive) {
       btnMenuImportDrive.addEventListener('click', function () {
         if (dropdownAddMenu) dropdownAddMenu.classList.add('hidden');
-        openModal(gDriveModal);
+        openGDriveModal(state.currentRepertoire ? state.currentRepertoire.id : null);
       });
     }
 
@@ -1730,6 +1743,18 @@ document.addEventListener('DOMContentLoaded', function () {
           openImportModal(state.currentRepertoire.id);
         } else {
           openImportModal(null);
+        }
+      });
+    }
+
+    // Importar Google Drive dentro do repertório
+    var btnRsvAddGDrive = document.getElementById('btnRsvAddGDrive');
+    if (btnRsvAddGDrive) {
+      btnRsvAddGDrive.addEventListener('click', function () {
+        if (state.currentRepertoire) {
+          openGDriveModal(state.currentRepertoire.id);
+        } else {
+          openGDriveModal(null);
         }
       });
     }
@@ -2111,11 +2136,12 @@ document.addEventListener('DOMContentLoaded', function () {
             state.currentSong = song;
             var rId = song.repertoireId || targetRepId;
             if (rId) {
-              return PrompterDB.getSongsByRepertoire(rId).then(function (songs) {
-                state.currentRepertoireSongs = songs || [];
-                return PrompterDB.getRepertoireById(rId);
-              }).then(function (rep) {
-                if (rep) state.currentRepertoire = rep;
+              return Promise.all([
+                PrompterDB.getRepertoireById(rId),
+                PrompterDB.getSongsByRepertoire(rId)
+              ]).then(function (results) {
+                if (results[0]) state.currentRepertoire = results[0];
+                state.currentRepertoireSongs = results[1] || [];
                 openPrompterView(song);
                 return true;
               }).catch(function () {
@@ -2534,12 +2560,58 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var repCache = {};
 
+  function openGDriveModal(repIdOrNull) {
+    if (!gDriveModal) return;
+    repCache = {};
+    var nameInput = document.getElementById('gdriveRepertoireName');
+    var modalHeader = gDriveModal.querySelector('.modal-header h3');
+
+    if (repIdOrNull) {
+      state.targetRepertoireId = repIdOrNull;
+      var foundRep = (state.repertoires || []).find(function(r) { return r.id === repIdOrNull; }) || state.currentRepertoire;
+      if (nameInput) {
+        nameInput.value = foundRep ? foundRep.name : 'Repertório Atual';
+        nameInput.setAttribute('disabled', 'true');
+      }
+      if (modalHeader) modalHeader.textContent = '☁️ Importar Google Drive para: ' + (foundRep ? foundRep.name : 'Repertório');
+    } else {
+      state.targetRepertoireId = null;
+      if (nameInput) {
+        nameInput.value = '';
+        nameInput.removeAttribute('disabled');
+      }
+      if (modalHeader) modalHeader.textContent = '☁️ Importar do Google Drive';
+      suggestRepertoireName('gdrive');
+    }
+
+    openModal(gDriveModal);
+  }
+
   function onDriveStreamBatch(songsBatch) {
     if (!songsBatch || songsBatch.length === 0) return;
 
     var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
     var curEmail = user ? (user.email || '').toLowerCase() : '';
     var curId = user ? user.id : 'local_anonymous';
+
+    // Se o usuário está adicionando a um repertório específico
+    var targetRepId = state.targetRepertoireId;
+
+    if (targetRepId) {
+      songsBatch.forEach(function (s) {
+        s.repertoireId = targetRepId;
+        s.user_id = curId;
+        s.user_email = curEmail;
+      });
+      PrompterDB.saveSongsBatch(songsBatch).then(function () {
+        if (state.currentRepertoire && state.currentRepertoire.id === targetRepId) {
+          openRepertoireSongs(targetRepId);
+        } else {
+          loadRepertoires();
+        }
+      }).catch(function(err) { console.error('Erro ao salvar lote no repertório alvo:', err); });
+      return;
+    }
 
     var defaultNameInput = document.getElementById('gdriveRepertoireName');
     var defaultName = (defaultNameInput && defaultNameInput.value.trim()) || ('Drive ' + formatDate(Date.now()));
@@ -2692,6 +2764,34 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('btnDeleteSong').classList.add('hidden');
     }
 
+    var repSelect = document.getElementById('editSongRepertoire');
+    if (repSelect) {
+      repSelect.innerHTML = '';
+      var targetRepId = (song && song.repertoireId)
+        ? song.repertoireId
+        : (state.currentRepertoire ? state.currentRepertoire.id : (state.repertoires && state.repertoires.length > 0 ? state.repertoires[0].id : ''));
+      
+      var repsList = state.repertoires || [];
+      if (repsList.length === 0 && state.currentRepertoire) {
+        repsList = [state.currentRepertoire];
+      }
+
+      if (repsList.length > 0) {
+        repsList.forEach(function(r) {
+          var opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = r.name;
+          if (r.id === targetRepId) opt.selected = true;
+          repSelect.appendChild(opt);
+        });
+      } else {
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Sem repertório (Geral)';
+        repSelect.appendChild(opt);
+      }
+    }
+
     var audioFileInput = document.getElementById('editSongAudioFile');
     if (audioFileInput && !audioFileInput._hasChangeListener) {
       audioFileInput._hasChangeListener = true;
@@ -2741,8 +2841,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var youtubeId = TextParser.extractYouTubeId(youtubeUrl);
 
-    var repId = state.currentRepertoire ? state.currentRepertoire.id : 0;
-    if (state.editingSong) repId = state.editingSong.repertoireId || repId;
+    var repSelect = document.getElementById('editSongRepertoire');
+    var selectedRepId = (repSelect && repSelect.value) ? repSelect.value : null;
+
+    var repId = selectedRepId ||
+      (state.editingSong && state.editingSong.repertoireId) ||
+      (state.currentRepertoire && state.currentRepertoire.id) ||
+      (state.repertoires && state.repertoires.length > 0 ? state.repertoires[0].id : null);
 
     var songData = {
       title: title,
@@ -2785,25 +2890,10 @@ document.addEventListener('DOMContentLoaded', function () {
           showToast('Música salva com sucesso!', 'success');
           closeModal(songEditorModal);
 
-          // Atualizar lista em memória imediatamente
-          if (state.currentRepertoireSongs && state.currentRepertoireSongs.length > 0) {
-            var found = false;
-            for (var k = 0; k < state.currentRepertoireSongs.length; k++) {
-              if (state.currentRepertoireSongs[k].id === songData.id) {
-                state.currentRepertoireSongs[k] = Object.assign({}, state.currentRepertoireSongs[k], songData);
-                found = true;
-                break;
-              }
-            }
-            if (!found && rId === (state.currentRepertoire ? state.currentRepertoire.id : null)) {
-              state.currentRepertoireSongs.push(songData);
-            }
-            renderSongsList(state.currentRepertoireSongs);
-          }
-
-          if (state.currentRepertoire && state.currentRepertoire.id === rId) {
+          // Atualizar tela de repertório ativa para refletir a música no lugar certo
+          if (state.currentRepertoire) {
             openRepertoireSongs(state.currentRepertoire.id);
-          } else if (!state.currentRepertoire) {
+          } else {
             loadRepertoires();
           }
 

@@ -298,23 +298,22 @@
     var sb = getSupabaseClient();
     checkCacheUser(user);
 
-    var cacheKey = repertoireId || 'ALL_USER_SONGS';
+    var curUserId = user ? user.id : 'guest';
+    var cacheKey = curUserId + '_' + (repertoireId || 'ALL_USER_SONGS');
     if (memCache.songsByRep[cacheKey]) {
       return Promise.resolve(memCache.songsByRep[cacheKey]);
     }
 
     if (!user || !user.id || !sb) {
       var offStore = getOfflineStore(user ? user.id : 'guest');
-      var localList = offStore.songs[repertoireId] || [];
+      var localList = (repertoireId ? offStore.songs[repertoireId] : []) || [];
       memCache.songsByRep[cacheKey] = localList;
       return Promise.resolve(localList);
     }
 
-    var query = sb.from('songs').select('*');
+    var query = sb.from('songs').select('*').eq('user_id', user.id);
     if (repertoireId) {
       query = query.eq('repertoire_id', repertoireId);
-    } else {
-      query = query.eq('user_id', user.id);
     }
 
     return query.order('track_number', { ascending: true, nullsFirst: false })
@@ -465,7 +464,23 @@
         });
       }
       var saved = res.data && res.data[0] ? res.data[0] : null;
-      return saved ? saved.id : payload.id;
+      var retId = saved ? saved.id : payload.id;
+      try {
+        var offStore = getOfflineStore(user.id);
+        if (offStore && offStore.songs) {
+          Object.keys(offStore.songs).forEach(function(rK) {
+            if (Array.isArray(offStore.songs[rK])) {
+              offStore.songs[rK] = offStore.songs[rK].filter(function(x) { return x.id !== retId; });
+            }
+          });
+          if (song.repertoireId) {
+            if (!offStore.songs[song.repertoireId]) offStore.songs[song.repertoireId] = [];
+            offStore.songs[song.repertoireId].push(Object.assign({}, song, { id: retId }));
+          }
+          saveOfflineStore(user.id, offStore);
+        }
+      } catch(e) {}
+      return retId;
     });
   }
 
@@ -479,11 +494,12 @@
       var offStore = getOfflineStore('guest');
       songsArray.forEach(function(s) {
         var sId = s.id || ('song-guest-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5));
-        s.id = sId;
-        s.user_id = 'guest';
-        var rId = s.repertoireId || 'misc';
+        var sData = Object.assign({}, s, { id: sId, user_id: 'guest', updatedAt: Date.now() });
+        var rId = sData.repertoireId || 'misc';
         if (!offStore.songs[rId]) offStore.songs[rId] = [];
-        offStore.songs[rId].push(s);
+        var existingIdx = offStore.songs[rId].findIndex(function(x) { return x.id === sId; });
+        if (existingIdx >= 0) offStore.songs[rId][existingIdx] = sData;
+        else offStore.songs[rId].push(sData);
       });
       saveOfflineStore('guest', offStore);
       return Promise.resolve(songsArray);
@@ -529,6 +545,19 @@
     var sb = getSupabaseClient();
     invalidateCache();
 
+    var userId = user ? user.id : 'guest';
+    try {
+      var offStore = getOfflineStore(userId);
+      if (offStore && offStore.songs) {
+        Object.keys(offStore.songs).forEach(function(rK) {
+          if (Array.isArray(offStore.songs[rK])) {
+            offStore.songs[rK] = offStore.songs[rK].filter(function(x) { return x.id !== id; });
+          }
+        });
+        saveOfflineStore(userId, offStore);
+      }
+    } catch(e) {}
+
     if (!user || !user.id || !sb) return Promise.resolve(true);
 
     return sb.from('songs').delete().eq('id', id).then(function(res) {
@@ -542,6 +571,21 @@
     var user = getCurrentUser();
     var sb = getSupabaseClient();
     invalidateCache();
+
+    var userId = user ? user.id : 'guest';
+    try {
+      var offStore = getOfflineStore(userId);
+      if (offStore && offStore.songs) {
+        var idMap = {};
+        ids.forEach(function(i) { idMap[i] = true; });
+        Object.keys(offStore.songs).forEach(function(rK) {
+          if (Array.isArray(offStore.songs[rK])) {
+            offStore.songs[rK] = offStore.songs[rK].filter(function(x) { return !idMap[x.id]; });
+          }
+        });
+        saveOfflineStore(userId, offStore);
+      }
+    } catch(e) {}
 
     if (!user || !user.id || !sb) return Promise.resolve(true);
 
