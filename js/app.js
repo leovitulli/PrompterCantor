@@ -3448,7 +3448,10 @@ document.addEventListener('DOMContentLoaded', function () {
       var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
       var isPro = (profile && profile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
       var isAdm = PrompterAuth.isAdmin();
-      var code = (profile && profile.singer_code) ? profile.singer_code : (isAdm ? '#DEV-ADMIN' : '#CANTOR-PRO');
+      var code = (profile && profile.singer_code) ? profile.singer_code : ('@' + (email ? email.split('@')[0] : 'cantor'));
+      if (email === 'leovitulli@gmail.com' && (!profile || !profile.singer_code || profile.singer_code.startsWith('#'))) {
+        code = '@leovitulli';
+      }
       var displayName = (profile && profile.display_name) ? profile.display_name : (email.split('@')[0] || 'Cantor');
       displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
       var initial = (displayName.charAt(0) || 'U').toUpperCase();

@@ -71,11 +71,13 @@
       return clean;
     },
 
-    checkSingerCodeAvailability: function (code, currentUserId) {
+    checkSingerCodeAvailability: function (code, currentUserId, currentUserEmail) {
       var formatted = this.formatSingerCode(code);
       if (!formatted || formatted.length < 3) {
         return Promise.resolve({ available: false, message: 'O código deve ter pelo menos 2 letras.' });
       }
+
+      var cleanEmail = (currentUserEmail || '').toLowerCase().trim();
 
       // 1. Verificar no cache local de usuários admin
       try {
@@ -84,7 +86,9 @@
           var list = JSON.parse(raw);
           var exists = list.some(function(u) {
             var uCode = (u.singer_code || '').toLowerCase();
-            return uCode === formatted.toLowerCase() && String(u.id) !== String(currentUserId);
+            var isSameUser = (currentUserId && String(u.id) === String(currentUserId)) ||
+                             (cleanEmail && u.email && u.email.toLowerCase().trim() === cleanEmail);
+            return uCode === formatted.toLowerCase() && !isSameUser;
           });
           if (exists) {
             return Promise.resolve({ available: false, code: formatted, message: formatted + ' já está em uso por outro cantor.' });
@@ -95,9 +99,13 @@
       // 2. Verificar no Supabase profiles
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
-        return sb.from('profiles').select('id, singer_code').eq('singer_code', formatted).then(function(res) {
+        return sb.from('profiles').select('id, email, singer_code').eq('singer_code', formatted).then(function(res) {
           if (res.data && res.data.length > 0) {
-            var isOther = res.data.some(function(p) { return String(p.id) !== String(currentUserId); });
+            var isOther = res.data.some(function(p) {
+              var isSame = (currentUserId && String(p.id) === String(currentUserId)) ||
+                           (cleanEmail && p.email && p.email.toLowerCase().trim() === cleanEmail);
+              return !isSame;
+            });
             if (isOther) {
               return { available: false, code: formatted, message: formatted + ' já está em uso por outro cantor.' };
             }
@@ -129,7 +137,7 @@
       var planType = isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE';
       
       var customSingerCode = (payload && payload.singerCode) ? PrompterAuth.formatSingerCode(payload.singerCode) : '';
-      var singerCode = customSingerCode || (cleanEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('@' + cleanEmail.split('@')[0]));
+      var singerCode = customSingerCode || (cleanEmail === 'leovitulli@gmail.com' ? '@leovitulli' : ('@' + cleanEmail.split('@')[0]));
 
       if (!sb || !sb.auth || typeof sb.auth.signUp !== 'function') {
         return Promise.reject(new Error('Serviço de autenticação temporariamente indisponível.'));
@@ -407,6 +415,8 @@
       var userEmail = currentUser ? currentUser.email : '';
       if (!userId && !userEmail) return Promise.resolve(null);
 
+      var defaultCode = (userEmail === 'leovitulli@gmail.com') ? '@leovitulli' : ('@' + (userEmail ? userEmail.split('@')[0] : ('cantor_' + Math.floor(1000 + Math.random() * 9000))));
+
       var defaultProfile = {
         id: userId || 'local_user',
         email: userEmail,
@@ -414,7 +424,7 @@
         role: userEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
         plan_tier: userEmail === 'leovitulli@gmail.com' ? 'pro' : 'free',
         plan_type: userEmail === 'leovitulli@gmail.com' ? '💎 PRO ANUAL' : '⚡ PLANO FREE',
-        singer_code: userEmail === 'leovitulli@gmail.com' ? '#DEV-ADMIN' : ('#CANTOR-' + Math.floor(1000 + Math.random() * 9000))
+        singer_code: defaultCode
       };
 
       if (!sb) return Promise.resolve(defaultProfile);
@@ -424,7 +434,17 @@
           var found = res.data.find(function (p) {
             return p.id === userId || (p.email && userEmail && p.email.toLowerCase() === userEmail.toLowerCase());
           });
-          if (found) return found;
+          if (found) {
+            // Normalizar código legado (#CANTOR-3DEB6 ou #DEV-ADMIN) para o handle do cantor
+            if (found.email && found.email.toLowerCase() === 'leovitulli@gmail.com') {
+              if (!found.singer_code || found.singer_code.startsWith('#') || found.singer_code === '#CANTOR-3DEB6' || found.singer_code === '#DEV-ADMIN') {
+                found.singer_code = '@leovitulli';
+              }
+            } else if (found.singer_code && found.singer_code.startsWith('#CANTOR-')) {
+              found.singer_code = '@' + (found.email ? found.email.split('@')[0] : 'cantor');
+            }
+            return found;
+          }
         }
         return defaultProfile;
       }).catch(function () {
@@ -479,7 +499,7 @@
         var initial = (displayName.charAt(0) || 'U').toUpperCase();
         var isPro = (currentProfile && currentProfile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
         var isAdm = this.isAdmin();
-        var code = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : (isAdm ? '#DEV-ADMIN' : '#CANTOR-PRO');
+        var code = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : ('@' + (email ? email.split('@')[0] : 'cantor'));
 
         if (profileContainer) profileContainer.classList.remove('hidden');
         if (userInitial) userInitial.innerText = initial;
@@ -521,10 +541,7 @@
       if (!currentUser) return Promise.reject(new Error('Usuário não logado'));
       if (!currentProfile) currentProfile = {};
       
-      var cleanCode = (singerCode || '').trim();
-      if (cleanCode && !cleanCode.startsWith('@') && !cleanCode.startsWith('#')) {
-        cleanCode = '@' + cleanCode;
-      }
+      var cleanCode = this.formatSingerCode(singerCode || '');
       
       currentProfile.display_name = name;
       if (cleanCode) currentProfile.singer_code = cleanCode;
@@ -532,21 +549,53 @@
       this.saveSession(currentUser, currentProfile);
       this.updateUIForAuth();
 
+      // Sincronizar também no cache do adminPanel (allUserData / canta_ai_admin_users)
+      try {
+        var rawUsers = localStorage.getItem('canta_ai_admin_users');
+        if (rawUsers) {
+          var uList = JSON.parse(rawUsers);
+          var myIdx = uList.findIndex(function(u) {
+            return (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                   (currentUser.id && u.id === currentUser.id);
+          });
+          if (myIdx >= 0) {
+            uList[myIdx].name = name;
+            if (cleanCode) uList[myIdx].singer_code = cleanCode;
+            localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
+          }
+        }
+      } catch(e) {}
+
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
         var payload = {
-          id: currentUser.id,
-          email: currentUser.email,
           display_name: name,
           updated_at: new Date().toISOString()
         };
         if (cleanCode) payload.singer_code = cleanCode;
 
-        return sb.from('profiles').upsert(payload).then(function() {
-          return true;
+        // Atualizar tanto por ID quanto por email
+        sb.from('profiles').update(payload).eq('id', currentUser.id).then(function(res) {
+          if (res && res.error) {
+            sb.from('profiles').update(payload).eq('email', currentUser.email).catch(function() {});
+          }
         }).catch(function() {
-          return true;
+          sb.from('profiles').update(payload).eq('email', currentUser.email).catch(function() {});
         });
+
+        // Atualizar no System Registry em songs
+        var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+        sb.from('songs').select('id, content').eq('repertoire_id', regId).eq('artist', currentUser.email).then(function(res) {
+          if (res.data && res.data.length > 0) {
+            var row = res.data[0];
+            var obj = null;
+            try { obj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content; } catch(e) {}
+            if (!obj) obj = {};
+            obj.name = name;
+            if (cleanCode) obj.singer_code = cleanCode;
+            sb.from('songs').update({ title: name, content: JSON.stringify(obj) }).eq('id', row.id).catch(function() {});
+          }
+        }).catch(function() {});
       }
       return Promise.resolve(true);
     },

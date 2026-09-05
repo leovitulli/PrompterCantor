@@ -16,7 +16,26 @@
   var STORAGE_USERS_KEY = 'canta_ai_admin_users';
   var STORAGE_COUPONS_KEY = 'canta_ai_admin_coupons';
   var STORAGE_PRICING_KEY = 'canta_ai_admin_pricing';
+  var STORAGE_DELETED_KEY = 'canta_ai_deleted_singers';
   var SYSTEM_REGISTRY_REPERTOIRE_ID = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+
+  function getDeletedSingers() {
+    try {
+      var raw = localStorage.getItem(STORAGE_DELETED_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) list = [];
+      // Se ainda não tiver registrado o cantor teste como excluído, incluir por padrão para atender pedido do usuário
+      if (list.indexOf('test_singer@cantaaipro.com') === -1) {
+        list.push('test_singer@cantaaipro.com');
+        list.push('@test_singer');
+        list.push('a7af2dd9-76f8-4b18-aa3f-3a7535baeb00');
+        try { localStorage.setItem(STORAGE_DELETED_KEY, JSON.stringify(list)); } catch(e) {}
+      }
+      return list;
+    } catch (e) {
+      return ['test_singer@cantaaipro.com', '@test_singer', 'a7af2dd9-76f8-4b18-aa3f-3a7535baeb00'];
+    }
+  }
 
   var allUserData = [];
   var allCoupons = [];
@@ -57,23 +76,25 @@
           allUserData = JSON.parse(rawUsers);
         }
 
+        var deletedSingers = getDeletedSingers();
+
         var defaultSeedSingers = [
           {
-            id: 'a7af2dd9-76f8-4b18-aa3f-3a7535baeb00',
-            name: 'Cantor Teste VIP',
-            email: 'test_singer@cantaaipro.com',
-            singer_code: '@test_singer',
-            phone: '(11) 98888-7777',
-            cpf: '123.456.789-00',
-            instagram: '@cantorteste_oficial',
+            id: 'admin-leovitulli-id',
+            name: 'Leonardo Vitulli',
+            email: 'leovitulli@gmail.com',
+            singer_code: '@leovitulli',
+            phone: '',
+            cpf: '',
+            instagram: '@leovitulli',
             plan_tier: 'pro',
             plan_type: '💎 PRO ANUAL',
             is_online: true,
             status_text: '🟢 Conectado e Ativo',
-            reps_count: 2,
-            songs_count: 45,
-            last_seen: 'Agora mesmo',
-            created_at: '2026-03-01'
+            reps_count: 1,
+            songs_count: 33,
+            last_seen: 'Hoje',
+            created_at: '2026-02-15'
           },
           {
             id: 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0',
@@ -91,43 +112,43 @@
             songs_count: 12,
             last_seen: 'Agora mesmo',
             created_at: '2026-08-31'
-          },
-          {
-            id: 'admin-leovitulli-id',
-            name: 'Leonardo Vitulli',
-            email: 'leovitulli@gmail.com',
-            singer_code: '@leovitulli',
-            phone: '',
-            cpf: '',
-            instagram: '@leovitulli',
-            plan_tier: 'pro',
-            plan_type: '💎 PRO ANUAL',
-            is_online: true,
-            status_text: '🟢 Conectado e Ativo',
-            reps_count: 1,
-            songs_count: 33,
-            last_seen: 'Hoje',
-            created_at: '2026-02-15'
           }
         ];
 
         if (!allUserData || allUserData.length === 0) {
-          allUserData = defaultSeedSingers.slice();
+          allUserData = defaultSeedSingers.filter(function(u) {
+            return deletedSingers.indexOf(u.email.toLowerCase()) === -1 &&
+                   deletedSingers.indexOf(u.singer_code.toLowerCase()) === -1 &&
+                   deletedSingers.indexOf(u.id.toLowerCase()) === -1;
+          });
           localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
         } else {
-          var hasTestSinger = allUserData.some(function(u) {
-            return (u.email && u.email.toLowerCase() === 'test_singer@cantaaipro.com') ||
-                   (u.singer_code && u.singer_code.toLowerCase() === '@test_singer');
+          // Filtrar qualquer usuário excluído
+          allUserData = allUserData.filter(function(u) {
+            var uId = (u.id || '').toLowerCase();
+            var uEmail = (u.email || '').toLowerCase();
+            var uCode = (u.singer_code || '').toLowerCase();
+            if (uId && deletedSingers.indexOf(uId) !== -1) return false;
+            if (uEmail && deletedSingers.indexOf(uEmail) !== -1) return false;
+            if (uCode && deletedSingers.indexOf(uCode) !== -1) return false;
+            return true;
           });
-          if (!hasTestSinger) {
-            allUserData.push(defaultSeedSingers[0]);
-          }
+
+          // Normalizar código legado de leovitulli@gmail.com
+          allUserData.forEach(function (u) {
+            if (u.email && u.email.toLowerCase() === 'leovitulli@gmail.com') {
+              if (!u.singer_code || u.singer_code.startsWith('#') || u.singer_code === '#CANTOR-3DEB6' || u.singer_code === '#DEV-ADMIN') {
+                u.singer_code = '@leovitulli';
+              }
+            }
+          });
+
           var hasLeoOgum = allUserData.some(function(u) {
             return (u.email && u.email.toLowerCase() === 'leoogum23@gmail.com') ||
                    (u.singer_code && u.singer_code.toLowerCase() === '@leoogum23') ||
                    u.id === 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0';
           });
-          if (!hasLeoOgum) {
+          if (!hasLeoOgum && deletedSingers.indexOf('leoogum23@gmail.com') === -1) {
             allUserData.push(defaultSeedSingers[1]);
           }
           localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
@@ -689,9 +710,10 @@
           editCodeFeedback.style.color = '#94a3b8';
           editCodeFeedback.innerText = '🔍 Verificando...';
 
+          var curEmail = (document.getElementById('editSingerEmail') ? document.getElementById('editSingerEmail').value : '').trim();
           editCodeDebounce = setTimeout(function () {
             if (window.PrompterAuth) {
-              window.PrompterAuth.checkSingerCodeAvailability(val, curId).then(function (res) {
+              window.PrompterAuth.checkSingerCodeAvailability(val, curId, curEmail).then(function (res) {
                 if (res.available) {
                   editCodeFeedback.style.color = '#34d399';
                   editCodeFeedback.innerText = '✅ ' + res.message;
@@ -951,22 +973,43 @@
 
     deleteSinger: function (id) {
       if (!id) return;
-      var userObj = allUserData.find(function (u) { return u.id === id; });
+      var userObj = allUserData.find(function (u) { return u.id === id || u.email === id; });
       var name = userObj ? (userObj.name || userObj.email) : 'este cantor';
+      var userEmail = userObj ? userObj.email : (id.indexOf('@') !== -1 ? id : '');
+      var userCode = userObj ? userObj.singer_code : '';
+      var actualId = userObj ? userObj.id : id;
+
       if (!confirm('Deseja realmente excluir ' + name + ' do sistema?')) return;
 
-      allUserData = allUserData.filter(function (u) { return u.id !== id; });
+      // 1. Gravar na lista de cantores excluídos para nunca mais ressurgir em sincronizações
+      var deletedList = getDeletedSingers();
+      if (actualId) deletedList.push(String(actualId).toLowerCase());
+      if (userEmail) deletedList.push(userEmail.toLowerCase());
+      if (userCode) deletedList.push(userCode.toLowerCase());
+      deletedList = deletedList.filter(function(v, i, a) { return a.indexOf(v) === i; });
+      try {
+        localStorage.setItem(STORAGE_DELETED_KEY, JSON.stringify(deletedList));
+      } catch(e) {}
+
+      // 2. Remover do array local
+      allUserData = allUserData.filter(function (u) {
+        if (u.id === actualId || u.id === id) return false;
+        if (userEmail && u.email && u.email.toLowerCase() === userEmail.toLowerCase()) return false;
+        if (userCode && u.singer_code && u.singer_code.toLowerCase() === userCode.toLowerCase()) return false;
+        return true;
+      });
       PrompterAdmin.saveStoredUsers();
 
+      // 3. Excluir no Supabase (perfis e System Registry em songs)
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
-        sb.from('profiles').delete().eq('id', id).catch(function () {});
-        if (userObj && userObj.email) {
-          sb.from('profiles').delete().eq('email', userObj.email).catch(function () {});
-          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('artist', userObj.email).catch(function () {});
+        if (isValidUUID(actualId)) {
+          sb.from('profiles').delete().eq('id', actualId).then(function() {}).catch(function () {});
+          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('id', actualId).then(function() {}).catch(function () {});
         }
-        if (isValidUUID(id)) {
-          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('id', id).catch(function () {});
+        if (userEmail) {
+          sb.from('profiles').delete().eq('email', userEmail).then(function() {}).catch(function () {});
+          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('artist', userEmail).then(function() {}).catch(function () {});
         }
       }
 
@@ -994,7 +1037,7 @@
       }
 
       if (window.PrompterAuth) {
-        window.PrompterAuth.checkSingerCodeAvailability(code, id).then(function (checkRes) {
+        window.PrompterAuth.checkSingerCodeAvailability(code, id, email).then(function (checkRes) {
           if (!checkRes.available) {
             if (window.showToast) window.showToast(checkRes.message || 'Este @Login já está em uso.', 'warning');
             return;
@@ -1043,6 +1086,27 @@
       }
 
       PrompterAdmin.saveStoredUsers();
+
+      // Se o cantor editado for o usuário atualmente logado (ex: leovitulli@gmail.com):
+      var authUser = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
+      var authProfile = window.PrompterAuth ? window.PrompterAuth.getProfile() : null;
+      var loggedEmail = (authUser && authUser.email) ? authUser.email.toLowerCase() : (authProfile && authProfile.email ? authProfile.email.toLowerCase() : '');
+
+      if (cleanEmail && cleanEmail === loggedEmail) {
+        if (!authProfile) authProfile = {};
+        authProfile.display_name = name;
+        authProfile.singer_code = code;
+        authProfile.phone = phone;
+        authProfile.cpf = cpf;
+        authProfile.instagram = instagram;
+        authProfile.plan_tier = singerPayload.plan_tier;
+        authProfile.plan_type = singerPayload.plan_type;
+        if (window.PrompterAuth) {
+          window.PrompterAuth.saveSession(authUser, authProfile);
+          window.PrompterAuth.updateUIForAuth();
+        }
+      }
+
       PrompterAdmin.updateMetrics();
       PrompterAdmin.renderUsersTable();
       PrompterAdmin.closeSingerModal();
@@ -1050,10 +1114,7 @@
       // Persistir no Supabase em segundo plano
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
-        // Tentar profiles (caso permitido)
-        sb.from('profiles').upsert({
-          id: singerId,
-          email: email,
+        var profPayload = {
           display_name: name,
           phone: phone,
           cpf: cpf,
@@ -1062,7 +1123,15 @@
           plan_tier: isPro ? 'pro' : 'free',
           plan_type: planType,
           updated_at: new Date().toISOString()
-        }).catch(function() {});
+        };
+
+        // Atualizar tanto por ID quanto por email
+        if (isValidUUID(singerId)) {
+          profPayload.id = singerId;
+          sb.from('profiles').upsert(profPayload).catch(function() {});
+        } else {
+          sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
+        }
 
         // Persistir no System Registry (sempre acessível na nuvem)
         var songRow = {
@@ -1100,6 +1169,13 @@
       var devEmail = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser ? currentUser.email : 'admin@cantaaipro.com');
       var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : (currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'Administrador');
       var devCode = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : (devEmail ? '@' + devEmail.split('@')[0] : '@admin');
+
+      if (devEmail.toLowerCase() === 'leovitulli@gmail.com') {
+        if (!devCode || devCode.startsWith('#') || devCode === '#CANTOR-3DEB6' || devCode === '#DEV-ADMIN') {
+          devCode = '@leovitulli';
+          if (currentProfile) currentProfile.singer_code = '@leovitulli';
+        }
+      }
 
       // 1. Integrar usuário atual na lista local sem sobrescrever nenhum outro cantor cadastrado
       if (currentUser) {
@@ -1164,6 +1240,25 @@
                   }
                   if (sObj && (sObj.email || sObj.id)) {
                     var sEmail = (sObj.email || '').trim().toLowerCase();
+                    var sCode = (sObj.singer_code || '').trim().toLowerCase();
+                    var sId = (sObj.id || '').toLowerCase();
+                    var deletedSingers = getDeletedSingers();
+
+                    // Se estiver na lista de excluídos, expurgar imediatamente do Supabase e não adicionar à lista
+                    if (deletedSingers.indexOf(sEmail) !== -1 || deletedSingers.indexOf(sCode) !== -1 || (sId && deletedSingers.indexOf(sId) !== -1)) {
+                      if (sb) {
+                        if (sEmail) sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('artist', sObj.email).catch(function() {});
+                        if (isValidUUID(sId)) sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('id', sId).catch(function() {});
+                      }
+                      return;
+                    }
+
+                    if (sEmail === 'leovitulli@gmail.com') {
+                      if (!sObj.singer_code || sObj.singer_code.startsWith('#') || sObj.singer_code === '#CANTOR-3DEB6' || sObj.singer_code === '#DEV-ADMIN') {
+                        sObj.singer_code = '@leovitulli';
+                      }
+                    }
+
                     var existIdx = allUserData.findIndex(function(u) {
                       return (sObj.id && u.id === sObj.id) ||
                              (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
@@ -1192,9 +1287,25 @@
           if (res.data && res.data.length > 0) {
             res.data.forEach(function(p) {
               var pEmail = (p.email || '').trim().toLowerCase();
+              var pCode = (p.singer_code || '').trim().toLowerCase();
+              var pId = (p.id || '').toLowerCase();
+              var deletedSingers = getDeletedSingers();
+
+              if (deletedSingers.indexOf(pEmail) !== -1 || deletedSingers.indexOf(pCode) !== -1 || (pId && deletedSingers.indexOf(pId) !== -1)) {
+                return;
+              }
+
               var existIdx = allUserData.findIndex(function(u) {
                 return (p.id && u.id === p.id) || (pEmail && u.email && u.email.trim().toLowerCase() === pEmail);
               });
+
+              var effectiveCode = p.singer_code || (existIdx >= 0 ? allUserData[existIdx].singer_code : ('@' + p.email.split('@')[0]));
+              if (pEmail === 'leovitulli@gmail.com') {
+                if (!effectiveCode || effectiveCode.startsWith('#') || effectiveCode === '#CANTOR-3DEB6' || effectiveCode === '#DEV-ADMIN') {
+                  effectiveCode = '@leovitulli';
+                }
+              }
+
               var profData = {
                 id: p.id,
                 name: p.display_name || (existIdx >= 0 ? allUserData[existIdx].name : p.email.split('@')[0]),
@@ -1202,7 +1313,7 @@
                 phone: p.phone || (existIdx >= 0 ? allUserData[existIdx].phone : ''),
                 cpf: p.cpf || (existIdx >= 0 ? allUserData[existIdx].cpf : ''),
                 instagram: p.instagram || (existIdx >= 0 ? allUserData[existIdx].instagram : ''),
-                singer_code: p.singer_code || (existIdx >= 0 ? allUserData[existIdx].singer_code : ('@' + p.email.split('@')[0])),
+                singer_code: effectiveCode,
                 plan_tier: p.plan_tier || (existIdx >= 0 ? allUserData[existIdx].plan_tier : 'free'),
                 plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
                 is_online: existIdx >= 0 ? allUserData[existIdx].is_online : false,
