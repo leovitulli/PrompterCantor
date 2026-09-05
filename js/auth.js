@@ -28,6 +28,7 @@
           currentProfile = JSON.parse(savedProfile);
           this.updateUIForAuth();
           this.heartbeatLastSeen();
+          if (currentProfile) this.syncNewUserToAdmin(currentProfile);
         } catch (e) {
           console.warn('Erro ao restaurar sessão local:', e);
         }
@@ -43,6 +44,7 @@
               PrompterAuth.saveSession(currentUser, currentProfile);
               PrompterAuth.updateUIForAuth();
               PrompterAuth.heartbeatLastSeen();
+              if (currentProfile) PrompterAuth.syncNewUserToAdmin(currentProfile);
               return { user: currentUser, profile: currentProfile };
             });
           } else if (!currentUser) {

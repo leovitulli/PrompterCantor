@@ -76,6 +76,23 @@
             created_at: '2026-03-01'
           },
           {
+            id: 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0',
+            name: 'Leo Ogum',
+            email: 'leoogum23@gmail.com',
+            singer_code: '@leoogum23',
+            phone: '',
+            cpf: '',
+            instagram: '@leoogum23',
+            plan_tier: 'pro',
+            plan_type: '💎 PRO ANUAL',
+            is_online: true,
+            status_text: '🟢 Conectado e Ativo',
+            reps_count: 1,
+            songs_count: 12,
+            last_seen: 'Agora mesmo',
+            created_at: '2026-08-31'
+          },
+          {
             id: 'admin-leovitulli-id',
             name: 'Leonardo Vitulli',
             email: 'leovitulli@gmail.com',
@@ -104,8 +121,16 @@
           });
           if (!hasTestSinger) {
             allUserData.push(defaultSeedSingers[0]);
-            localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
           }
+          var hasLeoOgum = allUserData.some(function(u) {
+            return (u.email && u.email.toLowerCase() === 'leoogum23@gmail.com') ||
+                   (u.singer_code && u.singer_code.toLowerCase() === '@leoogum23') ||
+                   u.id === 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0';
+          });
+          if (!hasLeoOgum) {
+            allUserData.push(defaultSeedSingers[1]);
+          }
+          localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
         }
         
         var rawCoupons = localStorage.getItem(STORAGE_COUPONS_KEY);
