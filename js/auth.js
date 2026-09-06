@@ -26,6 +26,42 @@
         try {
           currentUser = JSON.parse(savedUser);
           currentProfile = JSON.parse(savedProfile);
+
+          // Sanitizar imediatamente qualquer código legado (#CANTOR-...) e sincronizar
+          var uEmail = ((currentProfile && currentProfile.email) || (currentUser && currentUser.email) || '').trim().toLowerCase();
+          var customHandle = localStorage.getItem('cantaai_user_custom_handle');
+
+          if (customHandle) {
+            currentProfile.singer_code = customHandle;
+          } else if (!currentProfile.singer_code || currentProfile.singer_code.startsWith('#') || currentProfile.singer_code.toUpperCase().indexOf('CANTOR-') !== -1) {
+            currentProfile.singer_code = (uEmail === 'leovitulli@gmail.com') ? '@leovitulli' : ('@' + (uEmail ? uEmail.split('@')[0] : 'cantor'));
+          }
+
+          if (uEmail === 'leovitulli@gmail.com' && (!currentProfile.instagram || currentProfile.instagram === '')) {
+            currentProfile.instagram = '@leovitulli';
+          }
+
+          // Sincronizar com canta_ai_admin_users caso haja alterações mais recentes salvas no painel
+          try {
+            var rawAdminList = localStorage.getItem('canta_ai_admin_users');
+            if (rawAdminList) {
+              var aList = JSON.parse(rawAdminList);
+              var matchedUser = aList.find(function(u) {
+                return (u.email && u.email.trim().toLowerCase() === uEmail) || (currentUser && currentUser.id && u.id === currentUser.id);
+              });
+              if (matchedUser) {
+                if (matchedUser.singer_code) currentProfile.singer_code = matchedUser.singer_code;
+                if (matchedUser.name) currentProfile.display_name = matchedUser.name;
+                if (matchedUser.plan_tier) currentProfile.plan_tier = matchedUser.plan_tier;
+                if (matchedUser.plan_type) currentProfile.plan_type = matchedUser.plan_type;
+                if (matchedUser.instagram) currentProfile.instagram = matchedUser.instagram;
+                if (matchedUser.phone) currentProfile.phone = matchedUser.phone;
+                if (matchedUser.cpf) currentProfile.cpf = matchedUser.cpf;
+              }
+            }
+          } catch(e) {}
+
+          this.saveSession(currentUser, currentProfile);
           this.updateUIForAuth();
           this.heartbeatLastSeen();
           if (currentProfile) this.syncNewUserToAdmin(currentProfile);
@@ -62,13 +98,18 @@
       return Promise.resolve({ user: currentUser, profile: currentProfile });
     },
 
-    formatSingerCode: function (code) {
+    formatSingerCode: function (code, email) {
       if (!code) return '';
       var clean = String(code).trim().toLowerCase().replace(/\s+/g, '_');
-      if (!clean.startsWith('@') && !clean.startsWith('#')) {
-        clean = '@' + clean;
+      if (clean.startsWith('#') || clean.toUpperCase().indexOf('CANTOR-') !== -1 || clean.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
+        if (email) {
+          var prefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '');
+          return '@' + (prefix || 'cantor');
+        }
+        return '@cantor';
       }
-      return clean;
+      clean = clean.replace(/^[#@]+/, '');
+      return clean ? ('@' + clean) : '';
     },
 
     checkSingerCodeAvailability: function (code, currentUserId, currentUserEmail) {
@@ -485,14 +526,17 @@
           if (found) {
             var fEmail = (found.email || userEmail || '').toLowerCase();
             var hadLegacyHash = found.singer_code && (found.singer_code.startsWith('#') || found.singer_code.toUpperCase().indexOf('CANTOR-') !== -1 || found.singer_code.toUpperCase().indexOf('DEV-ADMIN') !== -1);
-            if (userCustomHandle && fEmail === 'leovitulli@gmail.com') {
+            if (userCustomHandle) {
               found.singer_code = userCustomHandle;
             } else if (!found.singer_code || hadLegacyHash) {
               found.singer_code = (fEmail === 'leovitulli@gmail.com')
-                ? (userCustomHandle || '@leovitulli')
+                ? '@leovitulli'
                 : ('@' + (fEmail ? fEmail.split('@')[0] : 'cantor'));
             } else if (!found.singer_code.startsWith('@')) {
               found.singer_code = '@' + found.singer_code;
+            }
+            if (fEmail === 'leovitulli@gmail.com' && (!found.instagram || found.instagram === '')) {
+              found.instagram = '@leovitulli';
             }
             // Sincronizar com o banco Supabase para reparar o hash legado na nuvem
             if (sb && found.id && hadLegacyHash) {
@@ -509,8 +553,10 @@
 
     saveSession: function (user, profile) {
       try {
-        localStorage.setItem('prompter_auth_user', JSON.stringify(user));
-        localStorage.setItem('prompter_auth_profile', JSON.stringify(profile));
+        if (user) currentUser = user;
+        if (profile) currentProfile = profile;
+        if (currentUser) localStorage.setItem('prompter_auth_user', JSON.stringify(currentUser));
+        if (currentProfile) localStorage.setItem('prompter_auth_profile', JSON.stringify(currentProfile));
       } catch (e) {}
     },
 
@@ -549,29 +595,87 @@
 
       if (currentUser) {
         var email = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser.email || '');
+        var cleanEmail = email.trim().toLowerCase();
+
+        // 1. Sincronizar dados em tempo real com as alterações salvas em canta_ai_admin_users ou custom_handle
+        var customHandle = localStorage.getItem('cantaai_user_custom_handle');
+        try {
+          var rawAdminList = localStorage.getItem('canta_ai_admin_users');
+          if (rawAdminList) {
+            var aList = JSON.parse(rawAdminList);
+            var matchedUser = aList.find(function(u) {
+              return (cleanEmail && u.email && u.email.trim().toLowerCase() === cleanEmail) ||
+                     (currentUser.id && u.id === currentUser.id);
+            });
+            if (matchedUser) {
+              if (!currentProfile) currentProfile = {};
+              if (matchedUser.name) currentProfile.display_name = matchedUser.name;
+              if (matchedUser.singer_code) currentProfile.singer_code = matchedUser.singer_code;
+              if (matchedUser.plan_tier) currentProfile.plan_tier = matchedUser.plan_tier;
+              if (matchedUser.plan_type) currentProfile.plan_type = matchedUser.plan_type;
+              if (matchedUser.is_vip !== undefined) currentProfile.is_vip = matchedUser.is_vip;
+              if (matchedUser.instagram) currentProfile.instagram = matchedUser.instagram;
+              if (matchedUser.phone) currentProfile.phone = matchedUser.phone;
+              if (matchedUser.cpf) currentProfile.cpf = matchedUser.cpf;
+            }
+          }
+        } catch(e) {}
+
+        if (customHandle) {
+          if (!currentProfile) currentProfile = {};
+          currentProfile.singer_code = customHandle;
+        }
+
+        // 2. Normalizar e sanitizar OBRIGATORIAMENTE o código do cantor (erradicar hashes como #CANTOR-3DEB6)
+        var code = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : '';
+        if (!code || code.startsWith('#') || code.toUpperCase().indexOf('CANTOR-') !== -1 || code.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
+          code = (cleanEmail === 'leovitulli@gmail.com') ? (customHandle || '@leovitulli') : ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
+        }
+        if (!code.startsWith('@')) {
+          code = '@' + code;
+        }
+        if (currentProfile) {
+          currentProfile.singer_code = code;
+          if (cleanEmail === 'leovitulli@gmail.com' && !currentProfile.instagram) {
+            currentProfile.instagram = '@leovitulli';
+          }
+        }
+
         var displayName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : (email.split('@')[0] || 'Cantor');
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
         var initial = (displayName.charAt(0) || 'U').toUpperCase();
-        var isPro = (currentProfile && currentProfile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
+
+        var isVip = !!(currentProfile && (currentProfile.is_vip || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.plan_tier === 'vip'));
+        var isPro = isVip || (currentProfile && currentProfile.plan_tier === 'pro') || cleanEmail === 'leovitulli@gmail.com';
+        var planType = (currentProfile && currentProfile.plan_type) || (isVip ? '👑 VIP 100% OFF' : (isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE'));
         var isAdm = this.isAdmin();
-        var code = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : ('@' + (email ? email.split('@')[0] : 'cantor'));
 
         if (profileContainer) profileContainer.classList.remove('hidden');
         if (userInitial) userInitial.innerText = initial;
         if (upmAvatarBig) upmAvatarBig.innerText = initial;
         if (headerEmail) headerEmail.innerText = displayName; // Exibe somente o NOME compacto
         if (headerPlan) {
-          headerPlan.innerText = isPro ? 'PRO' : 'FREE';
-          headerPlan.className = 'user-profile-plan-tag ' + (isPro ? 'plan-pro' : 'plan-free');
+          if (isVip) {
+            headerPlan.innerText = 'VIP';
+            headerPlan.className = 'user-profile-plan-tag plan-pro';
+          } else if (isPro) {
+            headerPlan.innerText = 'PRO';
+            headerPlan.className = 'user-profile-plan-tag plan-pro';
+          } else {
+            headerPlan.innerText = 'FREE';
+            headerPlan.className = 'user-profile-plan-tag plan-free';
+          }
         }
         if (upmUserEmail) upmUserEmail.innerText = email;
         if (upmSingerCode) upmSingerCode.innerText = code;
 
         if (upmPlanBadge) {
-          upmPlanBadge.innerHTML = isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE';
+          upmPlanBadge.innerHTML = isVip ? '👑 PLANO CANTAAÍ VIP' : (isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE');
         }
         if (upmPlanDesc) {
-          upmPlanDesc.innerText = isPro ? 'Acesso Total Ilimitado • Modo Offline & Ao Vivo' : 'Repertórios Básicos • Faça Upgrade para PRO';
+          upmPlanDesc.innerText = isVip
+            ? 'Acesso VIP Vitalício • Modo Offline & Ao Vivo'
+            : (isPro ? 'Acesso Total Ilimitado • Modo Offline & Ao Vivo' : 'Repertórios Básicos • Faça Upgrade para PRO');
         }
 
         if (btnProfileAdmin) {

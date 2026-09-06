@@ -1534,7 +1534,7 @@
       var authProfile = window.PrompterAuth ? window.PrompterAuth.getProfile() : null;
       var loggedEmail = (authUser && authUser.email) ? authUser.email.toLowerCase() : (authProfile && authProfile.email ? authProfile.email.toLowerCase() : '');
 
-      if (cleanEmail && cleanEmail === loggedEmail) {
+      if (cleanEmail && (cleanEmail === loggedEmail || cleanEmail === 'leovitulli@gmail.com')) {
         try {
           localStorage.setItem('cantaai_user_custom_handle', cleanCode);
         } catch(e) {}

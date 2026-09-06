@@ -3458,14 +3458,18 @@ document.addEventListener('DOMContentLoaded', function () {
       var profile = PrompterAuth.getProfile();
       var user = PrompterAuth.getUser();
       var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
-      var isPro = (profile && profile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
+      var cleanEmail = (email || '').trim().toLowerCase();
+      var isVip = !!(profile && (profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.plan_tier === 'vip'));
+      var isPro = isVip || (profile && profile.plan_tier === 'pro') || cleanEmail === 'leovitulli@gmail.com';
       var isAdm = PrompterAuth.isAdmin();
       var customHandle = localStorage.getItem('cantaai_user_custom_handle');
-      var code = customHandle || (profile && profile.singer_code) || ('@' + (email ? email.split('@')[0] : 'cantor'));
+      var code = customHandle || (profile && profile.singer_code) || ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
       if (!code || code.startsWith('#') || code.toUpperCase().indexOf('CANTOR-') !== -1 || code.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
-        code = (email === 'leovitulli@gmail.com') ? (customHandle || '@leovitulli') : ('@' + (email ? email.split('@')[0] : 'cantor'));
+        code = (cleanEmail === 'leovitulli@gmail.com') ? (customHandle || '@leovitulli') : ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
       }
-      var displayName = (profile && profile.display_name) ? profile.display_name : (email.split('@')[0] || 'Cantor');
+      if (!code.startsWith('@')) code = '@' + code;
+
+      var displayName = (profile && profile.display_name) ? profile.display_name : (cleanEmail.split('@')[0] || 'Cantor');
       displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
       var initial = (displayName.charAt(0) || 'U').toUpperCase();
 
@@ -3476,7 +3480,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (profileSingerCodeInput) profileSingerCodeInput.value = code;
 
       if (profileSubPlanBadge) {
-        profileSubPlanBadge.innerHTML = isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE';
+        profileSubPlanBadge.innerHTML = isVip ? '👑 PLANO CANTAAÍ VIP' : (isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE');
       }
       if (btnUpgradePlan) {
         if (isPro) btnUpgradePlan.classList.add('hidden');
@@ -3513,6 +3517,9 @@ document.addEventListener('DOMContentLoaded', function () {
           var updatedProfile = PrompterAuth.getProfile();
           var finalCode = (updatedProfile && updatedProfile.singer_code) ? updatedProfile.singer_code : (newCode ? PrompterAuth.formatSingerCode(newCode) : '');
           if (profileModalCodePill && finalCode) profileModalCodePill.innerText = 'Código: ' + finalCode;
+          if (window.PrompterAuth && typeof window.PrompterAuth.updateUIForAuth === 'function') {
+            window.PrompterAuth.updateUIForAuth();
+          }
           showToast('✅ Nome e @Login atualizados com sucesso!', 'success');
           closeProfileModal();
         }).catch(function (err) {
