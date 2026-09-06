@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       if (titleEl) titleEl.innerText = 'Limite de Músicas Atingido';
       if (descEl) {
-        descEl.innerHTML = 'O <strong>Plano Free</strong> permite gerenciar até <strong>5 músicas</strong> (você já possui ' + currentCount + '). Desbloqueie o <strong>CantaAí PRO</strong> para ter músicas ilimitadas, transposição no palco e sincronização com a banda!';
+        descEl.innerHTML = 'O <strong>Plano Free</strong> permite gerenciar até <strong>5 músicas</strong> (você já possui ' + currentCount + '). Desbloqueie o <strong>CantaAí PRO</strong> para ter músicas e repertórios ilimitados, transposição no palco e recursos avançados!';
       }
     }
 
