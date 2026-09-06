@@ -547,12 +547,12 @@
                     '</div>' +
                     '<div class="form-group">' +
                       '<label>Mercado Pago Public Key (Chave Pública):</label>' +
-                      '<input type="text" id="inputMpPublicKey" name="canta_mp_public_key_custom" autocomplete="off" data-lpignore="true" class="form-control" placeholder="Ex: APP_USR-6b83f0... ou TEST-...">' +
+                      '<input type="text" id="inputMpPublicKey" name="mp_api_pub_token_entry" autocomplete="off" spellcheck="false" data-lpignore="true" data-form-type="other" class="form-control" placeholder="Ex: APP_USR-6b83f0... ou TEST-...">' +
                     '</div>' +
                     '<div class="form-group">' +
                       '<label>Mercado Pago Access Token (Privado):</label>' +
                       '<div style="position: relative; display: flex; align-items: center;">' +
-                        '<input type="password" id="inputMpAccessToken" name="canta_mp_access_token_custom" autocomplete="off" data-lpignore="true" class="form-control" placeholder="Ex: APP_USR-1234567890..." style="font-family: var(--font-mono); padding-right: 42px;">' +
+                        '<input type="text" id="inputMpAccessToken" name="mp_api_sec_token_entry" autocomplete="new-password" spellcheck="false" data-lpignore="true" data-form-type="other" class="form-control" placeholder="Ex: APP_USR-1234567890..." style="font-family: var(--font-mono); padding-right: 42px; -webkit-text-security: disc;">' +
                         '<button type="button" id="btnToggleMpToken" title="Mostrar / Ocultar Chave" style="position: absolute; right: 8px; background: transparent; border: none; font-size: 1.1rem; cursor: pointer; color: #94a3b8; padding: 4px;">👁️</button>' +
                       '</div>' +
                     '</div>' +
@@ -1042,17 +1042,18 @@
         });
       }
 
-      // Mostrar / Ocultar Access Token do Mercado Pago
+      // Mostrar / Ocultar Access Token do Mercado Pago (com segurança total contra autofill)
       var btnToggleToken = document.getElementById('btnToggleMpToken');
       if (btnToggleToken) {
         btnToggleToken.addEventListener('click', function () {
           var inp = document.getElementById('inputMpAccessToken');
           if (inp) {
-            if (inp.type === 'password') {
-              inp.type = 'text';
+            var isHidden = inp.style.webkitTextSecurity !== 'none';
+            if (isHidden) {
+              inp.style.webkitTextSecurity = 'none';
               btnToggleToken.innerText = '🙈';
             } else {
-              inp.type = 'password';
+              inp.style.webkitTextSecurity = 'disc';
               btnToggleToken.innerText = '👁️';
             }
           }
@@ -1084,23 +1085,49 @@
           var elPub = document.getElementById('inputMpPublicKey');
           var elToken = document.getElementById('inputMpAccessToken');
 
+          var rawPub = elPub ? elPub.value.trim() : '';
+          var rawToken = elToken ? elToken.value.trim() : '';
+
+          // Validação: não permitir que um e-mail do navegador seja salvo como Public Key
+          if (rawPub && rawPub.indexOf('@') !== -1) {
+            if (window.showToast) window.showToast('⚠️ A Chave Pública não pode ser um e-mail. Utilize a Public Key do Mercado Pago (ex: APP_USR-... ou TEST-...).', 'warning');
+            rawPub = '';
+            if (elPub) elPub.value = '';
+          }
+
           pricingConfig.monthlyPrice = elMonthly ? parsePrice(elMonthly.value, 39.90) : 39.90;
           pricingConfig.annualPrice = elAnnual ? parsePrice(elAnnual.value, 299.00) : 299.00;
           pricingConfig.mpEnv = elEnv ? elEnv.value : 'production';
-          pricingConfig.mpPublicKey = elPub ? elPub.value.trim() : '';
-          pricingConfig.mpAccessToken = elToken ? elToken.value.trim() : '';
+          pricingConfig.mpPublicKey = rawPub;
+          pricingConfig.mpAccessToken = rawToken;
+
+          // Feedback visual imediato no próprio botão
+          btnSavePricing.disabled = true;
+          btnSavePricing.innerHTML = '⏳ Salvando...';
+          btnSavePricing.style.opacity = '0.85';
 
           PrompterAdmin.saveStoredPricing();
           PrompterAdmin.updateMetrics();
           PrompterAdmin.updateLandingPricingUI();
           PrompterAdmin.checkMpConnectionStatus(false);
 
+          setTimeout(function () {
+            btnSavePricing.innerHTML = '✅ Salvo com Sucesso!';
+            btnSavePricing.style.background = '#10b981';
+            btnSavePricing.style.opacity = '1';
+            setTimeout(function () {
+              btnSavePricing.disabled = false;
+              btnSavePricing.innerHTML = '💾 Salvar Cobrança';
+              btnSavePricing.style.background = '';
+              btnSavePricing.style.opacity = '1';
+            }, 1200);
+          }, 400);
+
           if (pricingConfig.mpAccessToken) {
-            // Valida automaticamente em segundo plano ao salvar
             PrompterAdmin.testMpConnection();
           }
 
-          if (window.showToast) window.showToast('💾 Configurações de cobrança e chaves do Mercado Pago salvas na nuvem!', 'success');
+          if (window.showToast) window.showToast('💾 Configurações de cobrança salvas com sucesso!', 'success');
         });
       }
 
@@ -1160,7 +1187,7 @@
       PrompterAdmin.renderUsersTable();
     },
 
-    openModal: function () {
+    openModal: function (preferredTab) {
       if (!window.PrompterAuth || !window.PrompterAuth.isAdmin()) {
         if (window.showToast) window.showToast('Acesso restrito ao perfil de Desenvolvedor / CEO.', 'warning');
         return;
@@ -1171,6 +1198,7 @@
         searchQuery = '';
         var sInput = document.getElementById('adminSearchInput');
         if (sInput) sInput.value = '';
+        this.switchTab(preferredTab || 'clients');
         this.loadDashboardData();
         this.renderCouponsTable();
         this.loadPricingForm();
@@ -2003,6 +2031,13 @@
       if (pM) pM.value = pricingConfig.monthlyPrice || 39.90;
       if (pA) pA.value = pricingConfig.annualPrice || 299.00;
       if (env) env.value = pricingConfig.mpEnv || 'production';
+
+      // Higienizar caso um e-mail tenha sido salvo anteriormente por autofill indevido do navegador
+      if (pricingConfig.mpPublicKey && pricingConfig.mpPublicKey.indexOf('@') !== -1) {
+        pricingConfig.mpPublicKey = '';
+        PrompterAdmin.saveStoredPricing();
+      }
+
       if (pubKey) pubKey.value = pricingConfig.mpPublicKey || '';
       if (accToken) accToken.value = pricingConfig.mpAccessToken || '';
 
