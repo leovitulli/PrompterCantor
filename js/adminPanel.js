@@ -137,7 +137,10 @@
           // Normalizar código legado de leovitulli@gmail.com
           allUserData.forEach(function (u) {
             if (u.email && u.email.toLowerCase() === 'leovitulli@gmail.com') {
-              if (!u.singer_code || u.singer_code.startsWith('#') || u.singer_code === '#CANTOR-3DEB6' || u.singer_code === '#DEV-ADMIN') {
+              var customH = localStorage.getItem('cantaai_user_custom_handle');
+              if (customH) {
+                u.singer_code = customH;
+              } else if (!u.singer_code || u.singer_code.startsWith('#') || u.singer_code === '#CANTOR-3DEB6' || u.singer_code === '#DEV-ADMIN') {
                 u.singer_code = '@leovitulli';
               }
             }
@@ -1093,6 +1096,9 @@
       var loggedEmail = (authUser && authUser.email) ? authUser.email.toLowerCase() : (authProfile && authProfile.email ? authProfile.email.toLowerCase() : '');
 
       if (cleanEmail && cleanEmail === loggedEmail) {
+        try {
+          localStorage.setItem('cantaai_user_custom_handle', code);
+        } catch(e) {}
         if (!authProfile) authProfile = {};
         authProfile.display_name = name;
         authProfile.singer_code = code;
@@ -1168,12 +1174,13 @@
 
       var devEmail = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser ? currentUser.email : 'admin@cantaaipro.com');
       var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : (currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'Administrador');
-      var devCode = (currentProfile && currentProfile.singer_code) ? currentProfile.singer_code : (devEmail ? '@' + devEmail.split('@')[0] : '@admin');
+      var customH = localStorage.getItem('cantaai_user_custom_handle');
+      var devCode = customH || (currentProfile && currentProfile.singer_code) || (devEmail ? '@' + devEmail.split('@')[0] : '@admin');
 
       if (devEmail.toLowerCase() === 'leovitulli@gmail.com') {
         if (!devCode || devCode.startsWith('#') || devCode === '#CANTOR-3DEB6' || devCode === '#DEV-ADMIN') {
-          devCode = '@leovitulli';
-          if (currentProfile) currentProfile.singer_code = '@leovitulli';
+          devCode = customH || '@leovitulli';
+          if (currentProfile) currentProfile.singer_code = devCode;
         }
       }
 
@@ -1254,7 +1261,10 @@
                     }
 
                     if (sEmail === 'leovitulli@gmail.com') {
-                      if (!sObj.singer_code || sObj.singer_code.startsWith('#') || sObj.singer_code === '#CANTOR-3DEB6' || sObj.singer_code === '#DEV-ADMIN') {
+                      var customH2 = localStorage.getItem('cantaai_user_custom_handle');
+                      if (customH2) {
+                        sObj.singer_code = customH2;
+                      } else if (!sObj.singer_code || sObj.singer_code.startsWith('#') || sObj.singer_code === '#CANTOR-3DEB6' || sObj.singer_code === '#DEV-ADMIN') {
                         sObj.singer_code = '@leovitulli';
                       }
                     }
@@ -1299,10 +1309,13 @@
                 return (p.id && u.id === p.id) || (pEmail && u.email && u.email.trim().toLowerCase() === pEmail);
               });
 
-              var effectiveCode = p.singer_code || (existIdx >= 0 ? allUserData[existIdx].singer_code : ('@' + p.email.split('@')[0]));
+              var customH3 = localStorage.getItem('cantaai_user_custom_handle');
+              var effectiveCode = (pEmail === 'leovitulli@gmail.com' && customH3)
+                ? customH3
+                : (p.singer_code || (existIdx >= 0 ? allUserData[existIdx].singer_code : ('@' + p.email.split('@')[0])));
               if (pEmail === 'leovitulli@gmail.com') {
                 if (!effectiveCode || effectiveCode.startsWith('#') || effectiveCode === '#CANTOR-3DEB6' || effectiveCode === '#DEV-ADMIN') {
-                  effectiveCode = '@leovitulli';
+                  effectiveCode = customH3 || '@leovitulli';
                 }
               }
 

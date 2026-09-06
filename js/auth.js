@@ -301,6 +301,19 @@
         ? Promise.resolve(cleanId)
         : (function () {
             var formattedCode = PrompterAuth.formatSingerCode(cleanId);
+            
+            // Verificação imediata no login customizado do dispositivo
+            var customH = localStorage.getItem('cantaai_user_custom_handle');
+            if (customH && customH.toLowerCase() === formattedCode.toLowerCase()) {
+              var rU = localStorage.getItem('prompter_auth_user');
+              if (rU) {
+                try {
+                  var pU = JSON.parse(rU);
+                  if (pU && pU.email) return Promise.resolve(pU.email);
+                } catch(e) {}
+              }
+            }
+
             return sb.from('profiles').select('email').eq('singer_code', formattedCode).single().then(function (res) {
               if (res.data && res.data.email) return res.data.email;
               throw new Error('Nenhum cantor encontrado com o login "' + formattedCode + '".');
@@ -415,7 +428,8 @@
       var userEmail = currentUser ? currentUser.email : '';
       if (!userId && !userEmail) return Promise.resolve(null);
 
-      var defaultCode = (userEmail === 'leovitulli@gmail.com') ? '@leovitulli' : ('@' + (userEmail ? userEmail.split('@')[0] : ('cantor_' + Math.floor(1000 + Math.random() * 9000))));
+      var userCustomHandle = localStorage.getItem('cantaai_user_custom_handle');
+      var defaultCode = userCustomHandle || ((userEmail === 'leovitulli@gmail.com') ? '@leovitulli' : ('@' + (userEmail ? userEmail.split('@')[0] : ('cantor_' + Math.floor(1000 + Math.random() * 9000)))));
 
       var defaultProfile = {
         id: userId || 'local_user',
@@ -435,8 +449,10 @@
             return p.id === userId || (p.email && userEmail && p.email.toLowerCase() === userEmail.toLowerCase());
           });
           if (found) {
-            // Normalizar código legado (#CANTOR-3DEB6 ou #DEV-ADMIN) para o handle do cantor
-            if (found.email && found.email.toLowerCase() === 'leovitulli@gmail.com') {
+            // Se o usuário já possui um login customizado salvo localmente, preserva como autoridade máxima
+            if (userCustomHandle) {
+              found.singer_code = userCustomHandle;
+            } else if (found.email && found.email.toLowerCase() === 'leovitulli@gmail.com') {
               if (!found.singer_code || found.singer_code.startsWith('#') || found.singer_code === '#CANTOR-3DEB6' || found.singer_code === '#DEV-ADMIN') {
                 found.singer_code = '@leovitulli';
               }
@@ -544,7 +560,12 @@
       var cleanCode = this.formatSingerCode(singerCode || '');
       
       currentProfile.display_name = name;
-      if (cleanCode) currentProfile.singer_code = cleanCode;
+      if (cleanCode) {
+        currentProfile.singer_code = cleanCode;
+        try {
+          localStorage.setItem('cantaai_user_custom_handle', cleanCode);
+        } catch(e) {}
+      }
 
       this.saveSession(currentUser, currentProfile);
       this.updateUIForAuth();
@@ -552,16 +573,41 @@
       // Sincronizar também no cache do adminPanel (allUserData / canta_ai_admin_users)
       try {
         var rawUsers = localStorage.getItem('canta_ai_admin_users');
-        if (rawUsers) {
-          var uList = JSON.parse(rawUsers);
-          var myIdx = uList.findIndex(function(u) {
+        var uList = rawUsers ? JSON.parse(rawUsers) : [];
+        var myIdx = uList.findIndex(function(u) {
+          return (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                 (currentUser.id && u.id === currentUser.id);
+        });
+        if (myIdx >= 0) {
+          uList[myIdx].name = name;
+          if (cleanCode) uList[myIdx].singer_code = cleanCode;
+        } else {
+          uList.unshift({
+            id: currentUser.id || 'user-' + Date.now(),
+            name: name,
+            email: currentUser.email || '',
+            singer_code: cleanCode || '@cantor',
+            plan_tier: currentProfile.plan_tier || 'pro',
+            plan_type: currentProfile.plan_type || '💎 PRO ANUAL',
+            is_online: true,
+            status_text: '🟢 Conectado e Ativo',
+            last_seen: 'Agora mesmo'
+          });
+        }
+        localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
+
+        // Sincronizar na memória ativa do adminPanel se estiver aberto
+        if (window.PrompterAdmin && Array.isArray(window.PrompterAdmin.allUserData)) {
+          var admIdx = window.PrompterAdmin.allUserData.findIndex(function(u) {
             return (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
                    (currentUser.id && u.id === currentUser.id);
           });
-          if (myIdx >= 0) {
-            uList[myIdx].name = name;
-            if (cleanCode) uList[myIdx].singer_code = cleanCode;
-            localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
+          if (admIdx >= 0) {
+            window.PrompterAdmin.allUserData[admIdx].name = name;
+            if (cleanCode) window.PrompterAdmin.allUserData[admIdx].singer_code = cleanCode;
+            if (typeof window.PrompterAdmin.renderUsersTable === 'function') {
+              window.PrompterAdmin.renderUsersTable();
+            }
           }
         }
       } catch(e) {}
@@ -574,7 +620,7 @@
         };
         if (cleanCode) payload.singer_code = cleanCode;
 
-        // Atualizar tanto por ID quanto por email
+        // Atualizar tanto por ID quanto por email no profiles
         sb.from('profiles').update(payload).eq('id', currentUser.id).then(function(res) {
           if (res && res.error) {
             sb.from('profiles').update(payload).eq('email', currentUser.email).catch(function() {});
@@ -594,6 +640,24 @@
             obj.name = name;
             if (cleanCode) obj.singer_code = cleanCode;
             sb.from('songs').update({ title: name, content: JSON.stringify(obj) }).eq('id', row.id).catch(function() {});
+          } else {
+            var newRegObj = {
+              id: currentUser.id,
+              name: name,
+              email: currentUser.email,
+              singer_code: cleanCode || '@cantor',
+              plan_tier: currentProfile.plan_tier || 'pro',
+              plan_type: currentProfile.plan_type || '💎 PRO ANUAL',
+              is_online: true,
+              status_text: '🟢 Conectado e Ativo',
+              last_seen: 'Hoje'
+            };
+            sb.from('songs').insert({
+              repertoire_id: regId,
+              title: name,
+              artist: currentUser.email,
+              content: JSON.stringify(newRegObj)
+            }).catch(function() {});
           }
         }).catch(function() {});
       }

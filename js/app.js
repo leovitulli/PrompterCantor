@@ -3448,9 +3448,10 @@ document.addEventListener('DOMContentLoaded', function () {
       var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
       var isPro = (profile && profile.plan_tier === 'pro') || email === 'leovitulli@gmail.com';
       var isAdm = PrompterAuth.isAdmin();
-      var code = (profile && profile.singer_code) ? profile.singer_code : ('@' + (email ? email.split('@')[0] : 'cantor'));
-      if (email === 'leovitulli@gmail.com' && (!profile || !profile.singer_code || profile.singer_code.startsWith('#'))) {
-        code = '@leovitulli';
+      var customHandle = localStorage.getItem('cantaai_user_custom_handle');
+      var code = customHandle || (profile && profile.singer_code) || ('@' + (email ? email.split('@')[0] : 'cantor'));
+      if (email === 'leovitulli@gmail.com' && (!code || code.startsWith('#'))) {
+        code = customHandle || '@leovitulli';
       }
       var displayName = (profile && profile.display_name) ? profile.display_name : (email.split('@')[0] || 'Cantor');
       displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
@@ -3497,6 +3498,9 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
         PrompterAuth.saveProfileDetails(newName, newCode).then(function () {
+          var updatedProfile = PrompterAuth.getProfile();
+          var finalCode = (updatedProfile && updatedProfile.singer_code) ? updatedProfile.singer_code : (newCode ? PrompterAuth.formatSingerCode(newCode) : '');
+          if (profileModalCodePill && finalCode) profileModalCodePill.innerText = 'Código: ' + finalCode;
           showToast('✅ Nome e @Login atualizados com sucesso!', 'success');
           closeProfileModal();
         }).catch(function (err) {
