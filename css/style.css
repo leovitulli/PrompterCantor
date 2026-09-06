@@ -2442,11 +2442,11 @@ textarea {
     width: 100% !important;
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     gap: 0.4rem !important;
-    overflow-x: auto !important;
-    padding-bottom: 3px !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow: visible !important;
+    padding-bottom: 2px !important;
+    position: relative !important;
   }
 
   .header-actions::-webkit-scrollbar {
@@ -2454,14 +2454,64 @@ textarea {
   }
 
   .header-actions .btn {
-    padding: 0.4rem 0.75rem !important;
+    padding: 0.4rem 0.65rem !important;
     font-size: 0.8rem !important;
     flex: 0 0 auto !important;
     white-space: nowrap !important;
+    touch-action: manipulation !important;
   }
 
   .header-actions .btn-text {
     display: inline !important;
+  }
+
+  .dropdown-add-container,
+  .user-profile-container {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dropdown-add-menu {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    left: 0 !important;
+    right: auto !important;
+    min-width: 220px !important;
+    max-width: calc(100vw - 24px) !important;
+    z-index: 100000 !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .user-profile-menu {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    left: auto !important;
+    width: min(320px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
+    z-index: 100000 !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .user-profile-trigger {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    padding: 3px 8px 3px 4px !important;
+    gap: 6px !important;
+  }
+
+  .user-profile-email {
+    max-width: 85px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .user-avatar-initial {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.75rem !important;
   }
 
   /* Banner de Status do Plano SaaS no Mobile */
@@ -3376,10 +3426,12 @@ textarea {
   }
 
   .user-profile-menu {
-    right: -6px !important;
+    right: 0 !important;
+    left: auto !important;
     width: calc(100vw - 20px) !important;
     max-width: calc(100vw - 20px) !important;
     min-width: 0 !important;
+    z-index: 100000 !important;
   }
 
   .prompter-text-content {
