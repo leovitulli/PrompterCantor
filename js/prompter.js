@@ -104,6 +104,16 @@ var Prompter = {
     var btnScrollToTop = document.getElementById('btnScrollToTop');
     if (btnScrollToTop) {
       this.bindFastTouch(btnScrollToTop, function() { self.scrollToTop(); });
+      var scrollAreaEl = document.getElementById('prompterScrollArea');
+      if (scrollAreaEl) {
+        scrollAreaEl.addEventListener('scroll', function() {
+          if (scrollAreaEl.scrollTop > 220) {
+            btnScrollToTop.classList.add('visible');
+          } else {
+            btnScrollToTop.classList.remove('visible');
+          }
+        }, { passive: true });
+      }
     }
 
  
@@ -370,6 +380,9 @@ var Prompter = {
 
     // 2. Reseta o acumulador subpixel para zero absoluto
     this.subpixelScroll = 0;
+
+    var btnScrollToTop = document.getElementById('btnScrollToTop');
+    if (btnScrollToTop) btnScrollToTop.classList.remove('visible');
 
     // 3. Move para o topo imediatamente
     if (area) {

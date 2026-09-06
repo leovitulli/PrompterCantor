@@ -1051,6 +1051,9 @@ document.addEventListener('DOMContentLoaded', function () {
     state.currentSong = song;
     saveActiveState('prompter', { songId: song.id, repertoireId: song.repertoireId });
 
+    var btnScrollToTop = document.getElementById('btnScrollToTop');
+    if (btnScrollToTop) btnScrollToTop.classList.remove('visible');
+
     // Ocultar 100% o cabeçalho, abas e containers da página principal
     var appHeader = document.getElementById('appHeader');
     var navTabs = document.getElementById('navTabs');
