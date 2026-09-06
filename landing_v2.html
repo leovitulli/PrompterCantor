@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CantaAí PRO — Teleprompter & Gestão Harmônica para Cantores e Bandas</title>
+  <title>CantaAí PRO — Teleprompter Profissional & Gestão Harmônica para Cantores e Bandas</title>
   <meta name="description" content="A plataforma definitiva para apresentações ao vivo. Teleprompter com rolagem contínua suave, transposição de tom em tempo real, YouTube dock integrado e gestão profissional de setlists.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z'/><path d='M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z'/></svg>">
 
@@ -16,8 +16,8 @@
 </head>
 <body>
 
-  <!-- Ambient Background System -->
-  <div class="ambient-bg">
+  <!-- Ambient Light System -->
+  <div class="ambient-canvas">
     <div class="ambient-grid"></div>
   </div>
 
@@ -27,31 +27,31 @@
   <header class="site-header">
     <div class="container">
       <nav class="navbar">
-        <a href="landing_v2.html" class="brand-logo">
-          <div class="brand-icon-wrapper">
+        <a href="landing_v2.html" class="brand-link">
+          <div class="brand-icon">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
               <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
             </svg>
           </div>
           <span>CantaAí</span>
-          <span class="badge-pro-nav">PRO</span>
+          <span class="brand-pro-tag">PRO</span>
         </a>
 
-        <ul class="nav-links">
-          <li><a href="#simulator">Simulador Ao Vivo</a></li>
-          <li><a href="#ecossistema">Ecossistema</a></li>
-          <li><a href="#dispositivos">Multi-Telas</a></li>
+        <ul class="nav-menu">
+          <li><a href="#demonstracao">Demonstração</a></li>
+          <li><a href="#recursos">Recursos</a></li>
+          <li><a href="#dispositivos">Multi-Dispositivos</a></li>
           <li><a href="#comparativo">Comparativo</a></li>
-          <li><a href="#precos">Planos & Preços</a></li>
+          <li><a href="#planos">Planos</a></li>
           <li><a href="#faq">Dúvidas</a></li>
         </ul>
 
-        <div class="nav-cta-group">
+        <div class="nav-actions">
           <a href="index.html?auth=signin" class="btn-nav-ghost">Entrar</a>
           <a href="index.html?auth=signup" class="btn-primary">
             <span>Começar Grátis</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </a>
@@ -61,154 +61,118 @@
   </header>
 
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  HERO SECTION COM INTERAÇÃO AO VIVO                                    -->
+  <!--  HERO SECTION                                                           -->
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
   <section class="hero-section">
     <div class="container">
       
-      <div class="hero-badge-pill">
-        <span class="pulse-beacon"></span>
-        <span>Tecnologia SaaS em Tempo Real para Cantores & Bandas</span>
+      <div class="hero-pill-beacon">
+        <span class="beacon-pulse"></span>
+        <span>Sistema SaaS de Teleprompter & Gestão Harmônica</span>
       </div>
 
-      <h1 class="hero-title">
-        Diga adeus às pastas de papel.<br>
-        <span class="hero-title-highlight">Sua performance ao vivo com precisão de elite.</span>
+      <h1 class="hero-heading">
+        Chega de pastas de papel.<br>
+        <span class="hero-heading-gradient">O seu show ao vivo no nível PRO.</span>
       </h1>
 
-      <p class="hero-subtitle">
-        Teleprompter profissional com transposição harmônica em frações de segundo, rolagem contínua subpixel, dock com áudio guia do YouTube e sincronização instantânea em qualquer tablet ou smartphone.
+      <p class="hero-subhead">
+        Teleprompter profissional com rolagem contínua fluida, transposição instantânea de acordes, dock com áudio guia do YouTube e alta legibilidade para cantores e instrumentistas.
       </p>
 
-      <div class="hero-actions">
-        <a href="index.html?auth=signup" class="btn-primary btn-hero-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <div class="hero-buttons-row">
+        <a href="index.html?auth=signup" class="btn-primary" style="font-size: 1.05rem; padding: 14px 28px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
-          <span>Criar Conta Gratuita (7 Dias PRO Inclusos)</span>
+          <span>Criar Minha Conta Grátis (7 Dias PRO Inclusos)</span>
         </a>
-        <a href="#simulator" class="btn-secondary btn-hero-secondary">
+        <a href="index.html?action=app" class="btn-secondary" style="font-size: 1.05rem; padding: 14px 28px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
-          <span>Testar Simulador Abaixo</span>
+          <span>Experimentar no Navegador</span>
         </a>
       </div>
 
-      <!-- Trust Stats Bar -->
+      <!-- Trust Pillars Bar -->
       <div class="trust-bar">
-        <div class="trust-item">
-          <span class="trust-value"><span class="trust-value-highlight">0</span> ms</span>
-          <span class="trust-label">Latência Harmônica</span>
+        <div class="trust-stat">
+          <div class="trust-stat-val">100<span>%</span></div>
+          <div class="trust-stat-lbl">Fluído & Subpixel</div>
         </div>
-        <div class="trust-item">
-          <span class="trust-value">100<span class="trust-value-highlight">%</span></span>
-          <span class="trust-label">Fluidez na Rolagem</span>
+        <div class="trust-stat">
+          <div class="trust-stat-val"><span>0</span>s</div>
+          <div class="trust-stat-lbl">Delay na Transposição</div>
         </div>
-        <div class="trust-item">
-          <span class="trust-value"><span class="trust-value-highlight">OLED</span> Contrast</span>
-          <span class="trust-label">Zero Fadiga Visual</span>
+        <div class="trust-stat">
+          <div class="trust-stat-val">Multi-<span>Telas</span></div>
+          <div class="trust-stat-lbl">Tablet, Smartphone & PC</div>
         </div>
-        <div class="trust-item">
-          <span class="trust-value"><span class="trust-value-highlight">Universal</span></span>
-          <span class="trust-label">iPad, Android, iPhone, PC</span>
+        <div class="trust-stat">
+          <div class="trust-stat-val">OLED <span>#000</span></div>
+          <div class="trust-stat-lbl">Zero Fadiga Visual</div>
         </div>
       </div>
 
       <!-- ═════════════════════════════════════════════════════════════════════ -->
-      <!--  SIMULADOR INTERATIVO AO VIVO DO TELEPROMPTER                         -->
+      <!--  HERO VISUAL: O TELEPROMPTER REAL DO SISTEMA                          -->
       <!-- ═════════════════════════════════════════════════════════════════════ -->
-      <div id="simulator" class="interactive-simulator-wrapper">
-        <div class="simulator-window">
+      <div id="demonstracao" class="hero-mockup-wrapper">
+        <div class="hero-window-frame">
           
-          <div class="simulator-titlebar">
-            <div class="simulator-window-dots">
-              <span class="window-dot dot-red"></span>
-              <span class="window-dot dot-yellow"></span>
-              <span class="window-dot dot-green"></span>
+          <div class="window-header-bar">
+            <div class="window-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
             </div>
-            <div class="simulator-status-badge">
-              <span class="pulse-beacon"></span>
-              <span>Motor de Rolagem Subpixel Ativo</span>
-            </div>
-          </div>
-
-          <div class="simulator-controls-bar">
-            <div class="simulator-group">
-              <button id="simBtnPlay" class="sim-btn sim-btn-play" title="Iniciar ou pausar rolagem contínua">
-                <span id="simPlayIcon">▶</span> <span id="simPlayText">Iniciar Rolagem</span>
-              </button>
-            </div>
-
-            <div class="simulator-group">
-              <span class="sim-label">Tom:</span>
-              <button id="btnKeyDown" class="sim-btn" title="Descer meio-tom">- ½</button>
-              <span id="simBadgeKey" class="sim-badge-key">Gm (Sol Menor)</span>
-              <button id="btnKeyUp" class="sim-btn" title="Subir meio-tom">+ ½</button>
-            </div>
-
-            <div class="simulator-group">
-              <span class="sim-label">Velocidade:</span>
-              <button id="btnSpeed1" class="sim-btn">1x</button>
-              <button id="btnSpeed2" class="sim-btn sim-btn-play">2x</button>
-              <button id="btnSpeed3" class="sim-btn">3x</button>
-            </div>
-
-            <div class="simulator-group">
-              <span class="sim-label">Fonte:</span>
-              <button id="btnFontDown" class="sim-btn">A-</button>
-              <button id="btnFontUp" class="sim-btn">A+</button>
+            <div class="window-live-badge">
+              <span class="beacon-pulse"></span>
+              <span>Ao Vivo em Tempo Real</span>
             </div>
           </div>
 
-          <div id="simViewport" class="simulator-viewport">
-            <div class="simulator-meta-header">
-              <div>
-                <div class="sim-song-title">
-                  <span>🎤 Resignação</span>
-                  <span class="sim-song-artist">• Geraldo Filme</span>
-                </div>
-              </div>
-              <div class="sim-song-info-tags">
-                <span class="sim-tag">Samba Tradicional</span>
-                <span class="sim-tag">BPM: 92</span>
-                <span class="sim-tag">4/4</span>
-              </div>
+          <div class="prompter-nav-row">
+            <span class="prompter-back-btn">‹ Voltar</span>
+            <div class="prompter-track-title">
+              <span>🎤 Resignação • Geraldo Filme</span>
             </div>
-
-            <div id="simLyrics" class="simulator-lyrics-scroll">
-              <span class="sim-chord" data-chord="Dm">[ Dm ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Gm">[ Gm ]</span><br>
-              Sinto que eu estou me atormentando<br>
-              <span class="sim-chord" data-chord="A7">[ A7 ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Dm">[ Dm ]</span><br>
-              E aos poucos me acabando por te amar em vão...<br><br>
-
-              <span class="sim-chord" data-chord="D7">[ D7 ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Gm">[ Gm ]</span><br>
-              Mas guardo comigo uma esperança<br>
-              <span class="sim-chord" data-chord="A7">[ A7 ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Dm">[ Dm ]</span><br>
-              De um dia ver o meu amor voltar...<br><br>
-
-              <span class="sim-chord" data-chord="Gm">[ Gm ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Dm">[ Dm ]</span><br>
-              Eu sei que a vida é uma ilusão<br>
-              <span class="sim-chord" data-chord="A7">[ A7 ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Dm">[ Dm ]</span><br>
-              Que a mágoa corrói o coração...<br><br>
-
-              <span class="sim-chord" data-chord="D7">[ D7 ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Gm">[ Gm ]</span><br>
-              Mas quem canta o samba tem a paz<br>
-              <span class="sim-chord" data-chord="A7">[ A7 ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sim-chord" data-chord="Dm">[ Dm ]</span><br>
-              Que a tristeza nunca mais desfaz.<br>
+            <div class="prompter-nav-meta">
+              <span class="badge-key-highlight">TOM: Dm (Dó Menor)</span>
+              <span class="badge-pos-pill">RITMO: Samba</span>
+              <span class="badge-pos-pill">1 / 33</span>
             </div>
           </div>
 
-          <div class="simulator-footer-hint">
-            <div class="hint-interactive">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              <span>Demonstração interativa real: altere o tom ou a velocidade nos botões acima para ver a transposição harmônica instantânea.</span>
+          <div class="prompter-control-row">
+            <div class="btn-prompter-play">
+              <span>▶ Iniciar Rolagem</span>
             </div>
-            <span>Base de Dados CantaAí PRO</span>
+            <div class="prompter-group-tools">
+              <span>Velocidade: <strong class="tool-chip">3x</strong></span>
+              <span>Fonte: <strong class="tool-chip">24px</strong></span>
+              <span class="tool-chip">⛶ Tela Cheia</span>
+            </div>
+          </div>
+
+          <div class="prompter-oled-screen">
+            <div class="floating-youtube-dock">
+              <span>🎵 YouTube Dock: Áudio Original Geraldo Filme (1974)</span>
+              <span class="dock-yt-pill">● Sincronizado</span>
+            </div>
+
+            <div class="lyrics-stream-box">
+              <div><span class="chord-chip">[ Dm ]</span><span class="chord-gap"></span><span class="chord-chip">[ Gm ]</span></div>
+              <div style="font-weight: 600;">Sinto que eu estou me atormentando</div>
+              <div><span class="chord-chip">[ A7 ]</span><span class="chord-gap"></span><span class="chord-chip">[ Dm ]</span></div>
+              <div style="font-weight: 600;">E aos poucos me acabando por te amar em vão...</div>
+              <br>
+              <div><span class="chord-chip">[ D7 ]</span><span class="chord-gap"></span><span class="chord-chip">[ Gm ]</span></div>
+              <div style="font-weight: 600;">Mas guardo comigo uma esperança</div>
+              <div><span class="chord-chip">[ A7 ]</span><span class="chord-gap"></span><span class="chord-chip">[ Dm ]</span></div>
+              <div style="font-weight: 600;">De um dia ver o meu amor voltar...</div>
+            </div>
           </div>
 
         </div>
@@ -218,500 +182,78 @@
   </section>
 
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  TOUR DE PRODUTO: IMAGENS REAIS DO SISTEMA                              -->
+  <!--  RECURSOS DE ENGENHARIA                                                 -->
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <section id="ecossistema" class="product-tour-container">
+  <section id="recursos" class="features-section">
     <div class="container">
       
-      <div class="section-headline">
-        <span class="section-pill">Tour de Produto Real</span>
-        <h2 class="section-title">Construído para a rotina exigente de músicos profissionais</h2>
-        <p class="section-description">
-          Explore as telas autênticas do CantaAí PRO. Sem ilustrações conceituais ou mockups genéricos — aqui você vê a ferramenta exatamente como ela roda nos seus ensaios e apresentações.
+      <div class="section-headline-block">
+        <span class="section-pill-tag">Tecnologia para Artistas</span>
+        <h2 class="section-heading-title">Tudo o que você precisa antes, durante e após o show</h2>
+        <p class="section-heading-sub">
+          Desenvolvido por quem entende a dinâmica e a rotina real de cantores e instrumentistas.
         </p>
       </div>
 
-      <!-- Abas de Navegação das Telas Reais do Sistema -->
-      <div class="tour-nav-tabs">
-        <button class="tour-tab-btn active" data-target="tourPrompter">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          <span>Teleprompter Ao Vivo</span>
-        </button>
-        <button class="tour-tab-btn" data-target="tourRepertorios">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>Repertórios & Sets</span>
-        </button>
-        <button class="tour-tab-btn" data-target="tourMusicas">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          <span>Biblioteca & Busca</span>
-        </button>
-        <button class="tour-tab-btn" data-target="tourEditor">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          <span>Editor Harmônico</span>
-        </button>
-        <button class="tour-tab-btn" data-target="tourImprimir">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          <span>Relatório Técnico PDF</span>
-        </button>
-      </div>
-
-      <!-- Painel 1: Prompter (Frame Real em Alta Fidelidade) -->
-      <div id="tourPrompter" class="tour-content-panel active">
-        <div class="tour-appweb-col">
-          <div class="appweb-frame prompter-appweb-frame">
-            <div class="appweb-topbar">
-              <span class="appweb-btn-back">‹ Voltar</span>
-              <div class="appweb-song-title-center">
-                <span>🎤 Resignação • Geraldo Filme</span>
-              </div>
-              <div class="appweb-topbar-right">
-                <span class="appweb-key-chip">Gm (Sol Menor) ▾</span>
-                <div class="appweb-nav-pill">
-                  <span>‹</span>
-                  <span class="appweb-pos">1 / 33</span>
-                  <span>›</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="appweb-controls-bar">
-              <div class="appweb-cta-scroll">
-                <span>▶ Iniciar Rolagem</span>
-              </div>
-              <div class="appweb-speed-box">
-                <span class="appweb-speed-lbl">Velocidade:</span>
-                <span class="appweb-circle-btn">-</span>
-                <span class="appweb-speed-val">3x</span>
-                <span class="appweb-circle-btn">+</span>
-              </div>
-              <div class="appweb-font-box">
-                <span class="appweb-font-btn">A-</span>
-                <span class="appweb-font-val">24px</span>
-                <span class="appweb-font-btn">A+</span>
-              </div>
-              <div class="appweb-btn-fullscreen">⛶</div>
-            </div>
-
-            <div class="appweb-prompter-screen">
-              <div class="appweb-youtube-floating-dock">
-                <span>🎵 YouTube Dock: Áudio Original Geraldo Filme (1974)</span>
-                <span class="yt-live-dot">● Sincronizado</span>
-              </div>
-
-              <div class="appweb-lyrics-stream">
-                <div class="lyrics-line-chord"><span class="chord">[ Dm ]</span><span class="chord-spacing"></span><span class="chord">[ Gm ]</span></div>
-                <div class="lyrics-line-text">Sinto que eu estou me atormentando</div>
-                <div class="lyrics-line-chord"><span class="chord">[ A7 ]</span><span class="chord-spacing"></span><span class="chord">[ Dm ]</span></div>
-                <div class="lyrics-line-text">E aos poucos me acabando por te amar em vão...</div>
-                <div class="lyrics-line-chord"><span class="chord">[ D7 ]</span><span class="chord-spacing"></span><span class="chord">[ Gm ]</span></div>
-                <div class="lyrics-line-text">Mas guardo comigo uma esperança</div>
-                <div class="lyrics-line-chord"><span class="chord">[ A7 ]</span><span class="chord-spacing"></span><span class="chord">[ Dm ]</span></div>
-                <div class="lyrics-line-text">De um dia ver o meu amor voltar...</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tour-details-box">
-          <span class="tour-feature-tag">Módulo de Apresentação</span>
-          <h3 class="tour-title">Controle Absoluto Durante a Apresentação</h3>
-          <p class="tour-text">
-            Projetado para leitura instantânea sob holofotes e iluminação desafiadora. Rolagem contínua fluida, atalhos de teclado e compatibilidade com pedais Bluetooth de virada de página.
-          </p>
-          <ul class="tour-bullets">
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Fundo OLED Preto Puro (#000):</strong> Máximo contraste e economia de bateria em tablets.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>YouTube Dock Flutuante:</strong> Áudio de referência original para conferir tom, andamento e introdução.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Rolagem com Velocidade Adaptativa:</strong> De 1x a 5x com incremento subpixel.</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Painel 2: Repertórios (Frame Real com Lista Autêntica do Appweb) -->
-      <div id="tourRepertorios" class="tour-content-panel">
-        <div class="tour-appweb-col">
-          <div class="appweb-frame repertoire-appweb-frame">
-            <div class="appweb-rep-header">
-              <span class="appweb-btn-back">‹ Repertórios</span>
-              <div class="appweb-rep-meta">
-                <div class="appweb-rep-title">SAMBA</div>
-                <div class="appweb-rep-count">33 músicas cadastradas</div>
-              </div>
-            </div>
-            <div class="appweb-rep-actionbar">
-              <span class="rep-action-chip">🔤 Ordem A-Z</span>
-              <span class="rep-action-chip">🖨️ Imprimir</span>
-              <span class="rep-action-chip">⚡ Baixar</span>
-            </div>
-            <div class="appweb-rep-songlist">
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">01</span>
-                  <div class="rep-info">
-                    <div class="rep-title">ALGUMA COISA</div>
-                    <div class="rep-artist">🎤 Sem Compromisso • ⚡</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">Gm</span>
-              </div>
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">02</span>
-                  <div class="rep-info">
-                    <div class="rep-title">AMOR DE VERDADE</div>
-                    <div class="rep-artist">🎤 Roberto Ribeiro • ⚡</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">C</span>
-              </div>
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">03</span>
-                  <div class="rep-info">
-                    <div class="rep-title">AMOR E FESTANÇA</div>
-                    <div class="rep-artist">🎤 Beth Carvalho • ⚡</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">S/Tom</span>
-              </div>
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">04</span>
-                  <div class="rep-info">
-                    <div class="rep-title">BAIXA ESSA GUARDA</div>
-                    <div class="rep-artist">🎤 Grupo Revelação • ⚡</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">F</span>
-              </div>
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">05</span>
-                  <div class="rep-info">
-                    <div class="rep-title">BORBOLETA CEGA</div>
-                    <div class="rep-artist">🎤 Jorge Aragão • ⚡</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">C</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tour-details-box">
-          <span class="tour-feature-tag">Organização Profissional</span>
-          <h3 class="tour-title">Setlists Organizados para Cada Tipo de Evento</h3>
-          <p class="tour-text">
-            Separe seus shows por estilo, duração ou cliente (ex: Sambas, MPB Acústico, Casamentos, Bares). Alterne de repertório com 1 toque.
-          </p>
-          <ul class="tour-bullets">
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Reordenação Drag & Drop:</strong> Mude a ordem das músicas em segundos conforme o público reage.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Contador de Músicas & Duração Estimada:</strong> Tenha precisão no tempo de cada entrada.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Detecção de Duplicadas:</strong> Evite repetir faixas acidentalmente no mesmo set.</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Painel 3: Músicas (Frame Real com Busca Indexada) -->
-      <div id="tourMusicas" class="tour-content-panel">
-        <div class="tour-appweb-col">
-          <div class="appweb-frame">
-            <div class="appweb-search-bar">
-              <div class="appweb-search-input-fake">🔍 Buscar repertório, música, tom ou artista...</div>
-            </div>
-            <div class="appweb-rep-actionbar">
-              <span class="rep-action-chip" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald-light); border-color: rgba(16, 185, 129, 0.3);">Todos (269)</span>
-              <span class="rep-action-chip">Sambas (33)</span>
-              <span class="rep-action-chip">Pagode (45)</span>
-              <span class="rep-action-chip">MPB (52)</span>
-            </div>
-            <div class="appweb-rep-songlist">
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">♪</span>
-                  <div class="rep-info">
-                    <div class="rep-title">DISRITMIA</div>
-                    <div class="rep-artist">🎤 Martinho da Vila • Samba • BPM 94</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">D</span>
-              </div>
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">♪</span>
-                  <div class="rep-info">
-                    <div class="rep-title">O MUNDO É UM MOINHO</div>
-                    <div class="rep-artist">🎤 Cartola • Samba-Canção • BPM 78</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">C</span>
-              </div>
-              <div class="rep-song-row">
-                <div class="rep-row-left">
-                  <span class="rep-num">♪</span>
-                  <div class="rep-info">
-                    <div class="rep-title">TREM DAS ONZE</div>
-                    <div class="rep-artist">🎤 Adoniran Barbosa • Samba • BPM 108</div>
-                  </div>
-                </div>
-                <span class="rep-key-badge">Am</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tour-details-box">
-          <span class="tour-feature-tag">Acervo Centralizado</span>
-          <h3 class="tour-title">Sua Biblioteca Musical Sempre à Mão</h3>
-          <p class="tour-text">
-            Localize qualquer música em menos de 200ms com busca indexada por título, artista, ritmo ou tom.
-          </p>
-          <ul class="tour-bullets">
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Tags Visuais de Tom Harmônico:</strong> Identificação rápida da tonalidade de cada arranjo.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Filtros por Gênero & Ritmo:</strong> Pagode, Samba, Sertanejo, Pop, MPB e Rock.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Importação Inteligente do Google Drive:</strong> Traga centenas de arquivos de uma só vez.</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Painel 4: Editor (Frame Real com Parser Harmônico) -->
-      <div id="tourEditor" class="tour-content-panel">
-        <div class="tour-appweb-col">
-          <div class="appweb-frame">
-            <div class="appweb-topbar">
-              <span class="appweb-btn-back">✏️ Editor Harmônico</span>
-              <div class="appweb-topbar-right">
-                <span class="appweb-circle-btn" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald-light);">- ½ Tom</span>
-                <span class="appweb-key-chip">Tom Atual: Em</span>
-                <span class="appweb-circle-btn" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald-light);">+ ½ Tom</span>
-              </div>
-            </div>
-            <div class="appweb-prompter-screen" style="min-height: 220px;">
-              <div class="appweb-lyrics-stream" style="font-size: 0.88rem;">
-                <div class="lyrics-line-chord"><span class="chord">[ Em ]</span><span class="chord-spacing" style="width:110px;"></span><span class="chord">[ B7 ]</span></div>
-                <div class="lyrics-line-text">Preste atenção, o mundo é um moinho...</div>
-                <div class="lyrics-line-chord"><span class="chord">[ E7 ]</span><span class="chord-spacing" style="width:110px;"></span><span class="chord">[ Am ]</span></div>
-                <div class="lyrics-line-text">Vai triturar teus sonhos tão mesquinhos...</div>
-              </div>
-              <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1); font-size: 0.74rem; color: #94a3b8;">
-                ✓ Cifras e compassos preservados sem quebra de alinhamento silábico.
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tour-details-box">
-          <span class="tour-feature-tag">Precisão Teórica</span>
-          <h3 class="tour-title">Editor com Transposição Harmônica Real</h3>
-          <p class="tour-text">
-            Trocou o cantor convidado ou precisa adaptar a tessitura vocal? Transponha acordes em meio-tom preservando todas as extensões (7M, 9, 13, sus4, dim).
-          </p>
-          <ul class="tour-bullets">
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Parser Harmônico Avançado:</strong> Não quebra o alinhamento das sílabas com os acordes.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Inserção de Links do YouTube:</strong> Sincronize o vídeo oficial para consulta rápida nos ensaios.</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Painel 5: Imprimir (Frame Real do Relatório Técnico) -->
-      <div id="tourImprimir" class="tour-content-panel">
-        <div class="tour-appweb-col">
-          <div class="setlist-sheet-fake" style="width: 100%; max-width: 480px;">
-            <div class="setlist-sheet-header">
-              <div>
-                <div class="setlist-sheet-title">SETLIST OFICIAL: SAMBA DA NOITE</div>
-                <div class="setlist-sheet-date">Data: 06/09/2026 • 33 Músicas • CantaAí PRO</div>
-              </div>
-              <span style="font-size: 0.7rem; background: #0f172a; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">VIA TÉCNICA</span>
-            </div>
-            <div class="setlist-sheet-row">
-              <span><strong>01. Alguma Coisa</strong> — Sem Compromisso</span>
-              <span class="sheet-key">Tom: Gm | BPM: 92</span>
-            </div>
-            <div class="setlist-sheet-row">
-              <span><strong>02. Amor de Verdade</strong> — Roberto Ribeiro</span>
-              <span class="sheet-key">Tom: C | BPM: 88</span>
-            </div>
-            <div class="setlist-sheet-row">
-              <span><strong>03. Amor e Festança</strong> — Beth Carvalho</span>
-              <span class="sheet-key">Tom: S/Tom | BPM: 98</span>
-            </div>
-            <div class="setlist-sheet-row">
-              <span><strong>04. Baixa Essa Guarda</strong> — Revelação</span>
-              <span class="sheet-key">Tom: F | BPM: 104</span>
-            </div>
-            <div class="setlist-sheet-row">
-              <span><strong>05. Borboleta Cega</strong> — Jorge Aragão</span>
-              <span class="sheet-key">Tom: C | BPM: 90</span>
-            </div>
-          </div>
-        </div>
-        <div class="tour-details-box">
-          <span class="tour-feature-tag">Integração Técnica</span>
-          <h3 class="tour-title">Setlists Formatados para Banda & Operadores</h3>
-          <p class="tour-text">
-            Gere com 1 clique relatórios limpos e prontos para impressão ou compartilhamento em PDF com a equipe de som, luz e músicos de apoio.
-          </p>
-          <ul class="tour-bullets">
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Tabela Clara com Ordem, Tom e Ritmo:</strong> Sem confusão na hora de puxar a próxima música.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Exportação Direta para PDF ou Impressora:</strong> Economize tempo precioso na passagem de som.</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  SHOWCASE MULTI-TELAS: ADAPTAÇÃO NATIVA NO CELULAR & TABLET             -->
-  <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <section id="dispositivos" class="devices-showcase-section">
-    <div class="container">
-      <div class="devices-grid">
+      <div class="features-grid">
         
-        <div class="devices-text-col">
-          <span class="section-pill">Responsividade Enterprise</span>
-          <h2 class="section-title">Do iPad no pedestal ao smartphone de bolso</h2>
-          <p class="section-description" style="margin-bottom: 24px;">
-            O CantaAí PRO foi refatorado sob uma rigorosa auditoria de telas mobile e touchscreens. Nada fica espremido, nenhum título é cortado e os controles obedecem à anatomia real dos dedos em ação.
-          </p>
-
-          <ul class="tour-bullets">
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Zero Obstrução de Letras:</strong> Botões flutuantes só aparecem quando você rola a tela para baixo.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Painel Executivo em Folha Cheia (Edge-to-Edge):</strong> Sem janelas flutuantes cortadas ou barras pretas laterais.</span>
-            </li>
-            <li class="tour-bullet-item">
-              <svg class="bullet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Safe Area iOS & Android:</strong> Respeita o entalhe superior e a barra de gestos do sistema sem sobreposição.</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="devices-mockups-col">
-          <!-- iPhone Mockup Real Prompter -->
-          <div class="iphone-mockup">
-            <div class="iphone-notch"></div>
-            <img src="assets/mobile_screenshots/mobile_prompter.png" alt="CantaAí PRO rodando no iPhone com tela limpa de teleprompter">
-            <div class="device-caption-pill">iPhone • Teleprompter OLED</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  CAPABILITIES GRID (SEM EMOJIS, ARQUITETURA DE ENGENHARIA)              -->
-  <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <section class="capabilities-section">
-    <div class="container">
-      
-      <div class="section-headline">
-        <span class="section-pill">Engenharia de Software</span>
-        <h2 class="section-title">Infraestrutura robusta para apresentações críticas</h2>
-        <p class="section-description">
-          Nada pode travar quando a música começa. Desenvolvemos cada componente com tolerância zero a lentidão ou falhas de conexão.
-        </p>
-      </div>
-
-      <div class="capabilities-grid">
-        
-        <div class="capability-card">
-          <div class="capability-icon-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <h3 class="capability-title">Motor Harmônico Instantâneo</h3>
-          <p class="capability-desc">
-            Algoritmo musical que reescreve enarmonias corretas (sustenidos e bemóis) respeitando o círculo das quintas sem desalinhar o compasso.
-          </p>
-        </div>
-
-        <div class="capability-card">
-          <div class="capability-icon-box">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
-          <h3 class="capability-title">Rolagem Subpixel Jitter-Free</h3>
-          <p class="capability-desc">
-            Sincronizado com a taxa de atualização do display (60Hz / 120Hz ProMotion), garantindo movimentação suave sem saltos ou engasgos.
+          <h3 class="feature-card-title">Teleprompter Inteligente</h3>
+          <p class="feature-card-desc">
+            Rolagem automática milimétrica com controle contínuo de velocidade e tipografia pensada para leitura limpa sem esforço sob luzes desafiadoras.
           </p>
         </div>
 
-        <div class="capability-card">
-          <div class="capability-icon-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
-          <h3 class="capability-title">Banco Supabase com Cache Local</h3>
-          <p class="capability-desc">
-            Seus repertórios ficam salvos na nuvem e cacheados no navegador. Se o sinal do Wi-Fi cair durante a apresentação, o show continua normalmente.
+          <h3 class="feature-card-title">Transposição Instantânea de Tom</h3>
+          <p class="feature-card-desc">
+            O cantor trocou o tom na hora? Transponha acordes em meio-tom ou tom inteiro em frações de segundo com total precisão harmônica e sem quebra de texto.
           </p>
         </div>
 
-        <div class="capability-card">
-          <div class="capability-icon-box">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           </div>
-          <h3 class="capability-title">Importação em Lote Inteligente</h3>
-          <p class="capability-desc">
-            Traga seus arquivos em Word (.docx), PDF ou Google Drive diretamente. Nosso parser identifica cifras e letras e formata tudo automaticamente.
+          <h3 class="feature-card-title">Importação Rápida & Google Drive</h3>
+          <p class="feature-card-desc">
+            Importe pastas inteiras do Google Drive ou arquivos locais em Word (.docx) e PDF. Suas cifras e letras são formatadas automaticamente em segundos.
           </p>
         </div>
 
-        <div class="capability-card">
-          <div class="capability-icon-box">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          </div>
+          <h3 class="feature-card-title">Nuvem & Suporte a Dispositivos Antigos</h3>
+          <p class="feature-card-desc">
+            Seus repertórios salvos com segurança no Supabase e funcionando com performance nativa rápida até em tablets antigos e smartphones de qualquer marca.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 8 5 3-5 3v-6Z"/></svg>
           </div>
-          <h3 class="capability-title">YouTube Dock & Áudio Guia</h3>
-          <p class="capability-desc">
-            Estude arranjos, afinações e convenções com o player de vídeo integrado diretamente na visualização do prompter, sem alternar de aplicativo.
+          <h3 class="feature-card-title">Áudio Guia & Estudo Integrado</h3>
+          <p class="feature-card-desc">
+            Ouça a gravação original ou arranjo no YouTube Dock integrado enquanto acompanha a letra e treina as convenções da música sem alternar de app.
           </p>
         </div>
 
-        <div class="capability-card">
-          <div class="capability-icon-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           </div>
-          <h3 class="capability-title">Segurança & Privacidade LGPD</h3>
-          <p class="capability-desc">
-            Autenticação segura via Row Level Security (RLS). Seus dados, repertórios exclusivos e cifras pessoais pertencem unicamente a você.
+          <h3 class="feature-card-title">Exportação & Impressão PDF</h3>
+          <p class="feature-card-desc">
+            Gere relatórios de setlists limpos e formatados para entregar à equipe técnica e aos operadores de som e luz com ordem, tom e andamento.
           </p>
         </div>
 
@@ -721,59 +263,110 @@
   </section>
 
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  COMPARATIVO: PAPEL VS APPS GENÉRICOS VS CANTAAÍ PRO                     -->
+  <!--  MULTI-DISPOSITIVOS: TABLET & SMARTPHONE                                -->
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <section id="dispositivos" class="devices-section">
+    <div class="container">
+      <div class="devices-split-grid">
+        
+        <div class="devices-text-side">
+          <span class="section-pill-tag">Responsividade Enterprise</span>
+          <h2 class="section-heading-title">Do Tablet no pedestal ao Smartphone de bolso</h2>
+          <p class="section-heading-sub" style="text-align: left; margin: 0 0 24px 0;">
+            O CantaAí PRO foi projetado sob rigorosos critérios de ergonomia de toque e usabilidade mobile. Nada fica espremido, nenhum título é cortado e todos os botões possuem alvos de toque confortáveis.
+          </p>
+
+          <ul class="device-perks-list">
+            <li class="device-perk-item">
+              <svg class="perk-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div>
+                <strong>Zero Obstrução de Letras:</strong>
+                <p>Botões flutuantes só aparecem quando você rola a tela para baixo, mantendo o início da letra 100% livre.</p>
+              </div>
+            </li>
+            <li class="device-perk-item">
+              <svg class="perk-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div>
+                <strong>Folha Cheia Nativa (Edge-to-Edge):</strong>
+                <p>Painéis e modais aproveitam cada milímetro do display em tablets e smartphones, sem barras pretas ou janelas cortadas.</p>
+              </div>
+            </li>
+            <li class="device-perk-item">
+              <svg class="perk-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div>
+                <strong>Alvos de Toque Precisos (Mínimo 44px):</strong>
+                <p>Ergonomia testada para troca de música e ajustes de tom rápidos durante a apresentação ao vivo.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="devices-mock-side">
+          <div class="smartphone-chassis">
+            <div class="smartphone-camera-island"></div>
+            <img src="assets/mobile_screenshots/mobile_prompter.png" alt="CantaAí PRO rodando no smartphone com teleprompter OLED">
+            <div class="device-status-chip">Smartphone • Teleprompter OLED</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <!--  COMPARATIVO: O JEITO ANTIGO VS O PADRÃO CANTAAÍ PRO                     -->
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
   <section id="comparativo" class="comparison-section">
     <div class="container">
       
-      <div class="section-headline">
-        <span class="section-pill">Transformação Real</span>
-        <h2 class="section-title">O Método Antigo vs. O Padrão CantaAí PRO</h2>
-        <p class="section-description">
+      <div class="section-headline-block">
+        <span class="section-pill-tag">Transformação Real</span>
+        <h2 class="section-heading-title">O Método Antigo vs. O Padrão CantaAí PRO</h2>
+        <p class="section-heading-sub">
           Entenda por que cantores e bandas profissionais abandonaram de vez as pastas de papel e os aplicativos amadores.
         </p>
       </div>
 
-      <div class="dual-comparison-grid">
+      <div class="dual-cards-grid">
+        
         <!-- Card 1: Método Tradicional -->
-        <div class="dual-card card-traditional">
-          <div class="dual-card-header">
-            <span class="dual-pill-badge pill-danger">O Jeito Tradicional</span>
-            <h3 class="dual-card-title">Pastas de Papel & Apps Amadores</h3>
-            <p class="dual-card-desc">Lento, desajeitado e com alto risco de erro no meio da apresentação.</p>
-          </div>
-          <ul class="dual-list">
-            <li class="dual-item danger-item">
-              <span class="dual-icon">✕</span>
-              <div>
+        <div class="comparison-box box-traditional">
+          <span class="box-tag-status tag-danger">O Jeito Tradicional</span>
+          <h3 class="box-title-main">Pastas de Papel & Apps Amadores</h3>
+          <p class="box-sub-desc">Lento, desajeitado e com alto risco de erro no meio da apresentação.</p>
+
+          <ul class="comparison-bullets-list">
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-cross">✕</span>
+              <div class="comp-bullet-content">
                 <strong>Mudança de tom impossível na hora:</strong>
                 <p>Trocar tom exige rabiscar papéis na correria ou refazer folhas inteiras, gerando atraso e tensão.</p>
               </div>
             </li>
-            <li class="dual-item danger-item">
-              <span class="dual-icon">✕</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-cross">✕</span>
+              <div class="comp-bullet-content">
                 <strong>Ofuscamento e folhas invisíveis no escuro:</strong>
                 <p>Papel branco não reflete iluminação cênica sem lanternas improvisadas que atrapalham a postura do cantor.</p>
               </div>
             </li>
-            <li class="dual-item danger-item">
-              <span class="dual-icon">✕</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-cross">✕</span>
+              <div class="comp-bullet-content">
                 <strong>Interrupção para virar páginas:</strong>
                 <p>O instrumentista precisa largar o instrumento com uma das mãos para passar a folha durante o refrão.</p>
               </div>
             </li>
-            <li class="dual-item danger-item">
-              <span class="dual-icon">✕</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-cross">✕</span>
+              <div class="comp-bullet-content">
                 <strong>Setlists desorganizados e folhas perdidas:</strong>
                 <p>Procurar uma música pedida pelo público entre 100 páginas desordenadas desconecta você da plateia.</p>
               </div>
             </li>
-            <li class="dual-item danger-item">
-              <span class="dual-icon">✕</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-cross">✕</span>
+              <div class="comp-bullet-content">
                 <strong>Sem áudio de referência para introduções:</strong>
                 <p>Nenhuma sincronia com o arranjo original para conferir convenções ou nuances harmônicas antes de entrar.</p>
               </div>
@@ -782,201 +375,174 @@
         </div>
 
         <!-- Card 2: CantaAí PRO -->
-        <div class="dual-card card-cantaai">
-          <div class="cantaai-top-beacon">
-            <span class="pulse-beacon"></span>
+        <div class="comparison-box box-cantaai">
+          <div class="beacon-cantaai-top">
+            <span class="beacon-pulse"></span>
             <span>Padrão de Performance Elite</span>
           </div>
-          <div class="dual-card-header">
-            <span class="dual-pill-badge pill-success">Solução Profissional</span>
-            <h3 class="dual-card-title">CantaAí PRO (SaaS em Tempo Real)</h3>
-            <p class="dual-card-desc">Controle milimétrico, visual executivo e segurança absoluta do início ao fim do show.</p>
-          </div>
-          <ul class="dual-list">
-            <li class="dual-item success-item">
-              <span class="dual-icon">✓</span>
-              <div>
+          <span class="box-tag-status tag-success">Solução Profissional</span>
+          <h3 class="box-title-main">CantaAí PRO (SaaS em Tempo Real)</h3>
+          <p class="box-sub-desc">Controle milimétrico, visual executivo e segurança absoluta do início ao fim do show.</p>
+
+          <ul class="comparison-bullets-list">
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-check">✓</span>
+              <div class="comp-bullet-content">
                 <strong>Transposição harmônica instantânea (0ms):</strong>
                 <p>Alterne meio-tom ou tom inteiro em 1 toque sem quebrar o alinhamento de nenhuma cifra com o texto.</p>
               </div>
             </li>
-            <li class="dual-item success-item">
-              <span class="dual-icon">✓</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-check">✓</span>
+              <div class="comp-bullet-content">
                 <strong>Modo OLED Preto Puro (#000):</strong>
                 <p>Contraste cirúrgico de cifras e letras, zero cansaço visual e estética discreta e sofisticada.</p>
               </div>
             </li>
-            <li class="dual-item success-item">
-              <span class="dual-icon">✓</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-check">✓</span>
+              <div class="comp-bullet-content">
                 <strong>Rolagem contínua suave & pedais Bluetooth:</strong>
                 <p>Controle hands-free de velocidade milimétrica, sem nunca interromper o violão, teclado ou postura vocal.</p>
               </div>
             </li>
-            <li class="dual-item success-item">
-              <span class="dual-icon">✓</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-check">✓</span>
+              <div class="comp-bullet-content">
                 <strong>Setlists inteligentes com Drag-and-Drop:</strong>
                 <p>Reordene músicas em tempo real com 1 gesto de dedo conforme a energia e os pedidos do público.</p>
               </div>
             </li>
-            <li class="dual-item success-item">
-              <span class="dual-icon">✓</span>
-              <div>
+            <li class="comp-bullet-row">
+              <span class="comp-bullet-icon icon-check">✓</span>
+              <div class="comp-bullet-content">
                 <strong>YouTube Dock de áudio integrado:</strong>
                 <p>Ouça o arranjo oficial ou introdução original em janela flutuante diretamente na tela do prompter.</p>
               </div>
             </li>
           </ul>
         </div>
+
       </div>
 
     </div>
   </section>
 
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  PLANOS & PREÇOS (TRANSPARÊNCIA ENTERPRISE)                              -->
+  <!--  PLANOS & PREÇOS                                                        -->
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <section id="precos" class="pricing-section">
+  <section id="planos" class="pricing-section">
     <div class="container">
       
-      <div class="section-headline">
-        <span class="section-pill">Investimento Transparente</span>
-        <h2 class="section-title">Escolha o plano ideal para a sua carreira</h2>
-        <p class="section-description">
-          Comece gratuitamente sem precisar cadastrar cartão de crédito. Desbloqueie recursos ilimitados quando estiver pronto para elevar o nível.
+      <div class="section-headline-block">
+        <span class="section-pill-tag">Planos Acessíveis</span>
+        <h2 class="section-heading-title">Investimento simples para transformar seus shows</h2>
+        <p class="section-heading-sub">
+          Comece gratuitamente sem precisar cadastrar cartão de crédito. Desbloqueie recursos ilimitados quando quiser.
         </p>
       </div>
 
-      <!-- Chaveador Mensal / Anual -->
-      <div class="billing-switcher-container">
-        <span id="labelMonthly" class="billing-switch-label active">Faturamento Mensal</span>
-        <label class="switch-control">
-          <input type="checkbox" id="billingToggle">
-          <span class="switch-slider"></span>
-        </label>
-        <span id="labelAnnual" class="billing-switch-label">Faturamento Anual</span>
-        <span class="save-badge">Economize 37% + 2 Meses Grátis</span>
-      </div>
-
-      <div class="pricing-cards-grid">
+      <div class="pricing-grid">
         
         <!-- CARD PLANO GRATUITO -->
-        <div class="pricing-plan-card">
-          <div class="plan-header">
-            <h3 class="plan-name">Plano Gratuito</h3>
-            <p class="plan-tagline">Ideal para testar a dinâmica da plataforma nos seus primeiros ensaios.</p>
+        <div class="plan-card">
+          <div class="plan-title-area">
+            <h3 class="plan-title-h3">Plano Gratuito</h3>
+            <p class="plan-desc-p">Ideal para experimentar o sistema e testar suas músicas no ensaio.</p>
           </div>
 
-          <div class="plan-price-block">
-            <div class="price-flex">
-              <span class="price-curr">R$</span>
-              <span class="price-main">0</span>
-              <span class="price-interval">/mês</span>
+          <div class="plan-price-display">
+            <div class="price-row-flex">
+              <span class="price-currency">R$</span>
+              <span class="price-number">0</span>
+              <span class="price-cadence">/mês</span>
             </div>
-            <div class="annual-breakdown-text" style="color: var(--text-muted);">Gratuito para sempre</div>
+            <div class="annual-deal-text" style="color: var(--text-muted);">Gratuito para sempre</div>
           </div>
 
-          <ul class="plan-features-list">
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <ul class="plan-items-list">
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               <span><strong>7 Dias de Degustação PRO Completa</strong></span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               <span>1 Repertório ativo</span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               <span>Até 5 Músicas com cifras completas</span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Transposição harmônica em tempo real</span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Transposição de Tom em tempo real</span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Rolagem automática com controle de velocidade</span>
-            </li>
-            <li class="plan-feature-item disabled">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              <span>Músicas e Repertórios Ilimitados</span>
-            </li>
-            <li class="plan-feature-item disabled">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              <span>YouTube Dock Integrado & Áudios Guia</span>
-            </li>
-            <li class="plan-feature-item disabled">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              <span>Exportação de Setlists em PDF</span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Rolagem automática contínua</span>
             </li>
           </ul>
 
-          <a href="index.html?auth=signup" class="btn-secondary btn-plan-action">
-            <span>Criar Conta Gratuita</span>
+          <a href="index.html?auth=signup" class="btn-secondary" style="width:100%; justify-content:center;">
+            <span>Começar Gratuitamente</span>
           </a>
         </div>
 
         <!-- CARD PLANO PRO ILIMITADO -->
-        <div class="pricing-plan-card plan-featured">
-          <div class="featured-top-pill">Recomendado para Artistas Ativos</div>
-          
-          <div class="plan-header">
-            <h3 class="plan-name">CantaAí PRO Ilimitado</h3>
-            <p class="plan-tagline">Para vocalistas, solistas e bandas que fazem apresentações frequentes e exigem segurança total.</p>
+        <div class="plan-card plan-pro-featured">
+          <div class="plan-top-badge">Mais Escolhido</div>
+
+          <div class="plan-title-area">
+            <h3 class="plan-title-h3">CantaAí PRO</h3>
+            <p class="plan-desc-p">Para cantores profissionais, apresentações ao vivo e ensaios frequentes.</p>
           </div>
 
-          <div class="plan-price-block">
-            <div class="price-flex">
-              <span class="price-curr">R$</span>
-              <span id="priceProMain" class="price-main">39</span>
-              <span id="priceProCents" class="price-cents">,90</span>
-              <span id="priceProPeriod" class="price-interval">/mês</span>
+          <div class="plan-price-display">
+            <div class="price-row-flex">
+              <span class="price-currency">R$</span>
+              <span class="price-number">39</span>
+              <span class="price-fraction">,90</span>
+              <span class="price-cadence">/mês</span>
             </div>
-            <div id="annualBreakdown" class="annual-breakdown-text" style="display: none;">
-              Cobrança anual única de R$ 299,00 (Economia de R$ 179,80/ano)
+            <div class="annual-deal-text">
+              Opção Anual: R$ 299,00/ano (Equivalente a R$ 24,92/mês)
             </div>
           </div>
 
-          <ul class="plan-features-list">
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Músicas & Repertórios 100% Ilimitados</strong></span>
+          <ul class="plan-items-list">
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><strong>Repertórios & Músicas Ilimitadas</strong></span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Transposição Instantânea Sem Limites</strong></span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><strong>Transposição Instantânea & Rolagem Fluída</strong></span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>YouTube Dock Integrado & Áudios de Apoio</strong></span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><strong>YouTube Dock Integrado & Áudios Guia</strong></span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Importação Rápida em Lote via Google Drive</strong></span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><strong>Importação em Lote via Google Drive</strong></span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Exportação Completa de Setlists em PDF</strong></span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><strong>Exportação Completa em PDF Formato</strong></span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span><strong>Modo OLED Alto Contraste (Preto Puro)</strong></span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><strong>Modo Profissional (Alto Contraste OLED)</strong></span>
             </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Backup criptografado contínuo no Supabase</span>
-            </li>
-            <li class="plan-feature-item active">
-              <svg class="plan-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Suporte prioritário via WhatsApp direto</span>
+            <li class="plan-bullet bullet-active">
+              <svg class="bullet-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Backup Seguro no Banco de Dados Supabase</span>
             </li>
           </ul>
 
-          <a href="index.html?auth=signup" class="btn-primary btn-plan-action">
-            <span>Desbloquear CantaAí PRO Agora</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <a href="index.html?auth=signup" class="btn-primary" style="width:100%; justify-content:center;">
+            <span>Assinar CantaAí PRO (Pix / Cartão)</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </a>
@@ -988,122 +554,55 @@
   </section>
 
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  DEPOIMENTOS / PROVA SOCIAL DE MÚSICOS                                  -->
-  <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <section class="testimonials-section">
-    <div class="container">
-      
-      <div class="section-headline">
-        <span class="section-pill">Validação em Cena</span>
-        <h2 class="section-title">Aprovado por quem vive de música toda semana</h2>
-      </div>
-
-      <div class="testimonials-grid">
-        
-        <div class="testimonial-card">
-          <p class="quote-text">
-            "Acabou aquele pesadelo de levar pasta preta pesada cheia de folhas amassadas. Se o convidado pede para subir meio tom na hora do refrão, eu toco no iPad e em 1 segundo a cifra tá perfeita."
-          </p>
-          <div class="musician-profile">
-            <div class="musician-avatar">MR</div>
-            <div class="musician-info">
-              <h4>Marcelo Ribeiro</h4>
-              <span>Voz e Violão • Samba & MPB (SP)</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card">
-          <p class="quote-text">
-            "O dock do YouTube dentro do teleprompter salvou meus ensaios de repertório novo. Eu escuto a introdução no fone, vejo a letra rolando no tempo certo e chego no evento com tudo memorizado."
-          </p>
-          <div class="musician-profile">
-            <div class="musician-avatar">CS</div>
-            <div class="musician-info">
-              <h4>Camila Santoro</h4>
-              <span>Cantora de Casamentos & Eventos Corporativos</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card">
-          <p class="quote-text">
-            "Exportar o PDF do setlist formatado com a ordem e os tons de cada música para passar aos operadores de som e aos músicos de cordas transformou o profissionalismo dos nossos shows."
-          </p>
-          <div class="musician-profile">
-            <div class="musician-avatar">DL</div>
-            <div class="musician-info">
-              <h4>Diego Linhares</h4>
-              <span>Diretor Musical & Baixista</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  FAQ ACCORDION INTERATIVO                                               -->
+  <!--  FAQ OBJETIVO                                                           -->
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
   <section id="faq" class="faq-section">
     <div class="container">
       
-      <div class="section-headline">
-        <span class="section-pill">Perguntas Frequentes</span>
-        <h2 class="section-title">Tire suas dúvidas antes de começar</h2>
+      <div class="section-headline-block">
+        <span class="section-pill-tag">Perguntas Frequentes</span>
+        <h2 class="section-heading-title">Dúvidas Frequentes</h2>
       </div>
 
-      <div class="faq-accordion-list">
+      <div class="faq-list">
         
-        <div class="faq-item">
-          <div class="faq-header">
-            <h3>Como funciona o teste gratuito de 7 dias?</h3>
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="faq-card-item">
+          <div class="faq-question-btn">
+            <h3>Como funciona a degustação de 7 dias?</h3>
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-body">
-            Ao criar sua conta, você recebe acesso instantâneo a todos os recursos ilimitados do CantaAí PRO por 7 dias corridos. Não exigimos cartão de crédito antecipado. Se não desejar continuar, sua conta migra automaticamente para o plano gratuito básico.
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <div class="faq-header">
-            <h3>O app funciona se a internet do local cair durante a apresentação?</h3>
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-          <div class="faq-body">
-            Sim! O CantaAí PRO armazena seus repertórios e músicas em cache local persistente no navegador (PWA). Uma vez carregadas, as cifras continuam funcionando sem internet para rolagem, consulta e transposição.
+          <div class="faq-answer-pane">
+            Ao criar sua conta, você recebe acesso total e irrestrito ao CantaAí PRO por 7 dias sem precisar cadastrar cartão de crédito. Se optar por não assinar, sua conta continua ativa no Plano Gratuito.
           </div>
         </div>
 
-        <div class="faq-item">
-          <div class="faq-header">
-            <h3>Posso usar no meu iPad ou tablet Android antigo?</h3>
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="faq-card-item">
+          <div class="faq-question-btn">
+            <h3>O teleprompter funciona se a internet cair no meio do show?</h3>
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-body">
-            Com certeza. O sistema foi construído em arquitetura leve sem dependências pesadas, rodando diretamente no navegador (Safari, Chrome, Edge) mesmo em iPads de gerações mais antigas com extrema agilidade.
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <div class="faq-header">
-            <h3>Consigo importar minhas músicas que já tenho no Google Drive ou Word?</h3>
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-          <div class="faq-body">
-            Sim, o módulo de importação permite selecionar pastas do Google Drive ou carregar arquivos .txt, .docx e .pdf. Nosso parser identifica cifras e letras e organiza tudo no seu acervo automaticamente.
+          <div class="faq-answer-pane">
+            Sim! O CantaAí PRO armazena automaticamente suas músicas e repertórios em cache local seguro no navegador. Uma vez carregadas, as letras e cifras continuam funcionando sem internet.
           </div>
         </div>
 
-        <div class="faq-item">
-          <div class="faq-header">
-            <h3>Posso cancelar a assinatura quando quiser?</h3>
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="faq-card-item">
+          <div class="faq-question-btn">
+            <h3>Funciona em Tablet ou Smartphone antigo?</h3>
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-body">
-            Sim, o cancelamento pode ser feito a qualquer momento com apenas 1 clique no seu painel de usuário, sem multas, carências ou burocracia.
+          <div class="faq-answer-pane">
+            Sim. A plataforma roda diretamente pelo navegador em qualquer Tablet, Smartphone ou Computador com performance ultrarrápida e consumo mínimo de bateria.
+          </div>
+        </div>
+
+        <div class="faq-card-item">
+          <div class="faq-question-btn">
+            <h3>Posso importar minhas cifras do Google Drive?</h3>
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer-pane">
+            Sim, você pode conectar o Google Drive ou importar arquivos em Word (.docx) e PDF. O sistema detecta acordes e letras automaticamente.
           </div>
         </div>
 
@@ -1113,26 +612,26 @@
   </section>
 
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <!--  BOTTOM CTA BANNER                                                      -->
+  <!--  CLOSING HERO BANNER                                                    -->
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
-  <section class="bottom-cta-section">
+  <section class="closing-section">
     <div class="container">
-      <div class="cta-banner-box">
-        <h2 class="cta-banner-title">
-          Pronto para transformar sua segurança e postura em cena?
+      <div class="closing-banner">
+        <h2 class="closing-banner-title">
+          Pronto para transformar a segurança dos seus shows?
         </h2>
-        <p class="cta-banner-desc">
-          Junte-se a cantores e bandas que já aposentaram as pastas de papel e realizam apresentações perfeitas com o CantaAí PRO.
+        <p class="closing-banner-desc">
+          Aposente as pastas de papel e tenha o controle absoluto das suas músicas e acordes em cena.
         </p>
-        <div class="cta-banner-actions">
-          <a href="index.html?auth=signup" class="btn-primary btn-hero-primary">
-            <span>Começar Gratuitamente em 30 Segundos</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <div class="closing-banner-actions">
+          <a href="index.html?auth=signup" class="btn-primary" style="font-size: 1.05rem; padding: 14px 28px;">
+            <span>Criar Minha Conta Gratuita</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </a>
-          <a href="index.html?action=app" class="btn-secondary btn-hero-secondary">
-            <span>Acessar o App Web</span>
+          <a href="index.html?action=app" class="btn-secondary" style="font-size: 1.05rem; padding: 14px 28px;">
+            <span>Abrir o App Web</span>
           </a>
         </div>
       </div>
@@ -1145,64 +644,73 @@
   <footer class="site-footer">
     <div class="container">
       
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a href="landing_v2.html" class="brand-logo">
-            <div class="brand-icon-wrapper" style="width:30px;height:30px;">
+      <div class="footer-inner-top">
+        <div class="footer-brand-info">
+          <a href="landing_v2.html" class="brand-link">
+            <div class="brand-icon" style="width:30px;height:30px;">
               <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                 <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
               </svg>
             </div>
             <span>CantaAí</span>
-            <span class="badge-pro-nav">PRO</span>
+            <span class="brand-pro-tag">PRO</span>
           </a>
           <p>
-            Plataforma SaaS de alta performance para cantores, solistas e bandas em apresentações ao vivo e ensaios.
+            Plataforma SaaS profissional para cantores, solistas e bandas em apresentações ao vivo e ensaios.
           </p>
         </div>
 
-        <div class="footer-links-group">
-          <div class="footer-col">
-            <h5>Produto</h5>
+        <div class="footer-links-cluster">
+          <div class="footer-col-nav">
+            <h5>Navegação</h5>
             <ul>
-              <li><a href="#simulator">Simulador Interativo</a></li>
-              <li><a href="#ecossistema">Tour de Recursos</a></li>
+              <li><a href="#demonstracao">Demonstração</a></li>
+              <li><a href="#recursos">Recursos</a></li>
               <li><a href="#dispositivos">Multi-Dispositivos</a></li>
-              <li><a href="#precos">Planos & Preços</a></li>
+              <li><a href="#planos">Planos & Preços</a></li>
             </ul>
           </div>
-          <div class="footer-col">
-            <h5>Recursos</h5>
+          <div class="footer-col-nav">
+            <h5>Acesso Rápido</h5>
             <ul>
               <li><a href="index.html?action=app">App Web</a></li>
               <li><a href="manual_cantaai_pro.html" target="_blank">Manual do Usuário</a></li>
-              <li><a href="index.html?auth=signin">Login de Artista</a></li>
+              <li><a href="index.html?auth=signin">Entrar</a></li>
             </ul>
           </div>
-          <div class="footer-col">
-            <h5>Legal & Segurança</h5>
+          <div class="footer-col-nav">
+            <h5>Legal</h5>
             <ul>
               <li><a href="#">Termos de Uso</a></li>
               <li><a href="#">Privacidade & LGPD</a></li>
-              <li><a href="#">Contrato SaaS</a></li>
             </ul>
           </div>
         </div>
       </div>
 
-      <div class="footer-bottom">
+      <div class="footer-bottom-legal">
         <div>
           CantaAí PRO &copy; 2026. Todos os direitos reservados.
         </div>
         <div>
-          Desenvolvido com precisão harmônica para artistas profissionais.
+          Desenvolvido com precisão para músicos e cantores profissionais.
         </div>
       </div>
 
     </div>
   </footer>
 
-  <script src="js/landing_v2.js"></script>
+  <script>
+    // FAQ Accordion
+    document.querySelectorAll('.faq-question-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var card = this.parentElement;
+        var isOpen = card.classList.contains('open');
+        document.querySelectorAll('.faq-card-item').forEach(function(c) { c.classList.remove('open'); });
+        if (!isOpen) card.classList.add('open');
+      });
+    });
+  </script>
 </body>
 </html>
