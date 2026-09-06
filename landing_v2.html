@@ -231,37 +231,88 @@
         </p>
       </div>
 
-      <!-- Abas de Navegação das Telas Reais -->
+      <!-- Abas de Navegação das Telas Reais do Sistema -->
       <div class="tour-nav-tabs">
         <button class="tour-tab-btn active" data-target="tourPrompter">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          <span>1. Teleprompter de Alta Legibilidade</span>
+          <span>Teleprompter Ao Vivo</span>
         </button>
         <button class="tour-tab-btn" data-target="tourRepertorios">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>2. Gestor de Repertórios</span>
+          <span>Repertórios & Sets</span>
         </button>
         <button class="tour-tab-btn" data-target="tourMusicas">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          <span>3. Biblioteca & Busca Global</span>
+          <span>Biblioteca & Busca</span>
         </button>
         <button class="tour-tab-btn" data-target="tourEditor">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          <span>4. Editor & Transpositor</span>
+          <span>Editor Harmônico</span>
         </button>
         <button class="tour-tab-btn" data-target="tourImprimir">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          <span>5. Exportação PDF para Equipe</span>
+          <span>Relatório Técnico PDF</span>
         </button>
       </div>
 
-      <!-- Painel 1: Prompter -->
+      <!-- Painel 1: Prompter (Frame Real em Alta Fidelidade) -->
       <div id="tourPrompter" class="tour-content-panel active">
-        <div class="tour-image-box">
-          <img src="assets/manual_img/tela_prompter.png" alt="Tela do Teleprompter CantaAí PRO com dock de áudio e cifras de alto contraste">
+        <div class="tour-appweb-col">
+          <div class="appweb-frame prompter-appweb-frame">
+            <div class="appweb-topbar">
+              <span class="appweb-btn-back">‹ Voltar</span>
+              <div class="appweb-song-title-center">
+                <span>🎤 Resignação • Geraldo Filme</span>
+              </div>
+              <div class="appweb-topbar-right">
+                <span class="appweb-key-chip">Gm (Sol Menor) ▾</span>
+                <div class="appweb-nav-pill">
+                  <span>‹</span>
+                  <span class="appweb-pos">1 / 33</span>
+                  <span>›</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="appweb-controls-bar">
+              <div class="appweb-cta-scroll">
+                <span>▶ Iniciar Rolagem</span>
+              </div>
+              <div class="appweb-speed-box">
+                <span class="appweb-speed-lbl">Velocidade:</span>
+                <span class="appweb-circle-btn">-</span>
+                <span class="appweb-speed-val">3x</span>
+                <span class="appweb-circle-btn">+</span>
+              </div>
+              <div class="appweb-font-box">
+                <span class="appweb-font-btn">A-</span>
+                <span class="appweb-font-val">24px</span>
+                <span class="appweb-font-btn">A+</span>
+              </div>
+              <div class="appweb-btn-fullscreen">⛶</div>
+            </div>
+
+            <div class="appweb-prompter-screen">
+              <div class="appweb-youtube-floating-dock">
+                <span>🎵 YouTube Dock: Áudio Original Geraldo Filme (1974)</span>
+                <span class="yt-live-dot">● Sincronizado</span>
+              </div>
+
+              <div class="appweb-lyrics-stream">
+                <div class="lyrics-line-chord"><span class="chord">[ Dm ]</span><span class="chord-spacing"></span><span class="chord">[ Gm ]</span></div>
+                <div class="lyrics-line-text">Sinto que eu estou me atormentando</div>
+                <div class="lyrics-line-chord"><span class="chord">[ A7 ]</span><span class="chord-spacing"></span><span class="chord">[ Dm ]</span></div>
+                <div class="lyrics-line-text">E aos poucos me acabando por te amar em vão...</div>
+                <div class="lyrics-line-chord"><span class="chord">[ D7 ]</span><span class="chord-spacing"></span><span class="chord">[ Gm ]</span></div>
+                <div class="lyrics-line-text">Mas guardo comigo uma esperança</div>
+                <div class="lyrics-line-chord"><span class="chord">[ A7 ]</span><span class="chord-spacing"></span><span class="chord">[ Dm ]</span></div>
+                <div class="lyrics-line-text">De um dia ver o meu amor voltar...</div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="tour-details-box">
-          <span class="tour-feature-tag">Módulo Principal</span>
+          <span class="tour-feature-tag">Módulo de Apresentação</span>
           <h3 class="tour-title">Controle Absoluto Durante a Apresentação</h3>
           <p class="tour-text">
             Projetado para leitura instantânea sob holofotes e iluminação desafiadora. Rolagem contínua fluida, atalhos de teclado e compatibilidade com pedais Bluetooth de virada de página.
@@ -283,10 +334,75 @@
         </div>
       </div>
 
-      <!-- Painel 2: Repertórios -->
+      <!-- Painel 2: Repertórios (Frame Real com Lista Autêntica do Appweb) -->
       <div id="tourRepertorios" class="tour-content-panel">
-        <div class="tour-image-box">
-          <img src="assets/manual_img/tela_repertorios.png" alt="Tela de Gerenciamento de Repertórios do CantaAí PRO">
+        <div class="tour-appweb-col">
+          <div class="appweb-frame repertoire-appweb-frame">
+            <div class="appweb-rep-header">
+              <span class="appweb-btn-back">‹ Repertórios</span>
+              <div class="appweb-rep-meta">
+                <div class="appweb-rep-title">SAMBA</div>
+                <div class="appweb-rep-count">33 músicas cadastradas</div>
+              </div>
+            </div>
+            <div class="appweb-rep-actionbar">
+              <span class="rep-action-chip">🔤 Ordem A-Z</span>
+              <span class="rep-action-chip">🖨️ Imprimir</span>
+              <span class="rep-action-chip">⚡ Baixar</span>
+            </div>
+            <div class="appweb-rep-songlist">
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">01</span>
+                  <div class="rep-info">
+                    <div class="rep-title">ALGUMA COISA</div>
+                    <div class="rep-artist">🎤 Sem Compromisso • ⚡</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">Gm</span>
+              </div>
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">02</span>
+                  <div class="rep-info">
+                    <div class="rep-title">AMOR DE VERDADE</div>
+                    <div class="rep-artist">🎤 Roberto Ribeiro • ⚡</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">C</span>
+              </div>
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">03</span>
+                  <div class="rep-info">
+                    <div class="rep-title">AMOR E FESTANÇA</div>
+                    <div class="rep-artist">🎤 Beth Carvalho • ⚡</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">S/Tom</span>
+              </div>
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">04</span>
+                  <div class="rep-info">
+                    <div class="rep-title">BAIXA ESSA GUARDA</div>
+                    <div class="rep-artist">🎤 Grupo Revelação • ⚡</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">F</span>
+              </div>
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">05</span>
+                  <div class="rep-info">
+                    <div class="rep-title">BORBOLETA CEGA</div>
+                    <div class="rep-artist">🎤 Jorge Aragão • ⚡</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">C</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="tour-details-box">
           <span class="tour-feature-tag">Organização Profissional</span>
@@ -311,10 +427,52 @@
         </div>
       </div>
 
-      <!-- Painel 3: Músicas -->
+      <!-- Painel 3: Músicas (Frame Real com Busca Indexada) -->
       <div id="tourMusicas" class="tour-content-panel">
-        <div class="tour-image-box">
-          <img src="assets/manual_img/tela_musicas.png" alt="Biblioteca de Músicas e Cifras">
+        <div class="tour-appweb-col">
+          <div class="appweb-frame">
+            <div class="appweb-search-bar">
+              <div class="appweb-search-input-fake">🔍 Buscar repertório, música, tom ou artista...</div>
+            </div>
+            <div class="appweb-rep-actionbar">
+              <span class="rep-action-chip" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald-light); border-color: rgba(16, 185, 129, 0.3);">Todos (269)</span>
+              <span class="rep-action-chip">Sambas (33)</span>
+              <span class="rep-action-chip">Pagode (45)</span>
+              <span class="rep-action-chip">MPB (52)</span>
+            </div>
+            <div class="appweb-rep-songlist">
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">♪</span>
+                  <div class="rep-info">
+                    <div class="rep-title">DISRITMIA</div>
+                    <div class="rep-artist">🎤 Martinho da Vila • Samba • BPM 94</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">D</span>
+              </div>
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">♪</span>
+                  <div class="rep-info">
+                    <div class="rep-title">O MUNDO É UM MOINHO</div>
+                    <div class="rep-artist">🎤 Cartola • Samba-Canção • BPM 78</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">C</span>
+              </div>
+              <div class="rep-song-row">
+                <div class="rep-row-left">
+                  <span class="rep-num">♪</span>
+                  <div class="rep-info">
+                    <div class="rep-title">TREM DAS ONZE</div>
+                    <div class="rep-artist">🎤 Adoniran Barbosa • Samba • BPM 108</div>
+                  </div>
+                </div>
+                <span class="rep-key-badge">Am</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="tour-details-box">
           <span class="tour-feature-tag">Acervo Centralizado</span>
@@ -339,10 +497,30 @@
         </div>
       </div>
 
-      <!-- Painel 4: Editor -->
+      <!-- Painel 4: Editor (Frame Real com Parser Harmônico) -->
       <div id="tourEditor" class="tour-content-panel">
-        <div class="tour-image-box">
-          <img src="assets/manual_img/tela_editor.png" alt="Editor de Músicas com Transposição Harmônica">
+        <div class="tour-appweb-col">
+          <div class="appweb-frame">
+            <div class="appweb-topbar">
+              <span class="appweb-btn-back">✏️ Editor Harmônico</span>
+              <div class="appweb-topbar-right">
+                <span class="appweb-circle-btn" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald-light);">- ½ Tom</span>
+                <span class="appweb-key-chip">Tom Atual: Em</span>
+                <span class="appweb-circle-btn" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald-light);">+ ½ Tom</span>
+              </div>
+            </div>
+            <div class="appweb-prompter-screen" style="min-height: 220px;">
+              <div class="appweb-lyrics-stream" style="font-size: 0.88rem;">
+                <div class="lyrics-line-chord"><span class="chord">[ Em ]</span><span class="chord-spacing" style="width:110px;"></span><span class="chord">[ B7 ]</span></div>
+                <div class="lyrics-line-text">Preste atenção, o mundo é um moinho...</div>
+                <div class="lyrics-line-chord"><span class="chord">[ E7 ]</span><span class="chord-spacing" style="width:110px;"></span><span class="chord">[ Am ]</span></div>
+                <div class="lyrics-line-text">Vai triturar teus sonhos tão mesquinhos...</div>
+              </div>
+              <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1); font-size: 0.74rem; color: #94a3b8;">
+                ✓ Cifras e compassos preservados sem quebra de alinhamento silábico.
+              </div>
+            </div>
+          </div>
         </div>
         <div class="tour-details-box">
           <span class="tour-feature-tag">Precisão Teórica</span>
@@ -363,10 +541,38 @@
         </div>
       </div>
 
-      <!-- Painel 5: Imprimir -->
+      <!-- Painel 5: Imprimir (Frame Real do Relatório Técnico) -->
       <div id="tourImprimir" class="tour-content-panel">
-        <div class="tour-image-box">
-          <img src="assets/manual_img/tela_imprimir.png" alt="Relatório de Impressão de Setlists">
+        <div class="tour-appweb-col">
+          <div class="setlist-sheet-fake" style="width: 100%; max-width: 480px;">
+            <div class="setlist-sheet-header">
+              <div>
+                <div class="setlist-sheet-title">SETLIST OFICIAL: SAMBA DA NOITE</div>
+                <div class="setlist-sheet-date">Data: 06/09/2026 • 33 Músicas • CantaAí PRO</div>
+              </div>
+              <span style="font-size: 0.7rem; background: #0f172a; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">VIA TÉCNICA</span>
+            </div>
+            <div class="setlist-sheet-row">
+              <span><strong>01. Alguma Coisa</strong> — Sem Compromisso</span>
+              <span class="sheet-key">Tom: Gm | BPM: 92</span>
+            </div>
+            <div class="setlist-sheet-row">
+              <span><strong>02. Amor de Verdade</strong> — Roberto Ribeiro</span>
+              <span class="sheet-key">Tom: C | BPM: 88</span>
+            </div>
+            <div class="setlist-sheet-row">
+              <span><strong>03. Amor e Festança</strong> — Beth Carvalho</span>
+              <span class="sheet-key">Tom: S/Tom | BPM: 98</span>
+            </div>
+            <div class="setlist-sheet-row">
+              <span><strong>04. Baixa Essa Guarda</strong> — Revelação</span>
+              <span class="sheet-key">Tom: F | BPM: 104</span>
+            </div>
+            <div class="setlist-sheet-row">
+              <span><strong>05. Borboleta Cega</strong> — Jorge Aragão</span>
+              <span class="sheet-key">Tom: C | BPM: 90</span>
+            </div>
+          </div>
         </div>
         <div class="tour-details-box">
           <span class="tour-feature-tag">Integração Técnica</span>
@@ -521,62 +727,109 @@
     <div class="container">
       
       <div class="section-headline">
-        <span class="section-pill">Análise Comparativa</span>
-        <h2 class="section-title">Por que os melhores artistas abandonaram o papel e os apps amadores</h2>
+        <span class="section-pill">Transformação Real</span>
+        <h2 class="section-title">O Método Antigo vs. O Padrão CantaAí PRO</h2>
         <p class="section-description">
-          Veja a diferença prática na rotina entre o método tradicional e uma solução SaaS profissional.
+          Entenda por que cantores e bandas profissionais abandonaram de vez as pastas de papel e os aplicativos amadores.
         </p>
       </div>
 
-      <div class="comparison-table-wrapper">
-        <table class="comparison-table">
-          <thead>
-            <tr>
-              <th>Critério de Performance</th>
-              <th>Pastas de Papel / Caderno</th>
-              <th>Sites & Apps Amadores</th>
-              <th class="col-cantaai">CantaAí PRO (SaaS)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="comparison-feature-name">Mudança de tom na hora da apresentação</td>
-              <td class="status-bad">✕ Impossível (exige rabiscos)</td>
-              <td class="status-mid">⚠ Desalinha o texto da cifra</td>
-              <td class="col-cantaai status-pro">✓ Instantâneo em 1 toque (0ms)</td>
-            </tr>
-            <tr>
-              <td class="comparison-feature-name">Leitura sob baixa luz ou holofotes</td>
-              <td class="status-bad">✕ Exige lanterna improvisada</td>
-              <td class="status-mid">⚠ Telas brancas ofuscantes</td>
-              <td class="col-cantaai status-pro">✓ Fundo OLED Preto Puro (#000)</td>
-            </tr>
-            <tr>
-              <td class="comparison-feature-name">Rolagem suave sem usar as mãos</td>
-              <td class="status-bad">✕ Parar de tocar para virar página</td>
-              <td class="status-mid">⚠ Saltos bruscos e anúncios na tela</td>
-              <td class="col-cantaai status-pro">✓ Rolagem contínua subpixel + pedais</td>
-            </tr>
-            <tr>
-              <td class="comparison-feature-name">Reordenação rápida do setlist ao vivo</td>
-              <td class="status-bad">✕ Folhear 100 páginas perdidas</td>
-              <td class="status-mid">⚠ Navegação travada e confusa</td>
-              <td class="col-cantaai status-pro">✓ Reordenação fluida em segundos</td>
-            </tr>
-            <tr>
-              <td class="comparison-feature-name">Áudio guia / Estudo de introduções</td>
-              <td class="status-bad">✕ Buscar no celular e pausar app</td>
-              <td class="status-bad">✕ Não possui suporte</td>
-              <td class="col-cantaai status-pro">✓ YouTube Dock integrado na tela</td>
-            </tr>
-            <tr>
-              <td class="comparison-feature-name">Relatório impresso para banda e técnicos</td>
-              <td class="status-bad">✕ Escrever à mão na correria</td>
-              <td class="status-bad">✕ Não formata setlists limpos</td>
-              <td class="col-cantaai status-pro">✓ PDF profissional gerado com 1 clique</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="dual-comparison-grid">
+        <!-- Card 1: Método Tradicional -->
+        <div class="dual-card card-traditional">
+          <div class="dual-card-header">
+            <span class="dual-pill-badge pill-danger">O Jeito Tradicional</span>
+            <h3 class="dual-card-title">Pastas de Papel & Apps Amadores</h3>
+            <p class="dual-card-desc">Lento, desajeitado e com alto risco de erro no meio da apresentação.</p>
+          </div>
+          <ul class="dual-list">
+            <li class="dual-item danger-item">
+              <span class="dual-icon">✕</span>
+              <div>
+                <strong>Mudança de tom impossível na hora:</strong>
+                <p>Trocar tom exige rabiscar papéis na correria ou refazer folhas inteiras, gerando atraso e tensão.</p>
+              </div>
+            </li>
+            <li class="dual-item danger-item">
+              <span class="dual-icon">✕</span>
+              <div>
+                <strong>Ofuscamento e folhas invisíveis no escuro:</strong>
+                <p>Papel branco não reflete iluminação cênica sem lanternas improvisadas que atrapalham a postura do cantor.</p>
+              </div>
+            </li>
+            <li class="dual-item danger-item">
+              <span class="dual-icon">✕</span>
+              <div>
+                <strong>Interrupção para virar páginas:</strong>
+                <p>O instrumentista precisa largar o instrumento com uma das mãos para passar a folha durante o refrão.</p>
+              </div>
+            </li>
+            <li class="dual-item danger-item">
+              <span class="dual-icon">✕</span>
+              <div>
+                <strong>Setlists desorganizados e folhas perdidas:</strong>
+                <p>Procurar uma música pedida pelo público entre 100 páginas desordenadas desconecta você da plateia.</p>
+              </div>
+            </li>
+            <li class="dual-item danger-item">
+              <span class="dual-icon">✕</span>
+              <div>
+                <strong>Sem áudio de referência para introduções:</strong>
+                <p>Nenhuma sincronia com o arranjo original para conferir convenções ou nuances harmônicas antes de entrar.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Card 2: CantaAí PRO -->
+        <div class="dual-card card-cantaai">
+          <div class="cantaai-top-beacon">
+            <span class="pulse-beacon"></span>
+            <span>Padrão de Performance Elite</span>
+          </div>
+          <div class="dual-card-header">
+            <span class="dual-pill-badge pill-success">Solução Profissional</span>
+            <h3 class="dual-card-title">CantaAí PRO (SaaS em Tempo Real)</h3>
+            <p class="dual-card-desc">Controle milimétrico, visual executivo e segurança absoluta do início ao fim do show.</p>
+          </div>
+          <ul class="dual-list">
+            <li class="dual-item success-item">
+              <span class="dual-icon">✓</span>
+              <div>
+                <strong>Transposição harmônica instantânea (0ms):</strong>
+                <p>Alterne meio-tom ou tom inteiro em 1 toque sem quebrar o alinhamento de nenhuma cifra com o texto.</p>
+              </div>
+            </li>
+            <li class="dual-item success-item">
+              <span class="dual-icon">✓</span>
+              <div>
+                <strong>Modo OLED Preto Puro (#000):</strong>
+                <p>Contraste cirúrgico de cifras e letras, zero cansaço visual e estética discreta e sofisticada.</p>
+              </div>
+            </li>
+            <li class="dual-item success-item">
+              <span class="dual-icon">✓</span>
+              <div>
+                <strong>Rolagem contínua suave & pedais Bluetooth:</strong>
+                <p>Controle hands-free de velocidade milimétrica, sem nunca interromper o violão, teclado ou postura vocal.</p>
+              </div>
+            </li>
+            <li class="dual-item success-item">
+              <span class="dual-icon">✓</span>
+              <div>
+                <strong>Setlists inteligentes com Drag-and-Drop:</strong>
+                <p>Reordene músicas em tempo real com 1 gesto de dedo conforme a energia e os pedidos do público.</p>
+              </div>
+            </li>
+            <li class="dual-item success-item">
+              <span class="dual-icon">✓</span>
+              <div>
+                <strong>YouTube Dock de áudio integrado:</strong>
+                <p>Ouça o arranjo oficial ou introdução original em janela flutuante diretamente na tela do prompter.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
 
     </div>
