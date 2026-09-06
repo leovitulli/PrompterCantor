@@ -442,24 +442,34 @@ document.addEventListener('DOMContentLoaded', function () {
   //  TELA INTERNA: MÚSICAS DO REPERTÓRIO
   // ═══════════════════════════════════════
 
-  function openRepertoireSongs(repId) {
+  function openRepertoireSongs(repId, isSilent) {
     var foundRep = (state.repertoires || []).find(function (r) { return r.id === repId; });
     var repPromise = foundRep ? Promise.resolve(foundRep) : PrompterDB.getRepertoireById(repId);
 
-    repPromise.then(function (rep) {
+    return repPromise.then(function (rep) {
       if (!rep) {
-        showToast('Repertório não encontrado.', 'warning');
-        return;
+        try {
+          localStorage.removeItem('prompter_active_state');
+          if (window.location.hash && window.location.hash.indexOf('#rep-') === 0) {
+            history.replaceState(null, '', window.location.pathname);
+          }
+        } catch(e) {}
+        if (!isSilent) {
+          showToast('Repertório não encontrado.', 'warning');
+        }
+        return false;
       }
       state.currentRepertoire = rep;
 
       return PrompterDB.getSongsByRepertoire(rep.id).then(function (songs) {
         state.currentRepertoireSongs = songs || [];
         showRepertoireSongsView(rep, state.currentRepertoireSongs);
+        return true;
       });
     }).catch(function (err) {
       console.error('Erro ao abrir repertório:', err);
-      showToast('Erro ao carregar repertório.', 'warning');
+      if (!isSilent) showToast('Erro ao carregar repertório.', 'warning');
+      return false;
     });
   }
 
@@ -2180,13 +2190,15 @@ document.addEventListener('DOMContentLoaded', function () {
               return true;
             }
           } else if (targetRepId) {
-            openRepertoireSongs(targetRepId);
-            return true;
+            return openRepertoireSongs(targetRepId, true);
+          } else {
+            try { localStorage.removeItem('prompter_active_state'); } catch(e) {}
           }
+        }).catch(function() {
+          try { localStorage.removeItem('prompter_active_state'); } catch(e) {}
         });
       } else if (targetRepId) {
-        openRepertoireSongs(targetRepId);
-        return true;
+        return openRepertoireSongs(targetRepId, true);
       }
     } catch (e) {
       console.warn('Erro ao restaurar estado:', e);

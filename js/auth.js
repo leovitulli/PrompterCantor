@@ -234,22 +234,31 @@
             : ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
         }
 
+        var existingUser = (existingIdx >= 0 ? list[existingIdx] : null);
+        var sPhone = profile.phone || (existingUser ? existingUser.phone : '') || '';
+        var sCpf = profile.cpf || (existingUser ? existingUser.cpf : '') || '';
+        var sInsta = profile.instagram || (existingUser ? existingUser.instagram : '') || (cleanEmail === 'leovitulli@gmail.com' ? '@leovitulli' : '');
+
+        profile.phone = sPhone;
+        profile.cpf = sCpf;
+        profile.instagram = sInsta;
+
         var singerItem = {
-          id: profile.id || ('user-' + Date.now()),
-          name: profile.display_name || profile.name || profile.email.split('@')[0],
+          id: profile.id || (existingUser ? existingUser.id : ('user-' + Date.now())),
+          name: profile.display_name || profile.name || (existingUser ? existingUser.name : profile.email.split('@')[0]),
           email: profile.email,
-          phone: profile.phone || '',
-          cpf: profile.cpf || '',
-          instagram: profile.instagram || '',
+          phone: sPhone,
+          cpf: sCpf,
+          instagram: sInsta,
           singer_code: sCode,
-          plan_tier: profile.plan_tier || 'pro',
-          plan_type: profile.plan_type || '💎 PRO ANUAL',
+          plan_tier: profile.plan_tier || (existingUser ? existingUser.plan_tier : 'pro'),
+          plan_type: profile.plan_type || (existingUser ? existingUser.plan_type : '💎 PRO ANUAL'),
           is_online: true,
           status_text: '🟢 Conectado e Ativo',
-          reps_count: (existingIdx >= 0 && list[existingIdx].reps_count) || 0,
-          songs_count: (existingIdx >= 0 && list[existingIdx].songs_count) || 0,
+          reps_count: (existingUser && existingUser.reps_count) || 0,
+          songs_count: (existingUser && existingUser.songs_count) || 0,
           last_seen: 'Agora mesmo',
-          created_at: profile.created_at || (existingIdx >= 0 ? list[existingIdx].created_at : new Date().toISOString().slice(0, 10))
+          created_at: profile.created_at || (existingUser ? existingUser.created_at : new Date().toISOString().slice(0, 10))
         };
 
         if (existingIdx >= 0) {

@@ -183,6 +183,13 @@
           if (!hasLeoOgum) {
             allUserData.push(defaultSeedSingers[1]);
           }
+
+          // Garantir que leovitulli@gmail.com possua instagram @leovitulli caso tenha sido zerado
+          var ceoUser = allUserData.find(function(u) { return u.email && u.email.toLowerCase() === 'leovitulli@gmail.com'; });
+          if (ceoUser && !ceoUser.instagram) {
+            ceoUser.instagram = '@leovitulli';
+          }
+
           localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
           PrompterAdmin.allUserData = allUserData;
         }
@@ -1481,6 +1488,14 @@
 
       var cleanEmail = (email || '').trim().toLowerCase();
       var cleanCode = normalizeSingerCode(code, cleanEmail);
+      var cleanInstagram = (instagram || '').trim();
+      if (cleanInstagram && !cleanInstagram.startsWith('@')) {
+        cleanInstagram = '@' + cleanInstagram;
+      }
+      if (!cleanInstagram && cleanEmail === 'leovitulli@gmail.com') {
+        cleanInstagram = '@leovitulli';
+      }
+
       var existing = allUserData.find(function(u) {
         return (id && u.id === id) || (u.email && u.email.trim().toLowerCase() === cleanEmail);
       });
@@ -1492,7 +1507,7 @@
         email: email,
         phone: phone,
         cpf: cpf,
-        instagram: instagram,
+        instagram: cleanInstagram,
         singer_code: cleanCode,
         plan_tier: planTier,
         plan_type: planType,
@@ -1528,7 +1543,7 @@
         authProfile.singer_code = cleanCode;
         authProfile.phone = phone;
         authProfile.cpf = cpf;
-        authProfile.instagram = instagram;
+        authProfile.instagram = cleanInstagram;
         authProfile.plan_tier = singerPayload.plan_tier;
         authProfile.plan_type = singerPayload.plan_type;
         authProfile.coupon_used = singerPayload.coupon_used;
@@ -1550,7 +1565,7 @@
           display_name: name,
           phone: phone,
           cpf: cpf,
-          instagram: instagram,
+          instagram: cleanInstagram,
           singer_code: cleanCode,
           plan_tier: planTier,
           plan_type: planType,
@@ -1618,6 +1633,8 @@
         var myIdx = allUserData.findIndex(function(u) {
           return u.id === currentUser.id || (u.email && u.email.toLowerCase() === devEmail.toLowerCase());
         });
+        var existingInsta = (myIdx >= 0 && allUserData[myIdx].instagram) ? allUserData[myIdx].instagram : '';
+        var instaVal = (currentProfile && currentProfile.instagram) || existingInsta || (devEmail.toLowerCase() === 'leovitulli@gmail.com' ? '@leovitulli' : '');
         var myData = {
           id: currentUser.id,
           name: devName,
@@ -1629,7 +1646,7 @@
           status_text: '🟢 Conectado e Ativo',
           phone: (currentProfile && currentProfile.phone) || (myIdx >= 0 ? allUserData[myIdx].phone : ''),
           cpf: (currentProfile && currentProfile.cpf) || (myIdx >= 0 ? allUserData[myIdx].cpf : ''),
-          instagram: (currentProfile && currentProfile.instagram) || (myIdx >= 0 ? allUserData[myIdx].instagram : ''),
+          instagram: instaVal,
           reps_count: (myIdx >= 0 && allUserData[myIdx].reps_count) ? allUserData[myIdx].reps_count : 1,
           songs_count: (myIdx >= 0 && allUserData[myIdx].songs_count) ? allUserData[myIdx].songs_count : 33,
           last_seen: 'Agora mesmo',
@@ -1738,13 +1755,14 @@
                 sb.from('profiles').update({ singer_code: effectiveCode }).eq('id', p.id).catch(function() {});
               }
 
+              var profInsta = p.instagram || (existIdx >= 0 ? allUserData[existIdx].instagram : '') || (pEmail === 'leovitulli@gmail.com' ? '@leovitulli' : '');
               var profData = {
                 id: p.id,
                 name: p.display_name || (existIdx >= 0 ? allUserData[existIdx].name : (p.email ? p.email.split('@')[0] : 'Cantor')),
                 email: p.email || (existIdx >= 0 ? allUserData[existIdx].email : ''),
                 phone: p.phone || (existIdx >= 0 ? allUserData[existIdx].phone : ''),
                 cpf: p.cpf || (existIdx >= 0 ? allUserData[existIdx].cpf : ''),
-                instagram: p.instagram || (existIdx >= 0 ? allUserData[existIdx].instagram : ''),
+                instagram: profInsta,
                 singer_code: effectiveCode,
                 plan_tier: p.plan_tier || (existIdx >= 0 ? allUserData[existIdx].plan_tier : 'free'),
                 plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
