@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
             PrompterDB.getSongsByRepertoire(state.currentRepertoire.id).then(function (songs) {
               state.currentRepertoireSongs = songs || [];
               renderSongsList(state.currentRepertoireSongs);
+              if (window.updateSaaSPlanBanner) updateSaaSPlanBanner();
             });
           } else {
             loadRepertoires();
@@ -244,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var fillEl = document.getElementById('spbProgressFill');
     var btnUpgrade = document.getElementById('btnSpbUpgrade');
 
-    PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+    PrompterDB.getAllSongs().then(function(allSongs) {
       var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
       var totalReps = (state.repertoires && Array.isArray(state.repertoires)) ? state.repertoires.length : 0;
 
@@ -2517,7 +2518,7 @@ document.addEventListener('DOMContentLoaded', function () {
         openSaasFreeLimitModal('repertoire', state.repertoires.length, saas.maxRepertoires);
         return;
       }
-      PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+      PrompterDB.getAllSongs().then(function(allSongs) {
         var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
         if (totalSongs >= saas.maxSongs) {
           openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
@@ -2754,7 +2755,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+    PrompterDB.getAllSongs().then(function(allSongs) {
       var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
       if (!saas.isUnlimited) {
         var availableSlots = Math.max(0, saas.maxSongs - totalSongs);
@@ -2852,7 +2853,7 @@ document.addEventListener('DOMContentLoaded', function () {
         openSaasFreeLimitModal('repertoire', state.repertoires.length, saas.maxRepertoires);
         return;
       }
-      PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+      PrompterDB.getAllSongs().then(function(allSongs) {
         var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
         if (totalSongs >= saas.maxSongs) {
           openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
@@ -3018,7 +3019,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!song) {
       var saas = getSaaSUserStatus();
       if (!saas.isUnlimited) {
-        PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+        PrompterDB.getAllSongs().then(function(allSongs) {
           var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
           if (totalSongs >= saas.maxSongs) {
             openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
@@ -3143,7 +3144,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!id) {
       var saas = getSaaSUserStatus();
       if (!saas.isUnlimited) {
-        PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+        PrompterDB.getAllSongs().then(function(allSongs) {
           var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
           if (totalSongs >= saas.maxSongs) {
             closeModal(songEditorModal);
