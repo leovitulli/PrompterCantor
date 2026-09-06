@@ -3541,7 +3541,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var appliedCoupon = null;
 
     function calculateCheckoutTotal() {
-      var basePrice = selectedPlan === 'annual' ? 299.00 : 39.90;
+      var pricing = (window.PrompterAdmin && typeof window.PrompterAdmin.getPricingConfig === 'function') 
+        ? window.PrompterAdmin.getPricingConfig() 
+        : null;
+      var annual = (pricing && pricing.annualPrice) ? pricing.annualPrice : 299.00;
+      var monthly = (pricing && pricing.monthlyPrice) ? pricing.monthlyPrice : 39.90;
+      var basePrice = selectedPlan === 'annual' ? annual : monthly;
       var finalPrice = basePrice;
 
       if (appliedCoupon) {
@@ -3583,13 +3588,26 @@ document.addEventListener('DOMContentLoaded', function () {
       if (inputCoupon) inputCoupon.value = '';
       if (couponAlert) { couponAlert.style.display = 'none'; couponAlert.innerText = ''; }
 
+      // Atualizar valores nos cards com a precificação configurada pelo CEO
+      var pricing = (window.PrompterAdmin && typeof window.PrompterAdmin.getPricingConfig === 'function') 
+        ? window.PrompterAdmin.getPricingConfig() 
+        : null;
+      var annual = (pricing && pricing.annualPrice) ? pricing.annualPrice : 299.00;
+      var monthly = (pricing && pricing.monthlyPrice) ? pricing.monthlyPrice : 39.90;
+
       if (cardPlanAnnual) {
         cardPlanAnnual.style.borderColor = '#38bdf8';
         cardPlanAnnual.style.background = 'rgba(56, 189, 248, 0.08)';
+        var priceDiv = cardPlanAnnual.querySelector('div[style*="font-size: 1.35rem"]');
+        var equivDiv = cardPlanAnnual.querySelector('div[style*="Equivalente a"]');
+        if (priceDiv) priceDiv.innerHTML = annual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">/ano</span>';
+        if (equivDiv) equivDiv.innerText = 'Equivalente a R$ ' + (annual / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/mês';
       }
       if (cardPlanMonthly) {
         cardPlanMonthly.style.borderColor = 'rgba(255, 255, 255, 0.15)';
         cardPlanMonthly.style.background = 'rgba(15, 23, 42, 0.6)';
+        var mPriceDiv = cardPlanMonthly.querySelector('div[style*="font-size: 1.35rem"]');
+        if (mPriceDiv) mPriceDiv.innerHTML = monthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">/mês</span>';
       }
 
       calculateCheckoutTotal();

@@ -170,6 +170,29 @@
 
         var rawPricing = localStorage.getItem(STORAGE_PRICING_KEY);
         if (rawPricing) pricingConfig = Object.assign(pricingConfig, JSON.parse(rawPricing));
+
+        // Sincronizar também da Nuvem (Supabase System Registry)
+        var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+        if (sb) {
+          sb.from('songs')
+            .select('content')
+            .eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID)
+            .eq('artist', 'SYSTEM_CONFIG_PRICING')
+            .then(function(res) {
+              if (res.data && res.data.length > 0 && res.data[0].content) {
+                try {
+                  var cloudPricing = typeof res.data[0].content === 'string' ? JSON.parse(res.data[0].content) : res.data[0].content;
+                  if (cloudPricing) {
+                    pricingConfig = Object.assign(pricingConfig, cloudPricing);
+                    localStorage.setItem(STORAGE_PRICING_KEY, JSON.stringify(pricingConfig));
+                    PrompterAdmin.loadPricingForm();
+                    PrompterAdmin.updateMetrics();
+                    PrompterAdmin.updateLandingPricingUI();
+                  }
+                } catch(e) {}
+              }
+            }).catch(function() {});
+        }
       } catch (e) {
         console.warn('Erro ao carregar dados do admin:', e);
       }
@@ -191,6 +214,27 @@
       try {
         localStorage.setItem(STORAGE_PRICING_KEY, JSON.stringify(pricingConfig));
       } catch (e) {}
+
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb) {
+        sb.from('songs')
+          .select('id')
+          .eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID)
+          .eq('artist', 'SYSTEM_CONFIG_PRICING')
+          .then(function(res) {
+            var row = {
+              repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
+              title: 'Configuração Mercado Pago e Precificação SaaS',
+              artist: 'SYSTEM_CONFIG_PRICING',
+              content: JSON.stringify(pricingConfig)
+            };
+            if (res.data && res.data.length > 0) {
+              sb.from('songs').update(row).eq('id', res.data[0].id).catch(function() {});
+            } else {
+              sb.from('songs').insert(row).catch(function() {});
+            }
+          }).catch(function() {});
+      }
     },
 
     createAdminModalHTML: function () {
@@ -459,7 +503,10 @@
 
                   '<!-- Card Credenciais Mercado Pago -->' +
                   '<div class="admin-card-section">' +
-                    '<h4>🤝 Integração Mercado Pago (Pix & Cartão)</h4>' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">' +
+                      '<h4 style="margin: 0;">🤝 Integração Mercado Pago (Pix & Cartão)</h4>' +
+                      '<span id="mpStatusBadge" style="font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.25);">⚪ Não Testado</span>' +
+                    '</div>' +
                     '<p style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 1rem;">Conecte sua conta do Mercado Pago para receber assinaturas de forma automática com liberação instantânea.</p>' +
                     '<div class="form-group">' +
                       '<label>Ambiente de Pagamento:</label>' +
@@ -474,7 +521,10 @@
                     '</div>' +
                     '<div class="form-group">' +
                       '<label>Mercado Pago Access Token (Privado):</label>' +
-                      '<input type="text" id="inputMpAccessToken" name="canta_mp_access_token_custom" autocomplete="off" data-lpignore="true" class="form-control" placeholder="Ex: APP_USR-1234567890..." style="font-family: var(--font-mono);">' +
+                      '<div style="position: relative; display: flex; align-items: center;">' +
+                        '<input type="password" id="inputMpAccessToken" name="canta_mp_access_token_custom" autocomplete="off" data-lpignore="true" class="form-control" placeholder="Ex: APP_USR-1234567890..." style="font-family: var(--font-mono); padding-right: 42px;">' +
+                        '<button type="button" id="btnToggleMpToken" title="Mostrar / Ocultar Chave" style="position: absolute; right: 8px; background: transparent; border: none; font-size: 1.1rem; cursor: pointer; color: #94a3b8; padding: 4px;">👁️</button>' +
+                      '</div>' +
                     '</div>' +
                     '<div style="background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 12px; padding: 12px 14px; margin-top: 1rem; font-size: 0.8rem; color: #cbd5e1;">' +
                       '<div style="font-weight: 700; color: #fbbf24; margin-bottom: 6px;">📘 Onde encontrar suas credenciais do Mercado Pago?</div>' +
@@ -485,7 +535,11 @@
                         '<li>Copie a <strong>Public Key</strong> e o <strong>Access Token</strong> e cole nos campos acima.</li>' +
                       '</ol>' +
                     '</div>' +
-                    '<button type="button" id="btnSavePricingConfig" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">💾 Salvar Configurações de Cobrança</button>' +
+                    '<div style="display: flex; gap: 10px; margin-top: 1.2rem;">' +
+                      '<button type="button" id="btnTestMpConnection" class="btn btn-secondary" style="flex: 1; white-space: nowrap;">⚡ Testar Conexão</button>' +
+                      '<button type="button" id="btnSavePricingConfig" class="btn btn-primary" style="flex: 1.4; white-space: nowrap;">💾 Salvar Cobrança</button>' +
+                    '</div>' +
+                    '<div id="mpConnectionFeedbackBox" style="display: none; margin-top: 10px; font-size: 0.8rem; padding: 12px; border-radius: 10px; line-height: 1.4;"></div>' +
                   '</div>' +
                 '</div>' +
               '</div>' +
@@ -833,20 +887,65 @@
         });
       }
 
-      // Salvar Configurações de Faturamento
+      // Mostrar / Ocultar Access Token do Mercado Pago
+      var btnToggleToken = document.getElementById('btnToggleMpToken');
+      if (btnToggleToken) {
+        btnToggleToken.addEventListener('click', function () {
+          var inp = document.getElementById('inputMpAccessToken');
+          if (inp) {
+            if (inp.type === 'password') {
+              inp.type = 'text';
+              btnToggleToken.innerText = '🙈';
+            } else {
+              inp.type = 'password';
+              btnToggleToken.innerText = '👁️';
+            }
+          }
+        });
+      }
+
+      // Testar Conexão com a API do Mercado Pago
+      var btnTestMp = document.getElementById('btnTestMpConnection');
+      if (btnTestMp) {
+        btnTestMp.addEventListener('click', function () {
+          PrompterAdmin.testMpConnection();
+        });
+      }
+
+      // Salvar Configurações de Faturamento & Mercado Pago
       var btnSavePricing = document.getElementById('btnSavePricingConfig');
       if (btnSavePricing) {
         btnSavePricing.addEventListener('click', function () {
-          pricingConfig.monthlyPrice = parseFloat(document.getElementById('inputPriceMonthly').value) || 39.90;
-          pricingConfig.annualPrice = parseFloat(document.getElementById('inputPriceAnnual').value) || 299.00;
-          pricingConfig.mpEnv = document.getElementById('selectMpEnv').value || 'production';
-          pricingConfig.mpPublicKey = (document.getElementById('inputMpPublicKey').value || '').trim();
-          pricingConfig.mpAccessToken = (document.getElementById('inputMpAccessToken').value || '').trim();
+          var parsePrice = function(val, fallback) {
+            if (!val && val !== 0) return fallback;
+            var clean = String(val).replace(/[^\d,\.]/g, '').replace(',', '.');
+            var num = parseFloat(clean);
+            return (!isNaN(num) && num > 0) ? num : fallback;
+          };
+
+          var elMonthly = document.getElementById('inputPriceMonthly');
+          var elAnnual = document.getElementById('inputPriceAnnual');
+          var elEnv = document.getElementById('selectMpEnv');
+          var elPub = document.getElementById('inputMpPublicKey');
+          var elToken = document.getElementById('inputMpAccessToken');
+
+          pricingConfig.monthlyPrice = elMonthly ? parsePrice(elMonthly.value, 39.90) : 39.90;
+          pricingConfig.annualPrice = elAnnual ? parsePrice(elAnnual.value, 299.00) : 299.00;
+          pricingConfig.mpEnv = elEnv ? elEnv.value : 'production';
+          pricingConfig.mpPublicKey = elPub ? elPub.value.trim() : '';
+          pricingConfig.mpAccessToken = elToken ? elToken.value.trim() : '';
 
           PrompterAdmin.saveStoredPricing();
           PrompterAdmin.updateMetrics();
           PrompterAdmin.updateLandingPricingUI();
-          if (window.showToast) window.showToast('✅ Configurações de preços e Mercado Pago salvas e atualizadas na página de vendas!', 'success');
+          PrompterAdmin.checkMpConnectionStatus(false);
+
+          if (pricingConfig.mpAccessToken) {
+            // Valida automaticamente em segundo plano ao salvar
+            PrompterAdmin.testMpConnection();
+          }
+
+          if (window.showToast) window.showToast('💾 Configurações de cobrança e chaves do Mercado Pago salvas na nuvem!', 'success');
         });
       }
 
@@ -894,6 +993,7 @@
 
       if (currentTab === 'announcements') PrompterAdmin.loadAnnouncements();
       if (currentTab === 'tickets') PrompterAdmin.loadTickets();
+      if (currentTab === 'pricing') PrompterAdmin.loadPricingForm();
     },
 
     setFilter: function (filterName) {
@@ -1595,11 +1695,130 @@
       var pubKey = document.getElementById('inputMpPublicKey');
       var accToken = document.getElementById('inputMpAccessToken');
 
-      if (pM) pM.value = pricingConfig.monthlyPrice;
-      if (pA) pA.value = pricingConfig.annualPrice;
+      if (pM) pM.value = pricingConfig.monthlyPrice || 39.90;
+      if (pA) pA.value = pricingConfig.annualPrice || 299.00;
       if (env) env.value = pricingConfig.mpEnv || 'production';
       if (pubKey) pubKey.value = pricingConfig.mpPublicKey || '';
       if (accToken) accToken.value = pricingConfig.mpAccessToken || '';
+
+      this.checkMpConnectionStatus(true);
+    },
+
+    checkMpConnectionStatus: function(silent) {
+      var badge = document.getElementById('mpStatusBadge');
+      if (!badge) return;
+      var token = pricingConfig.mpAccessToken || '';
+      if (!token) {
+        badge.innerText = '⚪ Não Configurado';
+        badge.style.background = 'rgba(148, 163, 184, 0.15)';
+        badge.style.color = '#94a3b8';
+        badge.style.borderColor = 'rgba(148, 163, 184, 0.25)';
+      } else if (token.startsWith('APP_USR-')) {
+        badge.innerText = '🟢 Produção Ativa';
+        badge.style.background = 'rgba(16, 185, 129, 0.15)';
+        badge.style.color = '#34d399';
+        badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      } else if (token.startsWith('TEST-')) {
+        badge.innerText = '🟡 Sandbox / Testes';
+        badge.style.background = 'rgba(251, 191, 36, 0.15)';
+        badge.style.color = '#fbbf24';
+        badge.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+      }
+    },
+
+    testMpConnection: function () {
+      var elToken = document.getElementById('inputMpAccessToken');
+      var token = (elToken ? elToken.value : '') || pricingConfig.mpAccessToken || '';
+      token = token.trim();
+      var feedback = document.getElementById('mpConnectionFeedbackBox');
+      var badge = document.getElementById('mpStatusBadge');
+
+      if (!token) {
+        if (feedback) {
+          feedback.style.display = 'block';
+          feedback.style.background = 'rgba(239, 68, 68, 0.12)';
+          feedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+          feedback.style.color = '#fca5a5';
+          feedback.innerHTML = '⚠️ <strong>Chave Ausente:</strong> Cole o seu <em>Mercado Pago Access Token</em> antes de testar a conexão.';
+        }
+        if (badge) {
+          badge.innerText = '⚪ Pendente';
+          badge.style.background = 'rgba(148, 163, 184, 0.15)';
+          badge.style.color = '#94a3b8';
+        }
+        return;
+      }
+
+      if (badge) {
+        badge.innerText = '🔄 Validando...';
+        badge.style.background = 'rgba(56, 189, 248, 0.15)';
+        badge.style.color = '#38bdf8';
+      }
+      if (feedback) {
+        feedback.style.display = 'block';
+        feedback.style.background = 'rgba(56, 189, 248, 0.1)';
+        feedback.style.border = '1px solid rgba(56, 189, 248, 0.25)';
+        feedback.style.color = '#bae6fd';
+        feedback.innerHTML = '🔄 Conectando com a API oficial do Mercado Pago...';
+      }
+
+      fetch('https://api.mercadopago.com/v1/payment_methods', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      }).then(function(res) {
+        if (res.status === 200) {
+          return res.json().then(function(methods) {
+            var hasPix = Array.isArray(methods) && methods.some(function(m) { return m.id === 'pix'; });
+            var envLabel = token.startsWith('APP_USR-') ? '🟢 Produção (Cobrança Real Ativa)' : '🟡 Sandbox (Ambiente de Testes)';
+            if (badge) {
+              badge.innerText = token.startsWith('APP_USR-') ? '🟢 Conexão Ativa' : '🟡 Testes / Sandbox';
+              badge.style.background = 'rgba(16, 185, 129, 0.15)';
+              badge.style.color = '#34d399';
+              badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            }
+            if (feedback) {
+              feedback.style.display = 'block';
+              feedback.style.background = 'rgba(16, 185, 129, 0.12)';
+              feedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+              feedback.style.color = '#a7f3d0';
+              feedback.innerHTML = '✅ <strong>Conexão Autorizada com Sucesso!</strong><br>' +
+                '• <strong>Status:</strong> ' + envLabel + '<br>' +
+                '• <strong>Pix Instantâneo:</strong> ' + (hasPix ? 'Ativado e pronto para recebimento' : 'Habilitado') + '<br>' +
+                '• <strong>Cartões Aceitos:</strong> Visa, Mastercard, Elo, Hipercard, Amex.<br>' +
+                '<span style="color: #6ee7b7; font-size: 0.75rem;">Suas assinaturas do CantaAí PRO já podem ser cobradas automaticamente.</span>';
+            }
+            if (window.showToast) window.showToast('✅ Conexão com Mercado Pago validada com sucesso!', 'success');
+          });
+        } else {
+          return res.json().then(function(errData) {
+            var msg = (errData && (errData.message || errData.error)) ? (errData.message || errData.error) : ('HTTP ' + res.status);
+            throw new Error(msg);
+          }).catch(function(e) {
+            throw new Error(e.message || ('Código HTTP ' + res.status));
+          });
+        }
+      }).catch(function(err) {
+        if (badge) {
+          badge.innerText = '🔴 Chave Rejeitada';
+          badge.style.background = 'rgba(239, 68, 68, 0.15)';
+          badge.style.color = '#f87171';
+        }
+        if (feedback) {
+          feedback.style.display = 'block';
+          feedback.style.background = 'rgba(239, 68, 68, 0.12)';
+          feedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+          feedback.style.color = '#fca5a5';
+          feedback.innerHTML = '❌ <strong>Falha na Autenticação com o Mercado Pago:</strong><br>' +
+            (err.message || 'Verifique se copiou a chave inteira ou se a conta do Mercado Pago está ativa.') + '<br>' +
+            '<span style="font-size: 0.75rem; color: #f87171;">Certifique-se de que o Access Token começa com APP_USR- (Produção) ou TEST- (Sandbox).</span>';
+        }
+        if (window.showToast) window.showToast('❌ Erro na validação das chaves do Mercado Pago.', 'warning');
+      });
+    },
+
+    getPricingConfig: function () {
+      return pricingConfig;
     },
     // ════════════════════════════════════════
     //  ACERVO MASTER DE MÚSICAS & CIFRAS (CEO)
