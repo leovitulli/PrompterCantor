@@ -54,7 +54,10 @@ DECLARE
     u_tier TEXT;
     u_type TEXT;
 BEGIN
-    random_code := '#CANTOR-' || UPPER(SUBSTRING(MD5(RANDOM()::TEXT) FROM 1 FOR 5));
+    random_code := CASE
+        WHEN NEW.email = 'leovitulli@gmail.com' THEN '@leovitulli'
+        ELSE COALESCE(NULLIF(NEW.raw_user_meta_data->>'singer_code', ''), '@' || split_part(NEW.email, '@', 1))
+    END;
     
     u_name := COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1));
     u_phone := COALESCE(NEW.raw_user_meta_data->>'phone', '');
@@ -82,6 +85,11 @@ BEGIN
         phone = COALESCE(NULLIF(EXCLUDED.phone, ''), profiles.phone),
         cpf = COALESCE(NULLIF(EXCLUDED.cpf, ''), profiles.cpf),
         instagram = COALESCE(NULLIF(EXCLUDED.instagram, ''), profiles.instagram),
+        singer_code = CASE
+            WHEN profiles.singer_code LIKE '#%' OR profiles.singer_code IS NULL OR profiles.singer_code = '' THEN
+                CASE WHEN EXCLUDED.email = 'leovitulli@gmail.com' THEN '@leovitulli' ELSE '@' || split_part(EXCLUDED.email, '@', 1) END
+            ELSE profiles.singer_code
+        END,
         updated_at = NOW();
 
     RETURN NEW;
@@ -109,7 +117,7 @@ DROP POLICY IF EXISTS "Profiles updateable by owner or admin" ON public.profiles
 CREATE POLICY "Profiles updateable by owner or admin" ON public.profiles
     FOR UPDATE USING (auth.uid() = id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
 
--- 6. POPULAR / SINCRONIZAR USUÁRIOS QUE JÁ EXISTEM NO AUTH.USERS
+-- 6. POPULAR / SINCRONIZAR USUÁRIOS QUE JÁ EXISTEM NO AUTH.USERS (CORRIGINDO QUALQUER CÓDIGO COM HASH)
 INSERT INTO public.profiles (id, email, display_name, phone, cpf, instagram, singer_code, role, plan_tier, plan_type)
 SELECT 
     au.id,
@@ -118,14 +126,30 @@ SELECT
     COALESCE(au.raw_user_meta_data->>'phone', ''),
     COALESCE(au.raw_user_meta_data->>'cpf', ''),
     COALESCE(au.raw_user_meta_data->>'instagram', ''),
-    '#CANTOR-' || UPPER(SUBSTRING(MD5(au.id::TEXT) FROM 1 FOR 5)),
+    CASE 
+        WHEN au.email = 'leovitulli@gmail.com' THEN '@leovitulli'
+        ELSE COALESCE(NULLIF(au.raw_user_meta_data->>'singer_code', ''), '@' || split_part(au.email, '@', 1))
+    END,
     CASE WHEN au.email = 'leovitulli@gmail.com' THEN 'admin' ELSE 'user' END,
     CASE WHEN au.email = 'leovitulli@gmail.com' THEN 'pro' ELSE 'free' END,
     CASE WHEN au.email = 'leovitulli@gmail.com' THEN '💎 PRO ANUAL' ELSE '⚡ PLANO FREE' END
 FROM auth.users au
 ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
-    role = EXCLUDED.role;
+    role = EXCLUDED.role,
+    singer_code = CASE
+        WHEN profiles.singer_code LIKE '#%' OR profiles.singer_code IS NULL OR profiles.singer_code = '' THEN
+            CASE WHEN EXCLUDED.email = 'leovitulli@gmail.com' THEN '@leovitulli' ELSE '@' || split_part(EXCLUDED.email, '@', 1) END
+        ELSE profiles.singer_code
+    END;
+
+-- Limpar qualquer singer_code com # remanescente na tabela profiles
+UPDATE public.profiles
+SET singer_code = CASE
+    WHEN email = 'leovitulli@gmail.com' THEN '@leovitulli'
+    ELSE '@' || split_part(email, '@', 1)
+END
+WHERE singer_code LIKE '#%' OR singer_code IS NULL OR singer_code = '';
 
 -- 7. TABELA DE CHAMADOS & FEEDBACK (COM FOTO/PRINT)
 CREATE TABLE IF NOT EXISTS public.tickets (

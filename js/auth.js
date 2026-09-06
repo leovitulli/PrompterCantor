@@ -224,6 +224,16 @@
         var existingIdx = list.findIndex(function(u) {
           return (u.email && u.email.trim().toLowerCase() === cleanEmail) || (profile.id && u.id === profile.id);
         });
+
+        var sCode = profile.singer_code || ('@' + profile.email.split('@')[0]);
+        if (window.PrompterAdmin && typeof window.PrompterAdmin.normalizeSingerCode === 'function') {
+          sCode = window.PrompterAdmin.normalizeSingerCode(sCode, profile.email);
+        } else if (sCode.startsWith('#') || sCode.toUpperCase().indexOf('CANTOR-') !== -1 || sCode.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
+          sCode = (cleanEmail === 'leovitulli@gmail.com')
+            ? (localStorage.getItem('cantaai_user_custom_handle') || '@leovitulli')
+            : ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
+        }
+
         var singerItem = {
           id: profile.id || ('user-' + Date.now()),
           name: profile.display_name || profile.name || profile.email.split('@')[0],
@@ -231,7 +241,7 @@
           phone: profile.phone || '',
           cpf: profile.cpf || '',
           instagram: profile.instagram || '',
-          singer_code: profile.singer_code || ('@' + profile.email.split('@')[0]),
+          singer_code: sCode,
           plan_tier: profile.plan_tier || 'pro',
           plan_type: profile.plan_type || '💎 PRO ANUAL',
           is_online: true,
@@ -248,6 +258,21 @@
           list.unshift(singerItem);
         }
         localStorage.setItem('canta_ai_admin_users', JSON.stringify(list));
+
+        if (window.PrompterAdmin && Array.isArray(window.PrompterAdmin.allUserData)) {
+          var admIdx = window.PrompterAdmin.allUserData.findIndex(function(u) {
+            return (u.email && u.email.trim().toLowerCase() === cleanEmail) || (profile.id && u.id === profile.id);
+          });
+          if (admIdx >= 0) {
+            window.PrompterAdmin.allUserData[admIdx] = Object.assign({}, window.PrompterAdmin.allUserData[admIdx], singerItem);
+          } else {
+            window.PrompterAdmin.allUserData.unshift(singerItem);
+          }
+          if (typeof window.PrompterAdmin.renderUsersTable === 'function') {
+            window.PrompterAdmin.renderUsersTable();
+            window.PrompterAdmin.updateMetrics();
+          }
+        }
 
         // Sincronizar no System Registry na nuvem
         var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
@@ -449,15 +474,20 @@
             return p.id === userId || (p.email && userEmail && p.email.toLowerCase() === userEmail.toLowerCase());
           });
           if (found) {
-            // Se o usuário já possui um login customizado salvo localmente, preserva como autoridade máxima
-            if (userCustomHandle) {
+            var fEmail = (found.email || userEmail || '').toLowerCase();
+            var hadLegacyHash = found.singer_code && (found.singer_code.startsWith('#') || found.singer_code.toUpperCase().indexOf('CANTOR-') !== -1 || found.singer_code.toUpperCase().indexOf('DEV-ADMIN') !== -1);
+            if (userCustomHandle && fEmail === 'leovitulli@gmail.com') {
               found.singer_code = userCustomHandle;
-            } else if (found.email && found.email.toLowerCase() === 'leovitulli@gmail.com') {
-              if (!found.singer_code || found.singer_code.startsWith('#') || found.singer_code === '#CANTOR-3DEB6' || found.singer_code === '#DEV-ADMIN') {
-                found.singer_code = '@leovitulli';
-              }
-            } else if (found.singer_code && found.singer_code.startsWith('#CANTOR-')) {
-              found.singer_code = '@' + (found.email ? found.email.split('@')[0] : 'cantor');
+            } else if (!found.singer_code || hadLegacyHash) {
+              found.singer_code = (fEmail === 'leovitulli@gmail.com')
+                ? (userCustomHandle || '@leovitulli')
+                : ('@' + (fEmail ? fEmail.split('@')[0] : 'cantor'));
+            } else if (!found.singer_code.startsWith('@')) {
+              found.singer_code = '@' + found.singer_code;
+            }
+            // Sincronizar com o banco Supabase para reparar o hash legado na nuvem
+            if (sb && found.id && hadLegacyHash) {
+              sb.from('profiles').update({ singer_code: found.singer_code }).eq('id', found.id).catch(function() {});
             }
             return found;
           }
@@ -558,6 +588,12 @@
       if (!currentProfile) currentProfile = {};
       
       var cleanCode = this.formatSingerCode(singerCode || '');
+      if (cleanCode.startsWith('#') || cleanCode.toUpperCase().indexOf('CANTOR-') !== -1 || cleanCode.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
+        cleanCode = '@' + cleanCode.replace(/^[#@]+/, '');
+      }
+      if (!cleanCode && currentUser && currentUser.email) {
+        cleanCode = '@' + currentUser.email.split('@')[0];
+      }
       
       currentProfile.display_name = name;
       if (cleanCode) {

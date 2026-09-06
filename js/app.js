@@ -3450,8 +3450,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var isAdm = PrompterAuth.isAdmin();
       var customHandle = localStorage.getItem('cantaai_user_custom_handle');
       var code = customHandle || (profile && profile.singer_code) || ('@' + (email ? email.split('@')[0] : 'cantor'));
-      if (email === 'leovitulli@gmail.com' && (!code || code.startsWith('#'))) {
-        code = customHandle || '@leovitulli';
+      if (!code || code.startsWith('#') || code.toUpperCase().indexOf('CANTOR-') !== -1 || code.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
+        code = (email === 'leovitulli@gmail.com') ? (customHandle || '@leovitulli') : ('@' + (email ? email.split('@')[0] : 'cantor'));
       }
       var displayName = (profile && profile.display_name) ? profile.display_name : (email.split('@')[0] || 'Cantor');
       displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);

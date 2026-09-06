@@ -24,6 +24,17 @@
       var raw = localStorage.getItem(STORAGE_DELETED_KEY);
       var list = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(list)) list = [];
+      // Higienizar: garantir que contas legítimas nunca fiquem na lista de excluídos
+      list = list.filter(function(x) {
+        var str = String(x || '').toLowerCase().trim();
+        return str !== 'leovitulli@gmail.com' &&
+               str !== '@leovitulli' &&
+               str !== 'admin-leovitulli-id' &&
+               str !== 'leoogum23@gmail.com' &&
+               str !== '@leoogum23' &&
+               str !== 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0' &&
+               str !== '';
+      });
       // Se ainda não tiver registrado o cantor teste como excluído, incluir por padrão para atender pedido do usuário
       if (list.indexOf('test_singer@cantaaipro.com') === -1) {
         list.push('test_singer@cantaaipro.com');
@@ -35,6 +46,31 @@
     } catch (e) {
       return ['test_singer@cantaaipro.com', '@test_singer', 'a7af2dd9-76f8-4b18-aa3f-3a7535baeb00'];
     }
+  }
+
+  function normalizeSingerCode(code, email) {
+    var cleanEmail = (email || '').trim().toLowerCase();
+    if (cleanEmail === 'leovitulli@gmail.com') {
+      var customH = localStorage.getItem('cantaai_user_custom_handle');
+      if (customH) {
+        return customH.startsWith('@') ? customH : ('@' + customH);
+      }
+    }
+
+    var c = String(code || '').trim();
+    // Se for hash legado gerado por SQL (ex: #CANTOR-3DEB6 ou qualquer #) ou vazio
+    if (!c || c.startsWith('#') || c.toUpperCase().indexOf('CANTOR-') !== -1 || c.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
+      if (cleanEmail === 'leovitulli@gmail.com') {
+        var savedH = localStorage.getItem('cantaai_user_custom_handle');
+        return savedH || '@leovitulli';
+      }
+      return '@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor');
+    }
+
+    if (!c.startsWith('@')) {
+      c = '@' + c;
+    }
+    return c.toLowerCase().replace(/\s+/g, '_');
   }
 
   var allUserData = [];
@@ -134,16 +170,9 @@
             return true;
           });
 
-          // Normalizar código legado de leovitulli@gmail.com
+          // Normalizar código de todos os usuários
           allUserData.forEach(function (u) {
-            if (u.email && u.email.toLowerCase() === 'leovitulli@gmail.com') {
-              var customH = localStorage.getItem('cantaai_user_custom_handle');
-              if (customH) {
-                u.singer_code = customH;
-              } else if (!u.singer_code || u.singer_code.startsWith('#') || u.singer_code === '#CANTOR-3DEB6' || u.singer_code === '#DEV-ADMIN') {
-                u.singer_code = '@leovitulli';
-              }
-            }
+            u.singer_code = normalizeSingerCode(u.singer_code, u.email);
           });
 
           var hasLeoOgum = allUserData.some(function(u) {
@@ -151,10 +180,11 @@
                    (u.singer_code && u.singer_code.toLowerCase() === '@leoogum23') ||
                    u.id === 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0';
           });
-          if (!hasLeoOgum && deletedSingers.indexOf('leoogum23@gmail.com') === -1) {
+          if (!hasLeoOgum) {
             allUserData.push(defaultSeedSingers[1]);
           }
           localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
+          PrompterAdmin.allUserData = allUserData;
         }
         
         var rawCoupons = localStorage.getItem(STORAGE_COUPONS_KEY);
@@ -1041,7 +1071,7 @@
         document.getElementById('editSingerPhone').value = user.phone || '';
         document.getElementById('editSingerCpf').value = user.cpf || '';
         document.getElementById('editSingerInstagram').value = user.instagram || '';
-        document.getElementById('editSingerCode').value = user.singer_code;
+        document.getElementById('editSingerCode').value = normalizeSingerCode(user.singer_code, user.email);
         
         var pVal = 'pro_annual';
         if (user.plan_type && user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
@@ -1081,6 +1111,11 @@
       var userEmail = userObj ? userObj.email : (id.indexOf('@') !== -1 ? id : '');
       var userCode = userObj ? userObj.singer_code : '';
       var actualId = userObj ? userObj.id : id;
+
+      if (userEmail && userEmail.toLowerCase() === 'leovitulli@gmail.com') {
+        if (window.showToast) window.showToast('O perfil do Administrador / CEO não pode ser excluído.', 'warning');
+        return;
+      }
 
       if (!confirm('Deseja realmente excluir ' + name + ' do sistema?')) return;
 
@@ -1159,6 +1194,7 @@
       else if (planVal === 'free') planType = '⚡ PLANO FREE';
 
       var cleanEmail = (email || '').trim().toLowerCase();
+      var cleanCode = normalizeSingerCode(code, cleanEmail);
       var existing = allUserData.find(function(u) {
         return (id && u.id === id) || (u.email && u.email.trim().toLowerCase() === cleanEmail);
       });
@@ -1171,7 +1207,7 @@
         phone: phone,
         cpf: cpf,
         instagram: instagram,
-        singer_code: code,
+        singer_code: cleanCode,
         plan_tier: isPro ? 'pro' : 'free',
         plan_type: planType,
         is_online: statusVal === 'online',
@@ -1197,11 +1233,11 @@
 
       if (cleanEmail && cleanEmail === loggedEmail) {
         try {
-          localStorage.setItem('cantaai_user_custom_handle', code);
+          localStorage.setItem('cantaai_user_custom_handle', cleanCode);
         } catch(e) {}
         if (!authProfile) authProfile = {};
         authProfile.display_name = name;
-        authProfile.singer_code = code;
+        authProfile.singer_code = cleanCode;
         authProfile.phone = phone;
         authProfile.cpf = cpf;
         authProfile.instagram = instagram;
@@ -1221,23 +1257,27 @@
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
         var profPayload = {
+          email: cleanEmail,
           display_name: name,
           phone: phone,
           cpf: cpf,
           instagram: instagram,
-          singer_code: code,
+          singer_code: cleanCode,
           plan_tier: isPro ? 'pro' : 'free',
           plan_type: planType,
           updated_at: new Date().toISOString()
         };
 
-        // Atualizar tanto por ID quanto por email
         if (isValidUUID(singerId)) {
           profPayload.id = singerId;
-          sb.from('profiles').upsert(profPayload).catch(function() {});
-        } else {
-          sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
         }
+        sb.from('profiles').upsert(profPayload).then(function(res) {
+          if (res && res.error) {
+            sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
+          }
+        }).catch(function() {
+          sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
+        });
 
         // Persistir no System Registry (sempre acessível na nuvem)
         var songRow = {
@@ -1269,20 +1309,16 @@
     },
 
     loadDashboardData: function () {
+      // 0. Recarregar dados locais para garantir que novos logins/cadastros não sejam perdidos
+      this.loadStoredData();
+
       var currentUser = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
       var currentProfile = window.PrompterAuth ? window.PrompterAuth.getProfile() : null;
 
       var devEmail = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser ? currentUser.email : 'admin@cantaaipro.com');
       var devName = (currentProfile && currentProfile.display_name) ? currentProfile.display_name : (currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'Administrador');
-      var customH = localStorage.getItem('cantaai_user_custom_handle');
-      var devCode = customH || (currentProfile && currentProfile.singer_code) || (devEmail ? '@' + devEmail.split('@')[0] : '@admin');
-
-      if (devEmail.toLowerCase() === 'leovitulli@gmail.com') {
-        if (!devCode || devCode.startsWith('#') || devCode === '#CANTOR-3DEB6' || devCode === '#DEV-ADMIN') {
-          devCode = customH || '@leovitulli';
-          if (currentProfile) currentProfile.singer_code = devCode;
-        }
-      }
+      var devCode = normalizeSingerCode((currentProfile && currentProfile.singer_code) || '', devEmail);
+      if (currentProfile) currentProfile.singer_code = devCode;
 
       // 1. Integrar usuário atual na lista local sem sobrescrever nenhum outro cantor cadastrado
       if (currentUser) {
@@ -1338,7 +1374,7 @@
                       id: row.id,
                       name: row.title,
                       email: row.artist,
-                      singer_code: '@' + (row.artist ? row.artist.split('@')[0] : 'cantor'),
+                      singer_code: normalizeSingerCode('', row.artist),
                       plan_tier: 'pro',
                       plan_type: '💎 PRO ANUAL',
                       is_online: false,
@@ -1360,14 +1396,7 @@
                       return;
                     }
 
-                    if (sEmail === 'leovitulli@gmail.com') {
-                      var customH2 = localStorage.getItem('cantaai_user_custom_handle');
-                      if (customH2) {
-                        sObj.singer_code = customH2;
-                      } else if (!sObj.singer_code || sObj.singer_code.startsWith('#') || sObj.singer_code === '#CANTOR-3DEB6' || sObj.singer_code === '#DEV-ADMIN') {
-                        sObj.singer_code = '@leovitulli';
-                      }
-                    }
+                    sObj.singer_code = normalizeSingerCode(sObj.singer_code, sObj.email);
 
                     var existIdx = allUserData.findIndex(function(u) {
                       return (sObj.id && u.id === sObj.id) ||
@@ -1409,20 +1438,17 @@
                 return (p.id && u.id === p.id) || (pEmail && u.email && u.email.trim().toLowerCase() === pEmail);
               });
 
-              var customH3 = localStorage.getItem('cantaai_user_custom_handle');
-              var effectiveCode = (pEmail === 'leovitulli@gmail.com' && customH3)
-                ? customH3
-                : (p.singer_code || (existIdx >= 0 ? allUserData[existIdx].singer_code : ('@' + p.email.split('@')[0])));
-              if (pEmail === 'leovitulli@gmail.com') {
-                if (!effectiveCode || effectiveCode.startsWith('#') || effectiveCode === '#CANTOR-3DEB6' || effectiveCode === '#DEV-ADMIN') {
-                  effectiveCode = customH3 || '@leovitulli';
-                }
+              var effectiveCode = normalizeSingerCode(p.singer_code, p.email);
+
+              // Atualizar no banco Supabase caso estivesse armazenado código legado (#CANTOR-3DEB6 ou com #)
+              if (p.singer_code && (p.singer_code.startsWith('#') || p.singer_code.toUpperCase().indexOf('CANTOR-') !== -1)) {
+                sb.from('profiles').update({ singer_code: effectiveCode }).eq('id', p.id).catch(function() {});
               }
 
               var profData = {
                 id: p.id,
-                name: p.display_name || (existIdx >= 0 ? allUserData[existIdx].name : p.email.split('@')[0]),
-                email: p.email,
+                name: p.display_name || (existIdx >= 0 ? allUserData[existIdx].name : (p.email ? p.email.split('@')[0] : 'Cantor')),
+                email: p.email || (existIdx >= 0 ? allUserData[existIdx].email : ''),
                 phone: p.phone || (existIdx >= 0 ? allUserData[existIdx].phone : ''),
                 cpf: p.cpf || (existIdx >= 0 ? allUserData[existIdx].cpf : ''),
                 instagram: p.instagram || (existIdx >= 0 ? allUserData[existIdx].instagram : ''),
@@ -1542,7 +1568,7 @@
           : '<span style="color:#64748b; font-size:0.8rem;">—</span>';
 
         var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : 'Sem CPF';
-        var loginCodeStr = user.singer_code ? escapeHtml(user.singer_code) : ('@' + user.email.split('@')[0]);
+        var loginCodeStr = escapeHtml(normalizeSingerCode(user.singer_code, user.email));
 
         html +=
           '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + escapeHtml(user.name) + '">' +
@@ -2164,8 +2190,12 @@
       link.download = 'canta_ai_relatorio_executivo_ceo_' + new Date().toISOString().slice(0, 10) + '.csv';
       link.click();
       if (window.showToast) window.showToast('📊 Relatório Executivo CSV exportado com sucesso (' + allUserData.length + ' cantores)!', 'success');
-    }
+    },
+    normalizeSingerCode: normalizeSingerCode,
+    allUserData: allUserData
   };
 
+  PrompterAdmin.normalizeSingerCode = normalizeSingerCode;
+  PrompterAdmin.allUserData = allUserData;
   window.PrompterAdmin = PrompterAdmin;
 })();
