@@ -2,27 +2,23 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Manual do Usuário & Roteiro de Vídeo • CantaAí PRO</title>
+  <title>Manual do Usuário • CantaAí PRO</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
 
     :root {
-      --bg-dark: #070b14;
-      --surface: #0f172a;
-      --surface-raised: #162036;
-      --surface-border: rgba(255, 255, 255, 0.1);
-      --primary: #38bdf8;
-      --primary-dark: #0284c7;
-      --primary-glow: rgba(56, 189, 248, 0.25);
-      --accent-gold: #fbbf24;
-      --accent-green: #34d399;
-      --accent-red: #f87171;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --chord-color: #38bdf8;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --accent-green: #10b981;
+      --accent-gold: #f59e0b;
+      --text-dark: #0f172a;
+      --text-body: #334155;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --card-bg: #ffffff;
+      --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
     }
 
     * {
@@ -32,1175 +28,816 @@
     }
 
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      font-size: 13.5px;
-      line-height: 1.6;
+      background-color: #f1f5f9;
+      color: var(--text-body);
+      font-family: var(--font-main);
+      font-size: 13px;
+      line-height: 1.55;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
 
-    /* ESTILO DE PÁGINAS A4 */
     @page {
       size: A4 portrait;
-      margin: 12mm 14mm 14mm 14mm;
+      margin: 10mm 12mm 10mm 12mm;
     }
 
-    .page {
-      position: relative;
-      background: #090e1a;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 34px 38px;
-      margin: 20px auto;
-      max-width: 820px;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+    .manual-page {
+      background: #ffffff;
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 24px 14px 24px;
+      border-radius: 6px;
       page-break-after: always;
       break-after: page;
+      position: relative;
+      box-sizing: border-box;
+      height: 275mm;
+      max-height: 275mm;
+      overflow: hidden;
     }
 
-    /* HEADER & FOOTER DE PÁGINA */
-    .page-header {
+    /* HEADER & FOOTER FIXOS POR PÁGINA */
+    .doc-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 12px;
-      margin-bottom: 24px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
       font-size: 11px;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
     }
 
-    .page-header .brand {
+    .doc-header .logo-brand {
       display: flex;
       align-items: center;
       gap: 6px;
+      color: var(--text-dark);
       font-weight: 800;
-      color: var(--primary);
+      font-size: 12px;
     }
 
-    .page-footer {
+    .doc-header .badge-pro {
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+
+    .doc-footer {
+      position: absolute;
+      bottom: 14px;
+      left: 24px;
+      right: 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 12px;
-      margin-top: 28px;
-      font-size: 10.5px;
-      color: var(--text-dim);
+      border-top: 1px solid var(--border-color);
+      padding-top: 8px;
+      font-size: 10px;
+      color: var(--text-muted);
     }
 
-    /* CAPA */
-    .cover-container {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-height: 980px;
+    /* CAPA MODERNA E LIMPA */
+    .cover-wrap {
       text-align: center;
-      padding: 40px 20px;
+      padding: 30px 10px 10px 10px;
     }
 
-    .badge-pill {
+    .cover-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 16px;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      color: var(--primary);
+      padding: 5px 14px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #0284c7;
       border-radius: 999px;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 24px;
-      align-self: center;
+      letter-spacing: 0.8px;
+      margin-bottom: 18px;
     }
 
-    .cover-title {
-      font-size: 44px;
+    .cover-brand-title {
+      font-size: 38px;
       font-weight: 900;
-      letter-spacing: -1.2px;
-      line-height: 1.15;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--text-dark);
+      letter-spacing: -1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    .cover-subtitle {
-      font-size: 18px;
+    .cover-brand-title .pro-tag {
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 16px;
+      padding: 3px 12px;
+      border-radius: 999px;
+      vertical-align: middle;
+      font-weight: 900;
+    }
+
+    .cover-main-sub {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .cover-desc {
+      font-size: 13.5px;
       color: var(--text-muted);
-      max-width: 620px;
-      margin: 0 auto 36px;
+      max-width: 600px;
+      margin: 0 auto 24px auto;
       line-height: 1.5;
     }
 
-    .cover-hero-card {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      border-radius: 16px;
-      padding: 24px;
+    .cover-card-preview {
+      background: #070b14;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 18px;
       text-align: left;
-      margin-bottom: 40px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     }
 
-    .cover-meta-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding-top: 24px;
+    .summary-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: left;
+      margin-bottom: 20px;
     }
 
-    .cover-meta-item {
-      text-align: center;
-    }
-
-    .cover-meta-item .label {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .cover-meta-item .val {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
-    /* TIPOGRAFIA & SEÇÕES */
-    h1 {
-      font-size: 24px;
+    .summary-title {
+      font-size: 12.5px;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 16px;
-      color: #ffffff;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
     }
 
-    h2 {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--primary);
-      margin: 20px 0 10px 0;
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-body);
+    }
+
+    .summary-num {
+      background: #e2e8f0;
+      color: var(--text-dark);
+      font-weight: 800;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10.5px;
+    }
+
+    /* TÍTULOS E TEXTOS DOS MÓDULOS */
+    h1 {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--text-dark);
+      letter-spacing: -0.4px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    h3 {
+    h2 {
       font-size: 15px;
       font-weight: 700;
-      color: #ffffff;
-      margin: 14px 0 6px 0;
+      color: var(--primary-dark);
+      margin: 16px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     p {
       margin-bottom: 12px;
-      color: #cbd5e1;
+      color: var(--text-body);
+      font-size: 13px;
     }
 
-    /* SIMULADORES DE TELA DO SISTEMA (MOCKUPS FIÉIS) */
-    .screen-mockup {
-      background: #020617;
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      border-radius: 12px;
+    /* MOLDURA PARA AS IMAGENS DO SISTEMA */
+    .img-mockup-frame {
+      background: #070b14;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
       overflow: hidden;
-      margin: 16px 0 22px 0;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+      margin: 10px 0 12px 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      text-align: center;
     }
 
-    .screen-topbar {
-      background: #0f172a;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 8px 14px;
+    .img-mockup-frame img {
+      width: 100%;
+      max-height: 235px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .img-caption {
+      background: #f8fafc;
+      border-top: 1px solid var(--border-color);
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--text-muted);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 12px;
-    }
-
-    .screen-dots {
-      display: flex;
       gap: 6px;
     }
 
-    .screen-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-    }
-    .dot-red { background: #ef4444; }
-    .dot-yellow { background: #f59e0b; }
-    .dot-green { background: #10b981; }
-
-    .screen-body {
-      padding: 16px 18px;
-    }
-
-    /* MODO PALCO PROMPTER COMPONENT */
-    .prompter-stage-view {
-      background: #050811;
-      border-radius: 8px;
-      padding: 18px;
-      font-family: var(--font-sans);
-    }
-
-    .prompter-header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 10px;
-      margin-bottom: 14px;
-    }
-
-    .song-title-huge {
-      font-size: 19px;
-      font-weight: 900;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .badge-tag {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .tag-tone { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
-    .tag-rhythm { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
-    .tag-bpm { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4); }
-
-    .prompter-lyrics-box {
-      font-family: var(--font-mono);
-      font-size: 13.5px;
-      line-height: 1.85;
-      color: #f1f5f9;
-      background: rgba(15, 23, 42, 0.5);
-      padding: 14px;
-      border-radius: 8px;
-      border-left: 3px solid var(--primary);
-    }
-
-    .chord {
-      color: var(--primary);
-      font-weight: 800;
-      background: rgba(56, 189, 248, 0.1);
-      padding: 1px 4px;
-      border-radius: 4px;
-    }
-
-    /* BARRA DE CONTROLES DO PALCO */
-    .stage-toolbar-strip {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #111a2e;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 8px 14px;
-      margin-top: 12px;
-      font-size: 12px;
-    }
-
-    .control-cluster {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .sim-btn {
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 11.5px;
-      font-weight: 700;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: #1e293b;
-      color: #ffffff;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .sim-btn-play {
-      background: #10b981;
-      border-color: #059669;
-      color: #0f172a;
-    }
-
-    .sim-btn-tone {
-      background: #0284c7;
-      border-color: #0369a1;
-    }
-
-    /* CARDS DE DESTAQUE / CALLOUTS */
-    .callout-box {
-      background: rgba(15, 23, 42, 0.7);
+    /* CARDS DE INSTRUÇÃO PASSO A PASSO */
+    .step-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
       border-left: 4px solid var(--primary);
-      border-radius: 0 10px 10px 0;
+      border-radius: 0 8px 8px 0;
       padding: 12px 16px;
-      margin: 14px 0;
+      margin: 12px 0;
       font-size: 12.5px;
     }
 
-    .callout-box.gold {
-      border-left-color: var(--accent-gold);
-      background: rgba(251, 191, 36, 0.06);
-    }
-
-    .callout-box.green {
+    .step-box.green {
       border-left-color: var(--accent-green);
-      background: rgba(52, 211, 153, 0.06);
+      background: #f0fdf4;
     }
 
-    .callout-title {
-      font-weight: 700;
-      color: #ffffff;
+    .step-box.gold {
+      border-left-color: var(--accent-gold);
+      background: #fffbeb;
+    }
+
+    .step-title {
+      font-weight: 800;
+      color: var(--text-dark);
       margin-bottom: 4px;
+      font-size: 13px;
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-
-    /* TABELAS DO MANUAL E ROTEIRO */
-    table.doc-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 14px 0 20px 0;
-      font-size: 12px;
-    }
-
-    table.doc-table th {
-      background: #131d33;
-      color: var(--primary);
-      text-align: left;
-      padding: 9px 12px;
-      border-bottom: 2px solid rgba(56, 189, 248, 0.3);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    table.doc-table td {
-      padding: 9px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-      color: #cbd5e1;
-      vertical-align: top;
-    }
-
-    table.doc-table tr:nth-child(even) td {
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .tag-scene {
-      font-weight: 800;
-      color: var(--accent-gold);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      white-space: nowrap;
-    }
-
-    .tag-time {
-      color: var(--primary);
-      font-family: var(--font-mono);
-      font-weight: 600;
-      font-size: 11px;
-      white-space: nowrap;
     }
 
     .grid-2cols {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin: 14px 0;
+      gap: 14px;
+      margin: 12px 0;
     }
 
-    .feature-card {
-      background: #0f172a;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      padding: 14px;
+    .info-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 14px;
     }
 
-    .feature-card-header {
+    .info-card-title {
+      font-weight: 700;
+      font-size: 12.5px;
+      color: var(--text-dark);
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 8px;
+      gap: 6px;
     }
 
-    .shortcut-badge {
-      font-family: var(--font-mono);
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
+    ul.bullet-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 12.5px;
+    }
+
+    ul.bullet-list li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 6px;
+      color: var(--text-body);
+    }
+
+    ul.bullet-list li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .kbd-tag {
+      background: #e2e8f0;
+      color: #0f172a;
+      font-family: var(--font-code);
       padding: 2px 6px;
+      border-radius: 4px;
       font-size: 11px;
-      color: #38bdf8;
       font-weight: 700;
+      border: 1px solid #cbd5e1;
     }
   </style>
 </head>
 <body>
 
-  <!-- ==================== PÁGINA 1: CAPA EXECUTIVA ==================== -->
-  <div class="page">
-    <div class="cover-container">
-      <div class="badge-pill">✨ MANUAL OFICIAL DE USO & ROTEIRO DE GRAVAÇÃO</div>
+  <!-- ==================== PÁGINA 1: CAPA DO MANUAL ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand">
+        <span>🎤</span> CantaAí <span class="badge-pro">PRO</span>
+      </div>
+      <div>Manual Oficial de Instruções</div>
+    </div>
+
+    <div class="cover-wrap">
+      <div class="cover-pill">📖 GUIA PRÁTICO PASSO A PASSO</div>
       
-      <h1 class="cover-title">CantaAí PRO</h1>
-      <p class="cover-subtitle">
-        Guia Completo de Operação de Palco, Gestão de Repertórios Musicais e Roteiro de Vídeo Comercial para Apresentação da Plataforma.
+      <div class="cover-brand-title">
+        <span>🎤</span> CantaAí <span class="pro-tag">PRO</span>
+      </div>
+      
+      <div class="cover-main-sub">Manual do Usuário para Cantores e Músicos</div>
+      <p class="cover-desc">
+        Aprenda a organizar seus repertórios por estilos musicais, importar cifras com facilidade, mudar o tom em tempo real e usar o teleprompter com rolagem contínua em seus ensaios e apresentações ao vivo.
       </p>
 
-      <div class="cover-hero-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <span style="font-weight: 800; font-size: 14px; color: var(--primary);">🎤 VISÃO DO PALCO AO VIVO</span>
-          <span class="badge-tag tag-tone">TOM ORIGINAL: E</span>
-        </div>
-        <div style="font-family: var(--font-mono); font-size: 13px; line-height: 1.8; color: #cbd5e1;">
-          <span class="chord">[ E ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ G#m ]</span><br>
-          Quando eu digo que deixei de te amar, é porque eu te amo...<br>
-          <span class="chord">[ A ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ B7 ]</span><br>
-          Quando eu digo que não quero mais você, é porque eu te quero...
-        </div>
-        <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--text-dim);">
-          <span>● Rolagem Contínua Ativa</span> • <span>● Transposição Instantânea</span> • <span>● Modo OLED Alto Contraste</span>
+      <!-- PREVIEW DA TELA REAL DO SISTEMA -->
+      <div class="img-mockup-frame">
+        <img src="assets/manual_img/tela_prompter.png" alt="Tela Real do Teleprompter CantaAí PRO">
+        <div class="img-caption">
+          <span>🔍 Visualização Real:</span> Leitura clara da música "Evidências" com acordes destacados e rolagem suave automática.
         </div>
       </div>
 
-      <div class="cover-meta-grid">
-        <div class="cover-meta-item">
-          <div class="label">Versão do Sistema</div>
-          <div class="val">CantaAí PRO v1.0 Production</div>
-        </div>
-        <div class="cover-meta-item">
-          <div class="label">Público-Alvo</div>
-          <div class="val">Cantores, Músicos & Bandas</div>
-        </div>
-        <div class="cover-meta-item">
-          <div class="label">Finalidade do Material</div>
-          <div class="val">Treinamento & Roteiro de Vídeo</div>
+      <div class="summary-box">
+        <div class="summary-title">📑 O que você vai aprender neste manual:</div>
+        <div class="summary-grid">
+          <div class="summary-item"><span class="summary-num">1</span> Barra de Comando e Busca Rápida</div>
+          <div class="summary-item"><span class="summary-num">2</span> Repertórios por Estilos Musicais</div>
+          <div class="summary-item"><span class="summary-num">3</span> Lista de Músicas e Organização</div>
+          <div class="summary-item"><span class="summary-num">4</span> Como Usar o Teleprompter ao Vivo</div>
+          <div class="summary-item"><span class="summary-num">5</span> Como Mudar o Tom em 1 Clique</div>
+          <div class="summary-item"><span class="summary-num">6</span> Cadastro, Edição e Impressão</div>
         </div>
       </div>
     </div>
-    
-    <div class="page-footer">
-      <span>CantaAí PRO © 2026 • A Plataforma Definitiva para Cantores</span>
+
+    <div class="doc-footer">
+      <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 1</span>
     </div>
   </div>
 
 
-  <!-- ==================== PÁGINA 2: SUMÁRIO & VISÃO GERAL ==================== -->
-  <div class="page">
-    <div class="page-header">
-      <div class="brand"><span>🎤</span> CantaAí PRO • Manual do Usuário</div>
-      <div>Sumário Executivo & Navegação</div>
+  <!-- ==================== PÁGINA 2: PASSO 1 - BARRA SUPERIOR & BUSCA ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><span>🎤</span> CantaAí <span class="badge-pro">PRO</span></div>
+      <div>Passo 1: Navegação Inicial & Barra Superior</div>
     </div>
 
-    <h1>📋 Sumário Executivo</h1>
+    <h1>1. Visão Geral da Barra Superior</h1>
     <p>
-      Este manual é dividido em duas grandes seções: a primeira detalha a <strong>operação prática no palco e gerenciamento de repertórios</strong> com exemplos de músicas consagradas da música brasileira. A segunda seção traz o <strong>roteiro técnico e comercial pronto para gravação de vídeos</strong> (tutoriais, YouTube, Reels e materiais de vendas).
+      Assim que você abre o CantaAí PRO, o topo da tela concentra todas as ferramentas essenciais para navegar, encontrar suas músicas rapidamente e adicionar novos repertórios sem complicações.
     </p>
 
-    <table class="doc-table">
-      <thead>
-        <tr>
-          <th>Parte</th>
-          <th>Seção / Módulo</th>
-          <th>Conteúdo Principal</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>PARTE 1</strong></td>
-          <td><strong>1. Interface & Navegação Geral</strong></td>
-          <td>Header, troca de repertórios, busca rápida e status offline/nuvem.</td>
-        </tr>
-        <tr>
-          <td><strong>PARTE 1</strong></td>
-          <td><strong>2. Modo Palco (Teleprompter)</strong></td>
-          <td>Rolagem automática milimétrica, controle de velocidade e tipografia OLED.</td>
-        </tr>
-        <tr>
-          <td><strong>PARTE 1</strong></td>
-          <td><strong>3. Transposição Instantânea</strong></td>
-          <td>Mudar o tom da música em tempo real durante o show com 1 clique.</td>
-        </tr>
-        <tr>
-          <td><strong>PARTE 1</strong></td>
-          <td><strong>4. YouTube Dock & Áudio Guia</strong></td>
-          <td>Janela flutuante (Picture-in-Picture) para ensaios e estudo de convenções.</td>
-        </tr>
-        <tr>
-          <td><strong>PARTE 1</strong></td>
-          <td><strong>5. Gestão de Repertórios & Importação</strong></td>
-          <td>Importação via Google Drive, arquivos Word/PDF e divisão por estilos musicais.</td>
-        </tr>
-        <tr>
-          <td><strong>PARTE 1</strong></td>
-          <td><strong>6. Exportação & Impressão em PDF</strong></td>
-          <td>Geração de folhas de setlist formatadas para operadores de som e banda.</td>
-        </tr>
-        <tr>
-          <td><strong>PARTE 2</strong></td>
-          <td><strong>Roteiro de Gravação de Vídeo</strong></td>
-          <td>7 Cenas cronometradas com marcação de tela, falas do locutor e callouts.</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2>🎯 Arquitetura da Interface</h2>
-    <p>
-      O CantaAí PRO foi projetado segundo o princípio de <em>Zero Distraction on Stage</em> (Zero Distração no Palco). Toda a tela se adapta automaticamente para alto contraste sob refletores e luzes fortes, operando perfeitamente em iPads, tablets Android, notebooks e celulares.
-    </p>
-
-    <div class="screen-mockup">
-      <div class="screen-topbar">
-        <div class="screen-dots">
-          <span class="screen-dot dot-red"></span>
-          <span class="screen-dot dot-yellow"></span>
-          <span class="screen-dot dot-green"></span>
-        </div>
-        <div style="font-weight: 700; color: #cbd5e1;">CANTAAÍ PRO — BARRA SUPERIOR DE COMANDO</div>
-        <div style="color: #34d399; font-size: 11px;">🟢 Supabase Cloud Ativo</div>
-      </div>
-      <div class="screen-body" style="display: flex; justify-content: space-between; align-items: center; background: #0b1220;">
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <span style="font-weight: 800; color: #38bdf8;">🎤 CantaAí PRO</span>
-          <span style="background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 11px; border: 1px solid rgba(255,255,255,0.1);">
-            Repertório: <strong>Sertanejo & Modão (Barzinho)</strong> ▾
-          </span>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <span class="sim-btn">🔍 Buscar Música</span>
-          <span class="sim-btn sim-btn-play">▶ Modo Palco</span>
-          <span class="sim-btn">⚙️ Ajustes</span>
-        </div>
+    <div class="img-mockup-frame">
+      <img src="assets/manual_img/tela_header.png" alt="Barra Superior do CantaAí PRO">
+      <div class="img-caption">
+        <span>📸 Tela Real:</span> Cabeçalho oficial com campo de busca inteligente, botão de Adicionar e perfil do usuário.
       </div>
     </div>
 
-    <div class="callout-box green">
-      <div class="callout-title">🛡️ Filosofia Offline First (100% Blindado no Palco)</div>
-      Todas as suas músicas, cifras e repertórios ficam gravados na memória local do seu aparelho. Mesmo que o sinal de Wi-Fi ou 4G caia durante o show no bar ou evento, seu teleprompter continua funcionando sem nenhuma interrupção.
+    <h2>🔍 Como funciona cada botão do topo:</h2>
+
+    <div class="step-box">
+      <div class="step-title">1. Busca Instantânea de Músicas e Repertórios</div>
+      Clique no campo <strong>"Buscar repertório ou música..."</strong> e digite qualquer trecho do nome da música, cantor ou compositor. Conforme você digita, o sistema filtra os resultados na hora, sem precisar apertar Enter.
     </div>
 
-    <div class="page-footer">
+    <div class="step-box green">
+      <div class="step-title">2. Botão Verde "+ Adicionar"</div>
+      Ao clicar no botão verde <strong>"+ Adicionar"</strong>, um menu se abre com 4 opções fáceis:
+      <ul class="bullet-list" style="margin-top: 6px;">
+        <li><strong>Criar Repertório:</strong> Cria uma pasta temática (ex: Sertanejo, Pop Rock, Samba).</li>
+        <li><strong>Criar Música Manual:</strong> Abre a tela para digitar ou colar a letra e os acordes.</li>
+        <li><strong>Importar Arquivos (Local):</strong> Puxe arquivos do seu computador ou celular (Word .docx, PDF ou texto).</li>
+        <li><strong>Importar do Google Drive:</strong> Conecte sua pasta do Drive para trazer dezenas de músicas juntas.</li>
+      </ul>
+    </div>
+
+    <div class="grid-2cols">
+      <div class="info-card">
+        <div class="info-card-title">🌙 Alternador de Tema</div>
+        <p style="font-size: 12px; margin: 0;">
+          Clique no ícone da <strong>Lua (🌙)</strong> para alternar entre o Modo Escuro (fundo preto anti-reflexo) e o Modo Claro. O Modo Escuro é ideal para ambientes com pouca luz.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">👤 Perfil e Assinatura</div>
+        <p style="font-size: 12px; margin: 0;">
+          No canto direito, você visualiza seu e-mail e o selo <strong>PRO</strong>. Clicando ali, você acessa os ajustes da sua conta e o status da sua assinatura.
+        </p>
+      </div>
+    </div>
+
+    <div class="doc-footer">
       <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 2</span>
     </div>
   </div>
 
 
-  <!-- ==================== PÁGINA 3: MODO PALCO & ROLAGEM ==================== -->
-  <div class="page">
-    <div class="page-header">
-      <div class="brand"><span>🎤</span> CantaAí PRO • Manual do Usuário</div>
-      <div>Módulo 1: O Modo Palco & Teleprompter Inteligente</div>
+  <!-- ==================== PÁGINA 3: PASSO 2 - REPERTÓRIOS POR ESTILOS ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><span>🎤</span> CantaAí <span class="badge-pro">PRO</span></div>
+      <div>Passo 2: Gestão de Repertórios & Estilos Musicais</div>
     </div>
 
-    <h1>📜 Módulo 1: O Modo Palco em Ação</h1>
+    <h1>2. Organização de Repertórios por Estilos</h1>
     <p>
-      O Modo Palco transforma o visor em um teleprompter de alta visibilidade. As cifras aparecem em cor ciano elétrico de alto contraste logo acima das sílabas certas, permitindo leitura confortável a até 2 metros de distância.
+      Para que você nunca fique perdido antes ou durante uma apresentação, o CantaAí PRO organiza suas músicas em blocos temáticos. Você pode ter quantos repertórios quiser, separados pelos estilos que você toca.
     </p>
 
-    <!-- SIMULADOR: EVIDÊNCIAS -->
-    <div class="screen-mockup">
-      <div class="screen-topbar">
-        <span style="font-weight: 700; color: #fbbf24;">● MODO PALCO EM EXECUÇÃO</span>
-        <span style="color: var(--text-muted); font-size: 11px;">Velocidade: 38 px/s • Rolagem Suave</span>
-      </div>
-      <div class="screen-body">
-        <div class="prompter-stage-view">
-          <div class="prompter-header-bar">
-            <div>
-              <div class="song-title-huge">Evidências • Chitãozinho & Xororó</div>
-              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Composição: José Augusto / Paulo Sérgio Valle</div>
-            </div>
-            <div style="display: flex; gap: 6px;">
-              <span class="badge-tag tag-tone">Tom: E</span>
-              <span class="badge-tag tag-rhythm">Balada Romântica</span>
-              <span class="badge-tag tag-bpm">74 BPM</span>
-            </div>
-          </div>
-
-          <div class="prompter-lyrics-box">
-            <span class="chord">[ E ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ G#m ]</span><br>
-            Quando eu digo que deixei de te amar, é porque eu te amo...<br>
-            <span class="chord">[ A ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ F#m ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ B7 ]</span><br>
-            Quando eu digo que não quero mais você, é porque eu te quero...<br>
-            <span class="chord">[ E ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ G#m ]</span><br>
-            Eu tenho medo de te dar meu coração e confessar que eu estou em tuas mãos...<br>
-            <span class="chord">[ A ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ B7 ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ E ]</span><br>
-            Mas não posso esconder o que sinto por você: e nessa loucura de dizer que não te quero...
-          </div>
-
-          <div class="stage-toolbar-strip">
-            <div class="control-cluster">
-              <span class="sim-btn sim-btn-play">⏸ Pausar Rolagem [Espaço]</span>
-              <span class="sim-btn">⏮ Voltar ao Topo</span>
-            </div>
-            <div class="control-cluster">
-              <span style="color: var(--text-muted); font-size: 11px;">Velocidade:</span>
-              <span class="sim-btn">➖ Mais Lento</span>
-              <span style="font-family: var(--font-mono); font-weight: 800; color: #38bdf8;">38</span>
-              <span class="sim-btn">➕ Mais Rápido</span>
-            </div>
-            <div class="control-cluster">
-              <span class="sim-btn sim-btn-tone">♯ / ♭ Transpor Tom</span>
-            </div>
-          </div>
-        </div>
+    <div class="img-mockup-frame">
+      <img src="assets/manual_img/tela_repertorios.png" alt="Painel de Repertórios do CantaAí PRO">
+      <div class="img-caption">
+        <span>📸 Tela Real:</span> Painel com cards organizados: Sertanejo & Modão, Pop & Rock Nacional, Samba & Pagode e MPB.
       </div>
     </div>
 
-    <h2>🎮 Comandos e Atalhos de Palco</h2>
+    <h2>📋 O que tem em cada cartão de repertório:</h2>
+
     <div class="grid-2cols">
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span>👆 Controle por Toque / Touchscreen</span>
-        </div>
+      <div class="info-card">
+        <div class="info-card-title">🏷️ Selo de Origem</div>
         <p style="font-size: 12px; margin: 0;">
-          • <strong>Toque simples no centro da tela:</strong> Inicia ou pausa a rolagem contínua.<br>
-          • <strong>Deslizar o dedo:</strong> Posiciona a letra manualmente sem desativar a rolagem automática.<br>
-          • <strong>Botões flutuantes:</strong> Ajustam a velocidade em incrementos precisos de 2 em 2 unidades.
+          Mostra se o repertório veio do <strong>Google Drive</strong>, de <strong>Importação Local</strong> (Word/PDF) ou se foi <strong>Criado Manualmente</strong>.
         </p>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span>⌨️ Atalhos de Teclado & Pedal Bluetooth</span>
-        </div>
+      <div class="info-card">
+        <div class="info-card-title">⋮⋮ Organizar Ordem</div>
         <p style="font-size: 12px; margin: 0;">
-          • <span class="shortcut-badge">Barra de Espaço</span>: Play / Pause instantâneo.<br>
-          • <span class="shortcut-badge">Seta Acima / Abaixo</span>: Acelera (+) ou desacelera (-) a rolagem.<br>
-          • <span class="shortcut-badge">Page Up / Page Down</span>: Pula para a próxima música ou anterior.<br>
-          • Total compatibilidade com pedais Bluetooth (AirTurn, Donner, Coda).
+          Segure o ícone <strong>⋮⋮</strong> e arraste para colocar os repertórios que você mais usa primeiro, ou use as setinhas <strong>◀ e ▶</strong> no topo do cartão.
         </p>
       </div>
     </div>
 
-    <div class="page-footer">
+    <div class="step-box">
+      <div class="step-title">🎵 Abrir e Ver Músicas</div>
+      Clique no botão verde <strong>"🎵 Ver Músicas"</strong> (ou em qualquer parte do cartão) para abrir a lista completa das músicas daquele repertório.
+    </div>
+
+    <div class="step-box gold">
+      <div class="step-title">✏️ Renomear e Gerenciar</div>
+      Para mudar o nome do repertório (por exemplo, de <em>"Sertanejo"</em> para <em>"Show de Sexta no Bar"</em>), basta clicar em <strong>"✏️ Renomear"</strong>, digitar o novo nome e confirmar.
+    </div>
+
+    <div class="doc-footer">
       <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 3</span>
     </div>
   </div>
 
 
-  <!-- ==================== PÁGINA 4: TRANSPOSIÇÃO & YOUTUBE DOCK ==================== -->
-  <div class="page">
-    <div class="page-header">
-      <div class="brand"><span>🎤</span> CantaAí PRO • Manual do Usuário</div>
-      <div>Módulos 2 e 3: Transposição Harmônica & YouTube Dock</div>
+  <!-- ==================== PÁGINA 4: PASSO 3 - LISTA DE MÚSICAS DO REPERTÓRIO ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><span>🎤</span> CantaAí <span class="badge-pro">PRO</span></div>
+      <div>Passo 3: Músicas do Repertório & Ordem de Execução</div>
     </div>
 
-    <h1>🎼 Módulo 2: Transposição Instantânea de Tom</h1>
+    <h1>3. A Lista de Músicas do Repertório</h1>
     <p>
-      Quantas vezes o cantor principal pediu para <em>"descer meio tom"</em> ou <em>"subir um tom inteiro"</em> em cima da hora? No CantaAí PRO, a transposição é instantânea e recalculada matematicamente em menos de 10 milissegundos, preservando sétimas, nonas, baixos invertidos e acordes diminutos.
+      Ao abrir um repertório, você entra na tela com todas as músicas cadastradas. Cada linha exibe o número de ordem, o título em letras maiúsculas legíveis, o tom de cantar e o ritmo musical.
     </p>
 
-    <!-- EXEMPLO TEMPO PERDIDO COM TRANSPOSIÇÃO -->
-    <div class="screen-mockup">
-      <div class="screen-topbar">
-        <span style="font-weight: 700; color: #38bdf8;">Troca Dinâmica de Tom • Legião Urbana - Tempo Perdido</span>
-        <span class="badge-tag tag-tone">Tom Atual: D (Original: C)</span>
-      </div>
-      <div class="screen-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-        <div style="background: rgba(15, 23, 42, 0.7); padding: 12px; border-radius: 8px; border-left: 3px solid #64748b;">
-          <div style="font-weight: 700; font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">TOM ORIGINAL (C - Dó Maior)</div>
-          <div style="font-family: var(--font-mono); font-size: 12px; line-height: 1.8;">
-            <span class="chord">[ C ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ Am7 ]</span><br>
-            Todos os dias quando acordo...<br>
-            <span class="chord">[ Bm ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ Em ]</span><br>
-            Não tenho mais o tempo que passou...
-          </div>
-        </div>
-
-        <div style="background: rgba(15, 23, 42, 0.9); padding: 12px; border-radius: 8px; border-left: 3px solid #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);">
-          <div style="font-weight: 700; font-size: 11px; color: #38bdf8; margin-bottom: 6px;">TRANSPORTO (+2 SEMITONS) → (D - Ré Maior)</div>
-          <div style="font-family: var(--font-mono); font-size: 12px; line-height: 1.8;">
-            <span class="chord" style="color: #34d399; background: rgba(52, 211, 153, 0.15);">[ D ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord" style="color: #34d399; background: rgba(52, 211, 153, 0.15);">[ Bm7 ]</span><br>
-            Todos os dias quando acordo...<br>
-            <span class="chord" style="color: #34d399; background: rgba(52, 211, 153, 0.15);">[ C#m ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord" style="color: #34d399; background: rgba(52, 211, 153, 0.15);">[ F#m ]</span><br>
-            Não tenho mais o tempo que passou...
-          </div>
-        </div>
+    <div class="img-mockup-frame">
+      <img src="assets/manual_img/tela_musicas.png" alt="Lista de Músicas do CantaAí PRO">
+      <div class="img-caption">
+        <span>📸 Tela Real:</span> Repertório Sertanejo com "Evidências", "Boate Azul", "Dormi na Praça" e "Ainda Ontem Chorei de Saudade".
       </div>
     </div>
 
-    <h1>🎧 Módulo 3: YouTube Dock & Áudio Guia Integrado</h1>
-    <p>
-      O YouTube Dock é o recurso secreto do CantaAí PRO para ensaios rápidos no camarim ou para tirar dúvidas de arranjo antes de entrar no palco. Você insere o link da música e uma janela flutuante <em>Picture-in-Picture</em> surge integrada ao prompter.
-    </p>
+    <h2>⚡ Ferramentas da Barra do Repertório:</h2>
 
-    <!-- SIMULADOR YOUTUBE DOCK COM COMO NOSSOS PAIS -->
-    <div class="screen-mockup">
-      <div class="screen-topbar">
-        <span style="font-weight: 700; color: #f87171;">📺 YouTube Dock Ativo • Elis Regina - Como Nossos Pais</span>
-        <span style="color: var(--text-muted); font-size: 11px;">Áudio Sincronizado</span>
+    <div class="grid-2cols">
+      <div class="info-card">
+        <div class="info-card-title">‹ Repertórios</div>
+        <p style="font-size: 12px; margin: 0;">
+          Volta com um clique para a tela principal de todos os seus repertórios.
+        </p>
       </div>
-      <div class="screen-body" style="position: relative;">
-        <!-- DOCK FLUTUANTE SIMULADO -->
-        <div style="position: absolute; right: 18px; top: 18px; width: 220px; background: #000000; border: 2px solid #38bdf8; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10;">
-          <div style="background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; padding: 3px 6px; display: flex; justify-content: space-between;">
-            <span>▶ YOUTUBE DOCK (ÁUDIO GUIA)</span>
-            <span>✕</span>
-          </div>
-          <div style="padding: 24px 10px; text-align: center; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);">
-            <div style="font-size: 20px; margin-bottom: 4px;">🎵</div>
-            <div style="font-size: 10.5px; font-weight: 700; color: #ffffff;">Elis Regina - Como Nossos Pais</div>
-            <div style="font-size: 9.5px; color: #94a3b8;">Gravado em 1976 • Tom: G</div>
-          </div>
-        </div>
 
-        <div class="prompter-stage-view" style="padding-right: 250px;">
-          <div class="prompter-header-bar">
-            <div class="song-title-huge">Como Nossos Pais • Elis Regina</div>
-            <span class="badge-tag tag-tone">Tom: G</span>
-          </div>
-          <div class="prompter-lyrics-box" style="font-size: 12px;">
-            <span class="chord">[ G ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ Bm7 ]</span><br>
-            Não quero lhe falar meu grande amor de coisas que aprendi nos livros...<br>
-            <span class="chord">[ C ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ D7 ]</span><br>
-            Quero lhe contar como vivi e tudo o que aconteceu comigo...<br>
-            <span class="chord">[ Em ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chord">[ Bm7 ]</span><br>
-            Viver é melhor que sonhar, e eu sei que o amor é uma coisa boa...
-          </div>
-        </div>
+      <div class="info-card">
+        <div class="info-card-title">🧹 Limpar Duplicadas</div>
+        <p style="font-size: 12px; margin: 0;">
+          Remove músicas com o mesmo nome que você possa ter importado por engano.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">🔤 Ordem A-Z</div>
+        <p style="font-size: 12px; margin: 0;">
+          Organiza todas as músicas do repertório em ordem alfabética instantaneamente.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">⚡ Offline Ativo</div>
+        <p style="font-size: 12px; margin: 0;">
+          Garante que todas as cifras deste repertório estão salvas na memória do seu aparelho.
+        </p>
       </div>
     </div>
 
-    <div class="page-footer">
+    <div class="step-box green">
+      <div class="step-title">👆 Como Iniciar a Leitura:</div>
+      Para abrir uma música no teleprompter, <strong>basta clicar em cima da linha da música</strong>. As setinhas <strong>▲ e ▼</strong> no canto direito servem para subir ou descer a música na ordem do show.
+    </div>
+
+    <div class="doc-footer">
       <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 4</span>
     </div>
   </div>
 
 
-  <!-- ==================== PÁGINA 5: REPERTÓRIOS POR ESTILO & IMPORTAÇÃO ==================== -->
-  <div class="page">
-    <div class="page-header">
-      <div class="brand"><span>🎤</span> CantaAí PRO • Manual do Usuário</div>
-      <div>Módulo 4: Gestão de Repertórios & Importação em Lote</div>
+  <!-- ==================== PÁGINA 5: PASSO 4 - TELEPROMPTER AO VIVO ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><span>🎤</span> CantaAí <span class="badge-pro">PRO</span></div>
+      <div>Passo 4: O Teleprompter & Rolagem Automática</div>
     </div>
 
-    <h1>📂 Módulo 4: Organização por Estilos Musicais</h1>
+    <h1>4. O Teleprompter em Ação</h1>
     <p>
-      O CantaAí PRO permite criar repertórios temáticos infinitos para atender a qualquer tipo de show ou evento. Abaixo estão exemplos práticos de repertórios já estruturados com clássicos da música nacional:
+      Esta é a tela principal que você usará durante seus ensaios e apresentações ao vivo. Os acordes aparecem em cor ciano vibrante bem em cima da letra, com fundo escuro de alto contraste para não cansar a vista.
     </p>
 
-    <div class="grid-2cols">
-      <!-- REPERTÓRIO 1: SAMBA & PAGODE -->
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span style="color: #fbbf24;">🥁 Repertório: Samba & Pagode Raiz</span>
-        </div>
-        <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px;">Ideal para rodas de samba, feijoadas e bares.</p>
-        <ul style="list-style: none; font-size: 12px; line-height: 1.7; color: #cbd5e1;">
-          <li>1. <strong>Cheia de Manias</strong> • Raça Negra <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom Em</span></li>
-          <li>2. <strong>Não Deixe o Samba Morrer</strong> • Alcione <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom Am</span></li>
-          <li>3. <strong>O Show Tem Que Continuar</strong> • Fundo de Quintal <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom F</span></li>
-          <li>4. <strong>Deixa Acontecer</strong> • Grupo Revelação <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom D</span></li>
-        </ul>
+    <div class="img-mockup-frame">
+      <img src="assets/manual_img/tela_prompter.png" alt="Teleprompter ao vivo com Evidências">
+      <div class="img-caption">
+        <span>📸 Tela Real:</span> Música "Evidências" pronta para leitura com controle de fonte (32px), velocidade (3x) e rolagem contínua.
       </div>
+    </div>
 
-      <!-- REPERTÓRIO 2: POP & ROCK NACIONAL -->
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span style="color: #38bdf8;">🎸 Repertório: Pop & Rock Nacional</span>
-        </div>
-        <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px;">Clássicos das décadas de 80 e 90 para agitar a plateia.</p>
-        <ul style="list-style: none; font-size: 12px; line-height: 1.7; color: #cbd5e1;">
-          <li>1. <strong>Tempo Perdido</strong> • Legião Urbana <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom C</span></li>
-          <li>2. <strong>Pro Dia Nascer Feliz</strong> • Barão Vermelho <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom A</span></li>
-          <li>3. <strong>Primeiros Erros</strong> • Capital Inicial <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom E</span></li>
-          <li>4. <strong>Não Quero Dinheiro</strong> • Tim Maia <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom G</span></li>
-        </ul>
-      </div>
+    <h2>🎛️ Como Usar os Controles do Teleprompter:</h2>
+
+    <div class="step-box green">
+      <div class="step-title">▶ Iniciar / Pausar a Rolagem Contínua</div>
+      Clique no botão verde <strong>"▶ Iniciar Rolagem"</strong>. O texto começará a descer suavemente na tela. Para pausar no meio da música, basta dar um toque na tela ou apertar a tecla <span class="kbd-tag">Espaço</span>.
     </div>
 
     <div class="grid-2cols">
-      <!-- REPERTÓRIO 3: SERTANEJO & MODÃO -->
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span style="color: #34d399;">🤠 Repertório: Sertanejo & Modão de Bar</span>
-        </div>
-        <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px;">Para apresentações acústicas e grandes comemorações.</p>
-        <ul style="list-style: none; font-size: 12px; line-height: 1.7; color: #cbd5e1;">
-          <li>1. <strong>Evidências</strong> • Chitãozinho & Xororó <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom E</span></li>
-          <li>2. <strong>Boate Azul</strong> • Joaquim & Manuel <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom Am</span></li>
-          <li>3. <strong>Dormi na Praça</strong> • Bruno & Marrone <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom D</span></li>
-          <li>4. <strong>Ainda Ontem Chorei de Saudade</strong> • João Mineiro <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom G</span></li>
-        </ul>
+      <div class="info-card">
+        <div class="info-card-title">🔠 Ajuste do Tamanho da Letra</div>
+        <p style="font-size: 12px; margin: 0;">
+          Clique em <strong>[A-]</strong> para diminuir ou <strong>[A+]</strong> para aumentar o tamanho da letra. O número no centro (ex: 32px) mostra o tamanho atual.
+        </p>
       </div>
 
-      <!-- REPERTÓRIO 4: MPB & BOSSA NOVA -->
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span style="color: #e879f9;">🎙️ Repertório: MPB & Voz e Violão</span>
-        </div>
-        <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px;">Repertório intimista e refinado para restaurantes e teatros.</p>
-        <ul style="list-style: none; font-size: 12px; line-height: 1.7; color: #cbd5e1;">
-          <li>1. <strong>Como Nossos Pais</strong> • Elis Regina <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom G</span></li>
-          <li>2. <strong>Garota de Ipanema</strong> • Tom Jobim & Vinicius <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom F</span></li>
-          <li>3. <strong>Águas de Março</strong> • Tom Jobim <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom Bb</span></li>
-          <li>4. <strong>O Bêbado e a Equilibrista</strong> • João Bosco <span class="badge-tag tag-tone" style="font-size: 9.5px;">Tom A</span></li>
-        </ul>
+      <div class="info-card">
+        <div class="info-card-title">⏩ Controle de Velocidade</div>
+        <p style="font-size: 12px; margin: 0;">
+          Use os botões <strong>[-]</strong> e <strong>[+]</strong> para deixar a rolagem mais lenta ou mais rápida, acompanhando o andamento natural da música.
+        </p>
       </div>
     </div>
 
-    <h2>🚀 Importação em Massa via Google Drive e Arquivos Locais</h2>
-    <p>
-      Você não precisa digitar todas as suas músicas manualmente. Clique no botão <strong>"Importar Cifras"</strong> no menu superior:
-    </p>
-    <div class="callout-box">
-      <div class="callout-title">📂 Formatos Suportados com Reconhecimento Automático</div>
-      • <strong>Google Drive:</strong> Conecte sua pasta do Drive e importe dezenas de músicas em 1 clique.<br>
-      • <strong>Arquivos Word (.docx) & PDF:</strong> O extrator inteligente isola os acordes e as estrofes automaticamente.<br>
-      • <strong>Colar Texto Puro:</strong> Cole o texto copiado de qualquer site de cifras; o sistema detecta o tom e formata tudo nos padrões visuais do palco.
+    <div class="step-box">
+      <div class="step-title">⏭️ Próxima Música ou Anterior</div>
+      Use os botões <strong>"‹ Anterior"</strong> e <strong>"Próxima ›"</strong> no topo para trocar de música rapidamente sem precisar sair do teleprompter. O indicador <strong>1 / 14</strong> mostra a posição da música no repertório.
     </div>
 
-    <div class="page-footer">
+    <div class="doc-footer">
       <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 5</span>
     </div>
   </div>
 
 
-  <!-- ==================== PÁGINA 6: EXPORTAÇÃO PDF & GOVERNANÇA ==================== -->
-  <div class="page">
-    <div class="page-header">
-      <div class="brand"><span>🎤</span> CantaAí PRO • Manual do Usuário</div>
-      <div>Módulo 5: Exportação em PDF & Governança de Nuvem</div>
+  <!-- ==================== PÁGINA 6: PASSO 5 - TRANSPOSIÇÃO DE TOM ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><span>🎤</span> CantaAí <span class="badge-pro">PRO</span></div>
+      <div>Passo 5: Transposição Instantânea de Tom</div>
     </div>
 
-    <h1>🖨️ Módulo 5: Exportação & Impressão Formatada de Setlists</h1>
+    <h1>5. Como Mudar o Tom na Hora do Show</h1>
     <p>
-      A comunicação perfeita com a equipe técnica (operador de som, iluminador e músicos convidados) é fundamental para um show sem falhas. O CantaAí PRO gera documentos de setlist limpos e diagramados com 1 clique.
+      Se o cantor convidado cantar em outro tom ou se a sua voz estiver cansada e você precisar descer meio tom, o CantaAí PRO resolve isso com um único clique, sem você precisar pensar nem fazer contas harmônicas de cabeça.
     </p>
 
-    <!-- PREVIEW SETLIST IMPRESSO -->
-    <div class="screen-mockup">
-      <div class="screen-topbar">
-        <span style="font-weight: 700; color: #ffffff;">📄 Visualização de Setlist para Impressão / PDF</span>
-        <span style="font-size: 11px; color: #38bdf8;">Pronto para Envio via WhatsApp ou Impressão</span>
-      </div>
-      <div class="screen-body" style="background: #ffffff; color: #0f172a; padding: 18px; border-radius: 4px; font-family: var(--font-sans);">
-        <div style="border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
-          <div>
-            <h2 style="color: #0f172a; margin: 0; font-size: 16px;">SETLIST OFICIAL: SHOW NOITE DE SEXTA</h2>
-            <div style="font-size: 11px; color: #475569;">Banda: Leonardo & Trio • Data: 12/09/2026 • Local: Villa Country</div>
-          </div>
-          <div style="font-size: 11px; font-weight: 700; background: #0f172a; color: #fff; padding: 4px 8px; border-radius: 4px;">
-            14 MÚSICAS • BLOCO 1
-          </div>
-        </div>
-
-        <table style="width: 100%; font-size: 11.5px; border-collapse: collapse; color: #1e293b;">
-          <thead>
-            <tr style="border-bottom: 1px solid #94a3b8; text-align: left; font-size: 10.5px; text-transform: uppercase;">
-              <th style="padding: 4px 6px;">#</th>
-              <th style="padding: 4px 6px;">Música</th>
-              <th style="padding: 4px 6px;">Artista Original</th>
-              <th style="padding: 4px 6px;">Tom</th>
-              <th style="padding: 4px 6px;">Ritmo</th>
-              <th style="padding: 4px 6px;">Obs. de Palco</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-              <td style="padding: 5px 6px; font-weight: 700;">01</td>
-              <td style="padding: 5px 6px; font-weight: 700;">Evidências</td>
-              <td style="padding: 5px 6px;">Chitãozinho & Xororó</td>
-              <td style="padding: 5px 6px; font-weight: 800; color: #0284c7;">E</td>
-              <td style="padding: 5px 6px;">Balada</td>
-              <td style="padding: 5px 6px; font-size: 10px; color: #64748b;">Entrada voz solo, bateria entra no refrão</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-              <td style="padding: 5px 6px; font-weight: 700;">02</td>
-              <td style="padding: 5px 6px; font-weight: 700;">Tempo Perdido</td>
-              <td style="padding: 5px 6px;">Legião Urbana</td>
-              <td style="padding: 5px 6px; font-weight: 800; color: #0284c7;">C</td>
-              <td style="padding: 5px 6px;">Rock 128 BPM</td>
-              <td style="padding: 5px 6px; font-size: 10px; color: #64748b;">Emenda direta sem parada</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-              <td style="padding: 5px 6px; font-weight: 700;">03</td>
-              <td style="padding: 5px 6px; font-weight: 700;">Cheia de Manias</td>
-              <td style="padding: 5px 6px;">Raça Negra</td>
-              <td style="padding: 5px 6px; font-weight: 800; color: #0284c7;">Em</td>
-              <td style="padding: 5px 6px;">Pagode 92 BPM</td>
-              <td style="padding: 5px 6px; font-size: 10px; color: #64748b;">Interação com a plateia no refrão</td>
-            </tr>
-            <tr>
-              <td style="padding: 5px 6px; font-weight: 700;">04</td>
-              <td style="padding: 5px 6px; font-weight: 700;">Não Quero Dinheiro</td>
-              <td style="padding: 5px 6px;">Tim Maia</td>
-              <td style="padding: 5px 6px; font-weight: 800; color: #0284c7;">G</td>
-              <td style="padding: 5px 6px;">Soul / Funk</td>
-              <td style="padding: 5px 6px; font-size: 10px; color: #64748b;">Final apoteótico com solo de metais</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="step-box green">
+      <div class="step-title">🎵 Como Fazer a Troca de Tom:</div>
+      No topo da tela do teleprompter, localize o seletor onde está escrito o tom atual (por exemplo, <strong>"Tom: E (Mi)"</strong>). Clique nele para abrir a lista completa de tons.
     </div>
-
-    <h2>☁️ Governança de Nuvem Supabase & Backup</h2>
-    <p>
-      O CantaAí PRO mantém uma sincronização contínua com seu banco de dados Supabase. Cada edição feita em casa no computador fica instantaneamente disponível no seu tablet de palco assim que você se conecta à internet.
-    </p>
 
     <div class="grid-2cols">
-      <div class="callout-box green" style="margin: 0;">
-        <div class="callout-title">🔒 Segurança dos Seus Dados</div>
-        Suas cifras e anotações pessoais são protegidas por criptografia e isoladas por usuário (Row Level Security - RLS).
+      <div class="info-card" style="border-left: 3px solid #0284c7;">
+        <div class="info-card-title">Tons Maiores Disponíveis</div>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin: 0;">
+          <strong>C</strong> (Dó) • <strong>C# / Db</strong> • <strong>D</strong> (Ré) • <strong>D# / Eb</strong><br>
+          <strong>E</strong> (Mi) • <strong>F</strong> (Fá) • <strong>F# / Gb</strong> • <strong>G</strong> (Sol)<br>
+          <strong>G# / Ab</strong> • <strong>A</strong> (Lá) • <strong>A# / Bb</strong> • <strong>B</strong> (Si)
+        </p>
       </div>
-      <div class="callout-box gold" style="margin: 0;">
-        <div class="callout-title">⚡ Multi-Dispositivos Sem Limites</div>
-        Use o mesmo login no seu iPhone, iPad, celular Android, notebook Mac ou Windows sem pagar nenhuma taxa adicional.
+
+      <div class="info-card" style="border-left: 3px solid #10b981;">
+        <div class="info-card-title">Tons Menores Disponíveis</div>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin: 0;">
+          <strong>Cm</strong> • <strong>C#m</strong> • <strong>Dm</strong> • <strong>D#m</strong><br>
+          <strong>Em</strong> • <strong>Fm</strong> • <strong>F#m</strong> • <strong>Gm</strong><br>
+          <strong>G#m</strong> • <strong>Am</strong> • <strong>Bbm</strong> • <strong>Bm</strong>
+        </p>
       </div>
     </div>
 
-    <div class="page-footer">
+    <h2>🎸 Exemplo Prático com a Música "Evidências":</h2>
+
+    <div class="grid-2cols">
+      <div class="info-card" style="background: #ffffff; border: 1px solid #cbd5e1;">
+        <div style="font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px;">TOM ORIGINAL: E (Mi Maior)</div>
+        <div style="font-family: var(--font-code); font-size: 11.5px; line-height: 1.7; color: #0f172a;">
+          <span style="color: #0284c7; font-weight: 800;">[ E ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0284c7; font-weight: 800;">[ G#m ]</span><br>
+          Quando eu digo que deixei de te amar...<br>
+          <span style="color: #0284c7; font-weight: 800;">[ A ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0284c7; font-weight: 800;">[ B7 ]</span><br>
+          Quando eu digo que não quero mais você...
+        </div>
+      </div>
+
+      <div class="info-card" style="background: #f0fdf4; border: 1px solid #86efac;">
+        <div style="font-size: 11px; font-weight: 800; color: #15803d; margin-bottom: 6px;">TRANSPORTO PARA: D (Ré Maior)</div>
+        <div style="font-family: var(--font-code); font-size: 11.5px; line-height: 1.7; color: #0f172a;">
+          <span style="color: #15803d; font-weight: 800;">[ D ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #15803d; font-weight: 800;">[ F#m ]</span><br>
+          Quando eu digo que deixei de te amar...<br>
+          <span style="color: #15803d; font-weight: 800;">[ G ]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #15803d; font-weight: 800;">[ A7 ]</span><br>
+          Quando eu digo que não quero mais você...
+        </div>
+      </div>
+    </div>
+
+    <div class="step-box gold">
+      <div class="step-title">⚡ Inteligência Harmônica Automática</div>
+      Todos os acordes da música inteira mudam instantaneamente. Acordes com sétima (ex: B7 virou A7), notas menores e variações são recalculados com precisão absoluta.
+    </div>
+
+    <div class="doc-footer">
       <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 6</span>
     </div>
   </div>
 
 
-  <!-- ==================== PÁGINA 7: ROTEIRO DE VÍDEO (PARTE 1) ==================== -->
-  <div class="page">
-    <div class="page-header">
-      <div class="brand"><span>🎬</span> CantaAí PRO • Roteiro de Gravação de Vídeo</div>
-      <div>Vídeo Demonstrativo & Comercial (Cenas 1 a 4)</div>
+  <!-- ==================== PÁGINA 7: PASSO 6 - EDIÇÃO & CADASTRO ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><span>🎤</span> CantaAí <span class="badge-pro">PRO</span></div>
+      <div>Passo 6: Cadastro, Edição de Músicas & YouTube Guia</div>
     </div>
 
-    <div class="badge-pill" style="margin-bottom: 14px;">🎥 ROTEIRO TÉCNICO DE PRODUÇÃO EM VÍDEO</div>
-    <h1>🎬 Roteiro de Vídeo: "Do Papel ao Palco Profissional"</h1>
+    <h1>6. Como Cadastrar e Editar uma Música</h1>
     <p>
-      Este roteiro foi formatado para a gravação de um <strong>vídeo de alta conversão de 3 a 4 minutos</strong>, ideal para YouTube, página de vendas e anúncios cortados para Instagram Reels / TikTok.
+      Para ajustar a letra, corrigir um acorde ou adicionar o link do YouTube para ensaiar, clique no botão <strong>"✏️ Editar"</strong> no teleprompter ou selecione <strong>"+ Criar Música Manual"</strong> no menu do topo.
     </p>
 
-    <table class="doc-table">
-      <thead>
-        <tr>
-          <th style="width: 15%;">Cena & Tempo</th>
-          <th style="width: 25%;">Enquadramento / Visual</th>
-          <th style="width: 40%;">Fala do Locutor / Apresentador</th>
-          <th style="width: 20%;">Callouts na Tela</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <span class="tag-scene">CENA 1</span><br>
-            <span class="tag-time">00:00 - 00:25</span>
-          </td>
-          <td>
-            <strong>Abertura no Palco:</strong><br>
-            Câmera mostra cantor no palco com pastas de papel amassadas caindo da estante ou celular com tela pequena apagando no meio da música.
-          </td>
-          <td>
-            <em>"Quantas vezes você já passou aquele sufoco terrível no palco? A pasta de papel caindo da estante, o refletor batendo e cegando sua visão, ou pior: esquecer a letra no meio do refrão mais esperado da noite? Chega disso."</em>
-          </td>
-          <td>
-            <span style="color: #f87171; font-weight: 700;">❌ Pastas de Papel</span><br>
-            <span style="color: #f87171; font-weight: 700;">❌ Letras Esquecidas</span>
-          </td>
-        </tr>
-
-        <tr>
-          <td>
-            <span class="tag-scene">CENA 2</span><br>
-            <span class="tag-time">00:25 - 00:55</span>
-          </td>
-          <td>
-            <strong>Apresentação CantaAí PRO:</strong><br>
-            Transição rápida com som de quem liga o som no palco. Tablet iPad/Android acende mostrando a interface moderna e elegante do CantaAí PRO em tema escuro.
-          </td>
-          <td>
-            <em>"Esse é o CantaAí PRO: a plataforma definitiva de teleprompter, cifras e repertórios criada por quem realmente entende o que acontece em cima do palco. Aqui você tem controle absoluto do seu show na ponta dos dedos."</em>
-          </td>
-          <td>
-            <span style="color: #38bdf8; font-weight: 800;">✨ CANTAAÍ PRO</span><br>
-            <span>O Palco Sem Papel</span>
-          </td>
-        </tr>
-
-        <tr>
-          <td>
-            <span class="tag-scene">CENA 3</span><br>
-            <span class="tag-time">00:55 - 01:45</span>
-          </td>
-          <td>
-            <strong>O Modo Palco em Ação:</strong><br>
-            Gravação de tela nítida mostrando a música <em>"Evidências"</em> rolando suavemente. O apresentador toca na tela ou aperta a barra de espaço para ajustar a velocidade de rolagem.
-          </td>
-          <td>
-            <em>"Olha a fluidez disso! As cifras aparecem em destaque ciano logo acima da sílaba exata. A rolagem contínua acompanha o seu ritmo de canto sem saltos nem travamentos. Você pode acelerar, desacelerar ou pausar com um toque suave ou pelo pedal Bluetooth."</em>
-          </td>
-          <td>
-            <span style="color: #34d399; font-weight: 700;">✓ Rolagem Fluída</span><br>
-            <span style="color: #38bdf8; font-weight: 700;">✓ Tipografia OLED</span>
-          </td>
-        </tr>
-
-        <tr>
-          <td>
-            <span class="tag-scene">CENA 4</span><br>
-            <span class="tag-time">01:45 - 02:30</span>
-          </td>
-          <td>
-            <strong>A Mágica da Transposição:</strong><br>
-            Apresentador na música <em>"Tempo Perdido"</em> em Dó (C). Ele clica no botão <em>"♯ Subir 1 Tom"</em> e a tela inteira atualiza instantaneamente para Ré (D), com todos os acordes matematicamente corrigidos.
-          </td>
-          <td>
-            <em>"A voz cansou no final do show e você precisa descer meio tom? Ou o cantor convidado canta em outra tonalidade? Um único clique e a mágica acontece. A harmonia inteira é recalculada na hora, sem atraso e sem você ter que fritar a cabeça calculando acordes."</em>
-          </td>
-          <td>
-            <span style="color: #fbbf24; font-weight: 800;">⚡ 1-Click Transpose</span><br>
-            <span>Precisão Harmônica</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="callout-box">
-      <div class="callout-title">🎙️ Instrução para o Locutor</div>
-      Mantenha o tom de conversa franca entre músicos profissionais: dinâmico, entusiasta e focado na tranquilidade e autoridade que a ferramenta entrega para quem canta ao vivo.
+    <div class="img-mockup-frame">
+      <img src="assets/manual_img/tela_editor.png" alt="Modal de Edição do CantaAí PRO">
+      <div class="img-caption">
+        <span>📸 Tela Real:</span> Tela de edição com campos de nome, repertório, ritmo, cantor, compositor e link de áudio guia.
+      </div>
     </div>
 
-    <div class="page-footer">
-      <span>CantaAí PRO • Roteiro de Vídeo</span>
+    <h2>📝 Campos Importantes na Edição:</h2>
+
+    <div class="grid-2cols">
+      <div class="info-card">
+        <div class="info-card-title">📌 Nome & Repertório</div>
+        <p style="font-size: 12px; margin: 0;">
+          Coloque o título da música e escolha em qual repertório ela vai ficar (ex: Sertanejo & Modão).
+        </p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">🥁 Toque / Ritmo</div>
+        <p style="font-size: 12px; margin: 0;">
+          Anote o ritmo para orientar a banda (ex: Balada, Guarânia, Vaneira, Samba, Rock 128 BPM).
+        </p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">🎵 Tom de Cantar</div>
+        <p style="font-size: 12px; margin: 0;">
+          Defina a tonalidade que você costuma cantar para ela sempre abrir pronta para você.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">📺 Áudio Guia (YouTube)</div>
+        <p style="font-size: 12px; margin: 0;">
+          Cole o link do YouTube da gravação oficial para ensaiar o arranjo e as convenções antes de cantar.
+        </p>
+      </div>
+    </div>
+
+    <div class="step-box green">
+      <div class="step-title">💾 Salvar Alterações</div>
+      Terminou de editar? Clique no botão verde <strong>"💾 Salvar Alterações"</strong>. A música é atualizada imediatamente no seu dispositivo e na nuvem.
+    </div>
+
+    <div class="doc-footer">
+      <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 7</span>
     </div>
   </div>
 
 
-  <!-- ==================== PÁGINA 8: ROTEIRO DE VÍDEO (PARTE 2) & FAQ ==================== -->
-  <div class="page">
-    <div class="page-header">
-      <div class="brand"><span>🎬</span> CantaAí PRO • Roteiro de Gravação de Vídeo</div>
-      <div>Vídeo Demonstrativo & Comercial (Cenas 5 a 7) + Checklist</div>
+  <!-- ==================== PÁGINA 8: PASSO 7 - IMPRESSÃO & MODO OFFLINE ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><span>🎤</span> CantaAí <span class="badge-pro">PRO</span></div>
+      <div>Passo 7: Impressão de Setlist & Segurança Offline</div>
     </div>
 
-    <h1>🎬 Roteiro de Vídeo: Cenas Finais & Chamada para Ação</h1>
+    <h1>7. Impressão de Setlists e Segurança Offline</h1>
+    <p>
+      O CantaAí PRO foi construído com duas prioridades máximas: facilitar a comunicação com os outros músicos da banda e garantir que o sistema nunca falhe durante uma apresentação ao vivo.
+    </p>
 
-    <table class="doc-table">
-      <thead>
-        <tr>
-          <th style="width: 15%;">Cena & Tempo</th>
-          <th style="width: 25%;">Enquadramento / Visual</th>
-          <th style="width: 40%;">Fala do Locutor / Apresentador</th>
-          <th style="width: 20%;">Callouts na Tela</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <span class="tag-scene">CENA 5</span><br>
-            <span class="tag-time">02:30 - 03:10</span>
-          </td>
-          <td>
-            <strong>YouTube Dock no Ensaio:</strong><br>
-            Mostrando a música <em>"Como Nossos Pais"</em> ou <em>"Cheia de Manias"</em> com o dock flutuante do YouTube aberto. O áudio original toca enquanto o texto da cifra rola.
-          </td>
-          <td>
-            <em>"E para estudar aquele arranjo difícil antes de subir ao palco? O CantaAí PRO vem com o YouTube Dock integrado. Você abre a versão original em uma janela flutuante e treina as convenções e entradas vocais com a cifra no mesmo visor."</em>
-          </td>
-          <td>
-            <span style="color: #f87171; font-weight: 800;">📺 YouTube Dock</span><br>
-            <span>Estudo & Arranjos</span>
-          </td>
-        </tr>
+    <h2>🖨️ Como Imprimir o Setlist do Show:</h2>
+    <p>
+      Dentro de qualquer repertório, clique no botão <strong>"🖨️ Imprimir Setlist"</strong>. O sistema gera uma folha limpa, organizada e pronta para imprimir ou salvar em PDF para enviar no WhatsApp dos músicos ou da equipe técnica.
+    </p>
 
-        <tr>
-          <td>
-            <span class="tag-scene">CENA 6</span><br>
-            <span class="tag-time">03:10 - 03:45</span>
-          </td>
-          <td>
-            <strong>Organização de Repertórios & PDF:</strong><br>
-            Troca rápida entre os repertórios temáticos (Sertanejo, Samba, Rock Nacional) e clique no botão de gerar setlist em PDF formatado.
-          </td>
-          <td>
-            <em>"Organize seus shows por estilos musicais: Samba, Sertanejo, Rock ou MPB. E quando for passar o som com a equipe técnica, gere um setlist formatado e limpo em PDF para o operador de áudio e os músicos."</em>
-          </td>
-          <td>
-            <span style="color: #38bdf8; font-weight: 700;">✓ Repertórios Infinitos</span><br>
-            <span style="color: #34d399; font-weight: 700;">✓ Impressão em PDF</span>
-          </td>
-        </tr>
+    <div class="img-mockup-frame">
+      <img src="assets/manual_img/tela_imprimir.png" alt="Setlist formatado para impressão">
+      <div class="img-caption">
+        <span>📸 Tela Real:</span> Tabela limpa com número da música, título, intérprete, tom, ritmo e espaço para anotações técnicas.
+      </div>
+    </div>
 
-        <tr>
-          <td>
-            <span class="tag-scene">CENA 7</span><br>
-            <span class="tag-time">03:45 - 04:15</span>
-          </td>
-          <td>
-            <strong>Fechamento & Oferta Irrecusável:</strong><br>
-            Câmera volta para o apresentador sorridente segurando o tablet pronto para o show. Em tela cheia aparece o card com os <strong>7 Dias Grátis de Degustação PRO</strong>.
-          </td>
-          <td>
-            <em>"Pare de improvisar e leve seus shows para o nível profissional que você merece. Você pode testar todas essas ferramentas gratuitamente agora mesmo por 7 dias. Clique no link aqui embaixo, crie sua conta e sinta o alívio no seu próximo show!"</em>
-          </td>
-          <td>
-            <span style="color: #fbbf24; font-weight: 900; font-size: 13px;">🎁 7 DIAS GRÁTIS</span><br>
-            <span style="color: #38bdf8; font-weight: 700;">Assine CantaAí PRO</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <h2>🛡️ Segurança Offline: E se a internet cair durante o show?</h2>
 
-    <h2>🎥 Dicas de Ouro para a Gravação do Vídeo</h2>
+    <div class="step-box green">
+      <div class="step-title">Funcionamento 100% Offline Garantido</div>
+      Todas as suas cifras, letras e repertórios ficam armazenados na memória física do seu tablet, celular ou computador. Se o Wi-Fi do local oscilar ou os dados móveis caírem no meio da apresentação, <strong>o teleprompter continua funcionando perfeitamente sem nenhuma interrupção</strong>.
+    </div>
+
     <div class="grid-2cols">
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span>💡 Iluminação & Equipamento</span>
-        </div>
+      <div class="info-card">
+        <div class="info-card-title">🔄 Sincronização Automática</div>
         <p style="font-size: 12px; margin: 0;">
-          • Grave a tela do iPad/computador usando gravação interna em 1080p ou 4K a 60fps para rolagem 100% fluída.<br>
-          • Use iluminação suave na face do apresentador e evite reflexos diretos na tela do tablet.<br>
-          • Microfone de lapela ou microfone dinâmico de palco garante o clima profissional de show.
+          Quando você voltar a ter internet, todas as edições e novas músicas sobem automaticamente para a sua nuvem no CantaAí PRO.
         </p>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span>🎵 Trilha Sonora & Edição</span>
-        </div>
+      <div class="info-card">
+        <div class="info-card-title">📱 Use em Qualquer Tela</div>
         <p style="font-size: 12px; margin: 0;">
-          • <strong>Trilha de fundo:</strong> Base acústica de violão ou pop/rock instrumental animado em volume baixo (-24dB).<br>
-          • Adicione efeitos sonoros sutis de <em>whoosh</em> nas transições e <em>clique mecânico</em> na transposição de tom.<br>
-          • Mantenha o ritmo dinâmico com cortes a cada 3 a 5 segundos nas cenas explicativas.
+          Abra o mesmo login no seu iPad, tablet Android, celular ou notebook. Suas músicas estarão sincronizadas em todos eles.
         </p>
       </div>
     </div>
 
-    <div class="callout-box green" style="text-align: center; margin-top: 14px;">
-      <strong>Pronto para Vender & Dominar o Palco!</strong> O CantaAí PRO une tecnologia de ponta e simplicidade real para transformar cada apresentação musical em um espetáculo perfeito.
-    </div>
-
-    <div class="page-footer">
-      <span>CantaAí PRO • Manual do Usuário & Roteiro de Vídeo</span>
+    <div class="doc-footer">
+      <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 8</span>
     </div>
   </div>
