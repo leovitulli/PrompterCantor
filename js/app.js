@@ -4444,6 +4444,22 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // Suporte a parâmetros de URL vindos de páginas externas (como landing_v2.html)
+    try {
+      var urlParams = new URLSearchParams(window.location.search);
+      var authParam = urlParams.get('auth');
+      var actionParam = urlParams.get('action');
+      if (authParam === 'signup') {
+        openAuthModal('signup');
+      } else if (authParam === 'signin' || authParam === 'login') {
+        openAuthModal('signin');
+      } else if (actionParam === 'app') {
+        showApp();
+      }
+    } catch (e) {
+      console.warn('Erro ao processar URL params:', e);
+    }
+
     // Inicialização da visualização: se usuário logado, vai direto ao App
     if (window.PrompterAuth && window.PrompterAuth.getUser()) {
       showApp();
