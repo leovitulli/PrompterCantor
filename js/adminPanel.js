@@ -617,8 +617,9 @@
                   '</div>' +
                   '<div class="form-grid-2cols">' +
                     '<div class="form-group">' +
-                      '<label>Plano de Assinatura:</label>' +
+                      '<label>Plano de Assinatura & Acesso:</label>' +
                       '<select id="editSingerPlan" class="form-control">' +
+                        '<option value="vip">👑 VIP 100% OFF (Acesso Vitalício)</option>' +
                         '<option value="pro_annual">💎 PRO ANUAL</option>' +
                         '<option value="pro_monthly">⚡ PRO MENSAL</option>' +
                         '<option value="free">⚡ PLANO FREE</option>' +
@@ -627,15 +628,42 @@
                     '<div class="form-group">' +
                       '<label>Status do Cantor:</label>' +
                       '<select id="editSingerStatus" class="form-control">' +
-                        '<option value="online">🟢 Ativo / Em Apresentação</option>' +
+                        '<option value="online">🟢 Conectado / Ativo</option>' +
                         '<option value="offline">⚪ Offline</option>' +
                       '</select>' +
                     '</div>' +
                   '</div>' +
+
+                  '<!-- GOVERNANÇA VIP & CUPOM DE DESCONTO -->' +
+                  '<div style="background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.3); border-radius: 12px; padding: 14px 16px; margin-top: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">' +
+                    '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">' +
+                      '<div style="font-size: 0.84rem; font-weight: 800; color: #fbbf24; display: flex; align-items: center; gap: 6px;">' +
+                        '<span>👑 Governança VIP & Cupom de Desconto</span>' +
+                      '</div>' +
+                      '<label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #fef08a; user-select: none; background: rgba(251,191,36,0.18); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(251,191,36,0.45); transition: all 0.2s ease;">' +
+                        '<input type="checkbox" id="editSingerIsVip" style="width: 17px; height: 17px; accent-color: #fbbf24; cursor: pointer;">' +
+                        '<span>Marcar como <strong>Cantor VIP</strong></span>' +
+                      '</label>' +
+                    '</div>' +
+                    '<div class="form-group" style="margin-bottom: 0;">' +
+                      '<label style="font-size: 0.78rem; color: #cbd5e1; font-weight: 600;">🏷️ Cupom de Desconto / Cortesia Atribuído:</label>' +
+                      '<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">' +
+                        '<input type="text" id="editSingerCoupon" list="availableCouponsList" class="form-control" placeholder="Digite ou escolha (ex: VIP100, PRO50)..." style="flex: 1; min-width: 170px; text-transform: uppercase; font-weight: 700; color: #fbbf24; border-color: rgba(251,191,36,0.4);">' +
+                        '<datalist id="availableCouponsList"></datalist>' +
+                        '<select id="editSingerCouponSelect" class="form-control" style="width: auto; min-width: 160px; border-color: rgba(251,191,36,0.35); font-size: 0.8rem; background-color: #1e293b; color: #e2e8f0;">' +
+                          '<option value="">Cupons do Sistema...</option>' +
+                        '</select>' +
+                      '</div>' +
+                      '<div id="editSingerVipNotice" style="display: none; font-size: 0.76rem; color: #fde047; margin-top: 8px; font-weight: 600; padding: 6px 10px; background: rgba(251,191,36,0.12); border-radius: 6px; border: 1px solid rgba(251,191,36,0.25);">' +
+                        '✨ <strong>Acesso VIP Ativado:</strong> Cantor liberado com 100% de desconto vitalício, sem restrições ou mensalidades.' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+
                   '<div style="display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap;">' +
-                    '<button type="button" id="btnDirectWhatsApp" class="btn btn-outline" style="color: #34d399; border-color: rgba(16,185,129,0.4);">💬 WhatsApp</button>' +
-                    '<button type="button" id="btnDeleteSinger" class="btn btn-outline" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">🗑️ Excluir</button>' +
-                    '<button type="button" id="btnSaveSingerData" class="btn btn-primary" style="flex: 1;">💾 Salvar Alterações</button>' +
+                    '<button type="button" id="btnDirectWhatsApp" class="btn btn-outline" style="color: #34d399; border-color: rgba(16,185,129,0.4); display: inline-flex; align-items: center; gap: 6px;">💬 WhatsApp</button>' +
+                    '<button type="button" id="btnDeleteSinger" class="btn btn-outline" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4); display: inline-flex; align-items: center; gap: 6px;">🗑️ Excluir</button>' +
+                    '<button type="button" id="btnSaveSingerData" class="btn btn-primary" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; transition: all 0.25s ease;">💾 Salvar Alterações</button>' +
                   '</div>' +
                 '</form>' +
               '</div>' +
@@ -745,10 +773,11 @@
         });
       }
 
-      // Salvar Cantor
+      // Salvar Cantor com feedback visual imediato
       var btnSaveSinger = document.getElementById('btnSaveSingerData');
       if (btnSaveSinger) {
-        btnSaveSinger.addEventListener('click', function () {
+        btnSaveSinger.addEventListener('click', function (e) {
+          e.preventDefault();
           PrompterAdmin.saveSingerModalData();
         });
       }
@@ -756,11 +785,14 @@
       // Botão WhatsApp Direto
       var btnWhatsApp = document.getElementById('btnDirectWhatsApp');
       if (btnWhatsApp) {
-        btnWhatsApp.addEventListener('click', function () {
+        btnWhatsApp.addEventListener('click', function (e) {
+          e.preventDefault();
           var phone = (document.getElementById('editSingerPhone').value || '').replace(/\D/g, '');
           var name = document.getElementById('editSingerName').value || 'Cantor';
           if (!phone) {
-            if (window.showToast) window.showToast('Este cantor não possui número de WhatsApp cadastrado.', 'warning');
+            if (window.showToast) window.showToast('Informe o número de WhatsApp no campo correspondente.', 'warning');
+            var fPhone = document.getElementById('editSingerPhone');
+            if (fPhone) fPhone.focus();
             return;
           }
           if (phone.length === 10 || phone.length === 11) {
@@ -774,9 +806,90 @@
       // Excluir Cantor
       var btnDeleteSinger = document.getElementById('btnDeleteSinger');
       if (btnDeleteSinger) {
-        btnDeleteSinger.addEventListener('click', function () {
+        btnDeleteSinger.addEventListener('click', function (e) {
+          e.preventDefault();
           var id = document.getElementById('editSingerId').value;
           PrompterAdmin.deleteSinger(id);
+        });
+      }
+
+      // Sincronização inteligente entre Checkbox VIP, Plano e Cupons
+      var chkVip = document.getElementById('editSingerIsVip');
+      var selPlan = document.getElementById('editSingerPlan');
+      var inputCoupon = document.getElementById('editSingerCoupon');
+      var selCoupon = document.getElementById('editSingerCouponSelect');
+      var vipNotice = document.getElementById('editSingerVipNotice');
+
+      function syncVipUi(isVip) {
+        if (vipNotice) vipNotice.style.display = isVip ? 'block' : 'none';
+      }
+
+      if (chkVip && selPlan) {
+        chkVip.addEventListener('change', function () {
+          if (this.checked) {
+            selPlan.value = 'vip';
+            if (inputCoupon && (!inputCoupon.value || inputCoupon.value.trim() === '')) {
+              inputCoupon.value = 'VIP100';
+            }
+            if (selCoupon) selCoupon.value = 'VIP100';
+            syncVipUi(true);
+          } else {
+            if (selPlan.value === 'vip') selPlan.value = 'pro_annual';
+            if (inputCoupon && inputCoupon.value.trim().toUpperCase() === 'VIP100') {
+              inputCoupon.value = '';
+            }
+            if (selCoupon && selCoupon.value === 'VIP100') {
+              selCoupon.value = '';
+            }
+            syncVipUi(false);
+          }
+        });
+      }
+
+      if (selPlan && chkVip) {
+        selPlan.addEventListener('change', function () {
+          if (this.value === 'vip') {
+            chkVip.checked = true;
+            if (inputCoupon && (!inputCoupon.value || inputCoupon.value.trim() === '')) {
+              inputCoupon.value = 'VIP100';
+            }
+            if (selCoupon) selCoupon.value = 'VIP100';
+            syncVipUi(true);
+          } else {
+            chkVip.checked = false;
+            if (inputCoupon && inputCoupon.value.trim().toUpperCase() === 'VIP100') {
+              inputCoupon.value = '';
+            }
+            if (selCoupon && selCoupon.value === 'VIP100') {
+              selCoupon.value = '';
+            }
+            syncVipUi(false);
+          }
+        });
+      }
+
+      if (selCoupon && inputCoupon) {
+        selCoupon.addEventListener('change', function () {
+          if (this.value) {
+            inputCoupon.value = this.value;
+            if (this.value === 'VIP100') {
+              if (chkVip) chkVip.checked = true;
+              if (selPlan) selPlan.value = 'vip';
+              syncVipUi(true);
+            }
+          }
+        });
+      }
+
+      if (inputCoupon) {
+        inputCoupon.addEventListener('input', function () {
+          var val = (this.value || '').trim().toUpperCase();
+          if (val === 'VIP100') {
+            if (chkVip) chkVip.checked = true;
+            if (selPlan) selPlan.value = 'vip';
+            if (selCoupon) selCoupon.value = 'VIP100';
+            syncVipUi(true);
+          }
         });
       }
 
@@ -808,6 +921,8 @@
                   editCodeFeedback.style.color = '#f87171';
                   editCodeFeedback.innerText = '❌ ' + res.message;
                 }
+              }).catch(function() {
+                editCodeFeedback.style.display = 'none';
               });
             }
           }, 300);
@@ -817,8 +932,18 @@
       // Fechar Sub-Modal Cantor
       var btnCloseEdit = document.getElementById('btnCloseEditSingerModal');
       var overlayEdit = document.getElementById('adminEditSingerOverlay');
-      if (btnCloseEdit) btnCloseEdit.addEventListener('click', PrompterAdmin.closeSingerModal);
-      if (overlayEdit) overlayEdit.addEventListener('click', PrompterAdmin.closeSingerModal);
+      if (btnCloseEdit) {
+        btnCloseEdit.addEventListener('click', function(e) {
+          e.preventDefault();
+          PrompterAdmin.closeSingerModal();
+        });
+      }
+      if (overlayEdit) {
+        overlayEdit.addEventListener('click', function(e) {
+          e.preventDefault();
+          PrompterAdmin.closeSingerModal();
+        });
+      }
 
       // Comunicados & Mensagens
       var btnSendAnnounce = document.getElementById('btnSendAnnouncement');
@@ -1063,23 +1188,60 @@
 
       if (!modal) return;
 
+      // Popula Datalist e Select rápido de Cupons disponíveis
+      var datalist = document.getElementById('availableCouponsList');
+      var selCoupon = document.getElementById('editSingerCouponSelect');
+      var inputCoupon = document.getElementById('editSingerCoupon');
+      var chkVip = document.getElementById('editSingerIsVip');
+      var vipNotice = document.getElementById('editSingerVipNotice');
+
+      if (datalist) {
+        var dOpts = '';
+        (allCoupons || []).forEach(function(c) {
+          dOpts += '<option value="' + escapeHtml(c.code) + '">' + escapeHtml(c.code) + ' (' + escapeHtml(c.discount) + ' - ' + escapeHtml(c.desc) + ')</option>';
+        });
+        datalist.innerHTML = dOpts;
+      }
+
+      if (selCoupon) {
+        var sOpts = '<option value="">Cupons do Sistema...</option>';
+        (allCoupons || []).forEach(function(c) {
+          sOpts += '<option value="' + escapeHtml(c.code) + '">' + escapeHtml(c.code) + ' (' + escapeHtml(c.discount) + ')</option>';
+        });
+        selCoupon.innerHTML = sOpts;
+      }
+
       if (user) {
-        title.innerText = '✏️ Gerenciar Cantor: ' + user.name;
+        title.innerText = '✏️ Gerenciar Cantor: ' + (user.name || user.email);
         document.getElementById('editSingerId').value = user.id;
-        document.getElementById('editSingerName').value = user.name;
-        document.getElementById('editSingerEmail').value = user.email;
+        document.getElementById('editSingerName').value = user.name || '';
+        document.getElementById('editSingerEmail').value = user.email || '';
         document.getElementById('editSingerPhone').value = user.phone || '';
         document.getElementById('editSingerCpf').value = user.cpf || '';
         document.getElementById('editSingerInstagram').value = user.instagram || '';
         document.getElementById('editSingerCode').value = normalizeSingerCode(user.singer_code, user.email);
         
+        var isUserVip = !!user.is_vip || (user.plan_type && user.plan_type.indexOf('VIP') !== -1) || user.coupon_used === 'VIP100';
+        if (chkVip) chkVip.checked = isUserVip;
+        if (vipNotice) vipNotice.style.display = isUserVip ? 'block' : 'none';
+
         var pVal = 'pro_annual';
-        if (user.plan_type && user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
+        if (isUserVip) pVal = 'vip';
+        else if (user.plan_type && user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
         else if (user.plan_tier === 'free') pVal = 'free';
         document.getElementById('editSingerPlan').value = pVal;
 
+        var assignedCoupon = user.coupon_used || (isUserVip ? 'VIP100' : '');
+        if (inputCoupon) inputCoupon.value = assignedCoupon;
+        if (selCoupon) selCoupon.value = assignedCoupon;
+
         document.getElementById('editSingerStatus').value = user.is_online ? 'online' : 'offline';
-        if (btnDel) btnDel.classList.remove('hidden');
+
+        // O administrador / CEO não pode ser excluído
+        var isCeo = user.email && user.email.toLowerCase() === 'leovitulli@gmail.com';
+        if (btnDel) {
+          btnDel.style.display = isCeo ? 'none' : 'inline-flex';
+        }
       } else {
         title.innerText = '➕ Convidar / Cadastrar Cantor VIP';
         document.getElementById('editSingerId').value = '';
@@ -1089,11 +1251,29 @@
         document.getElementById('editSingerCpf').value = '';
         document.getElementById('editSingerInstagram').value = '';
         document.getElementById('editSingerCode').value = '@cantor_' + Math.floor(1000 + Math.random() * 9000);
-        document.getElementById('editSingerPlan').value = 'pro_annual';
+        document.getElementById('editSingerPlan').value = 'vip';
         document.getElementById('editSingerStatus').value = 'online';
+
+        if (chkVip) chkVip.checked = true;
+        if (vipNotice) vipNotice.style.display = 'block';
+        if (inputCoupon) inputCoupon.value = 'VIP100';
+        if (selCoupon) selCoupon.value = 'VIP100';
+
         var editCodeFeedback = document.getElementById('editSingerCodeFeedback');
         if (editCodeFeedback) editCodeFeedback.style.display = 'none';
-        if (btnDel) btnDel.classList.add('hidden');
+        if (btnDel) btnDel.style.display = 'none';
+      }
+
+      // Restaurar estado inicial do botão salvar com animação limpa
+      var btnSave = document.getElementById('btnSaveSingerData');
+      if (btnSave) {
+        btnSave.disabled = false;
+        btnSave.innerHTML = '💾 Salvar Alterações';
+        btnSave.style.opacity = '1';
+        btnSave.style.background = '';
+        btnSave.style.borderColor = '';
+        btnSave.style.color = '';
+        btnSave.style.pointerEvents = '';
       }
 
       modal.classList.remove('hidden');
@@ -1158,6 +1338,7 @@
     },
 
     saveSingerModalData: function () {
+      var btnSave = document.getElementById('btnSaveSingerData');
       var id = document.getElementById('editSingerId').value;
       var name = (document.getElementById('editSingerName').value || '').trim();
       var email = (document.getElementById('editSingerEmail').value || '').trim();
@@ -1165,33 +1346,110 @@
       var cpf = (document.getElementById('editSingerCpf').value || '').trim();
       var instagram = (document.getElementById('editSingerInstagram').value || '').trim();
       var rawCode = (document.getElementById('editSingerCode').value || '').trim() || ('@' + email.split('@')[0]);
-      var code = window.PrompterAuth ? window.PrompterAuth.formatSingerCode(rawCode) : rawCode;
+      var code = normalizeSingerCode(rawCode, email);
       var planVal = document.getElementById('editSingerPlan').value;
       var statusVal = document.getElementById('editSingerStatus').value;
+      var inputCoupon = document.getElementById('editSingerCoupon');
+      var couponVal = inputCoupon ? (inputCoupon.value || '').trim().toUpperCase() : '';
+      var chkVip = document.getElementById('editSingerIsVip');
+      var isVip = chkVip ? chkVip.checked : (planVal === 'vip');
 
       if (!name || !email) {
         if (window.showToast) window.showToast('Preencha o nome e e-mail do cantor.', 'warning');
         return;
       }
 
-      if (window.PrompterAuth) {
+      // Feedback visual imediato no próprio botão
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = '⏳ Salvando dados...';
+        btnSave.style.opacity = '0.85';
+        btnSave.style.pointerEvents = 'none';
+      }
+
+      function finishSuccess() {
+        if (btnSave) {
+          btnSave.innerHTML = '✅ Salvo com sucesso!';
+          btnSave.style.background = '#10b981';
+          btnSave.style.borderColor = '#10b981';
+          btnSave.style.color = '#ffffff';
+          btnSave.style.opacity = '1';
+        }
+        if (window.showToast) window.showToast('✅ Informações do cantor atualizadas com sucesso!', 'success');
+        setTimeout(function () {
+          PrompterAdmin.closeSingerModal();
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = '💾 Salvar Alterações';
+            btnSave.style.background = '';
+            btnSave.style.borderColor = '';
+            btnSave.style.color = '';
+            btnSave.style.opacity = '1';
+            btnSave.style.pointerEvents = '';
+          }
+        }, 550);
+      }
+
+      function finishError(err) {
+        console.error('Erro ao salvar cantor:', err);
+        if (btnSave) {
+          btnSave.disabled = false;
+          btnSave.innerHTML = '💾 Salvar Alterações';
+          btnSave.style.opacity = '1';
+          btnSave.style.pointerEvents = '';
+        }
+        if (window.showToast) window.showToast('Erro ao salvar cantor. Tente novamente.', 'warning');
+      }
+
+      function proceed() {
+        try {
+          var p = PrompterAdmin.executeSaveSinger(id, name, email, phone, cpf, instagram, code, planVal, statusVal, couponVal, isVip);
+          if (p && typeof p.then === 'function') {
+            p.then(finishSuccess).catch(finishError);
+          } else {
+            finishSuccess();
+          }
+        } catch(err) {
+          finishError(err);
+        }
+      }
+
+      if (window.PrompterAuth && typeof window.PrompterAuth.checkSingerCodeAvailability === 'function') {
         window.PrompterAuth.checkSingerCodeAvailability(code, id, email).then(function (checkRes) {
           if (!checkRes.available) {
+            if (btnSave) {
+              btnSave.disabled = false;
+              btnSave.innerHTML = '💾 Salvar Alterações';
+              btnSave.style.opacity = '1';
+              btnSave.style.pointerEvents = '';
+            }
             if (window.showToast) window.showToast(checkRes.message || 'Este @Login já está em uso.', 'warning');
             return;
           }
-          PrompterAdmin.executeSaveSinger(id, name, email, phone, cpf, instagram, code, planVal, statusVal);
+          proceed();
+        }).catch(function() {
+          proceed();
         });
       } else {
-        PrompterAdmin.executeSaveSinger(id, name, email, phone, cpf, instagram, code, planVal, statusVal);
+        proceed();
       }
     },
 
-    executeSaveSinger: function (id, name, email, phone, cpf, instagram, code, planVal, statusVal) {
-      var isPro = planVal !== 'free';
+    executeSaveSinger: function (id, name, email, phone, cpf, instagram, code, planVal, statusVal, couponVal, isVip) {
+      var isVipActive = !!isVip || planVal === 'vip' || couponVal === 'VIP100';
+      var isPro = isVipActive || planVal !== 'free';
+
       var planType = '💎 PRO ANUAL';
-      if (planVal === 'pro_monthly') planType = '⚡ PRO MENSAL';
-      else if (planVal === 'free') planType = '⚡ PLANO FREE';
+      var planTier = isPro ? 'pro' : 'free';
+
+      if (isVipActive) {
+        planType = '👑 VIP 100% OFF';
+        couponVal = couponVal || 'VIP100';
+      } else if (planVal === 'pro_monthly') {
+        planType = '⚡ PRO MENSAL';
+      } else if (planVal === 'free') {
+        planType = '⚡ PLANO FREE';
+      }
 
       var cleanEmail = (email || '').trim().toLowerCase();
       var cleanCode = normalizeSingerCode(code, cleanEmail);
@@ -1208,8 +1466,10 @@
         cpf: cpf,
         instagram: instagram,
         singer_code: cleanCode,
-        plan_tier: isPro ? 'pro' : 'free',
+        plan_tier: planTier,
         plan_type: planType,
+        coupon_used: couponVal || '',
+        is_vip: isVipActive,
         is_online: statusVal === 'online',
         status_text: statusVal === 'online' ? '🟢 Conectado e Ativo' : '⚪ Offline',
         reps_count: existing ? existing.reps_count : 0,
@@ -1243,6 +1503,8 @@
         authProfile.instagram = instagram;
         authProfile.plan_tier = singerPayload.plan_tier;
         authProfile.plan_type = singerPayload.plan_type;
+        authProfile.coupon_used = singerPayload.coupon_used;
+        authProfile.is_vip = isVipActive;
         if (window.PrompterAuth) {
           window.PrompterAuth.saveSession(authUser, authProfile);
           window.PrompterAuth.updateUIForAuth();
@@ -1251,9 +1513,8 @@
 
       PrompterAdmin.updateMetrics();
       PrompterAdmin.renderUsersTable();
-      PrompterAdmin.closeSingerModal();
 
-      // Persistir no Supabase em segundo plano
+      // Persistir no Supabase em segundo plano sem prender o modal
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
         var profPayload = {
@@ -1263,20 +1524,23 @@
           cpf: cpf,
           instagram: instagram,
           singer_code: cleanCode,
-          plan_tier: isPro ? 'pro' : 'free',
+          plan_tier: planTier,
           plan_type: planType,
+          coupon_used: couponVal || '',
           updated_at: new Date().toISOString()
         };
 
         if (isValidUUID(singerId)) {
           profPayload.id = singerId;
         }
+
         sb.from('profiles').upsert(profPayload).then(function(res) {
           if (res && res.error) {
-            sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
+            return sb.from('profiles').update(profPayload).eq('email', cleanEmail);
           }
+          return res;
         }).catch(function() {
-          sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
+          return sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
         });
 
         // Persistir no System Registry (sempre acessível na nuvem)
@@ -1297,16 +1561,17 @@
             if (res.data && res.data.length > 0) {
               songRow.id = res.data[0].id;
             }
-            sb.from('songs').upsert(songRow).catch(function(e) {
-              console.warn('Aviso ao sincronizar cantor no registry:', e);
-            });
+            sb.from('songs').upsert(songRow).catch(function() {});
           }).catch(function() {
             sb.from('songs').upsert(songRow).catch(function() {});
           });
       }
 
-      if (window.showToast) window.showToast('✅ Dados do cantor salvos no banco com sucesso!', 'success');
+      return new Promise(function (resolve) {
+        setTimeout(resolve, 350);
+      });
     },
+
 
     loadDashboardData: function () {
       // 0. Recarregar dados locais para garantir que novos logins/cadastros não sejam perdidos
@@ -1550,9 +1815,19 @@
           ? '<span class="status-dot-pulse-online" title="🟢 Online e Ativo"></span>'
           : '<span class="status-dot-offline" title="⚪ Offline"></span>';
 
-        var planBadge = user.plan_tier === 'pro'
-          ? '<span class="badge-plan-executive badge-plan-pro">' + (user.plan_type || '💎 PRO ANUAL') + '</span>'
-          : '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>';
+        var isVip = !!user.is_vip || (user.plan_type && user.plan_type.indexOf('VIP') !== -1) || user.coupon_used === 'VIP100';
+        var planBadge = '';
+        if (isVip) {
+          planBadge = '<span class="badge-plan-executive" style="background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.3)); color: #fbbf24; border: 1px solid rgba(251,191,36,0.5); font-weight: 800; text-shadow: 0 0 10px rgba(251,191,36,0.3);">👑 VIP 100% OFF</span>';
+        } else if (user.plan_tier === 'pro') {
+          planBadge = '<span class="badge-plan-executive badge-plan-pro">' + (user.plan_type || '💎 PRO ANUAL') + '</span>';
+        } else {
+          planBadge = '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>';
+        }
+
+        if (user.coupon_used) {
+          planBadge += '<div style="font-size: 0.72rem; color: #a7f3d0; margin-top: 3px; font-weight: 600;">🏷️ ' + escapeHtml(user.coupon_used) + '</div>';
+        }
 
         var cleanPhone = (user.phone || '').replace(/\D/g, '');
         if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = '55' + cleanPhone;
@@ -1569,6 +1844,10 @@
 
         var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : 'Sem CPF';
         var loginCodeStr = escapeHtml(normalizeSingerCode(user.singer_code, user.email));
+        var isCeo = user.email && user.email.toLowerCase() === 'leovitulli@gmail.com';
+        var delBtnHtml = isCeo
+          ? ''
+          : '<button type="button" class="btn btn-outline btn-xs btn-del-singer-row" data-user-id="' + user.id + '" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); padding: 2px 7px; border-radius: 6px; font-size: 0.75rem;" title="Excluir Cantor">🗑️</button>';
 
         html +=
           '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + escapeHtml(user.name) + '">' +
@@ -1589,7 +1868,7 @@
             '<td style="text-align: right;">' +
               '<div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">' +
                 '<span class="admin-time-ago">' + escapeHtml(user.last_seen || 'Hoje') + '</span>' +
-                '<button type="button" class="btn btn-outline btn-xs btn-del-singer-row" data-user-id="' + user.id + '" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); padding: 2px 7px; border-radius: 6px; font-size: 0.75rem;" title="Excluir Cantor">🗑️</button>' +
+                delBtnHtml +
               '</div>' +
             '</td>' +
           '</tr>';
