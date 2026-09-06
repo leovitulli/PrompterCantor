@@ -654,10 +654,18 @@
         if (userInitial) userInitial.innerText = initial;
         if (upmAvatarBig) upmAvatarBig.innerText = initial;
         if (headerEmail) headerEmail.innerText = displayName; // Exibe somente o NOME compacto
+        var saasStatus = (window.getSaaSUserStatus && typeof window.getSaaSUserStatus === 'function')
+          ? window.getSaaSUserStatus()
+          : null;
+        var isTrialActive = saasStatus ? saasStatus.isTrial : !!(currentProfile && (currentProfile.is_trial || currentProfile.plan_tier === 'trial'));
+
         if (headerPlan) {
           if (isVip) {
             headerPlan.innerText = 'VIP';
-            headerPlan.className = 'user-profile-plan-tag plan-pro';
+            headerPlan.className = 'user-profile-plan-tag plan-vip';
+          } else if (isTrialActive) {
+            headerPlan.innerText = 'TESTE PRO';
+            headerPlan.className = 'user-profile-plan-tag plan-trial';
           } else if (isPro) {
             headerPlan.innerText = 'PRO';
             headerPlan.className = 'user-profile-plan-tag plan-pro';
@@ -670,12 +678,27 @@
         if (upmSingerCode) upmSingerCode.innerText = code;
 
         if (upmPlanBadge) {
-          upmPlanBadge.innerHTML = isVip ? '👑 PLANO CANTAAÍ VIP' : (isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE');
+          if (isVip) {
+            upmPlanBadge.innerHTML = '👑 PLANO CANTAAÍ VIP';
+          } else if (isTrialActive) {
+            var days = saasStatus ? saasStatus.trialDaysLeft : 7;
+            upmPlanBadge.innerHTML = '👑 DEGUSTAÇÃO PRO (' + days + 'D)';
+          } else if (isPro) {
+            upmPlanBadge.innerHTML = '👑 PLANO CANTAAÍ PRO';
+          } else {
+            upmPlanBadge.innerHTML = '⚡ PLANO FREE (5 Músicas)';
+          }
         }
         if (upmPlanDesc) {
-          upmPlanDesc.innerText = isVip
-            ? 'Acesso VIP Vitalício • Modo Offline & Ao Vivo'
-            : (isPro ? 'Acesso Total Ilimitado • Modo Offline & Ao Vivo' : 'Repertórios Básicos • Faça Upgrade para PRO');
+          if (isVip) {
+            upmPlanDesc.innerText = 'Acesso VIP Vitalício • Modo Offline & Ao Vivo';
+          } else if (isTrialActive) {
+            upmPlanDesc.innerHTML = 'Degustação Liberada • <span style="color:#38bdf8;font-weight:700;">Garantir Plano Anual</span>';
+          } else if (isPro) {
+            upmPlanDesc.innerText = 'Acesso Total Ilimitado • Modo Offline & Ao Vivo';
+          } else {
+            upmPlanDesc.innerHTML = 'Limite de 5 músicas • <span style="color:#38bdf8;font-weight:700;">Desbloquear PRO</span>';
+          }
         }
 
         if (btnProfileAdmin) {
@@ -684,6 +707,10 @@
           } else {
             btnProfileAdmin.classList.add('hidden');
           }
+        }
+
+        if (window.updateSaaSPlanBanner && typeof window.updateSaaSPlanBanner === 'function') {
+          window.updateSaaSPlanBanner();
         }
 
         // Limpar qualquer autofill indevido do navegador na barra de busca

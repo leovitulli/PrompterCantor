@@ -629,7 +629,8 @@
                         '<option value="vip">👑 VIP 100% OFF (Acesso Vitalício)</option>' +
                         '<option value="pro_annual">💎 PRO ANUAL</option>' +
                         '<option value="pro_monthly">⚡ PRO MENSAL</option>' +
-                        '<option value="free">⚡ PLANO FREE</option>' +
+                        '<option value="trial">⚡ DEGUSTAÇÃO PRO (7 DIAS)</option>' +
+                        '<option value="free">⚡ PLANO FREE (Limite 5 Músicas)</option>' +
                       '</select>' +
                     '</div>' +
                     '<div class="form-group">' +
@@ -1262,6 +1263,7 @@
 
         var pVal = 'pro_annual';
         if (isUserVip) pVal = 'vip';
+        else if (user.is_trial || user.plan_tier === 'trial') pVal = 'trial';
         else if (user.plan_type && user.plan_type.indexOf('MENSAL') !== -1) pVal = 'pro_monthly';
         else if (user.plan_tier === 'free') pVal = 'free';
         document.getElementById('editSingerPlan').value = pVal;
@@ -1472,14 +1474,17 @@
 
     executeSaveSinger: function (id, name, email, phone, cpf, instagram, code, planVal, statusVal, couponVal, isVip) {
       var isVipActive = !!isVip || planVal === 'vip' || couponVal === 'VIP100';
-      var isPro = isVipActive || planVal !== 'free';
+      var isTrial = (planVal === 'trial');
+      var isPro = isVipActive || (planVal !== 'free' && !isTrial);
 
       var planType = '💎 PRO ANUAL';
-      var planTier = isPro ? 'pro' : 'free';
+      var planTier = isVipActive ? 'vip' : (isTrial ? 'trial' : (planVal === 'free' ? 'free' : 'pro'));
 
       if (isVipActive) {
         planType = '👑 VIP 100% OFF';
         couponVal = couponVal || 'VIP100';
+      } else if (isTrial) {
+        planType = '⚡ DEGUSTAÇÃO PRO (7 DIAS)';
       } else if (planVal === 'pro_monthly') {
         planType = '⚡ PRO MENSAL';
       } else if (planVal === 'free') {
@@ -1513,6 +1518,7 @@
         plan_type: planType,
         coupon_used: couponVal || '',
         is_vip: isVipActive,
+        is_trial: isTrial,
         is_online: statusVal === 'online',
         status_text: statusVal === 'online' ? '🟢 Conectado e Ativo' : '⚪ Offline',
         reps_count: existing ? existing.reps_count : 0,
@@ -1548,6 +1554,7 @@
         authProfile.plan_type = singerPayload.plan_type;
         authProfile.coupon_used = singerPayload.coupon_used;
         authProfile.is_vip = isVipActive;
+        authProfile.is_trial = isTrial;
         if (window.PrompterAuth) {
           window.PrompterAuth.saveSession(authUser, authProfile);
           window.PrompterAuth.updateUIForAuth();
@@ -1570,6 +1577,7 @@
           plan_tier: planTier,
           plan_type: planType,
           coupon_used: couponVal || '',
+          is_trial: isTrial,
           updated_at: new Date().toISOString()
         };
 

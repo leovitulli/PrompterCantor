@@ -152,7 +152,7 @@
             </div>
 
             <!-- Card de Assinatura no Menu -->
-            <div class="upm-plan-card">
+            <div class="upm-plan-card" id="upmPlanCard" style="cursor: pointer;" title="Clique para gerenciar ou fazer upgrade do plano">
               <div class="upm-plan-badge" id="upmPlanBadge">👑 PLANO CANTAAÍ PRO</div>
               <div class="upm-plan-desc" id="upmPlanDesc">Acesso Total Ilimitado • Modo Offline & Ao Vivo</div>
             </div>
@@ -186,6 +186,26 @@
       </div>
     </div>
   </header>
+
+  <!-- BANNER DE STATUS DO PLANO SAAS (TRIAL & FREE GATES) -->
+  <div id="saasPlanBannerBar" class="saas-plan-banner-bar hidden">
+    <div class="spb-inner">
+      <div class="spb-info">
+        <span class="spb-badge spb-badge-free" id="spbBadge">⚡ PLANO FREE</span>
+        <div class="spb-message" id="spbMessage">
+          <strong>Limite de Uso:</strong> Você está usando <strong><span id="spbSongsCount">0</span>/5 músicas</strong> e <strong><span id="spbRepsCount">0</span>/1 repertório</strong>.
+        </div>
+        <div class="spb-progress-box" id="spbProgressBox" title="Uso do Plano Free">
+          <div class="spb-progress-fill" id="spbProgressFill" style="width: 0%;"></div>
+        </div>
+      </div>
+      <div class="spb-actions">
+        <button type="button" id="btnSpbUpgrade" class="spb-btn-upgrade">
+          ⭐ Desbloquear PRO Ilimitado
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- BANNER DE PROGRESSO DE IMPORTAÇÃO EM SEGUNDO PLANO -->
   <div id="importProgressBanner" class="import-progress-banner hidden">
@@ -1314,6 +1334,41 @@
         <button type="button" class="btn btn-primary" id="btnUnderstandLegalTerms" style="padding: 8px 24px;">Entendido e Concordo</button>
       </div>
     </div>
+  <!-- MODAL DE PAYWALL / LIMITE DO PLANO FREE -->
+  <div id="saasFreeLimitModal" class="modal hidden" style="z-index: 1000008;">
+    <div class="modal-overlay" id="saasFreeLimitOverlay"></div>
+    <div class="modal-card" style="max-width: 500px; text-align: center; border: 1px solid rgba(245, 158, 11, 0.4); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);">
+      <div class="modal-header" style="justify-content: center; position: relative; border-bottom: none; padding-top: 1.5rem; padding-bottom: 0;">
+        <div style="font-size: 2.8rem; line-height: 1;">👑</div>
+        <button class="modal-close" id="btnCloseFreeLimitModal" style="position: absolute; right: 1rem; top: 1rem;">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 0.75rem 1.5rem 1.5rem;">
+        <h3 style="font-size: 1.35rem; font-weight: 800; color: #f8fafc; margin-bottom: 0.5rem;" id="saasLimitTitle">
+          Limite do Plano Free Atingido
+        </h3>
+        <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem;" id="saasLimitDesc">
+          O <strong>Plano Free</strong> permite gerenciar até <strong>5 músicas</strong> e <strong>1 repertório</strong>. Desbloqueie o <strong>CantaAí PRO</strong> para ter músicas ilimitadas, transposição no palco e sincronização com a banda!
+        </p>
+
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; text-align: left;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; margin-bottom: 8px;">💎 No Plano CantaAí PRO você desbloqueia:</div>
+          <div style="color: #cbd5e1; font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px;">
+            <div>✓ Músicas & Cifras Ilimitadas</div>
+            <div>✓ Repertórios Ilimitados para todos os seus shows</div>
+            <div>✓ Transposição Harmônica Inteligente no Palco</div>
+            <div>✓ Modo Offline Seguro & Áudio Guia</div>
+            <div>✓ Sincronização em Tempo Real com a Banda</div>
+          </div>
+        </div>
+
+        <button type="button" id="btnModalFreeUpgrade" class="btn btn-warning" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 800; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0f172a; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);">
+          ⭐ Desbloquear Acesso Ilimitado Agora
+        </button>
+        <button type="button" id="btnModalFreeCancel" class="btn btn-secondary" style="width: 100%; margin-top: 8px; font-size: 0.85rem; border: none; background: transparent; color: #64748b;">
+          Continuar no Plano Free (5 músicas)
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- NOTIFICAÇÕES TOAST -->
@@ -1321,19 +1376,19 @@
 
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=121"></script>
-  <script src="js/supabaseClient.js?v=121"></script>
-  <script src="js/db.js?v=121"></script>
-  <script src="js/auth.js?v=121"></script>
-  <script src="js/adminPanel.js?v=121"></script>
-  <script src="js/textParser.js?v=121"></script>
-  <script src="js/sampleRepertoire.js?v=121"></script>
-  <script src="js/transposer.js?v=121"></script>
-  <script src="js/prompter.js?v=121"></script>
-  <script src="js/mediaPlayer.js?v=121"></script>
-  <script src="js/advancedPlayer.js?v=121"></script>
-  <script src="js/gdrive.js?v=121"></script>
-  <script src="js/gdriveUI.js?v=121"></script>
-  <script src="js/app.js?v=121"></script>
+  <script src="js/config.js?v=122"></script>
+  <script src="js/supabaseClient.js?v=122"></script>
+  <script src="js/db.js?v=122"></script>
+  <script src="js/auth.js?v=122"></script>
+  <script src="js/adminPanel.js?v=122"></script>
+  <script src="js/textParser.js?v=122"></script>
+  <script src="js/sampleRepertoire.js?v=122"></script>
+  <script src="js/transposer.js?v=122"></script>
+  <script src="js/prompter.js?v=122"></script>
+  <script src="js/mediaPlayer.js?v=122"></script>
+  <script src="js/advancedPlayer.js?v=122"></script>
+  <script src="js/gdrive.js?v=122"></script>
+  <script src="js/gdriveUI.js?v=122"></script>
+  <script src="js/app.js?v=122"></script>
 </body>
 </html>

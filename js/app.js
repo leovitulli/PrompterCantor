@@ -135,10 +135,205 @@ document.addEventListener('DOMContentLoaded', function () {
     return loadPromise.then(function (reps) {
       state.repertoires = reps || [];
       renderRepertoires();
+      updateSaaSPlanBanner();
     });
   }
 
+  // ═══════════════════════════════════════════════════════
+  //  GOVERNANÇA SAAS: LIMITES DO PLANO FREE & TESTE PRO
+  // ═══════════════════════════════════════════════════════
+
+  function getSaaSUserStatus() {
+    var profile = (window.PrompterAuth && window.PrompterAuth.getProfile()) ? window.PrompterAuth.getProfile() : null;
+    var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
+    var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
+    var cleanEmail = (email || '').trim().toLowerCase();
+
+    var isCeo = cleanEmail === 'leovitulli@gmail.com' || (profile && profile.role === 'admin');
+    var isVip = !!(profile && (profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.coupon_used === 'VIP100'));
+
+    if (isCeo || isVip) {
+      return {
+        isPro: true,
+        isUnlimited: true,
+        isTrial: false,
+        isVip: isVip,
+        isCeo: isCeo,
+        maxSongs: Infinity,
+        maxRepertoires: Infinity,
+        trialDaysLeft: 0,
+        tier: isVip ? 'vip' : 'pro'
+      };
+    }
+
+    var planTier = (profile && profile.plan_tier) ? profile.plan_tier.toLowerCase() : 'free';
+    var isExplicitPro = (planTier === 'pro') && (!profile.is_trial);
+    if (isExplicitPro) {
+      return {
+        isPro: true,
+        isUnlimited: true,
+        isTrial: false,
+        isVip: false,
+        isCeo: false,
+        maxSongs: Infinity,
+        maxRepertoires: Infinity,
+        trialDaysLeft: 0,
+        tier: 'pro'
+      };
+    }
+
+    // Verificar se a conta está no período de degustação (Trial 7 dias)
+    var isTrialExplicit = !!(profile && (profile.is_trial || planTier === 'trial'));
+    var createdAtTime = (profile && profile.created_at) ? new Date(profile.created_at).getTime() : NaN;
+    var isWithin7Days = false;
+    var trialDaysLeft = 0;
+
+    if (!isNaN(createdAtTime)) {
+      var trialDurationMs = 7 * 24 * 60 * 60 * 1000;
+      var elapsed = Date.now() - createdAtTime;
+      if (elapsed >= 0 && elapsed < trialDurationMs) {
+        isWithin7Days = true;
+        trialDaysLeft = Math.max(1, Math.ceil((trialDurationMs - elapsed) / (24 * 60 * 60 * 1000)));
+      }
+    }
+
+    if (isTrialExplicit) {
+      return {
+        isPro: true,
+        isUnlimited: true,
+        isTrial: true,
+        isVip: false,
+        isCeo: false,
+        maxSongs: Infinity,
+        maxRepertoires: Infinity,
+        trialDaysLeft: trialDaysLeft || 7,
+        tier: 'trial'
+      };
+    }
+
+    // PLANO FREE (Limite de 5 músicas e 1 repertório):
+    return {
+      isPro: false,
+      isUnlimited: false,
+      isTrial: false,
+      isVip: false,
+      isCeo: false,
+      maxSongs: 5,
+      maxRepertoires: 1,
+      trialDaysLeft: 0,
+      tier: 'free'
+    };
+  }
+
+  function updateSaaSPlanBanner() {
+    var banner = document.getElementById('saasPlanBannerBar');
+    if (!banner) return;
+
+    var status = getSaaSUserStatus();
+
+    // Se for CEO / PRO Pago Ilimitado / VIP: oculta o banner para experiência limpa no palco
+    if (status.isUnlimited && !status.isTrial) {
+      banner.classList.add('hidden');
+      return;
+    }
+
+    banner.classList.remove('hidden');
+
+    var badgeEl = document.getElementById('spbBadge');
+    var msgEl = document.getElementById('spbMessage');
+    var fillEl = document.getElementById('spbProgressFill');
+    var btnUpgrade = document.getElementById('btnSpbUpgrade');
+
+    PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+      var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
+      var totalReps = (state.repertoires && Array.isArray(state.repertoires)) ? state.repertoires.length : 0;
+
+      if (status.isTrial) {
+        if (badgeEl) {
+          badgeEl.className = 'spb-badge spb-badge-trial';
+          badgeEl.innerHTML = '👑 DEGUSTAÇÃO PRO';
+        }
+        var daysText = status.trialDaysLeft + (status.trialDaysLeft === 1 ? ' dia restante' : ' dias restantes');
+        if (msgEl) {
+          msgEl.innerHTML = '<strong>Acesso PRO Ativo:</strong> Restam <strong>' + daysText + '</strong> de degustação ilimitada no palco. Você tem ' + totalSongs + ' música(s) em ' + totalReps + ' repertório(s).';
+        }
+        if (fillEl) {
+          fillEl.style.width = '100%';
+          fillEl.className = 'spb-progress-fill';
+        }
+        if (btnUpgrade) {
+          btnUpgrade.innerHTML = '⭐ Assinar Anual com Desconto';
+        }
+      } else {
+        var maxSongs = status.maxSongs || 5;
+        var maxReps = status.maxRepertoires || 1;
+        var isOverLimit = totalSongs >= maxSongs || totalReps > maxReps;
+        var pct = Math.min(100, Math.round((totalSongs / maxSongs) * 100));
+
+        if (badgeEl) {
+          badgeEl.className = 'spb-badge spb-badge-free';
+          badgeEl.innerHTML = isOverLimit ? '⚠️ LIMITE ATINGIDO' : '⚡ PLANO FREE';
+        }
+        if (msgEl) {
+          msgEl.innerHTML = '<strong>Limite Free:</strong> ' +
+            '<strong>' + totalSongs + '/' + maxSongs + ' músicas</strong> usadas • ' +
+            '<strong>' + totalReps + '/' + maxReps + ' repertório</strong>.' +
+            (isOverLimit ? ' <span style="color:#f87171;font-weight:700;">(Faça upgrade para adicionar mais)</span>' : '');
+        }
+        if (fillEl) {
+          fillEl.style.width = pct + '%';
+          fillEl.className = 'spb-progress-fill' + (isOverLimit ? ' overlimit' : '');
+        }
+        if (btnUpgrade) {
+          btnUpgrade.innerHTML = '⭐ Desbloquear PRO Ilimitado';
+        }
+      }
+    }).catch(function(e) {
+      console.warn('Erro ao atualizar banner SaaS:', e);
+    });
+  }
+
+  function openSaasFreeLimitModal(type, currentCount, maxAllowed) {
+    var modal = document.getElementById('saasFreeLimitModal');
+    if (!modal) {
+      openCheckoutSaaSModal();
+      return;
+    }
+
+    var titleEl = document.getElementById('saasLimitTitle');
+    var descEl = document.getElementById('saasLimitDesc');
+
+    if (type === 'repertoire') {
+      if (titleEl) titleEl.innerText = 'Limite de Repertórios Atingido';
+      if (descEl) {
+        descEl.innerHTML = 'O <strong>Plano Free</strong> permite gerenciar <strong>1 repertório</strong> (você já possui ' + currentCount + '). Faça upgrade para o <strong>CantaAí PRO</strong> para criar repertórios ilimitados para todos os seus shows e eventos!';
+      }
+    } else {
+      if (titleEl) titleEl.innerText = 'Limite de Músicas Atingido';
+      if (descEl) {
+        descEl.innerHTML = 'O <strong>Plano Free</strong> permite gerenciar até <strong>5 músicas</strong> (você já possui ' + currentCount + '). Desbloqueie o <strong>CantaAí PRO</strong> para ter músicas ilimitadas, transposição no palco e sincronização com a banda!';
+      }
+    }
+
+    openModal(modal);
+  }
+
+  function closeSaasFreeLimitModal() {
+    var modal = document.getElementById('saasFreeLimitModal');
+    if (modal) closeModal(modal);
+  }
+
+  window.updateSaaSPlanBanner = updateSaaSPlanBanner;
+  window.getSaaSUserStatus = getSaaSUserStatus;
+  window.openSaasFreeLimitModal = openSaasFreeLimitModal;
+
   function promptCreateRepertoire() {
+    var saas = getSaaSUserStatus();
+    if (!saas.isUnlimited && state.repertoires && state.repertoires.length >= saas.maxRepertoires) {
+      openSaasFreeLimitModal('repertoire', state.repertoires.length, saas.maxRepertoires);
+      return;
+    }
+
     var now = new Date();
     var dd = String(now.getDate()).padStart(2, '0');
     var mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -1240,6 +1435,7 @@ document.addEventListener('DOMContentLoaded', function () {
     PrompterDB.deleteSong(songId)
       .then(function () {
         showToast('Música excluída!', 'success');
+        updateSaaSPlanBanner();
         if (state.currentRepertoire) {
           openRepertoireSongs(state.currentRepertoire.id);
         }
@@ -2314,6 +2510,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function openImportModal(repIdOrNull) {
     if (!importModal) return;
+
+    var saas = getSaaSUserStatus();
+    if (!saas.isUnlimited) {
+      if (!repIdOrNull && state.repertoires && state.repertoires.length >= saas.maxRepertoires) {
+        openSaasFreeLimitModal('repertoire', state.repertoires.length, saas.maxRepertoires);
+        return;
+      }
+      PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+        var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
+        if (totalSongs >= saas.maxSongs) {
+          openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
+          return;
+        }
+        _doOpenImportModal(repIdOrNull);
+      }).catch(function() {
+        _doOpenImportModal(repIdOrNull);
+      });
+      return;
+    }
+    _doOpenImportModal(repIdOrNull);
+  }
+
+  function _doOpenImportModal(repIdOrNull) {
     var nameInput = document.getElementById('importRepertoireName');
     var modalHeader = importModal.querySelector('.modal-header h3');
 
@@ -2507,11 +2726,17 @@ document.addEventListener('DOMContentLoaded', function () {
   function saveImportedFiles() {
     if (!state.pendingImportSongs || state.pendingImportSongs.length === 0) return;
 
+    var saas = getSaaSUserStatus();
+    var targetRepId = state.targetRepertoireId;
+
+    if (!saas.isUnlimited && !targetRepId && state.repertoires && state.repertoires.length >= saas.maxRepertoires) {
+      closeModal(importModal);
+      openSaasFreeLimitModal('repertoire', state.repertoires.length, saas.maxRepertoires);
+      return;
+    }
+
     var nameInput = document.getElementById('importRepertoireName');
     var repName = (nameInput && nameInput.value.trim()) || ('Repertório ' + formatDate(Date.now()));
-    
-    // Se o usuário está adicionando a um repertório específico
-    var targetRepId = state.targetRepertoireId;
 
     var user = (window.PrompterAuth && window.PrompterAuth.getUser()) ? window.PrompterAuth.getUser() : null;
     var curEmail = user ? (user.email || '').toLowerCase() : '';
@@ -2529,64 +2754,83 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    var count = songsToSave.length;
-    var ignoredCount = state.pendingImportSongs.length - songsToSave.length;
+    PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+      var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
+      if (!saas.isUnlimited) {
+        var availableSlots = Math.max(0, saas.maxSongs - totalSongs);
+        if (availableSlots <= 0) {
+          closeModal(importModal);
+          openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
+          return;
+        }
+        if (songsToSave.length > availableSlots) {
+          songsToSave = songsToSave.slice(0, availableSlots);
+          showToast('⚡ Plano Free: Importando apenas ' + availableSlots + ' música(s) para respeitar o limite de ' + saas.maxSongs + '.', 'warning');
+        }
+      }
 
-    function doSave(repId) {
-      PrompterDB.getSongsByRepertoire(repId).then(function(existing) {
-        var startTrack = 0;
-        if (existing && existing.length > 0) {
-          existing.forEach(function(ex) {
-            var num = parseInt(ex.trackNumber, 10) || 0;
-            if (num > startTrack) startTrack = num;
+      var count = songsToSave.length;
+      var ignoredCount = state.pendingImportSongs.length - songsToSave.length;
+
+      function doSave(repId) {
+        PrompterDB.getSongsByRepertoire(repId).then(function(existing) {
+          var startTrack = 0;
+          if (existing && existing.length > 0) {
+            existing.forEach(function(ex) {
+              var num = parseInt(ex.trackNumber, 10) || 0;
+              if (num > startTrack) startTrack = num;
+            });
+          }
+          for (var s = 0; s < songsToSave.length; s++) {
+            songsToSave[s].repertoireId = repId;
+            songsToSave[s].user_id = curId;
+            songsToSave[s].user_email = curEmail;
+            songsToSave[s].trackNumber = startTrack + s + 1;
+          }
+          return PrompterDB.saveSongsBatch(songsToSave);
+        }).then(function () {
+          closeModal(importModal);
+          state.pendingImportSongs = [];
+
+          var previewList = document.getElementById('importPreviewList');
+          if (previewList) previewList.innerHTML = '';
+          var btnSave = document.getElementById('btnSaveImportedSongs');
+          if (btnSave) btnSave.setAttribute('disabled', 'true');
+          var ni = document.getElementById('importRepertoireName');
+          if (ni) { ni.value = ''; ni.removeAttribute('disabled'); }
+          state.targetRepertoireId = null;
+
+          var successMsg = '🎉 ' + count + ' música(s) salvas no repertório!';
+          if (ignoredCount > 0) {
+            successMsg += ' (' + ignoredCount + ' duplicada(s) ignoradas)';
+          }
+          showToast(successMsg, 'success');
+          updateSaaSPlanBanner();
+
+          loadRepertoires().then(function() {
+            openRepertoireSongs(repId);
           });
-        }
-        for (var s = 0; s < songsToSave.length; s++) {
-          songsToSave[s].repertoireId = repId;
-          songsToSave[s].user_id = curId;
-          songsToSave[s].user_email = curEmail;
-          songsToSave[s].trackNumber = startTrack + s + 1;
-        }
-        return PrompterDB.saveSongsBatch(songsToSave);
-      }).then(function () {
-        closeModal(importModal);
-        state.pendingImportSongs = [];
-
-        var previewList = document.getElementById('importPreviewList');
-        if (previewList) previewList.innerHTML = '';
-        var btnSave = document.getElementById('btnSaveImportedSongs');
-        if (btnSave) btnSave.setAttribute('disabled', 'true');
-        var ni = document.getElementById('importRepertoireName');
-        if (ni) { ni.value = ''; ni.removeAttribute('disabled'); }
-        state.targetRepertoireId = null;
-
-        var successMsg = '🎉 ' + count + ' música(s) salvas no repertório!';
-        if (ignoredCount > 0) {
-          successMsg += ' (' + ignoredCount + ' duplicada(s) ignoradas)';
-        }
-        showToast(successMsg, 'success');
-
-        loadRepertoires().then(function() {
-          openRepertoireSongs(repId);
+        }).catch(function (err) {
+          console.error('Erro ao salvar músicas:', err);
+          showToast('Erro ao salvar músicas no banco.', 'warning');
         });
-      }).catch(function (err) {
-        console.error('Erro ao salvar músicas:', err);
-        showToast('Erro ao salvar músicas no banco.', 'warning');
-      });
-    }
+      }
 
-    if (targetRepId) {
-      doSave(targetRepId);
-    } else {
-      PrompterDB.saveRepertoire({
-        name: repName,
-        source: 'local',
-        user_id: curId,
-        user_email: curEmail
-      }).then(function (newRepId) {
-        doSave(newRepId);
-      });
-    }
+      if (targetRepId) {
+        doSave(targetRepId);
+      } else {
+        PrompterDB.saveRepertoire({
+          name: repName,
+          source: 'local',
+          user_id: curId,
+          user_email: curEmail
+        }).then(function (newRepId) {
+          doSave(newRepId);
+        });
+      }
+    }).catch(function(err) {
+      console.error('Erro ao verificar limite SaaS:', err);
+    });
   }
 
   // ═══════════════════════════════════════
@@ -2601,6 +2845,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function openGDriveModal(repIdOrNull) {
     if (!gDriveModal) return;
+
+    var saas = getSaaSUserStatus();
+    if (!saas.isUnlimited) {
+      if (!repIdOrNull && state.repertoires && state.repertoires.length >= saas.maxRepertoires) {
+        openSaasFreeLimitModal('repertoire', state.repertoires.length, saas.maxRepertoires);
+        return;
+      }
+      PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+        var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
+        if (totalSongs >= saas.maxSongs) {
+          openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
+          return;
+        }
+        _doOpenGDriveModal(repIdOrNull);
+      }).catch(function() {
+        _doOpenGDriveModal(repIdOrNull);
+      });
+      return;
+    }
+    _doOpenGDriveModal(repIdOrNull);
+  }
+
+  function _doOpenGDriveModal(repIdOrNull) {
     repCache = {};
     var nameInput = document.getElementById('gdriveRepertoireName');
     var modalHeader = gDriveModal.querySelector('.modal-header h3');
@@ -2748,6 +3015,26 @@ document.addEventListener('DOMContentLoaded', function () {
   // ═══════════════════════════════════════
 
   function openEditorModal(song) {
+    if (!song) {
+      var saas = getSaaSUserStatus();
+      if (!saas.isUnlimited) {
+        PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+          var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
+          if (totalSongs >= saas.maxSongs) {
+            openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
+            return;
+          }
+          _populateEditorModal(null);
+        }).catch(function() {
+          _populateEditorModal(null);
+        });
+        return;
+      }
+    }
+    _populateEditorModal(song);
+  }
+
+  function _populateEditorModal(song) {
     var form = document.getElementById('songForm');
     if (form) form.reset();
     document.getElementById('currentAudioName').textContent = '';
@@ -2847,6 +3134,33 @@ document.addEventListener('DOMContentLoaded', function () {
   function saveManualSong() {
     var id = document.getElementById('editSongId').value;
     var title = document.getElementById('editSongTitle').value.trim();
+
+    if (!title) {
+      showToast('Por favor, informe o nome da música.', 'warning');
+      return;
+    }
+
+    if (!id) {
+      var saas = getSaaSUserStatus();
+      if (!saas.isUnlimited) {
+        PrompterDB.getAllSongsGlobal().then(function(allSongs) {
+          var totalSongs = (allSongs && Array.isArray(allSongs)) ? allSongs.length : 0;
+          if (totalSongs >= saas.maxSongs) {
+            closeModal(songEditorModal);
+            openSaasFreeLimitModal('song', totalSongs, saas.maxSongs);
+            return;
+          }
+          _executeSaveManualSong(id, title);
+        }).catch(function() {
+          _executeSaveManualSong(id, title);
+        });
+        return;
+      }
+    }
+    _executeSaveManualSong(id, title);
+  }
+
+  function _executeSaveManualSong(id, title) {
     var rhythmEl = document.getElementById('editSongRhythm');
     var rhythm = rhythmEl ? rhythmEl.value.trim() : '';
     var key = document.getElementById('editSongKey').value;
@@ -2863,11 +3177,6 @@ document.addEventListener('DOMContentLoaded', function () {
       content = window.TextParser.normalizeRawInputText(content);
     }
     var audioFileInput = document.getElementById('editSongAudioFile');
-
-    if (!title) {
-      showToast('Por favor, informe o nome da música.', 'warning');
-      return;
-    }
 
     if (window.Transposer && typeof window.Transposer.normalizeKey === 'function') {
       if (key) key = window.Transposer.normalizeKey(key);
@@ -2928,6 +3237,7 @@ document.addEventListener('DOMContentLoaded', function () {
           songData.id = savedId;
           showToast('Música salva com sucesso!', 'success');
           closeModal(songEditorModal);
+          updateSaaSPlanBanner();
 
           // Atualizar tela de repertório ativa para refletir a música no lugar certo
           if (state.currentRepertoire) {
@@ -2948,6 +3258,12 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     if (!repId && !id) {
+      var saas = getSaaSUserStatus();
+      if (!saas.isUnlimited && state.repertoires && state.repertoires.length >= saas.maxRepertoires) {
+        closeModal(songEditorModal);
+        openSaasFreeLimitModal('repertoire', state.repertoires.length, saas.maxRepertoires);
+        return;
+      }
       PrompterDB.saveRepertoire({ name: 'Músicas Manuais', source: 'manual' })
         .then(function (newRepId) { saveFunc(newRepId); });
     } else {
@@ -3635,6 +3951,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function closeCheckoutSaaSModal() {
       if (checkoutModal) closeModal(checkoutModal);
+    }
+
+    window.openCheckoutSaaSModal = openCheckoutSaaSModal;
+    window.closeCheckoutSaaSModal = closeCheckoutSaaSModal;
+
+    // Botão de Upgrade no Banner Superior de Degustação / Plano Free
+    var btnSpbUpgrade = document.getElementById('btnSpbUpgrade');
+    if (btnSpbUpgrade) {
+      btnSpbUpgrade.addEventListener('click', function () {
+        openCheckoutSaaSModal();
+      });
+    }
+
+    // Ações do Modal de Limite Free (#saasFreeLimitModal)
+    var btnModalFreeUpgrade = document.getElementById('btnModalFreeUpgrade');
+    if (btnModalFreeUpgrade) {
+      btnModalFreeUpgrade.addEventListener('click', function () {
+        closeSaasFreeLimitModal();
+        openCheckoutSaaSModal();
+      });
+    }
+
+    var btnModalFreeCancel = document.getElementById('btnModalFreeCancel');
+    if (btnModalFreeCancel) {
+      btnModalFreeCancel.addEventListener('click', function () {
+        closeSaasFreeLimitModal();
+      });
+    }
+
+    var btnCloseFreeLimit = document.getElementById('btnCloseFreeLimitModal');
+    if (btnCloseFreeLimit) {
+      btnCloseFreeLimit.addEventListener('click', function () {
+        closeSaasFreeLimitModal();
+      });
+    }
+
+    var saasFreeLimitOverlay = document.getElementById('saasFreeLimitOverlay');
+    if (saasFreeLimitOverlay) {
+      saasFreeLimitOverlay.addEventListener('click', function () {
+        closeSaasFreeLimitModal();
+      });
+    }
+
+    // Clique no Card de Assinatura no Menu do Perfil
+    var upmPlanCard = document.getElementById('upmPlanCard');
+    if (upmPlanCard) {
+      upmPlanCard.addEventListener('click', function () {
+        var saas = getSaaSUserStatus();
+        if (!saas.isUnlimited || saas.isTrial) {
+          var menu = document.getElementById('userProfileMenu');
+          if (menu) menu.classList.add('hidden');
+          openCheckoutSaaSModal();
+        }
+      });
     }
 
     if (btnUpgradePlan) {
