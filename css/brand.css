@@ -102,15 +102,20 @@ h1, h2, h3, .rep-card-title, .rsv-title, .setlist-card-title, .modal-header h2, 
 }
 
 /* ── Logo (cabeçalho do app e da landing) ── */
+/* símbolo "afinador" — SVG inline no HTML, cor do texto (mesma marca em todas as telas) */
 .logo-icon {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 1.6rem;
   height: 1.6rem;
-  font-size: 0 !important;         /* esconde o emoji 🎤 sem mexer no HTML */
-  background-color: var(--tom-ink);
-  -webkit-mask: url('../assets/brand/simbolo-mono.svg') no-repeat center / contain;
-  mask: url('../assets/brand/simbolo-mono.svg') no-repeat center / contain;
+  font-size: 0 !important;
+  color: var(--ca-logo-azul);
+  background: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
 }
+.ca-logo-mark { width: 100%; height: 100%; display: block; }
 .logo-title {
   font-family: var(--ca-font-display) !important;
   font-weight: 800 !important;
@@ -398,7 +403,7 @@ body.light-mode .prompter-nav-group { background: transparent !important; border
 body { --ca-logo-azul: #67A3FF; }
 body.light-mode { --ca-logo-azul: #0145A7; }
 .logo-title .logo-ai { color: var(--ca-logo-azul) !important; }
-.logo-icon { background-color: var(--ca-logo-azul) !important; }
+.logo-icon { color: var(--ca-logo-azul) !important; background: none !important; }
 
 /* ── Menu do usuário e gatilho do perfil: sem gradientes, cores da marca ── */
 .user-profile-trigger { background: var(--bg-secondary) !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; box-shadow: none !important; }
@@ -632,3 +637,54 @@ body.light-mode .landing-container .feature-card, body.light-mode .landing-conta
 #forgotPasswordContainer a:hover, .auth-link:hover { color: var(--tom-G-ink) !important; }
 .auth-modal-card .modal-close, .auth-modal-card .btn-close { color: var(--text-muted) !important; }
 .auth-brand-icon, .auth-modal-card .logo-icon { color: var(--tom-G-ink) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   LOGO: um só em todas as telas
+   ══════════════════════════════════════════════════════════ */
+/* azul do "Aí" no tema claro: escuro o suficiente para o papel, mas claramente AZUL */
+body.light-mode { --ca-logo-azul: #0754C6; }
+
+/* selo PRO: parte do logotipo, não um botão. Sem caixa, na cor do acento. */
+.logo-badge {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  padding: 0 0 0 2px !important;
+  color: var(--ca-logo-azul) !important;
+  font-family: var(--ca-font-body) !important;
+  font-weight: 600 !important;
+  font-size: 0.6rem !important;
+  letter-spacing: 0.16em !important;
+  align-self: flex-start !important;
+  margin-top: 0.15em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+/* lockup na tela de entrar/criar conta: o mesmo do cabeçalho */
+.auth-logo-icon { display: none !important; }
+.auth-logo-lockup { display: inline-flex !important; align-items: baseline !important; gap: 0.5rem !important; justify-content: center !important; cursor: default !important; }
+.auth-logo-lockup .logo-icon { width: 1.5rem !important; height: 1.5rem !important; align-self: center !important; }
+.auth-logo-lockup .auth-title { font-size: 1.6rem !important; margin: 0 !important; }
+.auth-header-block { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 8px !important; }
+
+/* ══════════════════════════════════════════════════════════
+   MODAIS: a página continua atrás, levemente desfocada,
+   e o modal segue o tema da página (escuro no escuro, claro no claro)
+   ══════════════════════════════════════════════════════════ */
+.modal-overlay {
+  background: rgba(15, 16, 19, 0.62) !important;
+  backdrop-filter: blur(6px) saturate(0.9) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(0.9) !important;
+}
+body.light-mode .modal-overlay {
+  background: rgba(22, 21, 19, 0.34) !important;
+  backdrop-filter: blur(6px) saturate(0.95) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(0.95) !important;
+}
+/* o cartão do modal nunca é translúcido: usa a superfície do tema atual */
+.modal-card, .auth-modal-card, .admin-modal-card, .editor-modal-card {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+.admin-modal-card { background: var(--bg-primary) !important; }

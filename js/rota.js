@@ -26,8 +26,7 @@
 
   // Landing antiga desativada dentro do app
   var css = document.createElement('style');
-  css.textContent = '#landingPageSection, #landingHeaderNav { display: none !important; }'
-    + (querAuth ? ' .saas-plan-banner-bar, .app-header { display: none !important; }' : '');
+  css.textContent = '#landingPageSection, #landingHeaderNav { display: none !important; }';
   (document.head || document.documentElement).appendChild(css);
 
   function esconder() {
