@@ -1,0 +1,634 @@
+/* ══════════════════════════════════════════════════════════
+   CantaAí — CSS DA NOVA MARCA (passo 4)
+   Carregado DEPOIS de style.css. Só sobrescreve; não remove nada.
+   Para voltar ao visual antigo: remova a linha <link> deste arquivo.
+   Depende de: tokens em style.css (--ca-*, --tom-*) e js/tomColor.js
+   (que define --tom-ink/fill/minor/soft e data-tom-modo em <html>).
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Fontes (arquivos locais, licença SIL OFL) ── */
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 800; font-display: swap; src: url('../assets/brand/fonts/BricolageGrotesque-ExtraBold.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('../assets/brand/fonts/DMSans-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('../assets/brand/fonts/DMSans-Medium.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('../assets/brand/fonts/DMSans-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 700; font-display: swap; src: url('../assets/brand/fonts/DMSans-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 800; font-display: swap; src: url('../assets/brand/fonts/DMSans-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 900; font-display: swap; src: url('../assets/brand/fonts/DMSans-SemiBold.ttf') format('truetype'); }
+
+/* ── Variáveis do tema: escuro (padrão = modo palco) ── */
+:root {
+  --bg-primary: var(--ca-breu);
+  --bg-secondary: var(--ca-grafite);
+  --bg-card: var(--ca-grafite);
+  --bg-card-hover: #1D1F25;
+  --border-color: var(--ca-linha-escura);
+  --border-hover: var(--tom-ink);
+  --text-main: var(--ca-giz);
+  --text-muted: var(--ca-giz-muted);
+  --text-inverse: var(--ca-breu);
+  --accent-color: var(--tom-ink);
+  --accent-hover: var(--tom-ink);
+  --accent-glow: var(--tom-soft);
+  --font-sans: var(--ca-font-body);
+  --font-mono: var(--ca-font-body);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.6);
+  /* superfície do chip do tom (maior: fill claro + texto tinta; menor: cor funda + texto giz) */
+  --tom-chip-bg: var(--tom-fill);
+  --tom-chip-fg: var(--ca-tinta);
+}
+/* Fora do prompter o app usa a cor fixa da marca (Sol = azul).
+   Só dentro do #prompterView a cor segue o tom da música (variáveis --tom-* que o tomColor.js põe no <body>). */
+body {
+  --tom-ink: var(--tom-G-ink);
+  --tom-fill: var(--tom-G-fill);
+  --tom-minor: var(--tom-G-minor);
+  --tom-soft: var(--tom-G-soft);
+  --accent-color: var(--tom-G-ink);
+  --accent-hover: var(--tom-G-ink);
+  --accent-glow: var(--tom-G-soft);
+  --border-hover: var(--tom-G-ink);
+  --tom-chip-bg: var(--tom-G-fill);
+  --tom-chip-fg: var(--ca-tinta);
+}
+#prompterView {
+  --accent-color: var(--tom-atual-ink);
+  --accent-hover: var(--tom-atual-ink);
+  --accent-glow: var(--tom-atual-soft);
+  --border-hover: var(--tom-atual-ink);
+  --tom-ink: var(--tom-atual-ink);
+  --tom-fill: var(--tom-atual-fill);
+  --tom-minor: var(--tom-atual-minor);
+  --tom-soft: var(--tom-atual-soft);
+  --tom-chip-bg: var(--tom-atual-fill);
+  --tom-chip-fg: var(--ca-tinta);
+}
+html[data-tom-modo="menor"] #prompterView {
+  --tom-chip-bg: var(--tom-atual-minor);
+  --tom-chip-fg: var(--ca-giz);
+}
+
+/* ── Variáveis do tema: claro ── */
+body.light-mode {
+  --bg-primary: var(--ca-papel);
+  --bg-secondary: var(--ca-branco);
+  --bg-card: var(--ca-branco);
+  --bg-card-hover: #F3F0E9;
+  --border-color: var(--ca-linho);
+  --border-hover: var(--tom-ink);
+  --text-main: var(--ca-tinta);
+  --text-muted: var(--ca-tinta-muted);
+  --text-inverse: var(--ca-papel);
+  --accent-color: var(--tom-ink);
+  --accent-hover: var(--tom-ink);
+  --accent-glow: var(--tom-soft);
+  background: var(--ca-papel) !important;
+  color: var(--ca-tinta) !important;
+}
+
+/* ── Base ── */
+html, body {
+  font-family: var(--ca-font-body);
+  background: var(--bg-primary);
+  background-attachment: scroll;
+  color: var(--text-main);
+}
+h1, h2, h3, .rep-card-title, .rsv-title, .setlist-card-title, .modal-header h2, .modal-header h3,
+#prompterSongTitle, .pnsb-title, .editor-section-title {
+  font-family: var(--ca-font-display) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* ── Logo (cabeçalho do app e da landing) ── */
+.logo-icon {
+  display: inline-block;
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: 0 !important;         /* esconde o emoji 🎤 sem mexer no HTML */
+  background-color: var(--tom-ink);
+  -webkit-mask: url('../assets/brand/simbolo-mono.svg') no-repeat center / contain;
+  mask: url('../assets/brand/simbolo-mono.svg') no-repeat center / contain;
+}
+.logo-title {
+  font-family: var(--ca-font-display) !important;
+  font-weight: 800 !important;
+  font-size: 1.45rem !important;
+  letter-spacing: -0.04em !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--text-main) !important;
+}
+.logo-title .logo-ai { color: var(--tom-ink); }
+.logo-badge {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-color);
+  border-radius: 4px !important;
+  font-family: var(--ca-font-body);
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* ── Cabeçalhos ── */
+.app-header {
+  background: var(--bg-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.light-mode .app-header { background: var(--ca-papel) !important; }
+#searchInput {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  border-radius: 8px !important;
+  font-family: var(--ca-font-body) !important;
+}
+#searchInput:focus { border-color: var(--tom-ink) !important; box-shadow: none !important; }
+
+/* ── Botões: chapados, cantos curtos, sem brilho ── */
+.btn { border-radius: 8px; box-shadow: none; }
+.btn-primary, .btn-add-main, .spb-btn-upgrade, .pnsb-btn {
+  background: var(--tom-chip-bg) !important;
+  color: var(--tom-chip-fg) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+.btn-primary:hover:not(:disabled), .btn-add-main:hover { transform: none !important; box-shadow: none !important; filter: brightness(0.95); }
+.btn-secondary, .btn-outline {
+  background: transparent !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: none !important;
+}
+.btn-secondary:hover:not(:disabled), .btn-outline:hover:not(:disabled) { border-color: var(--text-main) !important; background: var(--bg-card-hover) !important; transform: none !important; }
+.btn-gdrive, .btn-gdrive-connected { box-shadow: none !important; border-radius: 8px !important; }
+.btn-danger { box-shadow: none !important; }
+
+/* ── Cards de repertório / setlist ── */
+.repertoire-card, .setlist-card, .setlist-select-card, .modal-card, .dropdown-add-menu, .user-profile-menu, .search-autocomplete-dropdown {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+.repertoire-card::before { display: none !important; }
+.repertoire-card:hover, .setlist-card:hover { transform: none !important; border-color: var(--tom-ink) !important; background: var(--bg-card-hover) !important; }
+.rep-card-title, .song-row-title { color: var(--text-main) !important; }
+
+/* Lista de músicas */
+.songs-list-table, .rsv-header { background: transparent !important; border-color: var(--border-color) !important; }
+.song-list-row { border-bottom: 1px solid var(--border-color) !important; border-radius: 0 !important; }
+.song-list-row:hover { background: var(--bg-card-hover) !important; }
+
+/* Selos de tom nas listas (cor de destaque = tom ativo; tom por música vem no passo 5) */
+.badge-key, .ap-key-badge, .badge-original-key, #prompterSongOriginalKey {
+  background: var(--tom-soft) !important;
+  color: var(--tom-ink) !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  font-family: var(--ca-font-body) !important;
+  font-weight: 700 !important;
+}
+.badge-nokey { border-radius: 4px !important; font-family: var(--ca-font-body) !important; }
+
+/* ── Formulários ── */
+.form-control, .text-content-editor, select.form-control {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  border-radius: 8px !important;
+  font-family: var(--ca-font-body) !important;
+}
+.form-control:focus, .text-content-editor:focus { border-color: var(--tom-ink) !important; box-shadow: none !important; }
+
+/* ── PROMPTER ── */
+/* Fundo do prompter acompanha o tom: escuro = breu tingido (--tom-soft escuro), claro = papel tingido */
+.prompter-section { background: var(--tom-soft) !important; }
+.prompter-header { background-color: var(--tom-soft) !important; }
+.prompter-header {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+#prompterSongTitle { font-size: 1.35rem !important; text-transform: uppercase; letter-spacing: -0.02em !important; }
+
+/* Seletor "Tom de Cantar" (o dropdown existente) vira o chip colorido do tom */
+.key-selector-dropdown {
+  background-color: var(--tom-chip-bg) !important;
+  color: var(--tom-chip-fg) !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  font-family: var(--ca-font-display) !important;
+  font-weight: 800 !important;
+  font-size: 1rem !important;
+  padding: 0.3rem 0.6rem !important;
+  letter-spacing: -0.02em !important;
+}
+.key-selector-dropdown:hover { background-color: var(--tom-chip-bg) !important; filter: brightness(0.95); }
+.key-selector-dropdown option { background-color: var(--bg-secondary) !important; color: var(--text-main) !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; }
+
+/* Controles: fonte, rolagem, velocidade */
+.btn-circle {
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+.btn-circle:hover { background-color: var(--text-main) !important; color: var(--bg-primary) !important; border-color: var(--text-main) !important; }
+#fontSizeDisplay, #scrollSpeedDisplay { font-family: var(--ca-font-body) !important; color: var(--text-muted) !important; font-weight: 600 !important; }
+.btn-scroll-play {
+  background: var(--text-main) !important;
+  color: var(--bg-primary) !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-family: var(--ca-font-body) !important;
+}
+.btn-scroll-play:hover { transform: none !important; box-shadow: none !important; filter: brightness(0.9); }
+.prompter-nav-btn, .btn-back { border-radius: 8px !important; }
+.control-label { color: var(--text-muted) !important; font-weight: 500 !important; }
+
+/* Letra e cifra: DM Sans, cifra na cor do tom, sem sombra */
+.prompter-text-content { font-family: var(--ca-font-body) !important; color: var(--text-main) !important; font-weight: 500 !important; }
+.lyric-line {
+  color: var(--text-main) !important;
+  font-family: var(--ca-font-body) !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+  letter-spacing: 0 !important;
+}
+.chord-line {
+  color: var(--tom-ink) !important;
+  font-family: var(--ca-font-body) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  opacity: 1 !important;
+}
+.inline-chord {
+  color: var(--tom-ink) !important;
+  background: var(--tom-soft) !important;
+  font-family: var(--ca-font-body) !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+}
+.prompter-section-tag { color: var(--text-muted) !important; font-family: var(--ca-font-body) !important; }
+.light-mode .prompter-text-content, .light-mode .lyric-line { color: var(--ca-tinta) !important; }
+.light-mode .chord-line, .light-mode .inline-chord { color: var(--tom-ink) !important; }
+
+/* Banner "próxima música" */
+.prompter-next-song-banner { background: var(--bg-card) !important; border: 1px solid var(--border-color) !important; border-radius: 12px !important; box-shadow: var(--shadow-md) !important; }
+.pnsb-label { color: var(--text-muted) !important; }
+
+/* Player de áudio */
+.advanced-player { background: var(--bg-card) !important; border: 1px solid var(--border-color) !important; border-radius: 12px !important; }
+.ap-btn { border-radius: 8px !important; }
+.ap-btn-play { background: var(--tom-chip-bg) !important; color: var(--tom-chip-fg) !important; box-shadow: none !important; }
+
+/* ── Toasts, modais, abas ── */
+.toast { border-radius: 8px !important; box-shadow: var(--shadow-md) !important; font-family: var(--ca-font-body) !important; }
+.modal-overlay { background: rgba(15, 16, 19, 0.7) !important; backdrop-filter: none !important; }
+.nav-tab { font-family: var(--ca-font-body) !important; }
+.nav-tab.active { color: var(--tom-ink) !important; border-color: var(--tom-ink) !important; }
+
+/* ── Modo claro: ajustes que o style.css força em cor fixa ── */
+body.light-mode .repertoire-card, body.light-mode .rsv-header, body.light-mode .songs-list-table,
+body.light-mode .dropdown-add-menu, body.light-mode .user-profile-menu {
+  background: var(--ca-branco) !important;
+  border-color: var(--ca-linho) !important;
+}
+body.light-mode .rep-card-title, body.light-mode .rsv-title, body.light-mode .song-row-title, body.light-mode .logo-title { color: var(--ca-tinta) !important; }
+body.light-mode .btn-secondary, body.light-mode .btn-outline { color: var(--ca-tinta) !important; border-color: var(--ca-linho) !important; }
+body.light-mode .prompter-header, body.light-mode .prompter-section { background: var(--tom-soft) !important; }
+body.light-mode .btn-scroll-play { background: var(--ca-tinta) !important; color: var(--ca-papel) !important; }
+body.light-mode .btn-circle { color: var(--ca-tinta) !important; }
+
+/* Modo claro — botões do prompter que o style.css força em cor fixa */
+body.light-mode .btn-back, body.light-mode .prompter-nav-btn, body.light-mode .btn-circle,
+body.light-mode #btnToggleFullscreen, body.light-mode #btnPrompterEdit, body.light-mode .prompter-pos-badge {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--ca-tinta) !important;
+  border: 1px solid var(--ca-linho) !important;
+  text-shadow: none !important;
+}
+body.light-mode .btn-back:hover, body.light-mode .prompter-nav-btn:hover, body.light-mode .btn-circle:hover {
+  background-color: var(--ca-tinta) !important;
+  color: var(--ca-papel) !important;
+  border-color: var(--ca-tinta) !important;
+}
+body.light-mode .control-label, body.light-mode #fontSizeDisplay, body.light-mode #scrollSpeedDisplay { color: var(--ca-tinta-muted) !important; }
+body.light-mode .prompter-header * { text-shadow: none !important; }
+
+body.light-mode .prompter-nav-group { background: transparent !important; border: none !important; box-shadow: none !important; }
+.prompter-pos-badge { color: var(--text-muted) !important; background: transparent !important; border: 1px solid var(--border-color) !important; font-family: var(--ca-font-body) !important; }
+
+/* ── Cards de repertório: mais enxutos (decisão do Léo) ──
+   Some o selo de origem (Importação local / Criado manual / Drive) e a data;
+   fica o número de músicas em cinza. Cards menores e mais por linha. */
+.rep-source-badge { display: none !important; }
+.rep-date { display: none !important; }
+.repertoires-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important; gap: 1rem !important; }
+.repertoire-card { padding: 1.1rem 1.2rem !important; gap: 0.75rem !important; }
+.rep-card-header { min-height: 0 !important; }
+.rep-card-title { font-size: 1.2rem !important; margin-bottom: 0.3rem !important; }
+.rep-song-count {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 4px !important;
+  font-family: var(--ca-font-body) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+}
+.rep-card-footer { padding-top: 0.75rem !important; border-top: 1px solid var(--border-color) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   LANDING dentro do index.html (landing.css) — passo 6
+   ══════════════════════════════════════════════════════════ */
+:root {
+  --canta-bg: var(--ca-breu);
+  --canta-surface: var(--ca-grafite);
+  --canta-card-bg: var(--ca-grafite);
+  --canta-card-border: var(--ca-linha-escura);
+  --canta-primary: var(--tom-G-ink);
+  --canta-primary-hover: var(--tom-G-ink);
+  --canta-primary-glow: var(--tom-G-soft);
+  --canta-cyan: var(--tom-G-ink);
+  --canta-cyan-glow: var(--tom-G-soft);
+  --canta-gold: var(--tom-D-ink);
+  --canta-text: var(--ca-giz);
+  --canta-text-muted: var(--ca-giz-muted);
+}
+.landing-header-nav { background: var(--ca-breu) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-bottom: 1px solid var(--ca-linha-escura) !important; }
+.landing-nav-logo .logo-badge { background: transparent !important; }
+.landing-nav-link:hover { color: var(--tom-G-ink) !important; }
+.btn-nav-signup, .btn-canta-primary, .pricing-badge-hot, .btn-auth-submit {
+  background: var(--tom-G-fill) !important;
+  color: var(--ca-tinta) !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+.btn-nav-login, .btn-canta-secondary { border-radius: 8px !important; box-shadow: none !important; }
+.hero-pill-badge, .section-pill-tag { background: var(--tom-G-soft) !important; color: var(--tom-G-ink) !important; border: 1px solid transparent !important; border-radius: 6px !important; }
+.hero-title, .section-heading-title, .pricing-title, .feature-title, .landing-container h1, .landing-container h2, .landing-container h3 {
+  font-family: var(--ca-font-display) !important; font-weight: 800 !important; letter-spacing: -0.03em !important;
+}
+.hero-title-gradient {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: var(--tom-G-ink) !important;
+  color: var(--tom-G-ink) !important;
+}
+.mockup-tag-tone, .chord-highlight { color: var(--tom-C-ink) !important; }
+.mockup-tag-rhythm { color: var(--ca-giz-muted) !important; }
+.pricing-card-box.is-pro { border: 2px solid var(--tom-G-ink) !important; box-shadow: none !important; }
+.auth-input:focus { border-color: var(--tom-G-ink) !important; box-shadow: none !important; }
+.landing-container .feature-card, .landing-container .pricing-card-box, .landing-container .demo-mockup-box {
+  background: var(--ca-grafite) !important; border: 1px solid var(--ca-linha-escura) !important; border-radius: 12px !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important;
+}
+
+/* ── Azul do logo mais escuro (pedido do Léo) ── */
+body { --ca-logo-azul: #67A3FF; }
+body.light-mode { --ca-logo-azul: #0145A7; }
+.logo-title .logo-ai { color: var(--ca-logo-azul) !important; }
+.logo-icon { background-color: var(--ca-logo-azul) !important; }
+
+/* ── Menu do usuário e gatilho do perfil: sem gradientes, cores da marca ── */
+.user-profile-trigger { background: var(--bg-secondary) !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; box-shadow: none !important; }
+.user-profile-trigger:hover { border-color: var(--tom-G-ink) !important; background: var(--bg-card-hover) !important; }
+.user-avatar-initial, .upm-avatar, .profile-avatar-big {
+  background: var(--tom-G-fill) !important; color: var(--ca-tinta) !important;
+  font-family: var(--ca-font-display) !important; font-weight: 800 !important; box-shadow: none !important; border: none !important;
+}
+.user-profile-plan-tag, .user-profile-plan-tag.plan-pro, .user-profile-plan-tag.plan-vip, .user-profile-plan-tag.plan-trial, .user-profile-plan-tag.plan-free,
+.sub-plan-badge, .spb-badge, .spb-badge-free, .spb-badge-trial {
+  background: transparent !important; color: var(--text-muted) !important; border: 1px solid var(--border-color) !important;
+  border-radius: 4px !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; letter-spacing: 0.06em !important;
+}
+.user-profile-plan-tag.plan-pro, .user-profile-plan-tag.plan-vip { color: var(--tom-G-ink) !important; border-color: var(--tom-G-ink) !important; }
+.user-profile-menu { background: var(--bg-card) !important; border: 1px solid var(--border-color) !important; border-radius: 12px !important; backdrop-filter: none !important; box-shadow: var(--shadow-md) !important; }
+.upm-name, .upm-details { color: var(--text-main) !important; }
+.upm-status-dot { background-color: var(--tom-G-ink) !important; box-shadow: none !important; }
+.upm-singer-code { color: var(--text-muted) !important; }
+.upm-plan-card { background: var(--tom-G-soft) !important; border: 1px solid transparent !important; border-radius: 8px !important; }
+.upm-plan-badge { color: var(--tom-G-ink) !important; font-family: var(--ca-font-display) !important; letter-spacing: 0 !important; }
+.upm-plan-desc { color: var(--text-muted) !important; }
+.upm-divider { background: var(--border-color) !important; }
+.upm-item { color: var(--text-main) !important; border-radius: 8px !important; font-family: var(--ca-font-body) !important; }
+.upm-item:hover { background: var(--bg-card-hover) !important; color: var(--text-main) !important; }
+.upm-item-admin, .upm-item-admin:hover { color: var(--text-main) !important; }
+.upm-item-admin:hover { background: var(--bg-card-hover) !important; }
+#upmSupport, .upm-item-support { color: var(--text-main) !important; }
+.upm-item-danger { color: var(--text-muted) !important; }
+.upm-item-danger:hover { color: #E5484D !important; background: rgba(229, 72, 77, 0.10) !important; }
+/* barra de plano no topo do dashboard */
+.saas-plan-banner-bar { background: var(--bg-secondary) !important; border-bottom: 1px solid var(--border-color) !important; }
+.spb-progress-fill { background: var(--tom-G-ink) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   PAINEL ADMIN (admin.css) — chapado, breu/grafite, azul da marca
+   ══════════════════════════════════════════════════════════ */
+.admin-modal-card, .modal-card.admin-modal-card { background: var(--bg-primary) !important; background-image: none !important; border: 1px solid var(--border-color) !important; border-radius: 12px !important; color: var(--text-main) !important; }
+.admin-header-main { background: var(--bg-primary) !important; border-bottom: 1px solid var(--border-color) !important; backdrop-filter: none !important; }
+.admin-header-main h2, .admin-header-main h3, .admin-title { font-family: var(--ca-font-display) !important; color: var(--text-main) !important; }
+.admin-avatar-crown { background: var(--tom-G-soft) !important; border: 1px solid transparent !important; border-radius: 10px !important; box-shadow: none !important; }
+.badge-ceo, .metric-badge-pill, .badge-plan-pro, .badge-plan-free, .metric-badge-live, .admin-code-tag, .status-pill-online, .status-pill-offline, .live-telemetry-badge, .metric-growth, .metric-action-hint {
+  background: var(--bg-card) !important; background-image: none !important; color: var(--text-muted) !important; border: 1px solid var(--border-color) !important; border-radius: 4px !important; box-shadow: none !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; text-shadow: none !important;
+}
+.badge-ceo, .badge-plan-pro, .live-telemetry-badge, .metric-badge-live, .status-pill-online { color: var(--tom-G-ink) !important; border-color: var(--tom-G-ink) !important; }
+.pulse-green-dot, .status-dot-pulse-online, .pulse-dot { background: var(--tom-G-ink) !important; box-shadow: none !important; animation: none !important; }
+.admin-nav-tabs { background: var(--bg-primary) !important; border-bottom: 1px solid var(--border-color) !important; }
+.admin-tab-btn { color: var(--text-muted) !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; }
+.admin-tab-btn.active, .admin-tab-btn[aria-selected="true"] { color: var(--text-main) !important; border-bottom: 2px solid var(--tom-G-ink) !important; }
+.metric-card, .metric-card-mrr, .admin-toolbar-row, .admin-table-container, .admin-coupon-creator-card, .admin-card-section {
+  background: var(--bg-card) !important; background-image: none !important; border: 1px solid var(--border-color) !important; border-radius: 12px !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important;
+}
+.metric-card-mrr { border-color: var(--tom-G-ink) !important; }
+.metric-icon { background: var(--bg-primary) !important; border: 1px solid var(--border-color) !important; border-radius: 10px !important; box-shadow: none !important; }
+.metric-value, .metric-card .metric-number, .metric-card h3, .metric-card strong { font-family: var(--ca-font-display) !important; color: var(--text-main) !important; text-shadow: none !important; }
+.metric-card-mrr .metric-value { color: var(--tom-G-ink) !important; }
+.metric-label, .metric-sub, .metric-card p, .metric-card span:not(.metric-value) { color: var(--text-muted) !important; text-shadow: none !important; }
+.admin-search-input { background: var(--bg-primary) !important; border: 1px solid var(--border-color) !important; color: var(--text-main) !important; border-radius: 8px !important; }
+.filter-pill { border: 1px solid var(--border-color) !important; color: var(--text-muted) !important; border-radius: 6px !important; }
+.filter-pill.active { background: var(--tom-G-soft) !important; color: var(--tom-G-ink) !important; border-color: var(--tom-G-ink) !important; }
+.admin-table th { background: var(--bg-primary) !important; color: var(--text-muted) !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; letter-spacing: 0.06em !important; border-bottom: 1px solid var(--border-color) !important; }
+.admin-table td { border-bottom: 1px solid var(--border-color) !important; color: var(--text-main) !important; }
+.admin-user-row:hover { background: var(--bg-card-hover) !important; }
+.admin-user-avatar { background: var(--tom-G-fill) !important; background-image: none !important; color: #161513 !important; font-family: var(--ca-font-display) !important; box-shadow: none !important; }
+.admin-btn-wa, .admin-btn-insta { background: transparent !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; }
+.admin-btn-wa:hover, .admin-btn-insta:hover { border-color: var(--text-main) !important; }
+.admin-modal-card .btn-primary { background: var(--tom-G-fill) !important; color: #161513 !important; }
+.admin-modal-card .btn-secondary, .admin-modal-card .btn-outline { background: transparent !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important; }
+.admin-modal-card .modal-close, .admin-modal-card .btn-close { color: var(--text-muted) !important; background: transparent !important; }
+
+/* modo claro: overlay mais leve para o fundo não parecer "apagado" */
+body.light-mode .modal-overlay { background: rgba(22, 21, 19, 0.45) !important; }
+
+/* ── Menu "Adicionar": hover neutro (sem verde/ciano por item) ── */
+.dropdown-add-item, .dropdown-add-item.item-import-local, .dropdown-add-item.item-import-gdrive, .dropdown-add-item.item-new-rep, .dropdown-add-item.item-new-song { color: var(--text-main) !important; border-radius: 8px !important; }
+.dropdown-add-item:hover, .dropdown-add-item.item-import-local:hover, .dropdown-add-item.item-import-gdrive:hover, .dropdown-add-item.item-new-rep:hover, .dropdown-add-item.item-new-song:hover { background: var(--tom-G-soft) !important; color: var(--text-main) !important; }
+.dropdown-divider { background: var(--border-color) !important; }
+
+/* ── Landing dentro do index.html no modo claro (títulos ficavam brancos) ── */
+body.light-mode {
+  --canta-bg: var(--ca-papel);
+  --canta-surface: var(--ca-branco);
+  --canta-card-bg: var(--ca-branco);
+  --canta-card-border: var(--ca-linho);
+  --canta-text: var(--ca-tinta);
+  --canta-text-muted: var(--ca-tinta-muted);
+}
+body.light-mode .landing-header-nav { background: var(--ca-papel) !important; border-bottom-color: var(--ca-linho) !important; }
+body.light-mode .landing-nav-link, body.light-mode .btn-nav-login { color: var(--ca-tinta) !important; }
+body.light-mode .hero-title, body.light-mode .section-heading-title, body.light-mode .landing-container h1, body.light-mode .landing-container h2, body.light-mode .landing-container h3, body.light-mode .stat-value, body.light-mode .hero-stat-value { color: var(--ca-tinta) !important; }
+body.light-mode .hero-subtitle, body.light-mode .section-heading-sub, body.light-mode .stat-label { color: var(--ca-tinta-muted) !important; }
+body.light-mode .btn-canta-secondary { background: transparent !important; color: var(--ca-tinta) !important; border: 1.5px solid var(--ca-tinta) !important; }
+body.light-mode .landing-container .feature-card, body.light-mode .landing-container .pricing-card-box { background: var(--ca-branco) !important; border-color: var(--ca-linho) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   CORREÇÕES DA AUDITORIA AUTOMÁTICA (contraste + cores antigas)
+   ══════════════════════════════════════════════════════════ */
+/* barra do plano (modo claro: texto ficava branco sobre branco) */
+.spb-message, .spb-message strong, .spb-info { color: var(--text-main) !important; text-shadow: none !important; }
+.spb-message strong { color: var(--tom-G-ink) !important; }
+/* lista de músicas: números, contagem e botões de ação */
+.rsv-count, .song-row-number, .btn-icon-action, .song-row-meta, .meta-sep { color: var(--text-muted) !important; }
+.btn-icon-action { background: transparent !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; }
+.btn-icon-action:hover { color: var(--text-main) !important; border-color: var(--text-main) !important; }
+.badge-rhythm, .badge-offline-mini, .badge-yt-mini, .badge-offline-tag, .badge-in-setlist {
+  background: transparent !important; color: var(--text-muted) !important; border: 1px solid var(--border-color) !important; border-radius: 4px !important; font-family: var(--ca-font-body) !important;
+}
+/* banner "próxima música" */
+.pnsb-title, .prompter-next-song-banner h3 { color: var(--text-main) !important; }
+/* painel admin: título em gradiente e nomes com cor fixa */
+.admin-suite-title, .admin-modal-card .admin-suite-title {
+  background: none !important; -webkit-background-clip: initial !important; -webkit-text-fill-color: var(--text-main) !important; color: var(--text-main) !important;
+  font-family: var(--ca-font-display) !important; text-shadow: none !important;
+}
+.admin-suite-subtitle, .admin-hint, .admin-modal-card .admin-hint strong, .admin-time-ago, .admin-user-email { color: var(--text-muted) !important; }
+.admin-user-name, .admin-modal-card td, .admin-modal-card th, .admin-modal-card label { color: var(--text-main) !important; text-shadow: none !important; }
+.admin-modal-card th { color: var(--text-muted) !important; }
+/* estilos inline vindos do adminPanel.js (não posso alterar o JS): neutralizados por atributo */
+.admin-modal-card [style*="fbbf24"], .admin-modal-card [style*="f59e0b"] {
+  background: var(--tom-G-soft) !important; color: var(--tom-G-ink) !important; border: 1px solid var(--tom-G-ink) !important; text-shadow: none !important; border-radius: 4px !important;
+}
+.admin-modal-card [style*="a7f3d0"] { color: var(--text-muted) !important; }
+.admin-modal-card [style*="38bdf8"] { color: var(--text-main) !important; }
+.admin-modal-card [style*="64748b"], .admin-modal-card [style*="94a3b8"] { color: var(--text-muted) !important; }
+.admin-modal-card [style*="f87171"] { color: var(--text-muted) !important; border-color: var(--border-color) !important; }
+.admin-modal-card [style*="f87171"]:hover { color: #E5484D !important; border-color: #E5484D !important; }
+.badge-plan-executive { border-radius: 4px !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; text-shadow: none !important; }
+.admin-modal-card .filter-pill, .admin-modal-card .admin-search-input { color: var(--text-main) !important; }
+/* menu do usuário: item de suporte com cor fixa no HTML */
+.upm-item[style*="38bdf8"], .upm-item span[style*="38bdf8"] { color: var(--text-main) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   ÍCONES DA MARCA — um só grid, traço, cor do texto
+   (emojis são trocados por SVG em js/brandIcons.js)
+   ══════════════════════════════════════════════════════════ */
+.ca-ico { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.22em; flex-shrink: 0; }
+.ca-ico-wrap { display: inline-flex; align-items: center; gap: 0.4em; }
+.btn .ca-ico-wrap, .upm-item .ca-ico-wrap, .dropdown-add-item .ca-ico-wrap, .admin-tab-btn .ca-ico-wrap { gap: 0.5em; }
+
+/* ══════════════════════════════════════════════════════════
+   PAINEL ADMIN — um padrão só (mesma altura, mesma borda, mesmo raio)
+   ══════════════════════════════════════════════════════════ */
+/* cabeçalho */
+.admin-avatar-crown {
+  width: 44px !important; height: 44px !important; border-radius: 10px !important;
+  background: var(--tom-G-soft) !important; color: var(--tom-G-ink) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 20px !important; box-shadow: none !important; border: 1px solid transparent !important;
+}
+.admin-suite-title { font-size: 1.3rem !important; display: flex; align-items: center; gap: 12px; }
+.badge-ceo, .live-telemetry-badge {
+  height: 26px; display: inline-flex !important; align-items: center; gap: 6px;
+  padding: 0 10px !important; font-size: 11px !important; letter-spacing: 0.08em !important; text-transform: uppercase;
+}
+.btn-close-admin { width: 36px !important; height: 36px !important; border-radius: 8px !important; border: 1px solid var(--border-color) !important; background: transparent !important; color: var(--text-muted) !important; display: inline-flex !important; align-items: center; justify-content: center; }
+.btn-close-admin:hover { color: var(--text-main) !important; border-color: var(--text-main) !important; }
+
+/* abas */
+.admin-tab-btn { height: 46px !important; padding: 0 18px !important; border-radius: 0 !important; border-bottom: 2px solid transparent !important; }
+
+/* cards de métrica: mesma altura, ícone em quadro, valor na fonte display */
+.admin-metrics-grid { gap: 14px !important; }
+.metric-card, .metric-card-mrr { padding: 18px !important; gap: 14px !important; align-items: flex-start !important; }
+.metric-icon {
+  width: 40px !important; height: 40px !important; min-width: 40px !important; border-radius: 8px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 18px !important; color: var(--text-muted) !important;
+}
+.metric-card-mrr .metric-icon { color: var(--tom-G-ink) !important; border-color: var(--tom-G-ink) !important; }
+.metric-label { font-size: 11px !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; font-weight: 600 !important; color: var(--text-muted) !important; }
+.metric-value { font-family: var(--ca-font-display) !important; font-size: 30px !important; letter-spacing: -0.03em !important; color: var(--text-main) !important; }
+.metric-value.metric-gold, .metric-value.metric-green, .metric-value.metric-cyan { color: var(--text-main) !important; }
+.metric-card-mrr .metric-value { color: var(--tom-G-ink) !important; }
+.metric-subtext { font-size: 12px !important; color: var(--text-muted) !important; }
+.metric-growth, .metric-badge-pill, .metric-badge-live, .metric-action-hint {
+  height: 22px; display: inline-flex !important; align-items: center; gap: 5px; padding: 0 8px !important; font-size: 11px !important; white-space: nowrap;
+}
+.metric-header-sub { gap: 10px !important; align-items: center !important; }
+
+/* barra de ferramentas: tudo com 40px */
+.admin-toolbar-row { padding: 12px !important; gap: 10px !important; }
+.admin-search-input { height: 40px !important; }
+.filter-pill { height: 40px !important; padding: 0 14px !important; font-size: 13px !important; font-family: var(--ca-font-body) !important; }
+.admin-toolbar-buttons .btn, .admin-modal-card .btn-sm { height: 40px !important; padding: 0 14px !important; font-size: 13px !important; border-radius: 8px !important; }
+
+/* tabela */
+.admin-table th { font-size: 11px !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; padding: 12px 14px !important; }
+.admin-table td { padding: 12px 14px !important; font-size: 14px !important; }
+.admin-user-avatar { width: 34px !important; height: 34px !important; border-radius: 8px !important; font-size: 14px !important; }
+.admin-user-name { font-weight: 600 !important; font-size: 14px !important; }
+.admin-user-email { font-size: 12px !important; }
+.admin-code-tag, .badge-plan-executive, .admin-table-btn-link, .status-pill-online, .status-pill-offline {
+  height: 26px !important; display: inline-flex !important; align-items: center !important; gap: 5px;
+  padding: 0 9px !important; font-size: 12px !important; border-radius: 4px !important; font-weight: 600 !important;
+  font-family: var(--ca-font-body) !important; white-space: nowrap;
+}
+.admin-table-btn-link { background: transparent !important; color: var(--text-muted) !important; border: 1px solid var(--border-color) !important; }
+.admin-table-btn-link:hover { color: var(--text-main) !important; border-color: var(--text-main) !important; }
+.status-dot-pulse-online, .status-dot-offline, .pulse-dot, .pulse-green-dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; box-shadow: none !important; animation: none !important; }
+.status-dot-offline { background: var(--border-color) !important; }
+.admin-time-ago { font-size: 12px !important; }
+.btn-del-singer-row { height: 26px !important; padding: 0 8px !important; border-radius: 4px !important; }
+
+/* respiro do ícone quando ele vem antes de um texto que está fora do mesmo nó */
+.ca-ico-wrap:not(:only-child):not(:last-child) { margin-right: 0.4em; }
+.admin-hint .ca-ico-wrap, .metric-card .ca-ico-wrap { margin-right: 0.4em; }
+
+/* cards de métrica: uma linha por informação (o atalho já está no clique do card) */
+.metric-action-hint { display: none !important; }
+.metric-card { min-height: 108px !important; }
+.metric-info { display: flex !important; flex-direction: column !important; gap: 6px !important; min-width: 0 !important; }
+.metric-header-sub { display: block !important; }
+.metric-label { display: block !important; line-height: 1.3 !important; }
+.metric-value-row { display: flex !important; align-items: baseline !important; gap: 10px !important; flex-wrap: wrap !important; }
+
+/* ══════════════════════════════════════════════════════════
+   TELA DE ENTRAR / CRIAR CONTA (landing.css usava cores fixas)
+   ══════════════════════════════════════════════════════════ */
+.auth-modal-card { background: var(--bg-card) !important; border: 1px solid var(--border-color) !important; border-radius: 14px !important; box-shadow: var(--shadow-md) !important; }
+.auth-title { color: var(--text-main) !important; font-family: var(--ca-font-display) !important; font-weight: 800 !important; letter-spacing: -0.03em !important; }
+.auth-subtitle, .auth-footer-notice { color: var(--text-muted) !important; }
+.auth-label { color: var(--text-main) !important; font-weight: 500 !important; }
+.auth-tabs { background: transparent !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; padding: 3px !important; gap: 3px !important; }
+.auth-tab-btn { background: transparent !important; color: var(--text-muted) !important; border-radius: 6px !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; }
+.auth-tab-btn.active { background: var(--tom-G-soft) !important; color: var(--tom-G-ink) !important; }
+.auth-input { background: var(--bg-primary) !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-family: var(--ca-font-body) !important; }
+.auth-input::placeholder { color: var(--text-muted) !important; }
+.auth-input:focus { border-color: var(--tom-G-ink) !important; box-shadow: none !important; }
+.btn-auth-submit { background: var(--tom-G-fill) !important; color: #161513 !important; border: none !important; box-shadow: none !important; border-radius: 8px !important; font-weight: 600 !important; font-family: var(--ca-font-body) !important; }
+.btn-auth-submit:hover { filter: brightness(0.96); transform: none !important; }
+#forgotPasswordContainer a, .auth-link { color: var(--text-muted) !important; }
+#forgotPasswordContainer a:hover, .auth-link:hover { color: var(--tom-G-ink) !important; }
+.auth-modal-card .modal-close, .auth-modal-card .btn-close { color: var(--text-muted) !important; }
+.auth-brand-icon, .auth-modal-card .logo-icon { color: var(--tom-G-ink) !important; }

@@ -37,6 +37,18 @@
       "use": "@vercel/static"
     },
     {
+      "src": "assets/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "manual_cantaai_pro.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "landing_v3.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "css/**",
       "use": "@vercel/static"
     },
@@ -69,6 +81,26 @@
     {
       "src": "/sw.js",
       "dest": "/sw.js"
+    },
+    {
+      "src": "/",
+      "dest": "/landing_v3.html"
+    },
+    {
+      "src": "/app",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/landing_v3.html",
+      "dest": "/landing_v3.html"
+    },
+    {
+      "src": "/manual_cantaai_pro.html",
+      "dest": "/manual_cantaai_pro.html"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
     },
     {
       "src": "/(.*)",

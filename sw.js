@@ -3,12 +3,21 @@
  * Garante funcionamento 100% Offline em Smartphones, Tablets e iPads no palco.
  */
 
-var CACHE_NAME = 'canta-ai-pro-v121';
+var CACHE_NAME = 'canta-ai-pro-v124';
 var ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
+  './css/brand.css',
+  './js/tomColor.js',
+  './js/brandIcons.js',
+  './js/rota.js',
+  './assets/brand/simbolo-mono.svg',
+  './assets/brand/fonts/BricolageGrotesque-ExtraBold.ttf',
+  './assets/brand/fonts/DMSans-Regular.ttf',
+  './assets/brand/fonts/DMSans-Medium.ttf',
+  './assets/brand/fonts/DMSans-SemiBold.ttf',
   './js/polyfills.js',
   './js/config.js',
   './js/supabaseClient.js',

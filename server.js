@@ -13,6 +13,9 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+  '.ttf': 'font/ttf',
+  '.woff2': 'font/woff2',
   '.ico': 'image/x-icon',
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
@@ -22,7 +25,9 @@ const MIME_TYPES = {
 function startServer(portToUse) {
   const server = http.createServer((req, res) => {
     let reqPath = req.url.split('?')[0];
-    if (reqPath === '/' || !reqPath) reqPath = '/index.html';
+    // Rota oficial: "/" abre a página de vendas nova; o app continua em /index.html (ou /app)
+    if (reqPath === '/' || !reqPath) reqPath = '/landing_v3.html';
+    if (reqPath === '/app' || reqPath === '/app/') reqPath = '/index.html';
     
     const filePath = path.join(PUBLIC_DIR, '.' + reqPath);
 

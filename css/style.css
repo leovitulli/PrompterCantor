@@ -4353,3 +4353,125 @@ html.canta-auth-active #tabRepertoire {
     padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   CantaAí — TOKENS DA NOVA MARCA (passo 2: só variáveis novas)
+   Nada abaixo é usado ainda. Não altera o visual atual.
+   Conceito: "o tom é a cor" — 12 matizes, uma por nota.
+   --tom-X-ink   texto/traços na cor do tom (contraste sobre o fundo)
+   --tom-X-fill  chip do tom MAIOR (fundo claro, texto #161513)
+   --tom-X-minor chip do tom MENOR (mesma cor, mais escura, texto claro)
+   --tom-X-soft  fundo sutil na cor do tom
+   C# = Cs, F# = Fs, etc. (D# usa Eb, G# usa Ab, A# usa Bb — mesma nota)
+   ══════════════════════════════════════════════════════════ */
+:root {
+  /* neutros (tema escuro = modo palco, padrão do app) */
+  --ca-breu: #0F1013;
+  --ca-grafite: #17181C;
+  --ca-giz: #F2F2EE;
+  --ca-giz-muted: #9A9C96;
+  --ca-linha-escura: #2A2C32;
+  /* neutros (tema claro) */
+  --ca-papel: #FAF8F3;
+  --ca-branco: #FFFFFF;
+  --ca-tinta: #161513;
+  --ca-tinta-muted: #6F6A61;
+  --ca-linho: #E6E1D6;
+  /* tipografia */
+  --ca-font-display: 'Bricolage Grotesque', 'Arial Black', sans-serif;
+  --ca-font-body: 'DM Sans', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  /* cores do tom — valores para FUNDO ESCURO (padrão) */
+  --tom-C-ink: #FF9F5F;
+  --tom-C-minor: #883C00;
+  --tom-C-soft: #2E190D;
+  --tom-Cs-ink: #F0B135;
+  --tom-Cs-minor: #774B00;
+  --tom-Cs-soft: #291D07;
+  --tom-D-ink: #C4C642;
+  --tom-D-minor: #5A5A00;
+  --tom-D-soft: #202108;
+  --tom-Eb-ink: #87D576;
+  --tom-Eb-minor: #2B641D;
+  --tom-Eb-soft: #152411;
+  --tom-E-ink: #2CDCAF;
+  --tom-E-minor: #00694B;
+  --tom-E-soft: #07251C;
+  --tom-F-ink: #00DAE4;
+  --tom-F-minor: #00676F;
+  --tom-F-soft: #012527;
+  --tom-Fs-ink: #2ECEFF;
+  --tom-Fs-minor: #005F8A;
+  --tom-Fs-soft: #07232F;
+  --tom-G-ink: #83BDFF;
+  --tom-G-minor: #2A5397;
+  --tom-G-soft: #141F32;
+  --tom-Ab-ink: #BDACFF;
+  --tom-Ab-minor: #564692;
+  --tom-Ab-soft: #1F1C31;
+  --tom-A-ink: #E89CF9;
+  --tom-A-minor: #723C7E;
+  --tom-A-soft: #28192B;
+  --tom-Bb-ink: #FF93CB;
+  --tom-Bb-minor: #84345F;
+  --tom-Bb-soft: #2D1722;
+  --tom-B-ink: #FF9395;
+  --tom-B-minor: #8C3439;
+  --tom-B-soft: #301717;
+  /* fill é igual nos dois temas */
+  --tom-C-fill: #FF9858;
+  --tom-Cs-fill: #E9AB2B;
+  --tom-D-fill: #BEBF3A;
+  --tom-Eb-fill: #81CE70;
+  --tom-E-fill: #1ED5A9;
+  --tom-F-fill: #00D3DD;
+  --tom-Fs-fill: #21C8FF;
+  --tom-G-fill: #7DB7FF;
+  --tom-Ab-fill: #B7A5FF;
+  --tom-A-fill: #E196F3;
+  --tom-Bb-fill: #FE8DC5;
+  --tom-B-fill: #FF8D8F;
+  /* tom ativo (será preenchido pelo JS no passo 3; por enquanto sem uso) */
+  --tom-ink: var(--tom-C-ink);
+  --tom-fill: var(--tom-C-fill);
+  --tom-minor: var(--tom-C-minor);
+  --tom-soft: var(--tom-C-soft);
+}
+body.light-mode {
+  /* cores do tom — valores para FUNDO CLARO */
+  --tom-C-ink: #B13F00;
+  --tom-C-minor: #C85D00;
+  --tom-C-soft: #FFE4D4;
+  --tom-Cs-ink: #9A5800;
+  --tom-Cs-minor: #B17100;
+  --tom-Cs-soft: #FAE9CE;
+  --tom-D-ink: #716E00;
+  --tom-D-minor: #878700;
+  --tom-D-soft: #ECEED0;
+  --tom-Eb-ink: #227E00;
+  --tom-Eb-minor: #449630;
+  --tom-Eb-soft: #DEF2D9;
+  --tom-E-ink: #008559;
+  --tom-E-minor: #009D71;
+  --tom-E-soft: #D2F4E7;
+  --tom-F-ink: #00828F;
+  --tom-F-minor: #009AA6;
+  --tom-F-soft: #CDF4F6;
+  --tom-Fs-ink: #0076B6;
+  --tom-Fs-minor: #008ECC;
+  --tom-Fs-soft: #D1F1FF;
+  --tom-G-ink: #2663C9;
+  --tom-G-minor: #437DDE;
+  --tom-G-soft: #DCECFF;
+  --tom-Ab-ink: #6B50C2;
+  --tom-Ab-minor: #816BD8;
+  --tom-Ab-soft: #EAE7FF;
+  --tom-A-ink: #9240A4;
+  --tom-A-minor: #A95CBB;
+  --tom-A-soft: #F8E3FC;
+  --tom-Bb-ink: #AB3276;
+  --tom-Bb-minor: #C3518D;
+  --tom-Bb-soft: #FFE1EF;
+  --tom-B-ink: #B6303E;
+  --tom-B-minor: #CE5057;
+  --tom-B-soft: #FFE1E0;
+}

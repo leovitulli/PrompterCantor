@@ -8,7 +8,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CantaAí PRO">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+  <link rel="apple-touch-icon" href="assets/brand/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
   <title>CantaAí PRO - Teleprompter e Gestão de Repertórios Inteligente</title>
 
   <!-- Google Fonts -->
@@ -19,6 +20,7 @@
   <link rel="stylesheet" href="css/style.css?v=123">
   <link rel="stylesheet" href="css/admin.css?v=121">
   <link rel="stylesheet" href="css/landing.css?v=121">
+  <link rel="stylesheet" href="css/brand.css?v=16">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
   <script>
@@ -33,6 +35,7 @@
   </script>
 
   <!-- Polyfills para iOS 10.3.4 / iPad 4 -->
+  <script src="js/rota.js?v=1"></script>
   <script src="js/polyfills.js?v=76"></script>
 
   <!-- Service Worker para suporte PWA / Offline -->
@@ -66,7 +69,7 @@
   <nav class="landing-header-nav" id="landingHeaderNav">
     <div class="landing-nav-logo" id="btnLandingLogo">
       <span class="logo-icon">🎤</span>
-      <h1 class="logo-title">CantaAí</h1>
+      <h1 class="logo-title">Canta<span class="logo-ai">Aí</span></h1>
       <span class="logo-badge">PRO</span>
     </div>
     <div class="landing-nav-links">
@@ -85,7 +88,7 @@
     <div class="header-content">
       <div class="logo-area" id="btnGoHome">
         <span class="logo-icon">🎤</span>
-        <h1 class="logo-title">CantaAí</h1>
+        <h1 class="logo-title">Canta<span class="logo-ai">Aí</span></h1>
         <span class="logo-badge">PRO</span>
       </div>
 
@@ -877,8 +880,11 @@
       <button class="modal-close btn-close-auth" aria-label="Fechar">✕</button>
       
       <div class="auth-header-block">
-        <div class="auth-logo-icon">🎤</div>
-        <h2 class="auth-title">CantaAí <span class="badge-pro">PRO</span></h2>
+        <div class="logo-area auth-logo-lockup">
+          <span class="logo-icon"></span>
+          <h2 class="logo-title auth-title">Canta<span class="logo-ai">Aí</span></h2>
+          <span class="logo-badge">PRO</span>
+        </div>
         <p class="auth-subtitle" id="authSubtitleText">Acesse sua conta ou crie um novo cadastro grátis</p>
       </div>
 
@@ -1386,6 +1392,8 @@
   <script src="js/sampleRepertoire.js?v=123"></script>
   <script src="js/transposer.js?v=123"></script>
   <script src="js/prompter.js?v=123"></script>
+  <script src="js/tomColor.js?v=5"></script>
+  <script src="js/brandIcons.js?v=2"></script>
   <script src="js/mediaPlayer.js?v=123"></script>
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>

@@ -6,3 +6,5 @@ scratch/
 .env
 *.log
 .chrome_temp/
+*.bak*
+Claude outputs/

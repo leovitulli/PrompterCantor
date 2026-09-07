@@ -4387,7 +4387,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (confirm('Deseja realmente sair da sua conta?')) {
           PrompterAuth.signOut().then(function () {
             showToast('Você saiu da sua conta.', 'info');
-            showLanding();
+            // Rota oficial: ao sair, volta para a página de vendas (landing_v3)
+            window.location.href = 'landing_v3.html';
           });
         }
       });
