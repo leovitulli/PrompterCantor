@@ -818,3 +818,47 @@ body .logo-title .logo-ai, body.light-mode .logo-title .logo-ai { color: var(--c
   .spb-info { flex: 0 0 auto !important; }
   .spb-btn-upgrade { font-size: 0.72rem !important; padding: 0 10px !important; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   MODAIS ROLÁVEIS — o cartão tinha altura máxima com
+   overflow:visible, então o botão de enviar (ex.: "Finalizar
+   Cadastro") ficava fora da tela e não havia como rolar.
+   ══════════════════════════════════════════════════════════ */
+.modal-card, .auth-modal-card, .editor-modal-card {
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+/* o painel admin já rola no corpo dele */
+.admin-modal-card { overflow: hidden !important; }
+/* o botão de enviar do cadastro/login fica sempre visível no rodapé do cartão */
+.btn-auth-submit {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 3 !important;
+  box-shadow: 0 -12px 20px var(--bg-card) !important;
+}
+
+@media (max-width: 720px) {
+  .modal { padding: 0 !important; align-items: flex-end !important; }
+  .modal-card, .auth-modal-card {
+    max-height: 92dvh !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom)) !important;
+  }
+  .auth-modal-card { padding-left: 1.1rem !important; padding-right: 1.1rem !important; }
+  .auth-header-block { gap: 4px !important; }
+  .auth-subtitle { font-size: 0.82rem !important; }
+  .form-group { margin-bottom: 0.75rem !important; }
+  .auth-input, .form-control { min-height: 46px !important; }
+  /* o botão de enviar fica sempre à mão, colado no rodapé do cartão */
+  .btn-auth-submit {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 3 !important;
+    min-height: 50px !important;
+    box-shadow: 0 -10px 18px var(--bg-card) !important;
+  }
+}
