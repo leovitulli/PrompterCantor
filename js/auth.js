@@ -321,8 +321,15 @@
           if (typeof window.PrompterAdmin.renderUsersTable === 'function') {
             window.PrompterAdmin.renderUsersTable();
             window.PrompterAdmin.updateMetrics();
+            if (typeof window.PrompterAdmin.updateSignupsBadge === 'function') {
+              window.PrompterAdmin.updateSignupsBadge();
+            }
           }
         }
+
+        try {
+          window.dispatchEvent(new CustomEvent('cantaai:new_user_signup', { detail: singerItem }));
+        } catch (e) {}
 
         // Sincronizar no System Registry na nuvem
         var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
@@ -704,8 +711,18 @@
         if (btnProfileAdmin) {
           if (isAdm) {
             btnProfileAdmin.classList.remove('hidden');
+            if (window.PrompterAdmin) {
+              if (typeof window.PrompterAdmin.updateSignupsBadge === 'function') {
+                window.PrompterAdmin.updateSignupsBadge();
+              }
+              if (typeof window.PrompterAdmin.setupRealtimeSignups === 'function') {
+                window.PrompterAdmin.setupRealtimeSignups();
+              }
+            }
           } else {
             btnProfileAdmin.classList.add('hidden');
+            var alertDot = document.getElementById('adminHeaderAlertDot');
+            if (alertDot) alertDot.classList.add('hidden');
           }
         }
 

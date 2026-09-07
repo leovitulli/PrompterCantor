@@ -103,6 +103,8 @@
       this.createAdminModalHTML();
       this.bindEvents();
       this.updateLandingPricingUI();
+      this.setupRealtimeSignups();
+      this.updateSignupsBadge();
     },
 
     loadStoredData: function () {
@@ -358,6 +360,21 @@
 
               '<!-- ABA 1: CANTORES & CLIENTES -->' +
               '<div id="adminTabClients" class="admin-tab-content">' +
+                '<!-- BANNER DE ALERTA DE NOVO CADASTRO -->' +
+                '<div id="admRecentSignupsBanner" class="adm-recent-signups-banner hidden">' +
+                  '<div class="adm-rsb-left">' +
+                    '<span class="adm-rsb-icon">🔔</span>' +
+                    '<div class="adm-rsb-text">' +
+                      '<strong id="admRsbTitle">Novo Cadastro na Plataforma!</strong>' +
+                      '<span id="admRsbDetails">Carregando detalhes...</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="adm-rsb-actions">' +
+                    '<a id="admRsbWhatsApp" href="#" target="_blank" class="btn-rsb btn-rsb-wa" title="Chamar no WhatsApp direto">💬 WhatsApp</a>' +
+                    '<button type="button" id="admRsbMarkSeen" class="btn-rsb btn-rsb-seen">Marcar Visto</button>' +
+                  '</div>' +
+                '</div>' +
+
                 '<div class="admin-toolbar-row">' +
                   '<form class="admin-search-wrapper" autocomplete="off" onsubmit="return false;" style="margin:0;">' +
                     '<input type="text" name="fake_admin_user" style="display:none;" tabindex="-1">' +
@@ -365,11 +382,13 @@
                   '</form>' +
                   '<div class="admin-filter-pills">' +
                     '<button class="filter-pill active" data-filter="all">Todos (<span id="countPillAll">0</span>)</button>' +
+                    '<button class="filter-pill" data-filter="new" style="color: #f87171; font-weight: 800;">🔔 Novos (<span id="countPillNew">0</span>)</button>' +
                     '<button class="filter-pill" data-filter="pro">Assinantes PRO (<span id="countPillPro">0</span>)</button>' +
                     '<button class="filter-pill" data-filter="live">Ativos / Ao Vivo (<span id="countPillLive">0</span>)</button>' +
                     '<button class="filter-pill" data-filter="free">Plano Free (<span id="countPillFree">0</span>)</button>' +
                   '</div>' +
                   '<div class="admin-toolbar-buttons">' +
+                    '<button id="btnMarkAllSignupsSeen" class="btn btn-outline btn-sm" title="Marcar todos os cadastros como visualizados">👁️ Marcar Vistos</button>' +
                     '<button id="btnOpenNewSingerModal" class="btn btn-primary btn-sm">➕ Novo Cantor VIP</button>' +
                     '<button id="btnExportCSV" class="btn btn-outline btn-sm">📊 Exportar CSV</button>' +
                     '<button id="btnRefreshAdminData" class="btn btn-secondary btn-sm">🔄 Atualizar</button>' +
@@ -747,6 +766,20 @@
           if (sInput) sInput.value = '';
           PrompterAdmin.loadDashboardData();
           if (window.showToast) window.showToast('🔄 Lista de cantores atualizada com o banco de dados!', 'success');
+        });
+      }
+
+      var btnMarkSeen = document.getElementById('admRsbMarkSeen');
+      if (btnMarkSeen) {
+        btnMarkSeen.addEventListener('click', function () {
+          PrompterAdmin.markAllSignupsAsSeen();
+        });
+      }
+
+      var btnMarkAll = document.getElementById('btnMarkAllSignupsSeen');
+      if (btnMarkAll) {
+        btnMarkAll.addEventListener('click', function () {
+          PrompterAdmin.markAllSignupsAsSeen();
         });
       }
 
@@ -1208,6 +1241,7 @@
         if (sInput) sInput.value = '';
         this.switchTab(preferredTab || 'clients');
         this.loadDashboardData();
+        this.updateSignupsBadge();
         this.renderCouponsTable();
         this.loadPricingForm();
       }
@@ -1223,6 +1257,9 @@
       var btnDel = document.getElementById('btnDeleteSinger');
 
       if (!modal) return;
+      if (user) {
+        this.markUserAsSeen(user.id || user.email);
+      }
 
       // Popula Datalist e Select rápido de Cupons disponíveis
       var datalist = document.getElementById('availableCouponsList');
@@ -1818,11 +1855,13 @@
       var pPro = document.getElementById('countPillPro');
       var pLive = document.getElementById('countPillLive');
       var pFree = document.getElementById('countPillFree');
+      var pNew = document.getElementById('countPillNew');
 
       if (pAll) pAll.innerText = total;
       if (pPro) pPro.innerText = pro;
       if (pLive) pLive.innerText = online;
       if (pFree) pFree.innerText = free;
+      if (pNew) pNew.innerText = this.getUnreadSignups().length;
 
       // Buscar contagem real de músicas e repertórios no banco local e nuvem
       if (window.PrompterDB) {
@@ -1842,6 +1881,7 @@
       if (!tbody) return;
 
       var filtered = allUserData.filter(function (u) {
+        if (currentFilter === 'new' && !PrompterAdmin.isUserNew(u)) return false;
         if (currentFilter === 'pro' && u.plan_tier !== 'pro') return false;
         if (currentFilter === 'free' && u.plan_tier !== 'free') return false;
         if (currentFilter === 'live' && !u.is_online) return false;
@@ -1910,7 +1950,7 @@
               '<div class="admin-user-cell">' +
                 '<div class="admin-user-avatar">' + initial + '</div>' +
                 '<div class="admin-user-details">' +
-                  '<span class="admin-user-name">' + escapeHtml(user.name) + '</span>' +
+                  '<span class="admin-user-name">' + escapeHtml(user.name) + (PrompterAdmin.isUserNew(user) ? ' <span class="badge-new-signup">✨ NOVO</span>' : '') + '</span>' +
                   '<span class="admin-user-email">' + escapeHtml(user.email) + '</span>' +
                 '</div>' +
               '</div>' +
@@ -1935,7 +1975,10 @@
         row.addEventListener('click', function () {
           var uId = this.getAttribute('data-user-id');
           var userObj = allUserData.find(function(u) { return u.id === uId; });
-          if (userObj) PrompterAdmin.openSingerModal(userObj);
+          if (userObj) {
+            PrompterAdmin.markUserAsSeen(userObj.id || userObj.email);
+            PrompterAdmin.openSingerModal(userObj);
+          }
         });
       });
 
@@ -2516,6 +2559,229 @@
           if (window.showToast) window.showToast('Erro ao importar música.', 'warning');
         });
       }
+    },
+
+    getSeenUserIds: function () {
+      try {
+        var raw = localStorage.getItem('cantaai_admin_seen_users');
+        var list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
+    },
+
+    isUserNew: function (user) {
+      if (!user) return false;
+      var cleanEmail = (user.email || '').toLowerCase().trim();
+      if (cleanEmail === 'leovitulli@gmail.com') return false;
+      var seen = this.getSeenUserIds();
+      if (user.id && seen.indexOf(user.id) !== -1) return false;
+      if (cleanEmail && seen.indexOf(cleanEmail) !== -1) return false;
+      return true;
+    },
+
+    getUnreadSignups: function () {
+      var self = this;
+      return allUserData.filter(function (u) {
+        return self.isUserNew(u);
+      });
+    },
+
+    markUserAsSeen: function (userIdOrEmail) {
+      if (!userIdOrEmail) return;
+      var seen = this.getSeenUserIds();
+      var key = String(userIdOrEmail).toLowerCase().trim();
+      if (seen.indexOf(key) === -1) {
+        seen.push(key);
+        localStorage.setItem('cantaai_admin_seen_users', JSON.stringify(seen));
+      }
+      this.updateSignupsBadge();
+      this.renderUsersTable();
+    },
+
+    markAllSignupsAsSeen: function () {
+      var seen = this.getSeenUserIds();
+      allUserData.forEach(function (u) {
+        if (u.id && seen.indexOf(u.id) === -1) seen.push(u.id);
+        if (u.email && seen.indexOf(u.email.toLowerCase().trim()) === -1) seen.push(u.email.toLowerCase().trim());
+      });
+      localStorage.setItem('cantaai_admin_seen_users', JSON.stringify(seen));
+      this.updateSignupsBadge();
+      this.renderUsersTable();
+      if (window.showToast) window.showToast('✅ Todos os cadastros foram marcados como visualizados.', 'success');
+    },
+
+    updateSignupsBadge: function () {
+      var unread = this.getUnreadSignups();
+      var count = unread.length;
+
+      // 1. Badge no item do menu de perfil
+      var admBadge = document.getElementById('adminNewSignupsBadge');
+      if (admBadge) {
+        if (count > 0) {
+          admBadge.innerText = count + (count === 1 ? ' novo' : ' novos');
+          admBadge.classList.remove('hidden');
+        } else {
+          admBadge.classList.add('hidden');
+        }
+      }
+
+      // 2. Bolinha de alerta pulsante no header principal
+      var alertDot = document.getElementById('adminHeaderAlertDot');
+      if (alertDot) {
+        if (count > 0) {
+          alertDot.classList.remove('hidden');
+          alertDot.title = count + ' novo(s) cantor(es) cadastrado(s) na plataforma!';
+        } else {
+          alertDot.classList.add('hidden');
+        }
+      }
+
+      // 3. Contador na pílula de filtro da aba Cantores
+      var countPill = document.getElementById('countPillNew');
+      if (countPill) countPill.innerText = count;
+
+      // 4. Banner de alerta de novo cadastro no topo do painel
+      var banner = document.getElementById('admRecentSignupsBanner');
+      if (banner) {
+        if (count > 0) {
+          var latest = unread[0];
+          var titleEl = document.getElementById('admRsbTitle');
+          var detailsEl = document.getElementById('admRsbDetails');
+          var waBtn = document.getElementById('admRsbWhatsApp');
+
+          if (titleEl) {
+            titleEl.innerHTML = '🔔 Novo Cantor Cadastrado: <strong>' + escapeHtml(latest.name) + '</strong> (' + escapeHtml(latest.singer_code || '@cantor') + ')';
+          }
+          if (detailsEl) {
+            detailsEl.innerHTML = 'Plano: <strong>' + escapeHtml(latest.plan_type || '⚡ PLANO FREE') + '</strong> • ' +
+              (latest.phone ? ('WhatsApp: <strong>' + escapeHtml(latest.phone) + '</strong>') : 'Sem telefone') +
+              ' • E-mail: ' + escapeHtml(latest.email);
+          }
+          if (waBtn) {
+            var cleanPhone = (latest.phone || '').replace(/\D/g, '');
+            if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = '55' + cleanPhone;
+            if (cleanPhone) {
+              waBtn.href = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent('Olá ' + latest.name + '! Seja muito bem-vindo(a) ao CantaAí PRO!');
+              waBtn.style.display = 'inline-flex';
+            } else {
+              waBtn.style.display = 'none';
+            }
+          }
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      }
+    },
+
+    playSignupChime: function () {
+      try {
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        var ctx = new AudioCtx();
+        var now = ctx.currentTime;
+        
+        // F#5 (739.99 Hz)
+        var osc1 = ctx.createOscillator();
+        var gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(739.99, now);
+        gain1.gain.setValueAtTime(0, now);
+        gain1.gain.linearRampToValueAtTime(0.2, now + 0.05);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        // C#6 (1108.73 Hz)
+        var osc2 = ctx.createOscillator();
+        var gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1108.73, now + 0.12);
+        gain2.gain.setValueAtTime(0, now + 0.12);
+        gain2.gain.linearRampToValueAtTime(0.25, now + 0.18);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.6);
+      } catch (e) {}
+    },
+
+    handleIncomingNewUser: function (userData) {
+      if (!userData || !userData.email) return;
+      var cleanEmail = (userData.email || '').toLowerCase().trim();
+      if (cleanEmail === 'leovitulli@gmail.com') return;
+
+      var existIdx = allUserData.findIndex(function (u) {
+        return (userData.id && u.id === userData.id) || (u.email && u.email.toLowerCase().trim() === cleanEmail);
+      });
+
+      var sCode = normalizeSingerCode(userData.singer_code, cleanEmail);
+      var singerItem = {
+        id: userData.id || ('user-' + Date.now()),
+        name: userData.display_name || userData.name || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        phone: userData.phone || '',
+        cpf: userData.cpf || '',
+        instagram: userData.instagram || '',
+        singer_code: sCode,
+        plan_tier: userData.plan_tier || 'free',
+        plan_type: userData.plan_type || (userData.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
+        is_online: true,
+        status_text: '🟢 Conectado e Ativo',
+        reps_count: 0,
+        songs_count: 0,
+        last_seen: 'Agora mesmo',
+        created_at: userData.created_at || new Date().toISOString()
+      };
+
+      if (existIdx >= 0) {
+        allUserData[existIdx] = Object.assign({}, allUserData[existIdx], singerItem);
+      } else {
+        allUserData.unshift(singerItem);
+      }
+      this.saveStoredUsers();
+
+      // Som e notificação toast
+      this.playSignupChime();
+      if (window.showToast) {
+        window.showToast('🔔 Novo Cantor Cadastrado: ' + singerItem.name + ' (' + singerItem.singer_code + ') no ' + singerItem.plan_type + '!', 'success');
+      }
+
+      this.updateMetrics();
+      this.updateSignupsBadge();
+      this.renderUsersTable();
+    },
+
+    setupRealtimeSignups: function () {
+      if (window._adminRealtimeListening) return;
+      var self = this;
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb && typeof sb.channel === 'function') {
+        try {
+          sb.channel('admin-signups-realtime')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, function (payload) {
+              if (payload && payload.new) {
+                self.handleIncomingNewUser(payload.new);
+              }
+            })
+            .subscribe();
+          window._adminRealtimeListening = true;
+        } catch (err) {
+          console.warn('Falha ao conectar Realtime profiles:', err);
+        }
+      }
+
+      // Escutar evento local e cross-tab
+      window.addEventListener('cantaai:new_user_signup', function (e) {
+        if (e && e.detail) {
+          self.handleIncomingNewUser(e.detail);
+        }
+      });
     },
 
     exportCSV: function () {

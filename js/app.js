@@ -3704,9 +3704,15 @@ document.addEventListener('DOMContentLoaded', function () {
             couponCode: couponCode,
             email: email,
             password: pass
-          }).then(function () {
-            showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
+          }).then(function (res) {
+            closeAuthModal();
             showApp();
+            showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
+            openWelcomeOnboardingModal({
+              name: name,
+              singerCode: singerCode,
+              planType: (res && res.profile && res.profile.plan_type) ? res.profile.plan_type : '⚡ PLANO FREE'
+            });
           });
         }).catch(function (err) {
           showToast(err.message || 'Erro ao criar conta.', 'warning');
@@ -3720,6 +3726,53 @@ document.addEventListener('DOMContentLoaded', function () {
           showToast(err.message || 'E-mail ou senha incorretos.', 'warning');
         });
       }
+    }
+
+    // ── MODAL DE BOAS-VINDAS & GUIA INICIAL (ONBOARDING) ──
+    var welcomeModal = document.getElementById('welcomeOnboardingModal');
+    var welcomeOverlay = document.getElementById('welcomeOnboardingOverlay');
+    var btnWelcomeStart = document.getElementById('btnWelcomeStartRepertoire');
+    var btnWelcomeClose = document.getElementById('btnWelcomeClose');
+    var welcomeGreeting = document.getElementById('welcomeUserGreeting');
+    var welcomeBadge = document.getElementById('welcomePlanBadge');
+    var welcomeDesc = document.getElementById('welcomePlanDesc');
+
+    function openWelcomeOnboardingModal(data) {
+      if (!welcomeModal) return;
+      var name = (data && data.name) ? data.name : 'Cantor';
+      var singerCode = (data && data.singerCode) ? data.singerCode : '';
+      var planType = (data && data.planType) ? data.planType : '⚡ PLANO FREE';
+      var isPro = planType.indexOf('PRO') !== -1 || planType.indexOf('VIP') !== -1;
+
+      if (welcomeGreeting) {
+        welcomeGreeting.innerHTML = 'Olá, <strong>' + escapeHtml(name) + '</strong>! Seu @Login oficial é <strong>' + escapeHtml(singerCode) + '</strong>.';
+      }
+      if (welcomeBadge) {
+        welcomeBadge.innerText = planType;
+        welcomeBadge.style.color = isPro ? '#fbbf24' : 'var(--tom-G-ink)';
+      }
+      if (welcomeDesc) {
+        if (isPro) {
+          welcomeDesc.innerText = '💎 Parabéns! Você tem Acesso Total Ilimitado a todas as músicas, cifras, modais e transposição em tempo real!';
+        } else {
+          welcomeDesc.innerText = '⚡ Seu plano permite cadastrar repertórios e testar todo o poder da rolagem automática inteligente e modo offline!';
+        }
+      }
+      welcomeModal.classList.remove('hidden');
+    }
+
+    function closeWelcomeOnboardingModal() {
+      if (welcomeModal) welcomeModal.classList.add('hidden');
+    }
+
+    if (welcomeOverlay) welcomeOverlay.addEventListener('click', closeWelcomeOnboardingModal);
+    if (btnWelcomeClose) btnWelcomeClose.addEventListener('click', closeWelcomeOnboardingModal);
+    if (btnWelcomeStart) {
+      btnWelcomeStart.addEventListener('click', function () {
+        closeWelcomeOnboardingModal();
+        var btnNewRep = document.getElementById('btnNewRepertoire');
+        if (btnNewRep) btnNewRep.click();
+      });
     }
 
     if (btnSubmitAuth) {

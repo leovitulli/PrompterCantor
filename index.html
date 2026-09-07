@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/style.css?v=123">
   <link rel="stylesheet" href="css/admin.css?v=121">
   <link rel="stylesheet" href="css/landing.css?v=121">
-  <link rel="stylesheet" href="css/brand.css?v=31">
+  <link rel="stylesheet" href="css/brand.css?v=33">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
   <script>
@@ -138,6 +138,7 @@
               <span class="user-profile-email" id="userProfileHeaderEmail">cantor@cantaaipro.com</span>
               <span class="user-profile-plan-tag" id="userProfileHeaderPlan">PRO</span>
             </div>
+            <span id="adminHeaderAlertDot" class="admin-header-alert-dot hidden" title="Novo cadastro na plataforma!"></span>
             <span class="dropdown-arrow">▾</span>
           </button>
 
@@ -165,6 +166,7 @@
             <!-- Ações do Menu -->
             <button id="btnProfileAdminGovernance" class="upm-item upm-item-admin hidden">
               <span class="upm-item-icon">👑</span> Governança Admin
+              <span id="adminNewSignupsBadge" class="admin-signups-badge hidden">0 novos</span>
             </button>
 
             <button id="btnProfileAccountDetails" class="upm-item">
@@ -1135,7 +1137,7 @@
           <span style="font-size: 1.5rem;">👑</span>
           <div>
             <h3 style="margin: 0; font-size: 1.25rem;">Assinatura CantaAí PRO & Governança Jurídica</h3>
-            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Acesso ilimitado, transposição no palco e segurança contratual</p>
+            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Acesso ilimitado, transposição nos shows e segurança contratual</p>
           </div>
         </div>
         <button class="modal-close" id="btnCloseCheckoutModal">✕</button>
@@ -1378,6 +1380,61 @@
     </div>
   </div>
 
+  <!-- ─── MODAL DE BOAS-VINDAS & GUIA DE INÍCIO RÁPIDO (ONBOARDING) ─── -->
+  <div id="welcomeOnboardingModal" class="modal hidden" style="z-index: 1000030;">
+    <div class="modal-overlay" id="welcomeOnboardingOverlay"></div>
+    <div class="modal-card welcome-modal-card">
+      <div class="welcome-header">
+        <div class="welcome-icon-badge">🎉</div>
+        <h2 class="welcome-title">Bem-vindo ao CantaAí PRO!</h2>
+        <p class="welcome-subtitle" id="welcomeUserGreeting">Sua conta de cantor foi criada com sucesso.</p>
+      </div>
+
+      <div class="welcome-body">
+        <!-- Card do Plano Liberado -->
+        <div class="welcome-plan-card" id="welcomePlanCard">
+          <div class="welcome-plan-badge" id="welcomePlanBadge">⚡ PLANO FREE ATIVADO</div>
+          <div class="welcome-plan-desc" id="welcomePlanDesc">Repertórios, músicas e cifras com rolagem automática inteligente liberados!</div>
+        </div>
+
+        <!-- Guia em 3 Passos -->
+        <div class="welcome-steps-title">🚀 3 passos rápidos para seu show:</div>
+        <div class="welcome-steps-grid">
+          <div class="welcome-step-item">
+            <div class="welcome-step-num">1</div>
+            <div class="welcome-step-content">
+              <strong>Crie seu Repertório</strong>
+              <span>Defina o nome do seu repertório ou bloco (ex: Show Barzinho, Casamento, Culto).</span>
+            </div>
+          </div>
+          <div class="welcome-step-item">
+            <div class="welcome-step-num">2</div>
+            <div class="welcome-step-content">
+              <strong>Adicione Músicas & Cifras</strong>
+              <span>Digite, cole ou importe letras com cifras, tom original e andamento (BPM).</span>
+            </div>
+          </div>
+          <div class="welcome-step-item">
+            <div class="welcome-step-num">3</div>
+            <div class="welcome-step-content">
+              <strong>Abra o Prompter</strong>
+              <span>Use a rolagem automática inteligente, transponha o tom com 1 toque e cante até 100% offline.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-footer">
+        <button type="button" id="btnWelcomeStartRepertoire" class="btn btn-primary btn-welcome-cta">
+          🚀 Criar Primeiro Repertório
+        </button>
+        <button type="button" id="btnWelcomeClose" class="btn btn-outline btn-welcome-skip">
+          Explorar a Plataforma
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- NOTIFICAÇÕES TOAST -->
   <div id="toastContainer" class="toast-container"></div>
 
@@ -1386,8 +1443,8 @@
   <script src="js/config.js?v=123"></script>
   <script src="js/supabaseClient.js?v=123"></script>
   <script src="js/db.js?v=123"></script>
-  <script src="js/auth.js?v=123"></script>
-  <script src="js/adminPanel.js?v=123"></script>
+  <script src="js/auth.js?v=124"></script>
+  <script src="js/adminPanel.js?v=124"></script>
   <script src="js/textParser.js?v=123"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
   <script src="js/transposer.js?v=123"></script>
@@ -1398,6 +1455,6 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/app.js?v=124"></script>
+  <script src="js/app.js?v=125"></script>
 </body>
 </html>
