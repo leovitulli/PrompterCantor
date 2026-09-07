@@ -688,3 +688,42 @@ body.light-mode .modal-overlay {
   color: var(--text-main) !important;
 }
 .admin-modal-card { background: var(--bg-primary) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   TELA DE ENTRADA (vinda da página de vendas): sempre escura,
+   como a página de vendas. Dentro do app vale a preferência do usuário.
+   ══════════════════════════════════════════════════════════ */
+html.canta-tela-entrada body,
+html.canta-tela-entrada body.light-mode {
+  --bg-primary: var(--ca-breu);
+  --bg-secondary: var(--ca-grafite);
+  --bg-card: var(--ca-grafite);
+  --bg-card-hover: #1D1F25;
+  --border-color: var(--ca-linha-escura);
+  --text-main: var(--ca-giz);
+  --text-muted: var(--ca-giz-muted);
+  --text-inverse: var(--ca-breu);
+  --ca-logo-azul: #67A3FF;
+  --tom-G-ink: #83BDFF;
+  --tom-G-soft: #141F32;
+  background: var(--ca-breu) !important;
+  color: var(--ca-giz) !important;
+}
+html.canta-tela-entrada .saas-plan-banner-bar,
+html.canta-tela-entrada .app-header { display: none !important; }
+html.canta-tela-entrada .modal-overlay {
+  background: rgba(15, 16, 19, 0.72) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* o wordmark nunca usa gradiente (style.css força um no tema claro) */
+body .logo-title, body.light-mode .logo-title, html.canta-tela-entrada body .logo-title, html.canta-tela-entrada body.light-mode .logo-title {
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--text-main) !important;
+}
+body .logo-title .logo-ai, body.light-mode .logo-title .logo-ai { color: var(--ca-logo-azul) !important; -webkit-text-fill-color: var(--ca-logo-azul) !important; }

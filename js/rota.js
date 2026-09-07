@@ -29,6 +29,30 @@
   css.textContent = '#landingPageSection, #landingHeaderNav { display: none !important; }';
   (document.head || document.documentElement).appendChild(css);
 
+  // Entrar/Criar conta: continua sendo a página de vendas (escura), com o
+  // formulário por cima. Dentro do app, aí sim vale a preferência do usuário.
+  if (querAuth && !logado) {
+    document.documentElement.classList.add('canta-tela-entrada');
+    // Fechou o formulário sem entrar? Volta para a página de vendas.
+    var voltar = function () {
+      setTimeout(function () {
+        var temSessao = false;
+        try { temSessao = !!localStorage.getItem('prompter_auth_user'); } catch (e) {}
+        if (!temSessao) window.location.href = 'landing_v3.html';
+      }, 120);
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+      var modal = document.getElementById('authModal')
+        || (document.querySelector('.auth-modal-card') && document.querySelector('.auth-modal-card').closest('.modal'));
+      if (!modal) return;
+      var fechar = modal.querySelector('.btn-close-auth, .modal-close');
+      if (fechar) fechar.addEventListener('click', voltar);
+      var overlay = modal.querySelector('.modal-overlay');
+      if (overlay) overlay.addEventListener('click', voltar);
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') voltar(); });
+    });
+  }
+
   function esconder() {
     ['landingPageSection', 'landingHeaderNav'].forEach(function (id) {
       var el = document.getElementById(id);

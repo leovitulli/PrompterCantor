@@ -156,13 +156,20 @@ details p { margin-top: 10px; color: var(--giz-muted); font-size: 16px; max-widt
 /* ── v2: logo reativo, afinador, demo, seção da marca ── */
 :root { --tom-chip: #7DB7FF; --tom-chip-fg: #161513; }
 .wordmark { font-family: var(--display); font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--giz); white-space: nowrap; }
-.wm-ai { color: var(--wm, var(--tom-ink)); transition: color .25s; }
+/* o logo tem cor fixa da marca — quem responde ao tom é a interface */
+.wm-ai { color: var(--wm, #67A3FF); }
+.wm-pro { font-family: var(--body); font-weight: 600; font-size: 0.42em; letter-spacing: 0.16em; color: #67A3FF; align-self: flex-start; margin-left: 0.25em; margin-top: 0.15em; line-height: 1; }
+.nav-logo, .footer-logo { align-items: baseline; }
+.nav-logo .afinador, .footer-logo .afinador { color: #67A3FF; align-self: center; }
 .nav-logo { display: inline-flex; align-items: center; gap: 8px; font-size: 26px; }
 .nav-logo img { display: none; }
 .afinador { width: 28px; height: 28px; flex-shrink: 0; }
-.afinador .tk { stroke: var(--giz); opacity: .35; transition: opacity .2s, stroke .2s; }
-.afinador .tk.on { stroke: var(--tom-ink); opacity: 1; stroke-width: 5; }
-.afinador .acento { stroke: var(--tom-ink); transition: stroke .25s; }
+.afinador .tk { stroke: currentColor; opacity: .4; transition: opacity .2s; }
+.afinador .tk.on { opacity: 1; stroke-width: 5; }
+.marca-tuner .afinador { color: var(--tom-ink); }
+.marca-tuner .afinador .tk { stroke: var(--giz); }
+.marca-tuner .afinador .tk.on { stroke: var(--tom-ink); }
+.afinador .acento { stroke: currentColor; }
 .footer-logo { display: inline-flex; align-items: center; gap: 8px; font-size: 22px; height: auto; }
 
 /* demo */
