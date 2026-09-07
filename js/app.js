@@ -775,9 +775,9 @@ document.addEventListener('DOMContentLoaded', function () {
       var trackNumStr = trackNum < 10 ? '0' + trackNum : '' + trackNum;
 
       var metaParts = [];
-      if (song.artist) metaParts.push('🎤 ' + escapeHtml(song.artist));
-      if (song.composer) metaParts.push('✍️ ' + escapeHtml(song.composer));
-      if (preview) metaParts.push('💬 ' + escapeHtml(preview));
+      if (song.artist) metaParts.push('<span class="meta-part meta-artista">🎤 ' + escapeHtml(song.artist) + '</span>');
+      if (song.composer) metaParts.push('<span class="meta-part meta-compositor">✍️ ' + escapeHtml(song.composer) + '</span>');
+      if (preview) metaParts.push('<span class="meta-part meta-previa">💬 ' + escapeHtml(preview) + '</span>');
 
       var svgUp = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
       var svgDown = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function () {
               (song.youtubeUrl ? '<span class="badge badge-yt-mini" title="Vídeo no YouTube">▶ Vídeo</span>' : '') +
               (song.audioBlob || song.audioUrl ? '<span class="song-audio-dot" title="Tem áudio guia local">🎵</span>' : '') +
             '</div>' +
-            (metaParts.length > 0 ? '<div class="song-row-meta">' + metaParts.join(' <span class="meta-sep">•</span> ') + '</div>' : '') +
+            (metaParts.length > 0 ? '<div class="song-row-meta">' + metaParts.join('<span class="meta-sep">•</span>') + '</div>' : '') +
           '</div>' +
           '<div class="song-row-actions">' +
             '<button class="btn-icon-action btn-move-up" data-song-id="' + song.id + '" title="Mover para Cima">' + svgUp + '</button>' +

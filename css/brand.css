@@ -434,8 +434,6 @@ body.light-mode { --ca-logo-azul: #0145A7; }
 .upm-item-danger { color: var(--text-muted) !important; }
 .upm-item-danger:hover { color: #E5484D !important; background: rgba(229, 72, 77, 0.10) !important; }
 /* barra de plano no topo do dashboard */
-.saas-plan-banner-bar { background: var(--bg-secondary) !important; border-bottom: 1px solid var(--border-color) !important; }
-.spb-progress-fill { background: var(--tom-G-ink) !important; }
 
 /* ══════════════════════════════════════════════════════════
    PAINEL ADMIN (admin.css) — chapado, breu/grafite, azul da marca
@@ -501,8 +499,6 @@ body.light-mode .landing-container .feature-card, body.light-mode .landing-conta
    CORREÇÕES DA AUDITORIA AUTOMÁTICA (contraste + cores antigas)
    ══════════════════════════════════════════════════════════ */
 /* barra do plano (modo claro: texto ficava branco sobre branco) */
-.spb-message, .spb-message strong, .spb-info { color: var(--text-main) !important; text-shadow: none !important; }
-.spb-message strong { color: var(--tom-G-ink) !important; }
 /* lista de músicas: números, contagem e botões de ação */
 .rsv-count, .song-row-number, .btn-icon-action, .song-row-meta, .meta-sep { color: var(--text-muted) !important; }
 .btn-icon-action { background: transparent !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; }
@@ -727,3 +723,98 @@ body .logo-title, body.light-mode .logo-title, html.canta-tela-entrada body .log
   color: var(--text-main) !important;
 }
 body .logo-title .logo-ai, body.light-mode .logo-title .logo-ai { color: var(--ca-logo-azul) !important; -webkit-text-fill-color: var(--ca-logo-azul) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   LISTA DE MÚSICAS: a linha de informações é UMA linha de texto
+   (era flex, e cada trecho virava um item que encolhia até
+    quebrar letra a letra no celular)
+   ══════════════════════════════════════════════════════════ */
+.song-row-meta {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  white-space: normal !important;
+  overflow: hidden !important;
+  line-height: 1.5 !important;
+  max-width: 100% !important;
+}
+.song-row-meta .ca-ico-wrap { display: inline-flex !important; vertical-align: -0.15em; }
+.meta-part { display: inline; }
+.meta-sep { color: var(--border-color) !important; margin: 0 0.4rem; }
+.song-row-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Celular: linhas mais enxutas e legíveis ── */
+@media (max-width: 720px) {
+  .song-list-row { padding: 0.7rem 0.85rem !important; gap: 0.6rem !important; align-items: center !important; }
+  .song-drag-handle { display: none !important; }
+  .song-row-number { min-width: 26px !important; width: 26px !important; height: 26px !important; font-size: 0.72rem !important; }
+  .song-row-title { font-size: 0.98rem !important; }
+  .song-row-title-line { gap: 0.4rem !important; flex-wrap: nowrap !important; overflow: hidden; }
+  .song-row-meta { font-size: 0.74rem !important; }
+  /* no celular a linha mostra só o artista — compositor e prévia ficam na música */
+  .meta-compositor, .meta-previa, .song-row-meta .meta-sep { display: none !important; }
+  .song-row-actions { gap: 0.25rem !important; }
+  .btn-icon-action { width: 30px !important; height: 30px !important; min-width: 30px !important; }
+  .btn-icon-action { width: 28px !important; height: 28px !important; min-width: 28px !important; font-size: 0.8rem !important; }
+
+  /* cabeçalho do repertório */
+  .rsv-header { padding: 0.85rem !important; gap: 0.6rem !important; }
+  .rsv-title { font-size: 1.35rem !important; }
+  .rsv-actions { gap: 0.4rem !important; flex-wrap: wrap !important; }
+  .rsv-actions .btn { height: 36px !important; padding: 0 10px !important; font-size: 0.78rem !important; }
+
+  /* topo do app */
+  .app-header { padding: 0 0.85rem !important; }
+  .logo-title { font-size: 1.15rem !important; }
+  .search-box-container { min-width: 0 !important; }
+  .repertoires-grid { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
+}
+
+/* ── Celular: topo compacto (o conteúdo começa mais cedo) ── */
+@media (max-width: 720px) {
+  .header-content { gap: 0.5rem !important; padding: 0.5rem 0 !important; }
+  .app-header { height: auto !important; }
+  .user-profile-email { max-width: 90px !important; overflow: hidden; text-overflow: ellipsis; }
+  .rsv-title-block { text-align: left !important; }
+  .rsv-header { flex-direction: column !important; align-items: stretch !important; }
+  .rsv-nav .btn-back { align-self: flex-start !important; }
+}
+
+@media (max-width: 520px) {
+}
+
+/* ══════════════════════════════════════════════════════════
+   BARRA DO PLANO — uma linha só, previsível em qualquer largura
+   selo do plano à esquerda · contagem no meio (some no celular)
+   · ação à direita
+   ══════════════════════════════════════════════════════════ */
+.saas-plan-banner-bar { background: var(--bg-secondary) !important; border-bottom: 1px solid var(--border-color) !important; box-shadow: none !important; backdrop-filter: none !important; padding: 0.5rem 1.25rem !important; }
+.spb-inner { display: flex !important; align-items: center !important; gap: 0.75rem !important; flex-wrap: nowrap !important; max-width: 1400px !important; margin: 0 auto !important; }
+.spb-info { display: flex !important; align-items: center !important; gap: 0.6rem !important; flex: 1 1 auto !important; min-width: 0 !important; flex-wrap: nowrap !important; }
+.spb-badge, .spb-badge-free, .spb-badge-trial {
+  flex: 0 0 auto !important; height: 24px !important; display: inline-flex !important; align-items: center !important; gap: 5px !important;
+  padding: 0 9px !important; border-radius: 4px !important; background: transparent !important; color: var(--text-muted) !important;
+  border: 1px solid var(--border-color) !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important;
+  font-size: 0.66rem !important; letter-spacing: 0.08em !important; white-space: nowrap !important;
+}
+.spb-message { flex: 1 1 auto !important; min-width: 0 !important; display: block !important; font-size: 0.78rem !important; color: var(--text-main) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-shadow: none !important; }
+.spb-message strong { display: inline !important; color: var(--tom-G-ink) !important; }
+.spb-progress-box { flex: 0 0 120px !important; }
+.spb-progress-fill { background: var(--tom-G-ink) !important; }
+.spb-actions { flex: 0 0 auto !important; display: flex !important; margin-left: auto !important; }
+.spb-btn-upgrade { height: 32px !important; padding: 0 14px !important; font-size: 0.78rem !important; border-radius: 8px !important; background: var(--tom-G-fill) !important; color: #161513 !important; border: none !important; box-shadow: none !important; white-space: nowrap !important; }
+@media (max-width: 768px) {
+  /* o style.css empilha a barra em coluna no celular; aqui ela volta a ser uma linha */
+  .saas-plan-banner-bar { padding: 0.45rem 0.85rem !important; }
+  .spb-inner { flex-direction: row !important; align-items: center !important; gap: 0.6rem !important; }
+  .spb-info { flex-direction: row !important; align-items: center !important; width: auto !important; gap: 0.5rem !important; }
+  .spb-progress-box { display: none !important; }
+  .spb-message { font-size: 0.72rem !important; line-height: 1.4 !important; }
+  .spb-actions { width: auto !important; }
+  .spb-btn-upgrade { width: auto !important; min-height: 32px !important; height: 32px !important; padding: 0 12px !important; font-size: 0.74rem !important; }
+}
+@media (max-width: 520px) {
+  .spb-message { display: none !important; }
+  .spb-info { flex: 0 0 auto !important; }
+  .spb-btn-upgrade { font-size: 0.72rem !important; padding: 0 10px !important; }
+}
