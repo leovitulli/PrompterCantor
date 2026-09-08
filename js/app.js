@@ -5004,6 +5004,39 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnCloseUserSupportModal) btnCloseUserSupportModal.addEventListener('click', closeUserSupportModal);
     if (userSupportOverlay) userSupportOverlay.addEventListener('click', closeUserSupportModal);
 
+    // Tour Interativo do Aplicativo (Spotlight Walkthrough)
+    var btnProfileInteractiveTour = document.getElementById('btnProfileInteractiveTour');
+    if (btnProfileInteractiveTour) {
+      btnProfileInteractiveTour.addEventListener('click', function () {
+        var menu = document.getElementById('userProfileMenu');
+        if (menu) menu.classList.add('hidden');
+        if (window.CantaAiTour && typeof window.CantaAiTour.start === 'function') {
+          window.CantaAiTour.start(0);
+        }
+      });
+    }
+
+    var btnNotifTourLink = document.getElementById('btnNotifTourLink');
+    if (btnNotifTourLink) {
+      btnNotifTourLink.addEventListener('click', function () {
+        var pop = document.getElementById('notificationsQuickPopover');
+        if (pop) pop.classList.add('hidden');
+        if (window.CantaAiTour && typeof window.CantaAiTour.start === 'function') {
+          window.CantaAiTour.start(0);
+        }
+      });
+    }
+
+    var btnSupportOpenTour = document.getElementById('btnSupportOpenTour');
+    if (btnSupportOpenTour) {
+      btnSupportOpenTour.addEventListener('click', function () {
+        closeUserSupportModal();
+        if (window.CantaAiTour && typeof window.CantaAiTour.start === 'function') {
+          window.CantaAiTour.start(0);
+        }
+      });
+    }
+
     if (ticketDropZone && ticketFileInput) {
       ticketDropZone.addEventListener('click', function (e) {
         if (e.target !== btnRemoveTicketImage) {

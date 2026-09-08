@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/landing.css?v=121">
   <link rel="stylesheet" href="css/brand.css?v=40">
   <link rel="stylesheet" href="css/notifications.css?v=1">
+  <link rel="stylesheet" href="css/interactiveTour.css?v=2">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
   <script>
@@ -162,10 +163,13 @@
             </div>
 
             <!-- Rodapé do Popover -->
-            <div class="notif-pop-footer">
+            <div class="notif-pop-footer" style="display: flex; justify-content: space-between; align-items: center;">
               <a href="#" id="btnNotifPopOpenFull" class="notif-pop-footer-link">
-                Abrir Central Completa & Suporte ↗
+                Central Completa & Suporte ↗
               </a>
+              <button type="button" id="btnNotifTourLink" class="notif-pop-footer-link" style="background: none; border: none; cursor: pointer; color: #38bdf8; font-weight: 700; padding: 0;">
+                📖 Guia do App
+              </button>
             </div>
           </div>
         </div>
@@ -220,6 +224,10 @@
             <button id="btnProfileNotifications" class="upm-item" style="color: #38bdf8;">
               <span class="upm-item-icon">🔔</span> Notificações & Atendimento
               <span id="profileNotificationBadge" class="admin-signups-badge hidden">0</span>
+            </button>
+
+            <button id="btnProfileInteractiveTour" class="upm-item" style="color: #38bdf8;">
+              <span class="upm-item-icon">📖</span> Tour Interativo do App
             </button>
 
             <button id="btnProfileThemeToggle" class="upm-item">
@@ -1171,6 +1179,7 @@
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" id="btnSupportOpenTour" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 5px 12px; font-size: 0.78rem; border-radius: 8px;" title="Ver o Passo a Passo do Aplicativo">📖 Tour do App</button>
           <button type="button" id="btnSyncNotificationsCenter" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 5px 12px; font-size: 0.78rem; border-radius: 8px;" title="Sincronizar com a nuvem">🔄 Sincronizar</button>
           <button class="modal-close" id="btnCloseUserSupportModal" title="Fechar">✕</button>
         </div>
@@ -1621,6 +1630,7 @@
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
   <script src="js/notificationsCenter.js?v=2"></script>
-  <script src="js/app.js?v=137"></script>
+  <script src="js/interactiveTour.js?v=2"></script>
+  <script src="js/app.js?v=138"></script>
 </body>
 </html>

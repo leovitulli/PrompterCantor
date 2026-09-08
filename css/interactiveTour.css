@@ -1,0 +1,312 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CANTAAÍ PRO — TOUR INTERATIVO GUIADO (ONBOARDING COM SPOTLIGHT)
+   Tipografia Oficial: Bricolage Grotesque (Display) + DM Sans (Body)
+   Paleta: #2563eb / #38bdf8 (Brand) | #070b14 / #0f172a (Dark Stage)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* OVERLAY ESCURO COM CORTE SPOTLIGHT */
+.cantaai-tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999900;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cantaai-tour-overlay.active {
+  opacity: 1;
+}
+
+.cantaai-tour-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 17, 0.82);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* CAIXA DE RECORTE SPOTLIGHT PULSANTE */
+.cantaai-tour-spotlight {
+  position: absolute;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(5, 8, 17, 0.82),
+              0 0 25px rgba(56, 189, 248, 0.6),
+              inset 0 0 15px rgba(37, 99, 235, 0.4);
+  border: 2px solid #38bdf8;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: tourSpotlightPulse 2s infinite ease-in-out;
+  z-index: 9999910;
+}
+
+@keyframes tourSpotlightPulse {
+  0%, 100% {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 9999px rgba(5, 8, 17, 0.82), 0 0 20px rgba(56, 189, 248, 0.5);
+  }
+  50% {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 9999px rgba(5, 8, 17, 0.82), 0 0 32px rgba(37, 99, 235, 0.8);
+  }
+}
+
+/* CARTÃO FLUTUANTE DE EXPLICAÇÃO */
+.cantaai-tour-card {
+  position: absolute;
+  z-index: 9999920;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  width: 92%;
+  max-width: 440px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(37, 99, 235, 0.2);
+  color: #f8fafc;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: tourCardPop 0.3s ease-out;
+}
+
+@keyframes tourCardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* CABEÇALHO DO TOUR */
+.tour-card-header {
+  padding: 12px 18px;
+  background: #131d35;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tour-step-badge {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.tour-btn-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 6px;
+}
+.tour-btn-close:hover {
+  color: #ffffff;
+  background: #1e293b;
+}
+
+/* CONTEÚDO PRINCIPAL DO PASSO */
+.tour-card-body {
+  padding: 18px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.tour-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 8px;
+  line-height: 1.25;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour-desc {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #cbd5e1;
+  margin-bottom: 14px;
+}
+
+/* CAIXAS DE DEMONSTRAÇÃO VISUAL / DICAS PRÁTICAS */
+.tour-demo-box {
+  background: #0a0f1d;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.tour-demo-box.highlight-blue {
+  border-left: 4px solid #2563eb;
+  background: #0b152d;
+}
+.tour-demo-box.highlight-cyan {
+  border-left: 4px solid #38bdf8;
+  background: #07192e;
+}
+.tour-demo-box.highlight-gold {
+  border-left: 4px solid #f59e0b;
+  background: #1f1809;
+}
+
+.tour-demo-title {
+  font-weight: 800;
+  font-size: 12.5px;
+  color: #ffffff;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-steps-mini {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+.tour-steps-mini li {
+  margin-bottom: 4px;
+}
+.tour-steps-mini strong {
+  color: #38bdf8;
+}
+
+/* BARRA DE PROGRESSO EM PONTINHOS */
+.tour-progress-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.tour-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #334155;
+  transition: all 0.25s;
+}
+.tour-dot.active {
+  background: #38bdf8;
+  width: 18px;
+  border-radius: 999px;
+}
+
+/* RODAPÉ DO CARTÃO */
+.tour-card-footer {
+  padding: 12px 18px;
+  background: #0a0f1d;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tour-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.tour-btn-prev {
+  background: #17233d;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+}
+.tour-btn-prev:hover {
+  background: #1e2e50;
+  color: #ffffff;
+}
+
+.tour-btn-next {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+.tour-btn-next:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+.tour-btn-skip {
+  background: transparent;
+  color: #64748b;
+  padding: 8px 6px;
+  font-size: 11.5px;
+}
+.tour-btn-skip:hover {
+  color: #cbd5e1;
+}
+
+/* OPÇÃO NÃO MOSTRAR NOVAMENTE */
+.tour-dont-show-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #64748b;
+  user-select: none;
+  cursor: pointer;
+}
+.tour-dont-show-wrap input[type="checkbox"] {
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* BOTÃO DE REABRIR O TOUR (MENU & RODAPÉ) */
+.btn-reopen-tour {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+/* RESPONSIVIDADE PARA SMARTPHONES */
+@media (max-width: 640px) {
+  .cantaai-tour-card {
+    width: 94%;
+    max-width: 94%;
+    left: 3% !important;
+    right: 3% !important;
+  }
+  .tour-title {
+    font-size: 16px;
+  }
+  .tour-desc {
+    font-size: 12.5px;
+  }
+  .tour-btn {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+}
