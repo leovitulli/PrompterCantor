@@ -1,13 +1,15 @@
 import os
 import time
 import subprocess
+import shutil
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-CWD = os.path.dirname(os.path.abspath(__file__))
-PROFILE = "/tmp/chrome_manual_profile"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+profile = f"/tmp/chrome_pdf_prof_{int(time.time()*1000)}"
 
-pdf_path = os.path.join(CWD, "MANUAL_DO_USUARIO_CANTAAI_PRO.pdf")
-html_url = "file://" + os.path.join(CWD, "manual_cantaai_pro.html")
+pdf_path = os.path.join(ROOT_DIR, "MANUAL_DO_USUARIO_CANTAAI_PRO.pdf")
+html_url = "file://" + os.path.join(ROOT_DIR, "manual_cantaai_pro.html")
 
 if os.path.exists(pdf_path):
     try:
@@ -25,13 +27,13 @@ cmd = [
     "--disable-sync",
     "--disable-translate",
     "--disable-extensions",
-    f"--user-data-dir={PROFILE}",
+    f"--user-data-dir={profile}",
     "--run-all-compositor-stages-before-draw",
     f"--print-to-pdf={pdf_path}",
     html_url
 ]
 
-print("==> Iniciando compilação do MANUAL_DO_USUARIO_CANTAAI_PRO.pdf...")
+print("==> Compilando MANUAL_DO_USUARIO_CANTAAI_PRO.pdf com tipografia aprovada...")
 proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 start = time.time()
@@ -54,7 +56,9 @@ try:
 except Exception:
     pass
 
+shutil.rmtree(profile, ignore_errors=True)
+
 if success:
-    print(f"🎉 PDF gerado com sucesso! Tamanho: {os.path.getsize(pdf_path)} bytes")
+    print(f"🎉 PDF compilado com sucesso! Tamanho: {os.path.getsize(pdf_path)} bytes")
 else:
     print(f"Resultado final: {os.path.exists(pdf_path)} (tamanho: {os.path.getsize(pdf_path) if os.path.exists(pdf_path) else 0})")

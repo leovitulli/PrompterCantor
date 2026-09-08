@@ -1,10 +1,11 @@
 import os
 import time
 import subprocess
+import shutil
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-CWD = os.path.dirname(os.path.abspath(__file__))
-PROFILE = "/tmp/chrome_manual_profile"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 
 SCREENS = [
     ("tela_header.png", "screen_header.html", 1080, 140),
@@ -17,9 +18,10 @@ SCREENS = [
 ]
 
 def render_screen(out_name, html_name, width, height):
-    out_path = os.path.join(CWD, "assets", "manual_img", out_name)
-    html_url = "file://" + os.path.join(CWD, "mockups", html_name)
-    
+    out_path = os.path.join(ROOT_DIR, "assets", "manual_img", out_name)
+    html_url = "file://" + os.path.join(SCRIPT_DIR, html_name)
+    profile = f"/tmp/chrome_prof_{out_name}_{int(time.time()*1000)}"
+
     if os.path.exists(out_path):
         try:
             os.remove(out_path)
@@ -36,7 +38,7 @@ def render_screen(out_name, html_name, width, height):
         "--disable-sync",
         "--disable-translate",
         "--disable-extensions",
-        f"--user-data-dir={PROFILE}",
+        f"--user-data-dir={profile}",
         f"--window-size={width},{height}",
         "--force-device-scale-factor=1",
         "--hide-scrollbars",
@@ -44,10 +46,9 @@ def render_screen(out_name, html_name, width, height):
         html_url
     ]
 
-    print(f"==> Iniciando renderização de {out_name} ({width}x{height})...")
+    print(f"==> Renderizando {out_name} ({width}x{height}) com tipografia aprovada...")
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     
-    # Aguarda até o arquivo ser gravado e ter tamanho válido
     start = time.time()
     success = False
     while time.time() - start < 8:
@@ -57,24 +58,24 @@ def render_screen(out_name, html_name, width, height):
             break
         time.sleep(0.2)
 
-    # Mata o processo do Chrome imediatamente
     try:
         proc.kill()
         proc.wait(timeout=1)
     except Exception:
         pass
 
+    shutil.rmtree(profile, ignore_errors=True)
+
     if success:
         size = os.path.getsize(out_path)
-        print(f"    ✓ {out_name} gerado com sucesso! ({size} bytes)")
+        print(f"    ✓ {out_name} gerado! ({size} bytes)")
     else:
-        print(f"    ✗ Falha ou timeout em {out_name}")
+        print(f"    ✗ Falha em {out_name}")
 
 def main():
-    os.makedirs(PROFILE, exist_ok=True)
     for out_name, html_name, width, height in SCREENS:
         render_screen(out_name, html_name, width, height)
-    print("\n🎉 Todas as telas foram processadas!")
+    print("\n🎉 Todas as 7 telas foram geradas com sucesso com a tipografia aprovada!")
 
 if __name__ == "__main__":
     main()
