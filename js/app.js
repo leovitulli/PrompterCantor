@@ -4724,11 +4724,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (userProfileMenu) userProfileMenu.classList.add('hidden');
       if (profileModal) profileModal.classList.add('hidden');
       userSupportModal.classList.remove('hidden');
-      if (tabName) {
-        switchSupportTab(tabName);
-      } else {
-        switchSupportTab('new');
-      }
+      switchSupportTab(tabName || 'announcements');
     }
 
     function closeUserSupportModal() {
@@ -4754,6 +4750,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var paneNewTicket = document.getElementById('paneNewTicket');
     var paneTicketHistory = document.getElementById('paneTicketHistory');
     var paneAnnouncements = document.getElementById('paneAnnouncements');
+    var btnHeaderNotifications = document.getElementById('btnHeaderNotifications');
+    var btnProfileNotifications = document.getElementById('btnProfileNotifications');
     var btnHeaderSupport = document.getElementById('btnHeaderSupport');
     var btnHeaderAnnouncements = document.getElementById('btnHeaderAnnouncements');
     var btnProfileAnnouncements = document.getElementById('btnProfileAnnouncements');
@@ -4991,11 +4989,13 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', function() { openUserSupportModal('new'); });
-    if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', function() { openUserSupportModal('new'); });
-    if (btnHeaderSupport) btnHeaderSupport.addEventListener('click', function() { openUserSupportModal('new'); });
+    if (btnHeaderNotifications) btnHeaderNotifications.addEventListener('click', function() { openUserSupportModal('announcements'); });
+    if (btnProfileNotifications) btnProfileNotifications.addEventListener('click', function() { openUserSupportModal('announcements'); });
     if (btnHeaderAnnouncements) btnHeaderAnnouncements.addEventListener('click', function() { openUserSupportModal('announcements'); });
     if (btnProfileAnnouncements) btnProfileAnnouncements.addEventListener('click', function() { openUserSupportModal('announcements'); });
+    if (btnHeaderSupport) btnHeaderSupport.addEventListener('click', function() { openUserSupportModal('new'); });
+    if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', function() { openUserSupportModal('new'); });
+    if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', function() { openUserSupportModal('new'); });
     if (btnCloseUserSupportModal) btnCloseUserSupportModal.addEventListener('click', closeUserSupportModal);
     if (userSupportOverlay) userSupportOverlay.addEventListener('click', closeUserSupportModal);
 
@@ -5231,7 +5231,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }).length;
       }
 
-      var badgeHeader = document.getElementById('headerAnnounceBadge');
+      var badgeHeader = document.getElementById('headerNotificationBadge') || document.getElementById('headerAnnounceBadge');
       if (badgeHeader) {
         if (unreadCount > 0) {
           badgeHeader.innerText = unreadCount;
@@ -5241,7 +5241,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
 
-      var badgeProfile = document.getElementById('profileAnnounceBadge');
+      var badgeProfile = document.getElementById('profileNotificationBadge') || document.getElementById('profileAnnounceBadge');
       if (badgeProfile) {
         if (unreadCount > 0) {
           badgeProfile.innerText = unreadCount + ' novo' + (unreadCount !== 1 ? 's' : '');

@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/style.css?v=124">
   <link rel="stylesheet" href="css/admin.css?v=123">
   <link rel="stylesheet" href="css/landing.css?v=121">
-  <link rel="stylesheet" href="css/brand.css?v=39">
+  <link rel="stylesheet" href="css/brand.css?v=40">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
   <script>
@@ -126,14 +126,9 @@
           </div>
         </div>
 
-        <button id="btnHeaderAnnouncements" class="btn btn-secondary btn-icon-sm" title="Comunicados e Avisos do CantaAí" style="position: relative; color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
-          📢
-          <span id="headerAnnounceBadge" class="header-announce-badge hidden">0</span>
-        </button>
-
-        <button id="btnHeaderSupport" class="btn btn-secondary btn-icon-sm" title="Central de Suporte & Mensagens" style="position: relative; color: #34d399; border-color: rgba(52, 211, 153, 0.3);">
-          💬
-          <span id="headerSupportBadge" class="header-support-badge hidden">0</span>
+        <button id="btnHeaderNotifications" class="btn btn-secondary btn-icon-sm" title="Notificações & Central de Atendimento" style="position: relative; font-size: 1.05rem;">
+          🔔
+          <span id="headerNotificationBadge" class="header-announce-badge hidden">0</span>
         </button>
 
         <button id="btnToggleTheme" class="btn btn-secondary btn-icon-sm" title="Alternar Modo Claro/Escuro">
@@ -183,13 +178,9 @@
               <span class="upm-item-icon">👤</span> Meus Dados & @Login
             </button>
 
-            <button id="btnProfileAnnouncements" class="upm-item" style="color: #38bdf8;">
-              <span class="upm-item-icon">📢</span> Comunicados do SaaS
-              <span id="profileAnnounceBadge" class="admin-signups-badge hidden">0</span>
-            </button>
-
-            <button id="btnProfileOpenSupport" class="upm-item" style="color: #34d399;">
-              <span class="upm-item-icon">💬</span> Suporte & Sugestões
+            <button id="btnProfileNotifications" class="upm-item" style="color: #38bdf8;">
+              <span class="upm-item-icon">🔔</span> Notificações & Atendimento
+              <span id="profileNotificationBadge" class="admin-signups-badge hidden">0</span>
             </button>
 
             <button id="btnProfileThemeToggle" class="upm-item">
@@ -1132,10 +1123,10 @@
     <div class="modal-card" style="max-width: 620px; max-height: 90vh; display: flex; flex-direction: column;">
       <div class="modal-header" style="flex-shrink: 0;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.5rem;">💬</span>
+          <span style="font-size: 1.5rem;">🔔</span>
           <div>
-            <h3 style="margin: 0; font-size: 1.2rem;">Canal de Atendimento & Comunicação</h3>
-            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Fale diretamente com a equipe do CantaAí PRO ou tire dúvidas</p>
+            <h3 style="margin: 0; font-size: 1.2rem;">Notificações & Central de Atendimento</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Comunicados do SaaS, suporte direto e histórico de mensagens</p>
           </div>
         </div>
         <button class="modal-close" id="btnCloseUserSupportModal">✕</button>
@@ -1143,14 +1134,14 @@
 
       <!-- Abas de Navegação da Central de Atendimento -->
       <div style="display: flex; gap: 8px; padding: 10px 1.5rem; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); overflow-x: auto; flex-shrink: 0;">
-        <button type="button" id="tabBtnNewTicket" class="btn-legal-tab active" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; cursor: pointer;">
+        <button type="button" id="tabBtnAnnouncements" class="btn-legal-tab active" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; cursor: pointer;">
+          🔔 Notificações & Comunicados
+        </button>
+        <button type="button" id="tabBtnNewTicket" class="btn-legal-tab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">
           ✉️ Enviar Mensagem
         </button>
         <button type="button" id="tabBtnTicketHistory" class="btn-legal-tab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">
           📋 Minhas Mensagens & Respostas
-        </button>
-        <button type="button" id="tabBtnAnnouncements" class="btn-legal-tab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">
-          📢 Comunicados do SaaS
         </button>
       </div>
 
@@ -1615,6 +1606,6 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/app.js?v=134"></script>
+  <script src="js/app.js?v=135"></script>
 </body>
 </html>
