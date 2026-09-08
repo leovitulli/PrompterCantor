@@ -4910,6 +4910,171 @@ document.addEventListener('DOMContentLoaded', function () {
       console.warn('Erro ao processar URL params:', e);
     }
 
+    // ── RECEPTOR DE COMUNICADOS & MENSAGENS PARA O CANTOR ──
+    var singerAnnModal = document.getElementById('singerAnnouncementModal');
+    var singerAnnBackdrop = document.getElementById('singerAnnouncementBackdrop');
+    var btnSingerAnnClose = document.getElementById('btnSingerAnnClose');
+    var btnSingerAnnConfirm = document.getElementById('btnSingerAnnConfirm');
+    var singerAnnTitle = document.getElementById('singerAnnTitle');
+    var singerAnnBody = document.getElementById('singerAnnBody');
+    var singerAnnBadge = document.getElementById('singerAnnBadge');
+    var singerAnnDate = document.getElementById('singerAnnDate');
+    var singerAnnIconBox = document.getElementById('singerAnnIconBox');
+
+    function closeSingerAnnouncementModal() {
+      if (singerAnnModal) singerAnnModal.classList.add('hidden');
+    }
+
+    if (singerAnnBackdrop) singerAnnBackdrop.addEventListener('click', closeSingerAnnouncementModal);
+    if (btnSingerAnnClose) btnSingerAnnClose.addEventListener('click', closeSingerAnnouncementModal);
+    if (btnSingerAnnConfirm) btnSingerAnnConfirm.addEventListener('click', closeSingerAnnouncementModal);
+
+    function checkSingerAnnouncements() {
+      if (!window.PrompterAuth) return;
+      var user = window.PrompterAuth.getUser();
+      var profile = window.PrompterAuth.getProfile();
+      if (!user && !profile) return;
+
+      var email = ((user && user.email) || (profile && profile.email) || '').trim().toLowerCase();
+      var singerCode = ((profile && profile.singer_code) || '').trim().toLowerCase();
+      var readIds = [];
+      try {
+        var rawRead = localStorage.getItem('cantaai_read_announcements');
+        readIds = rawRead ? JSON.parse(rawRead) : [];
+      } catch (e) {
+        readIds = [];
+      }
+
+      function isTargetMatch(target) {
+        if (!target) return false;
+        var t = String(target).trim().toLowerCase();
+        if (t === 'all') return true;
+        if (email && t === email) return true;
+        if (singerCode && (t === singerCode || t === singerCode.replace('@', ''))) return true;
+        return false;
+      }
+
+      function presentAnnouncement(ann) {
+        if (!ann || !ann.id || readIds.indexOf(ann.id) !== -1) return;
+        if (!singerAnnModal || !singerAnnTitle || !singerAnnBody) return;
+
+        singerAnnTitle.innerText = ann.title || 'Comunicado Importante';
+        singerAnnBody.innerText = ann.message || '';
+
+        var type = ann.type || 'info';
+        if (type === 'feature') {
+          if (singerAnnBadge) {
+            singerAnnBadge.innerText = 'NOVIDADE';
+            singerAnnBadge.style.color = '#38bdf8';
+            singerAnnBadge.style.background = 'rgba(56,189,248,0.2)';
+          }
+          if (singerAnnIconBox) singerAnnIconBox.innerText = '🎉';
+        } else if (type === 'alert') {
+          if (singerAnnBadge) {
+            singerAnnBadge.innerText = 'URGENTE';
+            singerAnnBadge.style.color = '#f87171';
+            singerAnnBadge.style.background = 'rgba(239,68,68,0.2)';
+          }
+          if (singerAnnIconBox) singerAnnIconBox.innerText = '🚨';
+        } else if (type === 'maintenance') {
+          if (singerAnnBadge) {
+            singerAnnBadge.innerText = 'MANUTENÇÃO';
+            singerAnnBadge.style.color = '#fbbf24';
+            singerAnnBadge.style.background = 'rgba(251,191,36,0.2)';
+          }
+          if (singerAnnIconBox) singerAnnIconBox.innerText = '🔧';
+        } else {
+          if (singerAnnBadge) {
+            singerAnnBadge.innerText = 'COMUNICADO';
+            singerAnnBadge.style.color = '#38bdf8';
+            singerAnnBadge.style.background = 'rgba(56,189,248,0.2)';
+          }
+          if (singerAnnIconBox) singerAnnIconBox.innerText = '📢';
+        }
+
+        if (singerAnnDate) {
+          singerAnnDate.innerText = ann.created_at
+            ? new Date(ann.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            : '';
+        }
+
+        // Marcar como lido ao confirmar ou fechar
+        var markAsRead = function () {
+          if (readIds.indexOf(ann.id) === -1) {
+            readIds.push(ann.id);
+            try {
+              localStorage.setItem('cantaai_read_announcements', JSON.stringify(readIds));
+            } catch (e) {}
+          }
+        };
+
+        if (btnSingerAnnConfirm) {
+          btnSingerAnnConfirm.onclick = function () {
+            markAsRead();
+            closeSingerAnnouncementModal();
+          };
+        }
+        if (btnSingerAnnClose) {
+          btnSingerAnnClose.onclick = function () {
+            markAsRead();
+            closeSingerAnnouncementModal();
+          };
+        }
+
+        singerAnnModal.classList.remove('hidden');
+      }
+
+      // 1. Verificar cache local primeiro
+      try {
+        var rawLocal = localStorage.getItem('canta_ai_admin_announcements');
+        var localList = rawLocal ? JSON.parse(rawLocal) : [];
+        if (Array.isArray(localList)) {
+          var matchedLocal = localList.filter(function (a) {
+            return isTargetMatch(a.target) && readIds.indexOf(a.id) === -1;
+          });
+          if (matchedLocal.length > 0) {
+            presentAnnouncement(matchedLocal[0]);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // 2. Buscar da nuvem (Supabase REST)
+      if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+        var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+        var restUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.SYSTEM_ANNOUNCEMENT&order=id.desc&limit=15';
+        fetch(restUrl, {
+          headers: {
+            'apikey': window.SUPABASE_CONFIG.key,
+            'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key
+          }
+        }).then(function (res) {
+          if (res.ok) return res.json();
+          return [];
+        }).then(function (rows) {
+          if (Array.isArray(rows)) {
+            for (var i = 0; i < rows.length; i++) {
+              try {
+                if (rows[i].content) {
+                  var ann = JSON.parse(rows[i].content);
+                  if (ann && ann.id && isTargetMatch(ann.target) && readIds.indexOf(ann.id) === -1) {
+                    presentAnnouncement(ann);
+                    break;
+                  }
+                }
+              } catch (err) {}
+            }
+          }
+        }).catch(function () {});
+      }
+    }
+
+    // Checar comunicados após carregar autenticação ou na abertura do app
+    setTimeout(checkSingerAnnouncements, 1200);
+    window.addEventListener('cantaai:auth_ready', function () {
+      setTimeout(checkSingerAnnouncements, 800);
+    });
+
     // Inicialização da visualização: se usuário logado, vai direto ao App
     if (window.PrompterAuth && window.PrompterAuth.getUser()) {
       showApp();
