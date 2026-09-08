@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mockup Repertórios CantaAí PRO</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #070b14;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #f8fafc;
+      width: 1080px;
+      height: 560px;
+      overflow: hidden;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sec-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-count {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      flex: 1;
+    }
+
+    .rep-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    .rep-card.featured {
+      border-color: #2563eb;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.15);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .origin-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tag-cloud {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .tag-drive {
+      background: rgba(37, 99, 235, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(37, 99, 235, 0.3);
+    }
+    .tag-local {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .tag-manual {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .card-actions-quick {
+      display: flex;
+      gap: 4px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .rep-name {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+    .rep-meta {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+    }
+    .rep-meta strong {
+      color: #38bdf8;
+    }
+
+    .rep-songs-preview {
+      background: #0a0f1d;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 14px;
+    }
+    .rep-songs-preview span {
+      color: #cbd5e1;
+    }
+
+    .card-foot {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-view-songs {
+      flex: 1;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      border: none;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .btn-rename {
+      background: #17233d;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-section">
+    <div class="sec-title">
+      <span>📂 Meus Repertórios Musicais</span>
+      <span class="badge-count">4 Ativos</span>
+    </div>
+    <div style="font-size: 12px; color: #94a3b8;">
+      Organizado por: <strong style="color: #f8fafc;">Ordem Personalizada (Show) ▾</strong>
+    </div>
+  </div>
+
+  <div class="grid-cards">
+    <!-- CARD 1 -->
+    <div class="rep-card featured">
+      <div>
+        <div class="card-top">
+          <span class="origin-tag tag-cloud">🏷️ Nuvem Sincronizada</span>
+          <div class="card-actions-quick">
+            <span>◀</span><span>▶</span><span>⋮⋮</span>
+          </div>
+        </div>
+        <div class="rep-name">Sertanejo & Modão de Bar</div>
+        <div class="rep-meta">
+          <span>🎵 <strong>14 Músicas</strong></span>
+          <span>• Atualizado Hoje</span>
+          <span>• 100% Offline</span>
+        </div>
+        <div class="rep-songs-preview">
+          <span>Evidências</span> • <span>Boate Azul</span> • <span>Dormi na Praça</span> • <span>Ainda Ontem...</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn-view-songs">🎵 Ver Músicas</button>
+        <button class="btn-rename">✏️ Renomear</button>
+      </div>
+    </div>
+
+    <!-- CARD 2 -->
+    <div class="rep-card">
+      <div>
+        <div class="card-top">
+          <span class="origin-tag tag-drive">☁️ Google Drive</span>
+          <div class="card-actions-quick">
+            <span>◀</span><span>▶</span><span>⋮⋮</span>
+          </div>
+        </div>
+        <div class="rep-name">Pop & Rock Nacional</div>
+        <div class="rep-meta">
+          <span>🎵 <strong>22 Músicas</strong></span>
+          <span>• Atualizado Ontem</span>
+          <span>• 100% Offline</span>
+        </div>
+        <div class="rep-songs-preview">
+          <span>Primeiros Erros</span> • <span>Tempo Perdido</span> • <span>Lanterna dos Afogados</span>...
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn-view-songs">🎵 Ver Músicas</button>
+        <button class="btn-rename">✏️ Renomear</button>
+      </div>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="rep-card">
+      <div>
+        <div class="card-top">
+          <span class="origin-tag tag-local">📄 Importação Local (Word)</span>
+          <div class="card-actions-quick">
+            <span>◀</span><span>▶</span><span>⋮⋮</span>
+          </div>
+        </div>
+        <div class="rep-name">Samba & Pagode 90</div>
+        <div class="rep-meta">
+          <span>🎵 <strong>18 Músicas</strong></span>
+          <span>• Há 3 dias</span>
+          <span>• 100% Offline</span>
+        </div>
+        <div class="rep-songs-preview">
+          <span>Cheia de Manias</span> • <span>O Show Tem Que Continuar</span> • <span>Telegrama</span>...
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn-view-songs">🎵 Ver Músicas</button>
+        <button class="btn-rename">✏️ Renomear</button>
+      </div>
+    </div>
+
+    <!-- CARD 4 -->
+    <div class="rep-card">
+      <div>
+        <div class="card-top">
+          <span class="origin-tag tag-manual">✍️ Criado Manual</span>
+          <div class="card-actions-quick">
+            <span>◀</span><span>▶</span><span>⋮⋮</span>
+          </div>
+        </div>
+        <div class="rep-name">Voz e Violão MPB</div>
+        <div class="rep-meta">
+          <span>🎵 <strong>15 Músicas</strong></span>
+          <span>• Há 1 semana</span>
+          <span>• 100% Offline</span>
+        </div>
+        <div class="rep-songs-preview">
+          <span>Oceano</span> • <span>Sozinho</span> • <span>Como Nossos Pais</span> • <span>Samurai</span>...
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn-view-songs">🎵 Ver Músicas</button>
+        <button class="btn-rename">✏️ Renomear</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

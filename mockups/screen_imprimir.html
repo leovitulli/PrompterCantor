@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mockup Setlist Impressão CantaAí PRO</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      width: 980px;
+      height: 480px;
+      overflow: hidden;
+      padding: 24px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .print-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 10px;
+    }
+    .brand-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-title span { color: #2563eb; }
+    .doc-type {
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .setlist-info-bar {
+      display: flex;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+    }
+    .info-item strong { color: #2563eb; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+    }
+    th {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 10px;
+      color: #334155;
+      letter-spacing: 0.5px;
+    }
+    td {
+      border: 1px solid #e2e8f0;
+      padding: 7px 10px;
+      color: #1e293b;
+    }
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .td-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #64748b;
+      text-align: center;
+      width: 40px;
+    }
+    .td-title {
+      font-weight: 800;
+      color: #0f172a;
+      font-size: 12px;
+    }
+    .td-tone {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      color: #1d4ed8;
+      background: #eff6ff;
+      text-align: center;
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+    .td-notes {
+      color: #64748b;
+      font-size: 11px;
+      font-style: italic;
+    }
+
+    .print-footer {
+      margin-top: auto;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-header">
+    <div class="brand-title">
+      Canta<span>Aí</span> PRO
+      <span style="font-size: 12px; background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; font-family: 'Inter', sans-serif;">SETLIST OFICIAL</span>
+    </div>
+    <div class="doc-type">Roteiro Técnico para Músicos e Equipe</div>
+  </div>
+
+  <div class="setlist-info-bar">
+    <div class="info-item">Repertório: <strong>Sertanejo & Modão de Bar</strong></div>
+    <div class="info-item">Total: <strong>14 Músicas</strong></div>
+    <div class="info-item">Duração Média: <strong>55 Minutos</strong></div>
+    <div class="info-item">Data / Show: <strong>Show de Sexta • Bar & Petiscaria</strong></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: center; width: 35px;">#</th>
+        <th>Música</th>
+        <th>Intérprete / Gravação</th>
+        <th style="text-align: center; width: 70px;">Tom</th>
+        <th>Ritmo / Toque</th>
+        <th>Observações Técnicas da Banda</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="td-num">01</td>
+        <td class="td-title">EVIDÊNCIAS</td>
+        <td>Chitãozinho & Xororó</td>
+        <td><span class="td-tone">E</span></td>
+        <td>Balada (72 BPM)</td>
+        <td class="td-notes">Solo de teclado na intro; refrão com 2ª voz</td>
+      </tr>
+      <tr>
+        <td class="td-num">02</td>
+        <td class="td-title">BOATE AZUL</td>
+        <td>Joaquim & Manuel</td>
+        <td><span class="td-tone">Am</span></td>
+        <td>Bolero / Valsa</td>
+        <td class="td-notes">Entrada da bateria no tempo 3; violão dedilhado</td>
+      </tr>
+      <tr>
+        <td class="td-num">03</td>
+        <td class="td-title">DORMI NA PRAÇA</td>
+        <td>Bruno & Marrone</td>
+        <td><span class="td-tone">G</span></td>
+        <td>Balada Romântica</td>
+        <td class="td-notes">Voz e violão no primeiro verso; banda entra no refrão</td>
+      </tr>
+      <tr>
+        <td class="td-num">04</td>
+        <td class="td-title">AINDA ONTEM CHOREI DE SAUDADE</td>
+        <td>João Mineiro & Marciano</td>
+        <td><span class="td-tone">D</span></td>
+        <td>Guarânia Tradicional</td>
+        <td class="td-notes">Sanfona marcando convenção; final dobrado</td>
+      </tr>
+      <tr>
+        <td class="td-num">05</td>
+        <td class="td-title">TELEFONE MUDO</td>
+        <td>Trio Parada Dura</td>
+        <td><span class="td-tone">D</span></td>
+        <td>Rasqueado</td>
+        <td class="td-notes">Subir meio tom no refrão final (D → Eb)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="print-footer">
+    <span>Gerado pelo CantaAí PRO • www.cantaaipro.com</span>
+    <span>Página 1 de 1 • Setlist Sincronizado</span>
+  </div>
+
+</body>
+</html>

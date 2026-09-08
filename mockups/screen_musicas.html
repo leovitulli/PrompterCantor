@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mockup Músicas CantaAí PRO</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #070b14;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #f8fafc;
+      width: 1080px;
+      height: 580px;
+      overflow: hidden;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .rep-nav-bar {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-back {
+      background: #17233d;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .rep-title-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .rep-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+    }
+    .badge-count {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .tool-btn {
+      background: #17233d;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .tool-btn.primary {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    .song-list-container {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-head {
+      display: grid;
+      grid-template-columns: 50px 1fr 120px 160px 90px;
+      padding: 10px 16px;
+      background: #131d35;
+      border-bottom: 1px solid #1e293b;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .song-row {
+      display: grid;
+      grid-template-columns: 50px 1fr 120px 160px 90px;
+      padding: 11px 16px;
+      align-items: center;
+      border-bottom: 1px solid #162036;
+      transition: background 0.15s;
+    }
+    .song-row:hover, .song-row.active {
+      background: #172442;
+    }
+    .song-row.active {
+      border-left: 3px solid #38bdf8;
+    }
+
+    .col-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+    }
+    .song-row.active .col-num {
+      color: #38bdf8;
+    }
+
+    .col-title-artist {
+      display: flex;
+      flex-direction: column;
+    }
+    .song-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .song-artist {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .col-tone {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      width: fit-content;
+    }
+
+    .col-rhythm {
+      font-size: 11px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .col-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .row-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      background: #17233d;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    .row-btn:hover {
+      color: #ffffff;
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="rep-nav-bar">
+    <button class="btn-back">‹ Voltar aos Repertórios</button>
+    
+    <div class="rep-title-box">
+      <span class="rep-title">Sertanejo & Modão de Bar</span>
+      <span class="badge-count">14 Músicas</span>
+    </div>
+
+    <div class="toolbar-actions">
+      <button class="tool-btn">🔤 Ordem A-Z</button>
+      <button class="tool-btn">🧹 Limpar Duplicadas</button>
+      <button class="tool-btn primary">🖨️ Imprimir Setlist</button>
+      <span style="font-size: 11px; color: #34d399; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-left: 6px;">
+        ● Offline 100%
+      </span>
+    </div>
+  </div>
+
+  <div class="song-list-container">
+    <div class="table-head">
+      <div>#</div>
+      <div>Música & Artista</div>
+      <div>Tom</div>
+      <div>Ritmo / Toque</div>
+      <div style="text-align: right;">Ordem</div>
+    </div>
+
+    <!-- ROW 1 (ACTIVE / CLICKED) -->
+    <div class="song-row active">
+      <div class="col-num">01</div>
+      <div class="col-title-artist">
+        <div class="song-title">EVIDÊNCIAS <span style="font-size: 10px; background: #2563eb; color: #fff; padding: 1px 5px; border-radius: 4px;">NO AR</span></div>
+        <div class="song-artist">Chitãozinho & Xororó • José Augusto</div>
+      </div>
+      <div class="col-tone">Tom: E</div>
+      <div class="col-rhythm">🥁 Balada Sertaneja (72 BPM)</div>
+      <div class="col-actions">
+        <div class="row-btn">▲</div>
+        <div class="row-btn">▼</div>
+        <div class="row-btn">✏️</div>
+      </div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="song-row">
+      <div class="col-num">02</div>
+      <div class="col-title-artist">
+        <div class="song-title">BOATE AZUL</div>
+        <div class="song-artist">Joaquim & Manuel • Benedito Seviero</div>
+      </div>
+      <div class="col-tone">Tom: Am</div>
+      <div class="col-rhythm">🥁 Bolero / Valsa</div>
+      <div class="col-actions">
+        <div class="row-btn">▲</div>
+        <div class="row-btn">▼</div>
+        <div class="row-btn">✏️</div>
+      </div>
+    </div>
+
+    <!-- ROW 3 -->
+    <div class="song-row">
+      <div class="col-num">03</div>
+      <div class="col-title-artist">
+        <div class="song-title">DORMI NA PRAÇA</div>
+        <div class="song-artist">Bruno & Marrone • Fátima Leão</div>
+      </div>
+      <div class="col-tone">Tom: G</div>
+      <div class="col-rhythm">🥁 Balada Romântica</div>
+      <div class="col-actions">
+        <div class="row-btn">▲</div>
+        <div class="row-btn">▼</div>
+        <div class="row-btn">✏️</div>
+      </div>
+    </div>
+
+    <!-- ROW 4 -->
+    <div class="song-row">
+      <div class="col-num">04</div>
+      <div class="col-title-artist">
+        <div class="song-title">AINDA ONTEM CHOREI DE SAUDADE</div>
+        <div class="song-artist">João Mineiro & Marciano • Moacyr Franco</div>
+      </div>
+      <div class="col-tone">Tom: D</div>
+      <div class="col-rhythm">🥁 Guarânia Tradicional</div>
+      <div class="col-actions">
+        <div class="row-btn">▲</div>
+        <div class="row-btn">▼</div>
+        <div class="row-btn">✏️</div>
+      </div>
+    </div>
+
+    <!-- ROW 5 -->
+    <div class="song-row">
+      <div class="col-num">05</div>
+      <div class="col-title-artist">
+        <div class="song-title">TELEFONE MUDO</div>
+        <div class="song-artist">Trio Parada Dura • Franco / Peão Carreiro</div>
+      </div>
+      <div class="col-tone">Tom: D</div>
+      <div class="col-rhythm">🥁 Rasqueado</div>
+      <div class="col-actions">
+        <div class="row-btn">▲</div>
+        <div class="row-btn">▼</div>
+        <div class="row-btn">✏️</div>
+      </div>
+    </div>
+
+    <!-- ROW 6 -->
+    <div class="song-row">
+      <div class="col-num">06</div>
+      <div class="col-title-artist">
+        <div class="song-title">FIO DE CABELO</div>
+        <div class="song-artist">Chitãozinho & Xororó • Darci Rossi</div>
+      </div>
+      <div class="col-tone">Tom: C</div>
+      <div class="col-rhythm">🥁 Cururu / Toada</div>
+      <div class="col-actions">
+        <div class="row-btn">▲</div>
+        <div class="row-btn">▼</div>
+        <div class="row-btn">✏️</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

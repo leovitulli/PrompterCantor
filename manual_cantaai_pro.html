@@ -293,6 +293,11 @@
       font-size: 12.5px;
     }
 
+    .step-box.blue {
+      border-left-color: var(--primary);
+      background: #eff6ff;
+    }
+
     .step-box.green {
       border-left-color: var(--accent-green);
       background: #f0fdf4;
@@ -407,12 +412,14 @@
       <div class="summary-box">
         <div class="summary-title">📑 O que você vai aprender neste manual:</div>
         <div class="summary-grid">
-          <div class="summary-item"><span class="summary-num">1</span> Barra de Comando e Busca Rápida</div>
+          <div class="summary-item"><span class="summary-num">1</span> Barra Superior, Busca & Notificações</div>
           <div class="summary-item"><span class="summary-num">2</span> Repertórios por Estilos Musicais</div>
-          <div class="summary-item"><span class="summary-num">3</span> Lista de Músicas e Organização</div>
+          <div class="summary-item"><span class="summary-num">3</span> Lista de Músicas do Repertório</div>
           <div class="summary-item"><span class="summary-num">4</span> Como Usar o Teleprompter ao Vivo</div>
           <div class="summary-item"><span class="summary-num">5</span> Como Mudar o Tom em 1 Clique</div>
-          <div class="summary-item"><span class="summary-num">6</span> Cadastro, Edição e Impressão</div>
+          <div class="summary-item"><span class="summary-num">6</span> Cadastro, Edição & YouTube Guia</div>
+          <div class="summary-item"><span class="summary-num">7</span> Impressão de Setlists & Modo Offline</div>
+          <div class="summary-item"><span class="summary-num">8</span> Central de Notificações & Suporte</div>
         </div>
       </div>
     </div>
@@ -428,18 +435,18 @@
   <div class="manual-page">
     <div class="doc-header">
       <div class="logo-brand"><img src="assets/brand/simbolo-claro.svg" alt="" style="height:1.1em;width:auto;vertical-align:-0.15em;margin-right:0.25em"><span>Canta<span style="color:var(--primary)">Aí</span></span> <span class="badge-pro">PRO</span></div>
-      <div>Passo 1: Navegação Inicial & Barra Superior</div>
+      <div>Passo 1: Navegação Inicial, Barra Superior & Notificações</div>
     </div>
 
     <h1>1. Visão Geral da Barra Superior</h1>
     <p>
-      Assim que você abre o CantaAí PRO, o topo da tela concentra todas as ferramentas essenciais para navegar, encontrar suas músicas rapidamente e adicionar novos repertórios sem complicações.
+      Assim que você abre o CantaAí PRO, o topo da tela concentra todas as ferramentas essenciais para navegar, encontrar suas músicas rapidamente, ver avisos do sistema e gerenciar repertórios.
     </p>
 
     <div class="img-mockup-frame">
       <img src="assets/manual_img/tela_header.png" alt="Barra Superior do CantaAí PRO">
       <div class="img-caption">
-        <span>📸 Tela Real:</span> Cabeçalho oficial com campo de busca inteligente, botão de Adicionar e perfil do usuário.
+        <span>📸 Tela Real:</span> Cabeçalho oficial com busca inteligente, botão azul de Adicionar, sino de notificações e perfil VIP.
       </div>
     </div>
 
@@ -447,12 +454,12 @@
 
     <div class="step-box">
       <div class="step-title">1. Busca Instantânea de Músicas e Repertórios</div>
-      Clique no campo <strong>"Buscar repertório ou música..."</strong> e digite qualquer trecho do nome da música, cantor ou compositor. Conforme você digita, o sistema filtra os resultados na hora, sem precisar apertar Enter.
+      Clique no campo <strong>"Buscar repertório ou música..."</strong> e digite qualquer trecho do nome da música, cantor ou compositor. O sistema filtra os resultados na hora conforme você digita.
     </div>
 
-    <div class="step-box green">
-      <div class="step-title">2. Botão Verde "+ Adicionar"</div>
-      Ao clicar no botão verde <strong>"+ Adicionar"</strong>, um menu se abre com 4 opções fáceis:
+    <div class="step-box blue">
+      <div class="step-title">2. Botão Azul "+ Adicionar"</div>
+      Ao clicar no botão azul <strong>"+ Adicionar"</strong>, um menu se abre com 4 opções fáceis:
       <ul class="bullet-list" style="margin-top: 6px;">
         <li><strong>Criar Repertório:</strong> Cria uma pasta temática (ex: Sertanejo, Pop Rock, Samba).</li>
         <li><strong>Criar Música Manual:</strong> Abre a tela para digitar ou colar a letra e os acordes.</li>
@@ -463,16 +470,16 @@
 
     <div class="grid-2cols">
       <div class="info-card">
-        <div class="info-card-title">🌙 Alternador de Tema</div>
+        <div class="info-card-title">🔔 Notificações & Suporte</div>
         <p style="font-size: 12px; margin: 0;">
-          Clique no ícone da <strong>Lua (🌙)</strong> para alternar entre o Modo Escuro (fundo preto anti-reflexo) e o Modo Claro. O Modo Escuro é ideal para ambientes com pouca luz.
+          Clique no <strong>Sininho</strong> para ver comunicados, novidades e abrir o chat direto com a equipe técnica.
         </p>
       </div>
 
       <div class="info-card">
-        <div class="info-card-title">👤 Perfil e Assinatura</div>
+        <div class="info-card-title">🌙 Tema & 👤 Perfil VIP</div>
         <p style="font-size: 12px; margin: 0;">
-          No canto direito, você visualiza seu e-mail e o selo <strong>PRO</strong>. Clicando ali, você acessa os ajustes da sua conta e o status da sua assinatura.
+          Alterne entre Modo Escuro (anti-reflexo) e Claro no ícone da lua, e veja os dados da sua conta no botão de perfil.
         </p>
       </div>
     </div>
@@ -523,7 +530,7 @@
 
     <div class="step-box">
       <div class="step-title">🎵 Abrir e Ver Músicas</div>
-      Clique no botão verde <strong>"🎵 Ver Músicas"</strong> (ou em qualquer parte do cartão) para abrir a lista completa das músicas daquele repertório.
+      Clique no botão azul <strong>"🎵 Ver Músicas"</strong> (ou em qualquer parte do cartão) para abrir a lista completa das músicas daquele repertório.
     </div>
 
     <div class="step-box gold">
@@ -589,7 +596,7 @@
       </div>
     </div>
 
-    <div class="step-box green">
+    <div class="step-box blue">
       <div class="step-title">👆 Como Iniciar a Leitura:</div>
       Para abrir uma música no teleprompter, <strong>basta clicar em cima da linha da música</strong>. As setinhas <strong>▲ e ▼</strong> no canto direito servem para subir ou descer a música na ordem do show.
     </div>
@@ -622,9 +629,9 @@
 
     <h2>🎛️ Como Usar os Controles do Teleprompter:</h2>
 
-    <div class="step-box green">
+    <div class="step-box blue">
       <div class="step-title">▶ Iniciar / Pausar a Rolagem Contínua</div>
-      Clique no botão verde <strong>"▶ Iniciar Rolagem"</strong>. O texto começará a descer suavemente na tela. Para pausar no meio da música, basta dar um toque na tela ou apertar a tecla <span class="kbd-tag">Espaço</span>.
+      Clique no botão azul <strong>"▶ Iniciar Rolagem"</strong>. O texto começará a descer suavemente na tela. Para pausar no meio da música, basta dar um toque na tela ou apertar a tecla <span class="kbd-tag">Espaço</span>.
     </div>
 
     <div class="grid-2cols">
@@ -667,7 +674,7 @@
       Se o cantor convidado cantar em outro tom ou se a sua voz estiver cansada e você precisar descer meio tom, o CantaAí PRO resolve isso com um único clique, sem você precisar pensar nem fazer contas harmônicas de cabeça.
     </p>
 
-    <div class="step-box green">
+    <div class="step-box blue">
       <div class="step-title">🎵 Como Fazer a Troca de Tom:</div>
       No topo da tela do teleprompter, localize o seletor onde está escrito o tom atual (por exemplo, <strong>"Tom: E (Mi)"</strong>). Clique nele para abrir a lista completa de tons.
     </div>
@@ -779,9 +786,9 @@
       </div>
     </div>
 
-    <div class="step-box green">
+    <div class="step-box blue">
       <div class="step-title">💾 Salvar Alterações</div>
-      Terminou de editar? Clique no botão verde <strong>"💾 Salvar Alterações"</strong>. A música é atualizada imediatamente no seu dispositivo e na nuvem.
+      Terminou de editar? Clique no botão azul <strong>"💾 Salvar Alterações"</strong>. A música é atualizada imediatamente no seu dispositivo e na nuvem.
     </div>
 
     <div class="doc-footer">
@@ -817,7 +824,7 @@
 
     <h2>🛡️ Segurança Offline: E se a internet cair durante o show?</h2>
 
-    <div class="step-box green">
+    <div class="step-box blue">
       <div class="step-title">Funcionamento 100% Offline Garantido</div>
       Todas as suas cifras, letras e repertórios ficam armazenados na memória física do seu tablet, celular ou computador. Se o Wi-Fi do local oscilar ou os dados móveis caírem no meio da apresentação, <strong>o teleprompter continua funcionando perfeitamente sem nenhuma interrupção</strong>.
     </div>
@@ -841,6 +848,60 @@
     <div class="doc-footer">
       <span>CantaAí PRO • Manual do Usuário</span>
       <span>Página 8</span>
+    </div>
+  </div>
+
+
+  <!-- ==================== PÁGINA 9: PASSO 8 - NOTIFICAÇÕES & SUPORTE ==================== -->
+  <div class="manual-page">
+    <div class="doc-header">
+      <div class="logo-brand"><img src="assets/brand/simbolo-claro.svg" alt="" style="height:1.1em;width:auto;vertical-align:-0.15em;margin-right:0.25em"><span>Canta<span style="color:var(--primary)">Aí</span></span> <span class="badge-pro">PRO</span></div>
+      <div>Passo 8: Central de Notificações & Suporte com Chat</div>
+    </div>
+
+    <h1>8. Notificações & Chat com a Equipe</h1>
+    <p>
+      O CantaAí PRO possui um canal direto de comunicação integrado. Se você tiver dúvidas antes de um show, sugestões de novos repertórios ou precisar de suporte técnico, pode conversar diretamente com nossa equipe sem sair da sua conta.
+    </p>
+
+    <div class="img-mockup-frame">
+      <img src="assets/manual_img/tela_notificacoes.png" alt="Central de Notificações e Chat Interativo do CantaAí PRO">
+      <div class="img-caption">
+        <span>📸 Tela Real:</span> Popover rápido no sino e Central de Atendimento com chat interativo em tempo real e envio de anexos.
+      </div>
+    </div>
+
+    <h2>💬 Como usar os recursos de comunicação:</h2>
+
+    <div class="grid-2cols">
+      <div class="info-card">
+        <div class="info-card-title">🔔 Popover Rápido no Topo</div>
+        <p style="font-size: 12px; margin: 0;">
+          Dê um clique no <strong>Sino</strong> para ver novidades, atualizações de repertórios e avisos urgentes. O contador vermelho indica mensagens não lidas.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">💬 Chat & Atendimento Direto</div>
+        <p style="font-size: 12px; margin: 0;">
+          Abra chamados organizados por assunto, converse com nossos atendentes em tempo real e mantenha todo o histórico das suas conversas salvo na nuvem.
+        </p>
+      </div>
+    </div>
+
+    <div class="step-box blue">
+      <div class="step-title">📎 Envio de Imagens e Cifras Anexas</div>
+      Ao enviar uma mensagem na Central de Atendimento, você pode clicar no botão <strong>📎 (Clipe)</strong> para anexar prints do seu tablet, fotos do palco ou arquivos de cifras para nossa equipe analisar e ajudar você de forma personalizada.
+    </div>
+
+    <div class="step-box gold">
+      <div class="step-title">⚡ Sincronização em Tempo Real na Nuvem</div>
+      Suas mensagens e comunicados são sincronizados automaticamente no Supabase, garantindo que você possa iniciar uma conversa no celular e continuar no computador ou tablet.
+    </div>
+
+    <div class="doc-footer">
+      <span>CantaAí PRO • Manual do Usuário</span>
+      <span>Página 9</span>
     </div>
   </div>
 

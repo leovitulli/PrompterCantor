@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mockup Notificações e Chat CantaAí PRO</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #070b14;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #f8fafc;
+      width: 1080px;
+      height: 580px;
+      overflow: hidden;
+      display: flex;
+      gap: 20px;
+      padding: 16px 20px;
+    }
+
+    /* COLUNA 1: POPOVER RÁPIDO DO HEADER */
+    .popover-col {
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .popover-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+
+    .popover-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #131d35;
+    }
+    .popover-title {
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-count {
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+    .btn-read-all {
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #0a0f1d;
+      border-bottom: 1px solid #1e293b;
+    }
+    .pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #17233d;
+      color: #94a3b8;
+      border: 1px solid #1e293b;
+    }
+    .pill.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    .notif-list {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+    }
+    .notif-item {
+      background: #17233d;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      gap: 10px;
+      position: relative;
+    }
+    .notif-item.unread {
+      border-left: 3px solid #38bdf8;
+      background: #162444;
+    }
+    .notif-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .notif-content {
+      flex: 1;
+    }
+    .notif-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .notif-time {
+      font-size: 9.5px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .notif-desc {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .popover-foot {
+      padding: 10px 14px;
+      border-top: 1px solid #1e293b;
+      background: #0a0f1d;
+      text-align: center;
+    }
+    .popover-foot a {
+      color: #38bdf8;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    /* COLUNA 2: CENTRAL MODAL DE ATENDIMENTO COM CHAT */
+    .modal-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+
+    .sc-header {
+      padding: 12px 18px;
+      background: #131d35;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sc-title {
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sc-sub {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .sc-tabs {
+      display: flex;
+      gap: 12px;
+      padding: 0 16px;
+      background: #0d1527;
+      border-bottom: 1px solid #1e293b;
+    }
+    .sc-tab {
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sc-tab.active {
+      color: #38bdf8;
+      border-bottom-color: #38bdf8;
+    }
+
+    .chat-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .chat-sidebar {
+      width: 220px;
+      background: #0a0f1d;
+      border-right: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 8px;
+    }
+    .btn-new-ticket {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .ticket-item {
+      background: #17233d;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .ticket-item.active {
+      border-color: #2563eb;
+      background: #162444;
+    }
+    .ticket-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 2px;
+    }
+    .ticket-tag {
+      font-size: 9px;
+      font-weight: 800;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      padding: 2px 5px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .chat-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0a0f1d;
+    }
+    .chat-convo-header {
+      padding: 8px 14px;
+      background: #10192e;
+      border-bottom: 1px solid #1e293b;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-online {
+      font-size: 10px;
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+    }
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+    }
+    .msg-row.support {
+      align-self: flex-start;
+    }
+    .msg-row.user {
+      align-self: flex-end;
+    }
+    .msg-meta {
+      font-size: 9.5px;
+      color: #64748b;
+      margin-bottom: 3px;
+      display: flex;
+      gap: 6px;
+    }
+    .msg-bubble {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .msg-row.support .msg-bubble {
+      background: #1e293b;
+      color: #f8fafc;
+      border-bottom-left-radius: 2px;
+      border: 1px solid #334155;
+    }
+    .msg-row.user .msg-bubble {
+      background: #2563eb;
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-input-bar {
+      padding: 10px 14px;
+      background: #10192e;
+      border-top: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-input {
+      flex: 1;
+      background: #17233d;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #f8fafc;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .btn-clip {
+      background: #17233d;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .btn-send {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- COLUNA 1: POPOVER RÁPIDO DO HEADER -->
+  <div class="popover-col">
+    <div class="popover-card">
+      <div class="popover-head">
+        <div class="popover-title">
+          <span>🔔 Notificações</span>
+          <span class="badge-count">2</span>
+        </div>
+        <button class="btn-read-all">✓ Ler todas</button>
+      </div>
+
+      <div class="filter-pills">
+        <div class="pill active">Todas (2)</div>
+        <div class="pill">Não lidas</div>
+        <div class="pill">Suporte / Chat</div>
+      </div>
+
+      <div class="notif-list">
+        <div class="notif-item unread">
+          <div class="notif-icon">💬</div>
+          <div class="notif-content">
+            <div class="notif-title">
+              <span>Equipe CantaAí PRO</span>
+              <span class="notif-time">14 min</span>
+            </div>
+            <div class="notif-desc">Sua conta VIP foi sincronizada com a nuvem e seus repertórios estão seguros.</div>
+          </div>
+        </div>
+
+        <div class="notif-item unread">
+          <div class="notif-icon">🚀</div>
+          <div class="notif-content">
+            <div class="notif-title">
+              <span>Novidade no Sistema</span>
+              <span class="notif-time">1h atrás</span>
+            </div>
+            <div class="notif-desc">Novo recurso de envio de anexos e fotos na Central de Atendimento!</div>
+          </div>
+        </div>
+
+        <div class="notif-item">
+          <div class="notif-icon">🎵</div>
+          <div class="notif-content">
+            <div class="notif-title">
+              <span>Repertórios Sertanejo</span>
+              <span class="notif-time">Ontem</span>
+            </div>
+            <div class="notif-desc">14 cifras prontas disponíveis para ensaio e apresentações ao vivo.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="popover-foot">
+        <a href="#">Abrir Central Completa & Suporte ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLUNA 2: CENTRAL DE ATENDIMENTO COM CHAT -->
+  <div class="modal-col">
+    <div class="modal-card">
+      <div class="sc-header">
+        <div>
+          <div class="sc-title">
+            <span>🔔</span> Central de Notificações & Atendimento
+          </div>
+          <div class="sc-sub">Canal direto com nossa equipe técnica para tirar dúvidas e sugerir músicas</div>
+        </div>
+        <div style="font-size: 12px; color: #38bdf8; font-weight: 700; background: #17233d; padding: 4px 10px; border-radius: 6px; border: 1px solid #334155;">
+          ● Suporte Ativo
+        </div>
+      </div>
+
+      <div class="sc-tabs">
+        <div class="sc-tab"><span>📢</span> Comunicados</div>
+        <div class="sc-tab active"><span>💬</span> Chat & Atendimento (1)</div>
+      </div>
+
+      <div class="chat-layout">
+        <!-- Barra lateral de tickets -->
+        <div class="chat-sidebar">
+          <button class="btn-new-ticket"><span>➕</span> Iniciar Conversa</button>
+          
+          <div class="ticket-item active">
+            <div class="ticket-title">Ajuste de Tom no iPad</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="ticket-tag">Respondido</span>
+              <span style="font-size: 9px; color: #64748b;">16:24</span>
+            </div>
+          </div>
+
+          <div class="ticket-item">
+            <div class="ticket-title">Dúvida sobre Setlist PDF</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 9px; color: #94a3b8; font-weight: 600;">Finalizado</span>
+              <span style="font-size: 9px; color: #64748b;">Ontem</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat com balões -->
+        <div class="chat-body">
+          <div class="chat-convo-header">
+            <div><strong>Chamado #104:</strong> Ajuste de Tom no iPad</div>
+            <div class="status-online">● Atendente Online</div>
+          </div>
+
+          <div class="chat-messages">
+            <div class="msg-row user">
+              <div class="msg-meta" style="align-self: flex-end;">Você • 16:20</div>
+              <div class="msg-bubble">Olá equipe! Se o Wi-Fi do bar cair durante o show, a troca de tom ainda funciona?</div>
+            </div>
+
+            <div class="msg-row support">
+              <div class="msg-meta">Suporte CantaAí PRO • 16:22</div>
+              <div class="msg-bubble">Olá Leonardo! Sim, o algoritmo harmônico roda 100% no seu aparelho sem precisar de internet. Pode subir no palco sem medo!</div>
+            </div>
+
+            <div class="msg-row user">
+              <div class="msg-meta" style="align-self: flex-end;">Você • 16:24</div>
+              <div class="msg-bubble">Show de bola! Testei aqui no ensaio da banda e funcionou na hora 🎸</div>
+            </div>
+          </div>
+
+          <div class="chat-input-bar">
+            <div class="btn-clip" title="Anexar foto ou cifra">📎</div>
+            <input type="text" class="chat-input" value="Digite sua mensagem para o suporte..." readonly>
+            <button class="btn-send">Enviar ➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
