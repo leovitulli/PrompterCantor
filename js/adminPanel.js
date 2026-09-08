@@ -1057,6 +1057,20 @@
         });
       }
 
+      var btnExpandAll = document.getElementById('btnMasterExpandAll');
+      if (btnExpandAll) {
+        btnExpandAll.addEventListener('click', function () {
+          PrompterAdmin.expandAllMaster();
+        });
+      }
+
+      var btnCollapseAll = document.getElementById('btnMasterCollapseAll');
+      if (btnCollapseAll) {
+        btnCollapseAll.addEventListener('click', function () {
+          PrompterAdmin.collapseAllMaster();
+        });
+      }
+
       var inputMaster = document.getElementById('inputMasterSearch');
       if (inputMaster) {
         inputMaster.addEventListener('input', function (e) {
@@ -2339,6 +2353,48 @@
     // ════════════════════════════════════════
     masterSongsCache: [],
     masterRepsCache: [],
+    expandedSingers: {},
+    expandedReps: {},
+
+    toggleSingerGroup: function (uid) {
+      var card = document.querySelector('.master-singer-card[data-singer-id="' + uid + '"]');
+      if (!card) return;
+      var isExp = card.classList.toggle('is-expanded');
+      PrompterAdmin.expandedSingers[uid] = isExp;
+    },
+
+    toggleRepGroup: function (repId) {
+      var card = document.querySelector('.master-rep-card[data-rep-id="' + repId + '"]');
+      if (!card) return;
+      var isExp = card.classList.toggle('is-expanded');
+      PrompterAdmin.expandedReps[repId] = isExp;
+    },
+
+    expandAllMaster: function () {
+      document.querySelectorAll('.master-singer-card').forEach(function (el) {
+        el.classList.add('is-expanded');
+        var uid = el.getAttribute('data-singer-id');
+        if (uid) PrompterAdmin.expandedSingers[uid] = true;
+      });
+      document.querySelectorAll('.master-rep-card').forEach(function (el) {
+        el.classList.add('is-expanded');
+        var rId = el.getAttribute('data-rep-id');
+        if (rId) PrompterAdmin.expandedReps[rId] = true;
+      });
+    },
+
+    collapseAllMaster: function () {
+      document.querySelectorAll('.master-singer-card').forEach(function (el) {
+        el.classList.remove('is-expanded');
+        var uid = el.getAttribute('data-singer-id');
+        if (uid) PrompterAdmin.expandedSingers[uid] = false;
+      });
+      document.querySelectorAll('.master-rep-card').forEach(function (el) {
+        el.classList.remove('is-expanded');
+        var rId = el.getAttribute('data-rep-id');
+        if (rId) PrompterAdmin.expandedReps[rId] = false;
+      });
+    },
 
     openMasterSongsModal: function () {
       var modal = document.getElementById('adminMasterSongsModal');
@@ -2485,46 +2541,53 @@
         totalSongsCount += userTotalSongs;
 
         var userInitial = (uInfo.name || uInfo.email || 'C').charAt(0).toUpperCase();
+        var isSingerExp = query ? true : !!PrompterAdmin.expandedSingers[uid];
 
         html +=
-          '<div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 18px 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">' +
-            '<!-- CABEÇALHO DO CANTOR -->' +
-            '<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">' +
-              '<div style="display: flex; align-items: center; gap: 12px;">' +
-                '<div class="user-avatar-initial" style="width: 40px; height: 40px; font-size: 1.1rem;">' + escapeHtml(userInitial) + '</div>' +
+          '<div class="master-singer-card ' + (isSingerExp ? 'is-expanded' : '') + '" data-singer-id="' + escapeHtml(uid) + '">' +
+            '<!-- CABEÇALHO DO CANTOR (CLICÁVEL PARA RETRAIR/EXPANDIR) -->' +
+            '<div class="master-singer-header" onclick="PrompterAdmin.toggleSingerGroup(\'' + escapeHtml(uid).replace(/'/g, "\\'") + '\')">' +
+              '<div class="master-singer-info">' +
+                '<div class="user-avatar-initial" style="width: 42px; height: 42px; font-size: 1.15rem; flex-shrink: 0;">' + escapeHtml(userInitial) + '</div>' +
                 '<div>' +
-                  '<div style="font-weight: 800; font-size: 1.1rem; color: #f8fafc; display: flex; align-items: center; gap: 8px;">' +
-                    escapeHtml(uInfo.name || uInfo.email) +
-                    '<span class="badge" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">' + escapeHtml(uInfo.plan_type || 'FREE') + '</span>' +
+                  '<div style="font-weight: 800; font-size: 1.05rem; color: #f8fafc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' +
+                    '<span>' + escapeHtml(uInfo.name || uInfo.email) + '</span>' +
+                    '<span class="badge" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); font-weight: 700;">' + escapeHtml(uInfo.plan_type || 'FREE') + '</span>' +
                   '</div>' +
                   '<div style="font-size: 0.8rem; color: #94a3b8;">' + escapeHtml(uInfo.email) + '</div>' +
                 '</div>' +
               '</div>' +
-              '<div style="font-size: 0.82rem; font-weight: 700; color: #34d399; background: rgba(16, 185, 129, 0.1); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.25);">' +
-                filteredReps.length + ' Repertório(s) • ' + userTotalSongs + ' Música(s)' +
+              '<div class="master-singer-meta">' +
+                '<span style="font-size: 0.8rem; font-weight: 700; color: #34d399; background: rgba(16, 185, 129, 0.1); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.25); white-space: nowrap;">' +
+                  filteredReps.length + ' Repertório(s) • ' + userTotalSongs + ' Música(s)' +
+                '</span>' +
+                '<span class="master-chevron">▼</span>' +
               '</div>' +
             '</div>' +
-            '<!-- LISTA DE REPERTÓRIOS DO CANTOR -->' +
-            '<div style="display: flex; flex-direction: column; gap: 14px;">';
+            '<!-- LISTA DE REPERTÓRIOS DO CANTOR (SANFONA) -->' +
+            '<div class="master-singer-content">';
 
         filteredReps.forEach(function (r) {
           var repSongs = r.songs || [];
+          var isRepExp = query ? true : !!PrompterAdmin.expandedReps[r.id];
+
           html +=
-            '<div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px 16px;">' +
-              '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">' +
-                '<div style="display: flex; align-items: center; gap: 8px;">' +
-                  '<span style="font-size: 1.2rem;">📁</span>' +
-                  '<strong style="font-size: 1rem; color: #ffffff;">' + escapeHtml(r.name) + '</strong>' +
-                  '<span style="font-size: 0.78rem; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px;">' + repSongs.length + ' músicas</span>' +
+            '<div class="master-rep-card ' + (isRepExp ? 'is-expanded' : '') + '" data-rep-id="' + escapeHtml(r.id) + '">' +
+              '<div class="master-rep-header" onclick="PrompterAdmin.toggleRepGroup(\'' + escapeHtml(r.id).replace(/'/g, "\\'") + '\')">' +
+                '<div class="master-rep-title-group">' +
+                  '<span style="font-size: 1.15rem;">📁</span>' +
+                  '<strong style="font-size: 0.95rem; color: #ffffff;">' + escapeHtml(r.name) + '</strong>' +
+                  '<span style="font-size: 0.75rem; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px;">' + repSongs.length + ' músicas</span>' +
                 '</div>' +
-                '<div style="display: flex; gap: 8px;">' +
-                  '<button class="btn btn-primary btn-sm" onclick="PrompterAdmin.cloneEntireRepertoire(\'' + r.id + '\', \'' + escapeHtml(r.name).replace(/'/g, "\\'") + '\')" style="font-weight: 800; padding: 6px 14px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">' +
+                '<div class="master-rep-actions">' +
+                  '<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); PrompterAdmin.cloneEntireRepertoire(\'' + r.id + '\', \'' + escapeHtml(r.name).replace(/'/g, "\\'") + '\')" style="font-weight: 700; font-size: 0.78rem; padding: 5px 12px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" title="Clonar todo este repertório para sua conta">' +
                     '📥 Importar Repertório Completo' +
                   '</button>' +
+                  '<span class="master-chevron">▼</span>' +
                 '</div>' +
               '</div>' +
-              '<!-- MÚSICAS DO REPERTÓRIO -->' +
-              '<div style="display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding-right: 4px;">';
+              '<!-- MÚSICAS DO REPERTÓRIO (COLAPSÁVEL) -->' +
+              '<div class="master-rep-songs">';
 
           if (repSongs.length === 0) {
             html += '<div style="color: #64748b; font-size: 0.8rem; font-style: italic; padding: 6px 0;">Nenhuma música neste repertório.</div>';
@@ -2536,16 +2599,16 @@
               var sArtist = s.artist || '';
 
               html +=
-                '<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">' +
+                '<div class="master-song-row">' +
                   '<div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">' +
-                    '<span style="color: #64748b; font-size: 0.8rem; font-family: var(--font-mono);">' + (sIdx + 1) + '.</span>' +
+                    '<span style="color: #64748b; font-size: 0.8rem; font-family: var(--font-mono); min-width: 22px;">' + (sIdx + 1) + '.</span>' +
                     '<strong style="color: #f1f5f9; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis;">' + escapeHtml(sTitle) + '</strong>' +
                     '<span class="badge badge-key" style="font-size: 0.72rem; padding: 1px 6px; background: rgba(56,189,248,0.15); color: #38bdf8; border-radius: 4px;">' + escapeHtml(sKey) + '</span>' +
                     (sArtist ? ('<span style="color: #94a3b8; font-size: 0.78rem;">• ' + escapeHtml(sArtist) + '</span>') : '') +
                   '</div>' +
                   '<div style="display: flex; gap: 6px;">' +
-                    '<button class="btn btn-outline btn-xs" onclick="PrompterAdmin.copySongContent(\'' + sId + '\')" style="color: #38bdf8; border-color: rgba(56,189,248,0.3); padding: 3px 8px; font-size: 0.75rem; border-radius: 6px;" title="Copiar letra e cifra">📋 Copiar</button>' +
-                    '<button class="btn btn-secondary btn-xs" onclick="PrompterAdmin.cloneSongToMyRepertoire(\'' + sId + '\')" style="padding: 3px 8px; font-size: 0.75rem; border-radius: 6px;" title="Importar apenas esta música">➕ Importar</button>' +
+                    '<button type="button" class="btn btn-outline btn-xs" onclick="event.stopPropagation(); PrompterAdmin.copySongContent(\'' + sId + '\')" style="color: #38bdf8; border-color: rgba(56,189,248,0.3); padding: 3px 8px; font-size: 0.75rem; border-radius: 6px;" title="Copiar letra e cifra">📋 Copiar</button>' +
+                    '<button type="button" class="btn btn-secondary btn-xs" onclick="event.stopPropagation(); PrompterAdmin.cloneSongToMyRepertoire(\'' + sId + '\')" style="padding: 3px 8px; font-size: 0.75rem; border-radius: 6px;" title="Importar apenas esta música">➕ Importar</button>' +
                   '</div>' +
                 '</div>';
             });
@@ -2562,8 +2625,12 @@
         return;
       }
 
-      var summaryHeader = '<div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 14px;">Acervo Global: <strong>' + totalRepsCount + '</strong> repertório(s) e <strong>' + totalSongsCount + '</strong> música(s) organizados por cantor:</div>';
-      container.innerHTML = summaryHeader + html;
+      var summaryBar = document.getElementById('masterSongsSummaryBar');
+      var summaryText = 'Acervo Global: <strong>' + totalRepsCount + '</strong> repertório(s) e <strong>' + totalSongsCount + '</strong> música(s) organizados por cantor • <em>Clique no cantor ou no repertório para expandir/recolher</em>';
+      if (summaryBar) {
+        summaryBar.innerHTML = summaryText;
+      }
+      container.innerHTML = html;
     },
 
     copySongContent: function (songId) {

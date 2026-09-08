@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css?v=124">
-  <link rel="stylesheet" href="css/admin.css?v=122">
+  <link rel="stylesheet" href="css/admin.css?v=123">
   <link rel="stylesheet" href="css/landing.css?v=121">
   <link rel="stylesheet" href="css/brand.css?v=38">
 
@@ -1175,23 +1175,26 @@
   <!-- MODAL MASTER: ACERVO GLOBAL DE MÚSICAS & REPERTÓRIOS (VIEW DO CEO) -->
   <div id="adminMasterSongsModal" class="modal hidden" style="z-index: 10000050 !important;">
     <div class="modal-overlay" id="adminMasterSongsOverlay"></div>
-    <div class="modal-card" style="max-width: 1040px; width: 95%; max-height: 92vh; overflow-y: auto;">
-      <div class="modal-header">
+    <div class="modal-card admin-modal-card" style="max-width: 1080px; width: 95%; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 1.6rem;">📚</span>
           <div>
-            <h3 style="margin: 0; font-size: 1.25rem;">Acervo Global por Cantor (CEO Master View)</h3>
-            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Explore os repertórios e músicas de cada usuário, com clonagem direta para a sua conta.</p>
+            <h3 style="margin: 0; font-size: 1.25rem; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;">Acervo Global por Cantor (CEO Master View)</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Explore os repertórios e músicas de cada usuário, com visualização retrátil e clonagem direta.</p>
           </div>
         </div>
         <button class="modal-close" id="btnCloseMasterSongsModal">✕</button>
       </div>
-      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
-        <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
-          <input type="search" id="inputMasterSearch" class="form-control" placeholder="🔍 Buscar por título, cantor, ritmo ou trecho da letra..." style="flex: 1;">
-          <button id="btnRefreshMasterSongs" class="btn btn-outline" title="Atualizar Lista">🔄</button>
+      <div class="modal-body" style="padding: 1.25rem 1.5rem; flex: 1; overflow-y: auto;">
+        <div style="display: flex; gap: 8px; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center;">
+          <input type="search" id="inputMasterSearch" class="form-control" placeholder="🔍 Buscar por título, cantor, ritmo ou trecho da letra..." style="flex: 1; min-width: 240px; height: 40px; border-radius: 8px;">
+          <button id="btnMasterExpandAll" class="btn btn-outline btn-sm" style="height: 40px; padding: 0 12px; font-size: 0.8rem; font-weight: 700; white-space: nowrap;" title="Expandir todos os cantores e repertórios">📂 Expandir Tudo</button>
+          <button id="btnMasterCollapseAll" class="btn btn-outline btn-sm" style="height: 40px; padding: 0 12px; font-size: 0.8rem; font-weight: 700; white-space: nowrap;" title="Recolher todos os cantores e repertórios">📁 Recolher Tudo</button>
+          <button id="btnRefreshMasterSongs" class="btn btn-outline btn-sm" style="height: 40px; padding: 0 14px; font-size: 0.85rem;" title="Atualizar Lista">🔄</button>
         </div>
-        <div id="masterSongsListContainer" style="max-height: 60vh; overflow-y: auto;">
+        <div id="masterSongsSummaryBar" style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 12px;"></div>
+        <div id="masterSongsListContainer" style="display: flex; flex-direction: column; gap: 10px;">
           <div class="text-center" style="padding: 24px; color: #94a3b8;">Carregando acervo de músicas...</div>
         </div>
       </div>
@@ -1523,7 +1526,7 @@
   <script src="js/supabaseClient.js?v=125"></script>
   <script src="js/db.js?v=123"></script>
   <script src="js/auth.js?v=129"></script>
-  <script src="js/adminPanel.js?v=128"></script>
+  <script src="js/adminPanel.js?v=129"></script>
   <script src="js/textParser.js?v=123"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
   <script src="js/transposer.js?v=123"></script>
