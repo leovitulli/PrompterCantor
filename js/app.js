@@ -3709,17 +3709,30 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
+    var authBtnLoadingSafetyTimer = null;
+
     function setAuthButtonState(loading, text) {
       if (!btnSubmitAuth) return;
       if (authBtnResetTimer) {
         clearTimeout(authBtnResetTimer);
         authBtnResetTimer = null;
       }
+      if (authBtnLoadingSafetyTimer) {
+        clearTimeout(authBtnLoadingSafetyTimer);
+        authBtnLoadingSafetyTimer = null;
+      }
       btnSubmitAuth.classList.remove('btn-auth-error');
       if (loading) {
         btnSubmitAuth.disabled = true;
         btnSubmitAuth.classList.add('btn-loading');
         btnSubmitAuth.innerHTML = '<span class="auth-btn-spinner"></span> ' + (text || 'Processando...');
+        // Failsafe timeout: nunca deixar o botão permanentemente travado em caso de lentidão de rede
+        authBtnLoadingSafetyTimer = setTimeout(function() {
+          if (btnSubmitAuth && btnSubmitAuth.classList.contains('btn-loading')) {
+            setAuthButtonState(false);
+            showAuthError('Tempo limite excedido. Verifique sua conexão e tente novamente.', null);
+          }
+        }, 9000);
       } else {
         btnSubmitAuth.disabled = false;
         btnSubmitAuth.classList.remove('btn-loading');
@@ -3842,7 +3855,7 @@ document.addEventListener('DOMContentLoaded', function () {
           showAuthError(msg, null);
           if (msg.indexOf('já está cadastrado') !== -1) {
             setTimeout(function () {
-              var tabSignIn = document.getElementById('authTabSignIn');
+              var tabSignIn = document.getElementById('tabAuthSignIn');
               if (tabSignIn) tabSignIn.click();
               var emailIn = document.getElementById('authEmail');
               if (emailIn && email) emailIn.value = email;

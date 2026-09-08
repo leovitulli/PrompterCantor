@@ -760,12 +760,28 @@
 
       var btnRefresh = document.getElementById('btnRefreshAdminData');
       if (btnRefresh) {
-        btnRefresh.addEventListener('click', function () {
+        var isRefreshingData = false;
+        btnRefresh.addEventListener('click', function (e) {
+          if (e) e.preventDefault();
+          if (isRefreshingData) return;
+          isRefreshingData = true;
+
+          var oldHtml = btnRefresh.innerHTML;
+          btnRefresh.disabled = true;
+          btnRefresh.innerHTML = '<span class="auth-btn-spinner" style="width:13px;height:13px;border-width:2px;margin-right:6px;vertical-align:middle;display:inline-block;"></span> Sincronizando...';
+
           searchQuery = '';
           var sInput = document.getElementById('adminSearchInput');
           if (sInput) sInput.value = '';
-          PrompterAdmin.loadDashboardData();
-          if (window.showToast) window.showToast('🔄 Lista de cantores atualizada com o banco de dados!', 'success');
+
+          PrompterAdmin.loadDashboardData(function (count) {
+            btnRefresh.disabled = false;
+            btnRefresh.innerHTML = oldHtml;
+            isRefreshingData = false;
+            if (window.showToast) {
+              window.showToast('🔄 Lista atualizada com a nuvem! ' + (allUserData.length) + ' cantores cadastrados.', 'success');
+            }
+          });
         });
       }
 
@@ -1661,7 +1677,7 @@
     },
 
 
-    loadDashboardData: function () {
+    loadDashboardData: function (onCompleteCallback) {
       // 0. Recarregar dados locais para garantir que novos logins/cadastros não sejam perdidos
       this.loadStoredData();
 
@@ -1710,7 +1726,98 @@
       PrompterAdmin.renderUsersTable();
       PrompterAdmin.populateAnnouncementTargets();
 
+      // Função de processamento seguro de linhas do System Registry
+      function processRegistrySongs(rows) {
+        if (!rows || !rows.length) return false;
+        var changed = false;
+        rows.forEach(function(row) {
+          try {
+            var sObj = null;
+            if (row.content) {
+              sObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+            }
+            if (!sObj && row.title) {
+              sObj = {
+                id: row.id,
+                name: row.title,
+                email: row.artist,
+                singer_code: normalizeSingerCode('', row.artist),
+                plan_tier: 'pro',
+                plan_type: '💎 PRO ANUAL',
+                is_online: false,
+                status_text: '⚪ Offline'
+              };
+            }
+            if (sObj && (sObj.email || sObj.id)) {
+              var sEmail = (sObj.email || '').trim().toLowerCase();
+              var sCode = (sObj.singer_code || '').trim().toLowerCase();
+              var sId = (sObj.id || '').toLowerCase();
+              var deletedSingers = getDeletedSingers();
+
+              if (deletedSingers.indexOf(sEmail) !== -1 || deletedSingers.indexOf(sCode) !== -1 || (sId && deletedSingers.indexOf(sId) !== -1)) {
+                return;
+              }
+
+              sObj.singer_code = normalizeSingerCode(sObj.singer_code, sObj.email);
+
+              var existIdx = allUserData.findIndex(function(u) {
+                return (sObj.id && u.id === sObj.id) ||
+                       (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
+              });
+              if (existIdx >= 0) {
+                allUserData[existIdx] = Object.assign({}, allUserData[existIdx], sObj);
+              } else {
+                allUserData.unshift(sObj);
+              }
+              changed = true;
+            }
+          } catch(e) {
+            console.warn('Erro ao processar cantor da nuvem:', e);
+          }
+        });
+
+        if (changed) {
+          PrompterAdmin.saveStoredUsers();
+          PrompterAdmin.updateMetrics();
+          PrompterAdmin.renderUsersTable();
+          PrompterAdmin.populateAnnouncementTargets();
+        }
+        return changed;
+      }
+
       // 2. Sincronizar da Nuvem: buscar todos os cantores registrados no System Registry
+      // Usar tanto o cliente Supabase quanto o endpoint REST público (anon) para garantir que cantores criados por outros usuários (ex: Aline) não sejam bloqueados pelo RLS do Postgres
+      var pendingCount = 2;
+      function notifyComplete() {
+        pendingCount--;
+        if (pendingCount <= 0 && typeof onCompleteCallback === 'function') {
+          onCompleteCallback(allUserData.length);
+        }
+      }
+
+      var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
+      var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
+      if (supUrl && anonKey) {
+        var restUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&select=*';
+        fetch(restUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': anonKey,
+            'Authorization': 'Bearer ' + anonKey,
+            'Content-Type': 'application/json'
+          }
+        }).then(function(r) { return r.json(); }).then(function(rows) {
+          if (Array.isArray(rows) && rows.length > 0) {
+            processRegistrySongs(rows);
+          }
+          notifyComplete();
+        }).catch(function() {
+          notifyComplete();
+        });
+      } else {
+        notifyComplete();
+      }
+
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
         sb.from('songs')
@@ -1718,62 +1825,11 @@
           .eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID)
           .then(function(res) {
             if (res.data && res.data.length > 0) {
-              res.data.forEach(function(row) {
-                try {
-                  var sObj = null;
-                  if (row.content) {
-                    sObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
-                  }
-                  if (!sObj && row.title) {
-                    sObj = {
-                      id: row.id,
-                      name: row.title,
-                      email: row.artist,
-                      singer_code: normalizeSingerCode('', row.artist),
-                      plan_tier: 'pro',
-                      plan_type: '💎 PRO ANUAL',
-                      is_online: false,
-                      status_text: '⚪ Offline'
-                    };
-                  }
-                  if (sObj && (sObj.email || sObj.id)) {
-                    var sEmail = (sObj.email || '').trim().toLowerCase();
-                    var sCode = (sObj.singer_code || '').trim().toLowerCase();
-                    var sId = (sObj.id || '').toLowerCase();
-                    var deletedSingers = getDeletedSingers();
-
-                    // Se estiver na lista de excluídos, expurgar imediatamente do Supabase e não adicionar à lista
-                    if (deletedSingers.indexOf(sEmail) !== -1 || deletedSingers.indexOf(sCode) !== -1 || (sId && deletedSingers.indexOf(sId) !== -1)) {
-                      if (sb) {
-                        if (sEmail) sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('artist', sObj.email).catch(function() {});
-                        if (isValidUUID(sId)) sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('id', sId).catch(function() {});
-                      }
-                      return;
-                    }
-
-                    sObj.singer_code = normalizeSingerCode(sObj.singer_code, sObj.email);
-
-                    var existIdx = allUserData.findIndex(function(u) {
-                      return (sObj.id && u.id === sObj.id) ||
-                             (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
-                    });
-                    if (existIdx >= 0) {
-                      allUserData[existIdx] = Object.assign({}, allUserData[existIdx], sObj);
-                    } else {
-                      allUserData.unshift(sObj);
-                    }
-                  }
-                } catch(e) {
-                  console.warn('Erro ao processar cantor da nuvem:', e);
-                }
-              });
-              PrompterAdmin.saveStoredUsers();
-              PrompterAdmin.updateMetrics();
-              PrompterAdmin.renderUsersTable();
-              PrompterAdmin.populateAnnouncementTargets();
+              processRegistrySongs(res.data);
             }
-          }).catch(function(err) {
-            console.warn('Aviso ao sincronizar registry:', err);
+            notifyComplete();
+          }).catch(function() {
+            notifyComplete();
           });
 
         // 3. Tentar também ler profiles caso o Supabase conceda permissão
@@ -1829,6 +1885,8 @@
             PrompterAdmin.renderUsersTable();
           }
         }).catch(function() {});
+      } else {
+        notifyComplete();
       }
     },
 
@@ -2805,6 +2863,297 @@
       });
     },
 
+    populateAnnouncementTargets: function () {
+      var sel = document.getElementById('announcementTarget');
+      if (!sel) return;
+      var curVal = sel.value;
+      var html = '<option value="all">🌐 TODOS OS CANTORES (Broadcast Geral)</option>';
+      allUserData.forEach(function (u) {
+        var uName = u.name || (u.email ? u.email.split('@')[0] : 'Cantor');
+        var uCode = u.singer_code || ('@' + (u.email ? u.email.split('@')[0] : 'cantor'));
+        html += '<option value="' + escapeHtml(u.email || u.id) + '">👤 ' + escapeHtml(uName) + ' (' + escapeHtml(uCode) + ')</option>';
+      });
+      sel.innerHTML = html;
+      if (curVal) sel.value = curVal;
+    },
+
+    // ── COMUNICADOS & MENSAGENS (BROADCAST PARA CANTORES) ──
+    loadAnnouncements: function () {
+      var container = document.getElementById('announcementsListContainer');
+      if (!container) return;
+
+      var raw = localStorage.getItem('canta_ai_admin_announcements');
+      var list = raw ? JSON.parse(raw) : [];
+
+      if (!list || list.length === 0) {
+        container.innerHTML = '<div style="color: #94a3b8; font-size: 0.85rem; padding: 20px; text-align: center; background: rgba(15,23,42,0.5); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.08);">Nenhum comunicado enviado ainda. Use o formulário acima para publicar atualizações ou avisos para os cantores.</div>';
+        return;
+      }
+
+      var html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+      list.forEach(function (a, idx) {
+        var typeBadge = '<span class="badge-plan-executive" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">📢 Geral</span>';
+        if (a.type === 'update') typeBadge = '<span class="badge-plan-executive" style="background: rgba(52, 211, 153, 0.2); color: #34d399;">🚀 Atualização</span>';
+        if (a.type === 'promo') typeBadge = '<span class="badge-plan-executive" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">🎉 Novidade</span>';
+        if (a.type === 'alert') typeBadge = '<span class="badge-plan-executive" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">⚠️ Alerta</span>';
+
+        var targetStr = (a.target === 'all') ? '🌐 Todos os Cantores' : escapeHtml(a.target);
+        var dateStr = a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente';
+
+        html +=
+          '<div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">' +
+            '<div style="flex: 1;">' +
+              '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">' +
+                typeBadge +
+                '<strong style="color: #f8fafc; font-size: 0.95rem;">' + escapeHtml(a.title || 'Sem título') + '</strong>' +
+                '<span style="color: #64748b; font-size: 0.75rem;">Para: ' + targetStr + '</span>' +
+                '<span style="color: #64748b; font-size: 0.75rem;">• ' + dateStr + '</span>' +
+              '</div>' +
+              '<div style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.45; white-space: pre-wrap;">' + escapeHtml(a.message || '') + '</div>' +
+            '</div>' +
+            '<button class="btn btn-sm btn-outline btn-del-announcement" data-idx="' + idx + '" style="color: #f87171; border-color: rgba(239,68,68,0.3); padding: 4px 8px; font-size: 0.75rem;" title="Excluir comunicado">✕</button>' +
+          '</div>';
+      });
+      html += '</div>';
+
+      container.innerHTML = html;
+
+      container.querySelectorAll('.btn-del-announcement').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var i = parseInt(this.getAttribute('data-idx'), 10);
+          list.splice(i, 1);
+          localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+          PrompterAdmin.loadAnnouncements();
+          if (window.showToast) window.showToast('Comunicado removido do histórico.', 'info');
+        });
+      });
+    },
+
+    sendAnnouncement: function () {
+      var targetEl = document.getElementById('announcementTarget');
+      var typeEl = document.getElementById('announcementType');
+      var titleEl = document.getElementById('announcementTitle');
+      var msgEl = document.getElementById('announcementMessage');
+      var btnSend = document.getElementById('btnSendAnnouncement');
+
+      var target = targetEl ? targetEl.value : 'all';
+      var type = typeEl ? typeEl.value : 'info';
+      var title = titleEl ? titleEl.value.trim() : '';
+      var msg = msgEl ? msgEl.value.trim() : '';
+
+      if (!title || !msg) {
+        if (window.showToast) window.showToast('Por favor, informe o título e o conteúdo da mensagem.', 'warning');
+        return;
+      }
+
+      if (btnSend) {
+        btnSend.disabled = true;
+        btnSend.innerHTML = '<span class="auth-btn-spinner" style="width:13px;height:13px;border-width:2px;margin-right:6px;vertical-align:middle;display:inline-block;"></span> Publicando...';
+      }
+
+      var newAnn = {
+        id: 'ann-' + Date.now(),
+        target: target,
+        type: type,
+        title: title,
+        message: msg,
+        created_at: new Date().toISOString()
+      };
+
+      var raw = localStorage.getItem('canta_ai_admin_announcements');
+      var list = raw ? JSON.parse(raw) : [];
+      list.unshift(newAnn);
+      localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+
+      // Sincronizar na nuvem (System Registry)
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb) {
+        var row = {
+          repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
+          title: '📢 COMUNICADO: ' + title,
+          artist: 'SYSTEM_ANNOUNCEMENT',
+          composer: target,
+          content: JSON.stringify(newAnn)
+        };
+        sb.from('songs').insert(row).catch(function() {});
+      }
+
+      setTimeout(function () {
+        if (titleEl) titleEl.value = '';
+        if (msgEl) msgEl.value = '';
+        if (btnSend) {
+          btnSend.disabled = false;
+          btnSend.innerHTML = '🚀 Publicar Comunicado';
+        }
+        PrompterAdmin.loadAnnouncements();
+        if (window.showToast) window.showToast('📢 Comunicado publicado com sucesso para os cantores!', 'success');
+      }, 400);
+    },
+
+    // ── CENTRAL DE CHAMADOS & SUPORTE (FEEDBACK DOS CANTORES) ──
+    loadTickets: function () {
+      var container = document.getElementById('ticketsListContainer');
+      var btnRef = document.getElementById('btnRefreshTickets');
+      if (btnRef) {
+        btnRef.disabled = true;
+        btnRef.innerHTML = '<span class="auth-btn-spinner" style="width:12px;height:12px;border-width:2px;margin-right:6px;vertical-align:middle;display:inline-block;"></span> Atualizando...';
+      }
+
+      if (container) {
+        container.innerHTML = '<div style="color: #94a3b8; padding: 24px; text-align: center;"><span class="auth-btn-spinner" style="width:16px;height:16px;border-width:2px;margin-right:8px;vertical-align:middle;display:inline-block;"></span> Carregando chamados dos cantores...</div>';
+      }
+
+      var localRaw = localStorage.getItem('canta_ai_support_tickets');
+      var tickets = localRaw ? JSON.parse(localRaw) : [];
+
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      var finishTicketsLoad = function (tList) {
+        if (btnRef) {
+          btnRef.disabled = false;
+          btnRef.innerHTML = '🔄 Atualizar Chamados';
+        }
+        PrompterAdmin.renderTicketsList(tList);
+      };
+
+      if (sb) {
+        sb.from('tickets').select('*').order('created_at', { ascending: false }).then(function (res) {
+          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+            res.data.forEach(function (cloudT) {
+              var idx = tickets.findIndex(function (x) { return x.id === cloudT.id; });
+              if (idx >= 0) {
+                tickets[idx] = Object.assign({}, tickets[idx], cloudT);
+              } else {
+                tickets.unshift(cloudT);
+              }
+            });
+            localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
+          }
+          finishTicketsLoad(tickets);
+        }).catch(function () {
+          finishTicketsLoad(tickets);
+        });
+      } else {
+        finishTicketsLoad(tickets);
+      }
+    },
+
+    renderTicketsList: function (tickets) {
+      var container = document.getElementById('ticketsListContainer');
+      if (!container) return;
+
+      if (!tickets || tickets.length === 0) {
+        container.innerHTML = '<div style="color: #94a3b8; padding: 28px; text-align: center; background: rgba(15,23,42,0.5); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.08); font-size: 0.9rem;">🎉 Nenhum chamado pendente no momento! Todos os cantores estão atendidos.</div>';
+        return;
+      }
+
+      var catLabels = {
+        'duvida': '❓ Dúvida de Uso',
+        'problema': '🐞 Problema / Bug',
+        'sugestao': '💡 Sugestão / Ideia',
+        'cifra': '🎵 Cifra ou Transposição',
+        'faturamento': '💳 Faturamento / Plano',
+        'outro': '📩 Outro Assunto'
+      };
+
+      var html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+      tickets.forEach(function (t) {
+        var isResolved = t.status === 'resolved';
+        var statusBadge = isResolved
+          ? '<span class="badge-plan-executive badge-plan-pro" style="background: rgba(52, 211, 153, 0.2); color: #34d399;">🟢 Resolvido</span>'
+          : '<span class="badge-plan-executive badge-plan-free" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">🟡 Aberto</span>';
+
+        var catBadge = '<span class="badge-plan-executive" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">' + (catLabels[t.category] || '📩 Suporte') + '</span>';
+        var dateStr = t.created_at ? new Date(t.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Hoje';
+
+        var photoHtml = '';
+        if (t.image_url) {
+          photoHtml =
+            '<div style="margin-top: 10px;">' +
+              '<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px;">📸 Print/Anexo enviado pelo cantor (clique para ampliar):</div>' +
+              '<img src="' + t.image_url + '" class="ticket-thumb-clickable" data-src="' + t.image_url + '" alt="Anexo do chamado" style="max-height: 90px; max-width: 160px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; object-fit: cover;">' +
+            '</div>';
+        }
+
+        html +=
+          '<div style="background: rgba(15, 23, 42, 0.7); border: 1px solid ' + (isResolved ? 'rgba(52, 211, 153, 0.3)' : 'rgba(251, 191, 36, 0.3)') + '; border-radius: 12px; padding: 16px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">' +
+              '<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' +
+                statusBadge +
+                catBadge +
+                '<strong style="color: #f8fafc; font-size: 1rem;">' + escapeHtml(t.title || 'Chamado de Suporte') + '</strong>' +
+              '</div>' +
+              '<div style="color: #64748b; font-size: 0.78rem;">' + dateStr + '</div>' +
+            '</div>' +
+
+            '<div style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 8px;">' +
+              '👤 <strong>' + escapeHtml(t.user_name || 'Cantor') + '</strong> &lt;' + escapeHtml(t.user_email || '') + '&gt;' +
+            '</div>' +
+
+            '<div style="color: #e2e8f0; font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; background: rgba(7, 10, 18, 0.6); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">' +
+              escapeHtml(t.description || '') +
+            '</div>' +
+
+            photoHtml +
+
+            '<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">' +
+              (!isResolved ? '<button class="btn btn-sm btn-primary btn-resolve-ticket" data-id="' + t.id + '" style="font-size: 0.78rem; padding: 6px 12px;">✅ Marcar como Resolvido</button>' : '') +
+              '<button class="btn btn-sm btn-outline btn-del-ticket" data-id="' + t.id + '" style="color: #f87171; border-color: rgba(239,68,68,0.3); font-size: 0.78rem; padding: 6px 10px;">✕ Excluir</button>' +
+            '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+
+      container.innerHTML = html;
+
+      // Click para zoom na imagem
+      container.querySelectorAll('.ticket-thumb-clickable').forEach(function (img) {
+        img.addEventListener('click', function () {
+          var src = this.getAttribute('data-src');
+          var modal = document.getElementById('imagePreviewModal');
+          var fullImg = document.getElementById('imagePreviewFull');
+          if (modal && fullImg && src) {
+            fullImg.src = src;
+            modal.classList.remove('hidden');
+          }
+        });
+      });
+
+      // Ações de resolver e excluir chamado
+      container.querySelectorAll('.btn-resolve-ticket').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = this.getAttribute('data-id');
+          var match = tickets.find(function (x) { return x.id === id; });
+          if (match) {
+            match.status = 'resolved';
+            localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
+            var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+            if (sb) {
+              sb.from('tickets').update({ status: 'resolved' }).eq('id', id).catch(function() {});
+            }
+            PrompterAdmin.renderTicketsList(tickets);
+            if (window.showToast) window.showToast('Chamado marcado como resolvido!', 'success');
+          }
+        });
+      });
+
+      container.querySelectorAll('.btn-del-ticket').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = this.getAttribute('data-id');
+          var idx = tickets.findIndex(function (x) { return x.id === id; });
+          if (idx >= 0) {
+            tickets.splice(idx, 1);
+            localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
+            var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+            if (sb) {
+              sb.from('tickets').delete().eq('id', id).catch(function() {});
+            }
+            PrompterAdmin.renderTicketsList(tickets);
+            if (window.showToast) window.showToast('Chamado excluído.', 'info');
+          }
+        });
+      });
+    },
+
     exportCSV: function () {
       var csv = 'ID,Nome,Email,Telefone,CPF,Instagram,Codigo_Cantor,Plano,Status,Ultimo_Acesso\n';
       allUserData.forEach(function (u) {
@@ -2818,11 +3167,19 @@
       link.click();
       if (window.showToast) window.showToast('📊 Relatório Executivo CSV exportado com sucesso (' + allUserData.length + ' cantores)!', 'success');
     },
-    normalizeSingerCode: normalizeSingerCode,
-    allUserData: allUserData
+    normalizeSingerCode: normalizeSingerCode
   };
 
   PrompterAdmin.normalizeSingerCode = normalizeSingerCode;
-  PrompterAdmin.allUserData = allUserData;
+  try {
+    Object.defineProperty(PrompterAdmin, 'allUserData', {
+      get: function () { return allUserData; },
+      set: function (val) { allUserData = val; },
+      configurable: true,
+      enumerable: true
+    });
+  } catch (e) {
+    PrompterAdmin.allUserData = allUserData;
+  }
   window.PrompterAdmin = PrompterAdmin;
 })();

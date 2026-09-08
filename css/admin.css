@@ -910,12 +910,20 @@
     width: 100% !important;
   }
 
+  .admin-actions-group button,
+  .admin-actions-group .btn,
   .admin-actions-group .btn-adm-action {
     flex: 1 1 auto !important;
-    padding: 8px 10px !important;
-    font-size: 0.78rem !important;
+    padding: 9px 12px !important;
+    min-height: 42px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
     white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
     justify-content: center !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   .admin-table-container {

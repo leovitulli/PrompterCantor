@@ -627,7 +627,7 @@ body.light-mode .landing-container .feature-card, body.light-mode .landing-conta
 .auth-input { background: var(--bg-primary) !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-family: var(--ca-font-body) !important; }
 .auth-input::placeholder { color: var(--text-muted) !important; }
 .auth-input:focus { border-color: var(--tom-G-ink) !important; box-shadow: none !important; }
-.btn-auth-submit { background: var(--tom-G-fill) !important; color: #161513 !important; border: none !important; box-shadow: none !important; border-radius: 8px !important; font-weight: 600 !important; font-family: var(--ca-font-body) !important; }
+.btn-auth-submit { background: var(--tom-G-fill) !important; color: #161513 !important; border: none !important; box-shadow: none !important; border-radius: 8px !important; font-weight: 600 !important; font-family: var(--ca-font-body) !important; touch-action: manipulation !important; -webkit-tap-highlight-color: transparent !important; }
 .btn-auth-submit:hover { filter: brightness(0.96); transform: none !important; }
 #forgotPasswordContainer a, .auth-link { color: var(--text-muted) !important; }
 #forgotPasswordContainer a:hover, .auth-link:hover { color: var(--tom-G-ink) !important; }

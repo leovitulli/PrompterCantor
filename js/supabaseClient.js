@@ -145,6 +145,10 @@
             queryParams.filters.push(encodeURIComponent(col) + '=neq.' + encodeURIComponent(val));
             return builder;
           },
+          ilike: function(col, val) {
+            queryParams.filters.push(encodeURIComponent(col) + '=ilike.' + encodeURIComponent(val));
+            return builder;
+          },
           order: function(col, opts) {
             var asc = (!opts || opts.ascending !== false) ? 'asc' : 'desc';
             var nulls = (opts && opts.nullsFirst) ? '.nullsfirst' : '';
@@ -291,6 +295,21 @@
                 then: function(onResolve, onReject) {
                   var fullQuery = filters.join('&');
                   return restRequest('DELETE', table, fullQuery).then(onResolve, onReject);
+                },
+                catch: function(onReject) {
+                  return builder.then(null, onReject);
+                }
+              };
+              return builder;
+            },
+            insert: function(payload) {
+              var builder = {
+                select: function() {
+                  return builder;
+                },
+                then: function(onResolve, onReject) {
+                  var headers = { 'Prefer': 'return=representation' };
+                  return restRequest('POST', table, '', payload, headers).then(onResolve, onReject);
                 },
                 catch: function(onReject) {
                   return builder.then(null, onReject);

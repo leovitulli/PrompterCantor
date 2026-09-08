@@ -18,9 +18,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css?v=124">
-  <link rel="stylesheet" href="css/admin.css?v=121">
+  <link rel="stylesheet" href="css/admin.css?v=122">
   <link rel="stylesheet" href="css/landing.css?v=121">
-  <link rel="stylesheet" href="css/brand.css?v=36">
+  <link rel="stylesheet" href="css/brand.css?v=37">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
   <script>
@@ -895,7 +895,7 @@
         <button type="button" id="tabAuthSignUp" class="auth-tab-btn">Criar Conta</button>
       </div>
 
-      <form id="formAuth" class="auth-form" onsubmit="return false;">
+      <form id="formAuth" class="auth-form">
         <!-- BANNER DE ERRO / AVISO DE AUTENTICAÇÃO (VISÍVEL NO TOPO DO FORM) -->
         <div id="authErrorBanner" class="auth-error-banner hidden" role="alert">
           <span class="aeb-icon">⚠️</span>
@@ -959,7 +959,7 @@
           <a href="#" id="btnForgotPassword" style="color: #94a3b8; font-size: 0.82rem; text-decoration: none;">Esqueci minha senha</a>
         </div>
 
-        <button type="button" id="btnSubmitAuthPrimary" class="btn-auth-submit">Entrar na Conta</button>
+        <button type="submit" id="btnSubmitAuthPrimary" class="btn-auth-submit">Entrar na Conta</button>
       </form>
       
       <div class="auth-footer-notice">
@@ -1447,10 +1447,10 @@
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=123"></script>
-  <script src="js/supabaseClient.js?v=123"></script>
+  <script src="js/supabaseClient.js?v=124"></script>
   <script src="js/db.js?v=123"></script>
-  <script src="js/auth.js?v=127"></script>
-  <script src="js/adminPanel.js?v=126"></script>
+  <script src="js/auth.js?v=128"></script>
+  <script src="js/adminPanel.js?v=127"></script>
   <script src="js/textParser.js?v=123"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
   <script src="js/transposer.js?v=123"></script>
@@ -1461,6 +1461,6 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/app.js?v=127"></script>
+  <script src="js/app.js?v=128"></script>
 </body>
 </html>
