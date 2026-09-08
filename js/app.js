@@ -3840,6 +3840,17 @@ document.addEventListener('DOMContentLoaded', function () {
           setAuthButtonState(false);
           var msg = (err && err.message) ? err.message : 'Erro ao criar conta. Verifique os dados e tente novamente.';
           showAuthError(msg, null);
+          if (msg.indexOf('já está cadastrado') !== -1) {
+            setTimeout(function () {
+              var tabSignIn = document.getElementById('authTabSignIn');
+              if (tabSignIn) tabSignIn.click();
+              var emailIn = document.getElementById('authEmail');
+              if (emailIn && email) emailIn.value = email;
+              var passIn = document.getElementById('authPassword');
+              if (passIn && pass) passIn.value = pass;
+              showAuthError('Este e-mail já está cadastrado. Seus dados foram sincronizados no painel! Clique abaixo em "Entrar na Minha Conta".', null);
+            }, 1400);
+          }
         });
 
       } else {

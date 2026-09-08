@@ -1898,7 +1898,28 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding: 28px; color: #94a3b8;">Nenhum cantor encontrado com os filtros atuais.</td></tr>';
+        var emptyHtml = 'Nenhum cantor encontrado com os filtros atuais.';
+        if (searchQuery && (searchQuery.indexOf('@') !== -1 || searchQuery.length >= 3)) {
+          var sTerm = escapeHtml(searchQuery.trim());
+          emptyHtml = 'Nenhum cadastro listado com o termo "<strong>' + sTerm + '</strong>".' +
+            '<div style="margin-top: 12px;">' +
+              '<button id="btnQuickAddSearchedSinger" class="btn btn-primary btn-sm">➕ Vincular / Cadastrar este Cantor no Painel</button>' +
+            '</div>';
+        }
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding: 28px; color: #94a3b8;">' + emptyHtml + '</td></tr>';
+        var btnQuickAdd = document.getElementById('btnQuickAddSearchedSinger');
+        if (btnQuickAdd) {
+          btnQuickAdd.addEventListener('click', function() {
+            var rawQuery = searchQuery.trim();
+            var qEmail = rawQuery.indexOf('@') !== -1 && !rawQuery.startsWith('@') ? rawQuery : '';
+            var qCode = rawQuery.startsWith('@') ? rawQuery : ('@' + (qEmail ? qEmail.split('@')[0] : rawQuery));
+            PrompterAdmin.openSingerModal({
+              email: qEmail,
+              name: qEmail ? qEmail.split('@')[0] : rawQuery.replace('@', ''),
+              singer_code: qCode
+            });
+          });
+        }
         return;
       }
 

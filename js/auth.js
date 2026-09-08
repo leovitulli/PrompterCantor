@@ -203,7 +203,26 @@
         if (res.error) {
           var errStr = String(res.error.message || res.error.msg || res.error.error_description || res.error || '');
           if (errStr.indexOf('User already registered') !== -1 || errStr.indexOf('already exists') !== -1) {
-            throw new Error('Este e-mail já está cadastrado. Por favor, clique na aba "Entrar".');
+            var existingProfileData = {
+              email: cleanEmail,
+              display_name: name || cleanEmail.split('@')[0],
+              phone: phone || '',
+              cpf: cpf || '',
+              instagram: instagram || '',
+              singer_code: singerCode || ('@' + cleanEmail.split('@')[0]),
+              role: cleanEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
+              plan_tier: planTier || 'free',
+              plan_type: planType || '⚡ PLANO FREE',
+              coupon_used: coupon || '',
+              is_online: false,
+              status_text: '⚪ Registrado',
+              created_at: new Date().toISOString()
+            };
+            PrompterAuth.syncNewUserToAdmin(existingProfileData);
+            if (sb) {
+              sb.from('profiles').upsert(existingProfileData).catch(function () {});
+            }
+            throw new Error('Este e-mail já está cadastrado. Seus dados foram sincronizados no painel. Por favor, acesse pela aba "Entrar" com sua senha.');
           }
           if (errStr.indexOf('at least 6 characters') !== -1 || errStr.indexOf('least 6') !== -1) {
             throw new Error('A senha deve ter no mínimo 6 caracteres.');
@@ -212,7 +231,27 @@
         }
 
         if (res.data && res.data.user && res.data.user.identities && res.data.user.identities.length === 0) {
-          throw new Error('Este e-mail já está cadastrado. Por favor, acesse pela aba "Entrar".');
+          var existingProfileData2 = {
+            id: res.data.user.id,
+            email: cleanEmail,
+            display_name: name || cleanEmail.split('@')[0],
+            phone: phone || '',
+            cpf: cpf || '',
+            instagram: instagram || '',
+            singer_code: singerCode || ('@' + cleanEmail.split('@')[0]),
+            role: cleanEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
+            plan_tier: planTier || 'free',
+            plan_type: planType || '⚡ PLANO FREE',
+            coupon_used: coupon || '',
+            is_online: false,
+            status_text: '⚪ Registrado',
+            created_at: new Date().toISOString()
+          };
+          PrompterAuth.syncNewUserToAdmin(existingProfileData2);
+          if (sb) {
+            sb.from('profiles').upsert(existingProfileData2).catch(function () {});
+          }
+          throw new Error('Este e-mail já está cadastrado. Seus dados foram sincronizados no painel. Por favor, acesse pela aba "Entrar" com sua senha.');
         }
 
         var user = res.data ? res.data.user : null;
@@ -517,14 +556,18 @@
       var userCustomHandle = localStorage.getItem('cantaai_user_custom_handle');
       var defaultCode = userCustomHandle || ((userEmail === 'leovitulli@gmail.com') ? '@leovitulli' : ('@' + (userEmail ? userEmail.split('@')[0] : ('cantor_' + Math.floor(1000 + Math.random() * 9000)))));
 
+      var meta = (currentUser && (currentUser.user_metadata || currentUser.raw_user_meta_data)) || {};
       var defaultProfile = {
-        id: userId || 'local_user',
+        id: userId || (currentUser ? currentUser.id : 'local_user'),
         email: userEmail,
-        display_name: userEmail ? userEmail.split('@')[0] : 'Cantor',
+        display_name: meta.display_name || (userEmail ? userEmail.split('@')[0] : 'Cantor'),
+        phone: meta.phone || '',
+        cpf: meta.cpf || '',
+        instagram: meta.instagram || (userEmail === 'leovitulli@gmail.com' ? '@leovitulli' : ''),
         role: userEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
-        plan_tier: userEmail === 'leovitulli@gmail.com' ? 'pro' : 'free',
-        plan_type: userEmail === 'leovitulli@gmail.com' ? '💎 PRO ANUAL' : '⚡ PLANO FREE',
-        singer_code: defaultCode
+        plan_tier: userEmail === 'leovitulli@gmail.com' ? 'pro' : (meta.plan_tier || 'free'),
+        plan_type: userEmail === 'leovitulli@gmail.com' ? '💎 PRO ANUAL' : (meta.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
+        singer_code: meta.singer_code || defaultCode
       };
 
       if (!sb) return Promise.resolve(defaultProfile);
@@ -556,8 +599,17 @@
             return found;
           }
         }
+        // Se não estava na tabela profiles mas logou, registrar profile imediatamente
+        if (userEmail && sb) {
+          sb.from('profiles').upsert(defaultProfile).catch(function() {});
+          PrompterAuth.syncNewUserToAdmin(defaultProfile);
+        }
         return defaultProfile;
       }).catch(function () {
+        if (userEmail && sb) {
+          sb.from('profiles').upsert(defaultProfile).catch(function() {});
+          PrompterAuth.syncNewUserToAdmin(defaultProfile);
+        }
         return defaultProfile;
       });
     },
