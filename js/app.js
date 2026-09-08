@@ -3627,18 +3627,228 @@ document.addEventListener('DOMContentLoaded', function () {
       authOverlay.addEventListener('click', closeAuthModal);
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  FLUXO DE RECUPERAÇÃO DE SENHA INTEGRADO (100% NA PLATAFORMA)
+    // ═══════════════════════════════════════════════════════════
+    var modalForgot = document.getElementById('forgotPasswordModal');
+    var overlayForgot = document.getElementById('forgotPasswordModalOverlay');
+    var btnCloseForgot = document.getElementById('btnCloseForgotPasswordModal');
+    var btnBackToLogin = document.getElementById('btnBackToLoginFromForgot');
+    var formForgot = document.getElementById('formForgotPassword');
+    var inputForgotEmail = document.getElementById('inputForgotEmail');
+    var alertForgot = document.getElementById('forgotPasswordAlert');
+    var alertForgotText = document.getElementById('forgotPasswordAlertText');
+    var alertForgotIcon = document.getElementById('forgotPasswordAlertIcon');
+    var btnSubmitForgot = document.getElementById('btnSubmitForgotPassword');
+
+    function openForgotPasswordModal() {
+      closeAuthModal();
+      if (modalForgot) {
+        modalForgot.classList.remove('hidden');
+        if (alertForgot) alertForgot.classList.add('hidden');
+        if (inputForgotEmail) {
+          var typed = (inputEmail && inputEmail.value && inputEmail.value.indexOf('@') !== -1) ? inputEmail.value.trim() : '';
+          inputForgotEmail.value = typed;
+          setTimeout(function () { inputForgotEmail.focus(); }, 150);
+        }
+      }
+    }
+
+    function closeForgotPasswordModal() {
+      if (modalForgot) modalForgot.classList.add('hidden');
+    }
+
     if (btnForgotPassword) {
       btnForgotPassword.addEventListener('click', function (e) {
         e.preventDefault();
-        var email = prompt('Digite o e-mail da sua conta para redefinir a senha:');
-        if (email && email.trim()) {
-          showToast('Enviando link de recuperação...', 'info');
-          PrompterAuth.resetPassword(email.trim()).then(function () {
-            showToast('Link de recuperação enviado para ' + email.trim() + '!', 'success');
-          }).catch(function (err) {
-            showToast(err.message || 'Erro ao enviar recuperação.', 'warning');
-          });
+        openForgotPasswordModal();
+      });
+    }
+
+    if (btnCloseForgot) {
+      btnCloseForgot.addEventListener('click', closeForgotPasswordModal);
+    }
+    if (overlayForgot) {
+      overlayForgot.addEventListener('click', closeForgotPasswordModal);
+    }
+    if (btnBackToLogin) {
+      btnBackToLogin.addEventListener('click', function () {
+        closeForgotPasswordModal();
+        openAuthModal();
+      });
+    }
+
+    if (formForgot) {
+      formForgot.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = inputForgotEmail ? inputForgotEmail.value.trim() : '';
+        if (!email || email.indexOf('@') === -1) {
+          if (alertForgot && alertForgotText) {
+            alertForgot.classList.remove('hidden');
+            alertForgot.style.background = 'rgba(239, 68, 68, 0.15)';
+            alertForgot.style.borderColor = '#ef4444';
+            if (alertForgotIcon) alertForgotIcon.innerText = '⚠️';
+            alertForgotText.style.color = '#fca5a5';
+            alertForgotText.innerText = 'Digite um endereço de e-mail válido.';
+          }
+          return;
         }
+
+        if (btnSubmitForgot) {
+          btnSubmitForgot.disabled = true;
+          btnSubmitForgot.innerText = '🔄 Enviando link seguro...';
+        }
+
+        PrompterAuth.resetPassword(email).then(function () {
+          if (btnSubmitForgot) {
+            btnSubmitForgot.disabled = false;
+            btnSubmitForgot.innerText = '✉️ Enviar Novamente';
+          }
+          if (alertForgot && alertForgotText) {
+            alertForgot.classList.remove('hidden');
+            alertForgot.style.background = 'rgba(16, 185, 129, 0.15)';
+            alertForgot.style.borderColor = '#10b981';
+            if (alertForgotIcon) alertForgotIcon.innerText = '✅';
+            alertForgotText.style.color = '#6ee7b7';
+            alertForgotText.innerHTML = 'Link de recuperação enviado com sucesso para <strong>' + email + '</strong>!<br>Verifique sua caixa de entrada e clique no link para redefinir sua senha diretamente nesta tela.';
+          }
+          showToast('Link de recuperação enviado para ' + email + '!', 'success');
+        }).catch(function (err) {
+          if (btnSubmitForgot) {
+            btnSubmitForgot.disabled = false;
+            btnSubmitForgot.innerText = '✉️ Enviar Link de Recuperação';
+          }
+          var errMsg = (err && (err.message || err.error_description)) || 'Erro ao enviar e-mail de recuperação.';
+          if (alertForgot && alertForgotText) {
+            alertForgot.classList.remove('hidden');
+            alertForgot.style.background = 'rgba(239, 68, 68, 0.15)';
+            alertForgot.style.borderColor = '#ef4444';
+            if (alertForgotIcon) alertForgotIcon.innerText = '⚠️';
+            alertForgotText.style.color = '#fca5a5';
+            alertForgotText.innerText = errMsg;
+          }
+          showToast(errMsg, 'warning');
+        });
+      });
+    }
+
+    // ─── MODAL DE NOVA SENHA (QUANDO O USUÁRIO RETORNA VIA LINK DO E-MAIL) ───
+    var modalReset = document.getElementById('resetPasswordModal');
+    var overlayReset = document.getElementById('resetPasswordModalOverlay');
+    var btnCloseReset = document.getElementById('btnCloseResetPasswordModal');
+    var formReset = document.getElementById('formResetPassword');
+    var inputNewPass = document.getElementById('inputNewPassword');
+    var inputConfirmNewPass = document.getElementById('inputConfirmNewPassword');
+    var alertReset = document.getElementById('resetPasswordAlert');
+    var alertResetText = document.getElementById('resetPasswordAlertText');
+    var alertResetIcon = document.getElementById('resetPasswordAlertIcon');
+    var btnSubmitReset = document.getElementById('btnSubmitResetPassword');
+
+    function closeResetPasswordModal() {
+      if (modalReset) modalReset.classList.add('hidden');
+    }
+
+    window.openResetPasswordModal = function () {
+      closeAuthModal();
+      closeForgotPasswordModal();
+      if (modalReset) {
+        modalReset.classList.remove('hidden');
+        if (alertReset) alertReset.classList.add('hidden');
+        if (inputNewPass) {
+          inputNewPass.value = '';
+          setTimeout(function () { inputNewPass.focus(); }, 150);
+        }
+        if (inputConfirmNewPass) inputConfirmNewPass.value = '';
+      }
+    };
+
+    if (btnCloseReset) {
+      btnCloseReset.addEventListener('click', closeResetPasswordModal);
+    }
+    if (overlayReset) {
+      overlayReset.addEventListener('click', closeResetPasswordModal);
+    }
+
+    if (formReset) {
+      formReset.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var p1 = inputNewPass ? inputNewPass.value : '';
+        var p2 = inputConfirmNewPass ? inputConfirmNewPass.value : '';
+
+        if (!p1 || p1.length < 6) {
+          if (alertReset && alertResetText) {
+            alertReset.classList.remove('hidden');
+            alertReset.style.background = 'rgba(239, 68, 68, 0.15)';
+            alertReset.style.borderColor = '#ef4444';
+            if (alertResetIcon) alertResetIcon.innerText = '⚠️';
+            alertResetText.style.color = '#fca5a5';
+            alertResetText.innerText = 'A senha precisa ter pelo menos 6 caracteres.';
+          }
+          if (inputNewPass) inputNewPass.focus();
+          return;
+        }
+
+        if (p1 !== p2) {
+          if (alertReset && alertResetText) {
+            alertReset.classList.remove('hidden');
+            alertReset.style.background = 'rgba(239, 68, 68, 0.15)';
+            alertReset.style.borderColor = '#ef4444';
+            if (alertResetIcon) alertResetIcon.innerText = '⚠️';
+            alertResetText.style.color = '#fca5a5';
+            alertResetText.innerText = 'As senhas não coincidem. Digite novamente.';
+          }
+          if (inputConfirmNewPass) inputConfirmNewPass.focus();
+          return;
+        }
+
+        if (btnSubmitReset) {
+          btnSubmitReset.disabled = true;
+          btnSubmitReset.innerText = '🔄 Atualizando sua senha...';
+        }
+
+        PrompterAuth.updatePassword(p1).then(function () {
+          if (alertReset && alertResetText) {
+            alertReset.classList.remove('hidden');
+            alertReset.style.background = 'rgba(16, 185, 129, 0.15)';
+            alertReset.style.borderColor = '#10b981';
+            if (alertResetIcon) alertResetIcon.innerText = '🎉';
+            alertResetText.style.color = '#6ee7b7';
+            alertResetText.innerText = 'Senha alterada com sucesso! Conectando à sua conta...';
+          }
+          showToast('Senha redefinida com sucesso! Bem-vindo(a) de volta.', 'success');
+
+          // Limpar hash da URL para não reabrir em refresh
+          try {
+            if (window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+          } catch(e) {}
+
+          setTimeout(function () {
+            closeResetPasswordModal();
+            if (typeof window.loadRepertoires === 'function') {
+              window.loadRepertoires();
+            }
+            if (PrompterAuth.getCurrentUser()) {
+              PrompterAuth.updateUIForAuth();
+            }
+          }, 1200);
+        }).catch(function (err) {
+          if (btnSubmitReset) {
+            btnSubmitReset.disabled = false;
+            btnSubmitReset.innerText = '💾 Salvar Nova Senha & Entrar';
+          }
+          var errMsg = (err && (err.message || err.error_description)) || 'Erro ao redefinir a senha. O link pode ter expirado.';
+          if (alertReset && alertResetText) {
+            alertReset.classList.remove('hidden');
+            alertReset.style.background = 'rgba(239, 68, 68, 0.15)';
+            alertReset.style.borderColor = '#ef4444';
+            if (alertResetIcon) alertResetIcon.innerText = '⚠️';
+            alertResetText.style.color = '#fca5a5';
+            alertResetText.innerText = errMsg;
+          }
+          showToast(errMsg, 'warning');
+        });
       });
     }
 

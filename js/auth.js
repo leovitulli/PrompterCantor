@@ -70,6 +70,44 @@
         }
       }
 
+      // Listener para eventos de autenticação Supabase (incluindo PASSWORD_RECOVERY)
+      if (sb && sb.auth && typeof sb.auth.onAuthStateChange === 'function') {
+        try {
+          sb.auth.onAuthStateChange(function (event, session) {
+            console.log('🔔 [Supabase Auth Event]:', event);
+            if (event === 'PASSWORD_RECOVERY') {
+              console.log('🔑 [Supabase Auth]: Fluxo de recuperação de senha iniciado!');
+              setTimeout(function () {
+                if (typeof window.openResetPasswordModal === 'function') {
+                  window.openResetPasswordModal();
+                }
+              }, 200);
+            } else if (event === 'SIGNED_IN' && session && session.user) {
+              currentUser = session.user;
+              PrompterAuth.fetchProfile(currentUser.id).then(function (profile) {
+                currentProfile = profile;
+                PrompterAuth.saveSession(currentUser, currentProfile);
+                PrompterAuth.updateUIForAuth();
+              });
+            }
+          });
+        } catch(e) {
+          console.warn('Erro ao registrar onAuthStateChange:', e);
+        }
+      }
+
+      // Detecção de link de recuperação diretamente na URL (ex: #access_token=...&type=recovery)
+      try {
+        var urlHash = window.location.hash || '';
+        if (urlHash.indexOf('type=recovery') !== -1 || (urlHash.indexOf('access_token=') !== -1 && urlHash.indexOf('recovery') !== -1)) {
+          setTimeout(function () {
+            if (typeof window.openResetPasswordModal === 'function') {
+              window.openResetPasswordModal();
+            }
+          }, 350);
+        }
+      } catch(e) {}
+
       // Tentar obter usuário ativo da SDK do Supabase se disponível
       if (sb.auth && typeof sb.auth.getUser === 'function') {
         return sb.auth.getUser().then(function (res) {
@@ -544,9 +582,23 @@
       if (!sb || !sb.auth || typeof sb.auth.resetPasswordForEmail !== 'function') {
         return Promise.reject(new Error('Serviço de redefinição de senha indisponível.'));
       }
-      return sb.auth.resetPasswordForEmail(cleanEmail).then(function (res) {
-        if (res.error) throw res.error;
+      var redirectUrl = window.location.origin + window.location.pathname;
+      return sb.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: redirectUrl
+      }).then(function (res) {
+        if (res && res.error) throw res.error;
         return res;
+      });
+    },
+
+    updatePassword: function (newPassword) {
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (!sb || !sb.auth || typeof sb.auth.updateUser !== 'function') {
+        return Promise.reject(new Error('Serviço de atualização de senha indisponível.'));
+      }
+      return sb.auth.updateUser({ password: newPassword }).then(function (res) {
+        if (res && res.error) throw res.error;
+        return res.data;
       });
     },
 

@@ -91,13 +91,20 @@
         });
       }
 
-      function authRequest(endpoint, body) {
+      function authRequest(endpoint, body, customHeaders, method) {
         return new Promise(function(resolve) {
           var url = authUrl + endpoint;
           var xhr = new XMLHttpRequest();
-          xhr.open('POST', url, true);
+          xhr.open(method || 'POST', url, true);
           xhr.setRequestHeader('apikey', apiKey);
           xhr.setRequestHeader('Content-Type', 'application/json');
+          if (customHeaders) {
+            for (var h in customHeaders) {
+              if (customHeaders.hasOwnProperty(h)) {
+                xhr.setRequestHeader(h, customHeaders[h]);
+              }
+            }
+          }
 
           xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300) {
@@ -120,7 +127,11 @@
             resolve({ data: null, error: { message: 'Erro de conexão com o Supabase Auth' } });
           };
 
-          xhr.send(typeof body === 'string' ? body : JSON.stringify(body));
+          if (body) {
+            xhr.send(typeof body === 'string' ? body : JSON.stringify(body));
+          } else {
+            xhr.send();
+          }
         });
       }
 
@@ -240,10 +251,35 @@
             }
             return Promise.resolve({ data: { user: null }, error: null });
           },
-          resetPasswordForEmail: function(email) {
-            return authRequest('recover', {
+          resetPasswordForEmail: function(email, options) {
+            var redirectParam = '';
+            var rUrl = (options && options.redirectTo) || (window.location.origin + window.location.pathname);
+            if (rUrl) {
+              redirectParam = '?redirect_to=' + encodeURIComponent(rUrl);
+            }
+            return authRequest('recover' + redirectParam, {
               email: (email || '').trim().toLowerCase()
             });
+          },
+          updateUser: function(attributes) {
+            var token = getStoredAccessToken();
+            var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+            return authRequest('user', attributes, headers, 'PUT').then(function(res) {
+              if (res.error) {
+                var msg = res.error.msg || res.error.message || 'Erro ao atualizar usuário.';
+                return { data: null, error: new Error(msg) };
+              }
+              return { data: { user: res.data }, error: null };
+            });
+          },
+          onAuthStateChange: function(callback) {
+            return {
+              data: {
+                subscription: {
+                  unsubscribe: function() {}
+                }
+              }
+            };
           }
         },
         from: function(table) {

@@ -968,6 +968,79 @@
     </div>
   </div>
 
+  <!-- ─── MODAL DE RECUPERAR SENHA (SOLICITAR LINK) ─── -->
+  <div id="forgotPasswordModal" class="modal hidden">
+    <div class="modal-overlay" id="forgotPasswordModalOverlay"></div>
+    <div class="modal-card auth-modal-card" style="max-width: 440px;">
+      <button class="modal-close btn-close-forgot" id="btnCloseForgotPasswordModal" aria-label="Fechar">✕</button>
+      
+      <div class="auth-header-block" style="text-align: center; margin-bottom: 1.25rem;">
+        <div style="font-size: 2.2rem; margin-bottom: 0.35rem;">🔐</div>
+        <h3 style="margin-bottom: 0.25rem; font-size: 1.3rem; font-weight: 800; color: #f8fafc;">Recuperar Acesso</h3>
+        <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.45; margin: 0 auto; max-width: 340px;">
+          Informe o e-mail da sua conta para receber um link seguro de redefinição de senha diretamente na plataforma.
+        </p>
+      </div>
+
+      <form id="formForgotPassword" class="auth-form" onsubmit="return false;">
+        <div id="forgotPasswordAlert" class="auth-error-banner hidden" style="margin-bottom: 1rem;">
+          <span class="aeb-icon" id="forgotPasswordAlertIcon">⚠️</span>
+          <span class="aeb-text" id="forgotPasswordAlertText"></span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="inputForgotEmail" class="auth-label">Seu E-mail Cadastrado *</label>
+          <input type="email" id="inputForgotEmail" class="auth-input" placeholder="seuemail@exemplo.com" required autocomplete="email">
+        </div>
+
+        <button type="submit" id="btnSubmitForgotPassword" class="btn-auth-submit" style="width: 100%; margin-bottom: 0.75rem;">
+          ✉️ Enviar Link de Recuperação
+        </button>
+
+        <button type="button" id="btnBackToLoginFromForgot" class="btn btn-secondary" style="width: 100%; padding: 10px; font-size: 0.85rem; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1;">
+          ← Voltar para o Login
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ─── MODAL DE REDEFINIÇÃO DE SENHA (ENTRADA VIA LINK DO E-MAIL) ─── -->
+  <div id="resetPasswordModal" class="modal hidden">
+    <div class="modal-overlay" id="resetPasswordModalOverlay"></div>
+    <div class="modal-card auth-modal-card" style="max-width: 440px;">
+      <button class="modal-close btn-close-reset-pwd" id="btnCloseResetPasswordModal" aria-label="Fechar">✕</button>
+      
+      <div class="auth-header-block" style="text-align: center; margin-bottom: 1.25rem;">
+        <div style="font-size: 2.2rem; margin-bottom: 0.35rem;">🔑</div>
+        <h3 style="margin-bottom: 0.25rem; font-size: 1.3rem; font-weight: 800; color: #f8fafc;">Criar Nova Senha</h3>
+        <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.45; margin: 0 auto; max-width: 340px;">
+          Defina sua nova senha de acesso para continuar usando o CantaAí PRO com segurança.
+        </p>
+      </div>
+
+      <form id="formResetPassword" class="auth-form" onsubmit="return false;">
+        <div id="resetPasswordAlert" class="auth-error-banner hidden" style="margin-bottom: 1rem;">
+          <span class="aeb-icon" id="resetPasswordAlertIcon">⚠️</span>
+          <span class="aeb-text" id="resetPasswordAlertText"></span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="inputNewPassword" class="auth-label">Nova Senha *</label>
+          <input type="password" id="inputNewPassword" class="auth-input" placeholder="Mínimo 6 caracteres" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="inputConfirmNewPassword" class="auth-label">Confirmar Nova Senha *</label>
+          <input type="password" id="inputConfirmNewPassword" class="auth-input" placeholder="Repita a nova senha" required autocomplete="new-password">
+        </div>
+
+        <button type="submit" id="btnSubmitResetPassword" class="btn-auth-submit" style="width: 100%;">
+          💾 Salvar Nova Senha & Entrar
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ─── MODAL DE PERFIL DO CANTOR & GOVERNANÇA DE ASSINATURA ─── -->
   <div id="profileModal" class="modal hidden">
     <div class="modal-overlay" id="profileModalOverlay"></div>
@@ -1447,9 +1520,9 @@
   <!-- SCRIPTS DA APLICAÇÃO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=123"></script>
-  <script src="js/supabaseClient.js?v=124"></script>
+  <script src="js/supabaseClient.js?v=125"></script>
   <script src="js/db.js?v=123"></script>
-  <script src="js/auth.js?v=128"></script>
+  <script src="js/auth.js?v=129"></script>
   <script src="js/adminPanel.js?v=128"></script>
   <script src="js/textParser.js?v=123"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
@@ -1461,6 +1534,6 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/app.js?v=128"></script>
+  <script src="js/app.js?v=129"></script>
 </body>
 </html>
