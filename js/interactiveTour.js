@@ -1,109 +1,92 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * CANTAAÍ PRO — TOUR INTERATIVO GUIADO (CLEAN, AIRY & FUN)
+ * CANTAAÍ PRO — TOUR INTERATIVO COM CONSCIÊNCIA DE TELA (SCREEN-AWARE ENGINE)
  * ═══════════════════════════════════════════════════════════════════════════
  * Características:
- * - Foco 100% cristalino: o elemento da tela fica totalmente visível e brilhante
- * - Textos curtos, diretos e divertidos (sem textão nem cansaço)
- * - Cobertura de tudo: Repertórios, Copiar/Colar Cifras, Ordem das Músicas (▲ ▼),
- *   Mudança de Tons em 1 clique, e Palco sem travar
- * - Desbloqueio imediato da tela ao fechar (zero bugs de clique)
+ * - Leitura real da tela: só aponta e explica o que REALMENTE está visível
+ * - Transições reais guiadas:
+ *   * Home (Repertórios & Busca)
+ *   * Abre o Repertório de verdade para mostrar as ferramentas e setinhas ▲ ▼
+ *   * Abre o Prompter de verdade para mostrar a transposição de Tom e Rolagem
+ *   * Retorna para a Home ao concluir ou fechar
+ * - Foco 100% cristalino (Spotlight sem blur, elemento limpo e brilhante)
+ * - Textos leves, curtos, espaçados e divertidos de ler
+ * - Desbloqueio imediato da tela em qualquer cancelamento
  */
 
 (function (window, document) {
   'use strict';
 
-  var STORAGE_KEY = 'cantaai_tour_seen_v4';
+  var STORAGE_KEY = 'cantaai_tour_seen_v5';
 
   var CantaAiTour = {
     currentStep: 0,
     isOpen: false,
     elements: {},
+    tourOpenedRepertoire: false,
+    tourOpenedPrompter: false,
 
-    // ── 9 PASSOS ÁGEIS, OBJETIVOS E DIVERTIDOS ──
+    // ── 9 PASSOS COM CONSCIÊNCIA E TRANSIÇÕES REAIS DE TELA ──
     steps: [
-      // PASSO 1: BEM-VINDO
+      // ── PASSO 1: BOAS-VINDAS (TELA: HOME) ──
       {
+        requiredView: 'home',
         target: '#btnGoHome',
         fallbackTarget: '#appHeader',
         title: 'Bora começar? 🎤✨',
-        description: 'Bem-vindo ao <strong>CantaAí PRO</strong>! Seu teleprompter inteligente de palco. Celular, tablet ou PC: tudo funciona <strong>100% offline no show</strong> sem depender de internet!',
+        description: 'Bem-vindo ao <strong>CantaAí PRO</strong>! Seu teleprompter inteligente para ensaios e shows. Celular, tablet ou PC: tudo funciona <strong>100% offline no palco</strong> sem depender de internet!',
         demo: {
-          title: '⚡ O que você vai ver rapidinho:',
+          title: '⚡ O que vamos ver juntos na tela:',
           items: [
-            'Como organizar seus <strong>repertórios e pastas</strong>',
-            'Como <strong>copiar cifras</strong> de sites e <strong>mudar o tom</strong>',
-            'Como <strong>mudar a ordem</strong> das músicas na hora do show'
+            'Como navegar nos seus <strong>repertórios e pastas</strong>',
+            'Como <strong>organizar a ordem</strong> das músicas do show',
+            'Como <strong>mudar o tom em 1 clique</strong> e ler no palco'
           ],
           type: 'blue'
         }
       },
 
-      // PASSO 2: REPERTÓRIOS COMO UM TODO
+      // ── PASSO 2: BUSCA INSTANTÂNEA (TELA: HOME) ──
       {
-        target: '#repertoireGrid',
-        fallbackTarget: '#tabRepertoire',
+        requiredView: 'home',
+        target: '#searchInput',
+        fallbackTarget: '#appHeader',
+        title: 'Busca Rápida de Músicas 🔍',
+        description: 'Digite qualquer palavra do título, artista ou trecho da letra para localizar a música na hora em todos os seus repertórios.',
+        demo: {
+          title: '🚀 Na hora do improviso:',
+          items: [
+            'Encontra qualquer música em milissegundos',
+            '1 toque no resultado abre a cifra pronta pra cantar'
+          ],
+          type: 'blue'
+        }
+      },
+
+      // ── PASSO 3: PASTAS DE REPERTÓRIOS (TELA: HOME) ──
+      {
+        requiredView: 'home',
+        target: '.repertoire-card',
+        fallbackTarget: '#repertoiresList',
         title: 'Suas Pastas & Shows 📂',
-        description: 'Organize suas músicas por estilo ou evento (ex: <em>Sertanejo, Pop Rock, Casamento</em>). Cada pasta guarda seu setlist pronto!',
+        description: 'Cada card na sua tela é uma pasta temática (ex: <em>Sertanejo, Pop Rock, Casamento</em>). Todas as suas apresentações organizadas!',
         demo: {
-          title: '🎛️ Dicas de Ouro:',
+          title: '🎛️ Tudo direto no card:',
           items: [
-            'Toque em <strong>🎵 Ver Músicas</strong> para abrir a lista.',
-            'Use as setinhas <strong>◀ e ▶</strong> (ou arraste em <strong>⋮⋮</strong>) para colocar os shows da semana na frente!',
-            'Clique em <strong>✏️ Renomear</strong> para alterar o nome quando quiser.'
+            'Use as setinhas <strong>◀ e ▶</strong> no topo para colocar o show da semana na frente',
+            'Toque em <strong>✏️ Renomear</strong> para alterar o nome da pasta quando quiser',
+            'Toque em <strong>🎵 Ver Músicas</strong> para abrir o repertório'
           ],
           type: 'blue'
         }
       },
 
-      // PASSO 3: O BOTÃO + ADICIONAR
+      // ── PASSO 4: O BOTÃO + ADICIONAR (TELA: HOME) ──
       {
+        requiredView: 'home',
         target: '#btnDropdownAdd',
-        title: 'O Botão Mágico ➕',
-        description: 'É aqui no botão azul <strong>+ Adicionar</strong> que você alimenta todo o seu app. Veja as 4 formas simples:',
-        onEnter: function () {
-          var menu = document.getElementById('dropdownAddMenu');
-          if (menu) menu.classList.remove('hidden');
-        },
-        demo: {
-          title: '📋 Escolha o seu jeito preferido:',
-          items: [
-            '<strong>Criar Repertório:</strong> Cria uma nova pasta vazia',
-            '<strong>Criar Música Manual:</strong> Onde você cola cifras da internet',
-            '<strong>Importar Arquivos:</strong> Puxa Word, PDF e áudios do aparelho',
-            '<strong>Google Drive:</strong> Conecta com suas pastas da nuvem'
-          ],
-          type: 'blue'
-        }
-      },
-
-      // PASSO 4: COPIAR E COLAR CIFRAS (FOCO MÁXIMO)
-      {
-        target: '#btnMenuNewSong',
-        fallbackTarget: '#btnDropdownAdd',
-        title: 'Copie de Qualquer Site! 🔥',
-        description: 'Achou a música no <em>Cifra Club</em>, <em>Letras</em> ou qualquer site? Colocar aqui é muito fácil:',
-        onEnter: function () {
-          var menu = document.getElementById('dropdownAddMenu');
-          if (menu) menu.classList.remove('hidden');
-        },
-        demo: {
-          title: '💡 3 Passos Simples:',
-          items: [
-            '<strong>1. No site:</strong> Selecione a letra com os acordes e copie (<code>Ctrl+C</code> ou segure o dedo e toque em <strong>Copiar</strong>).',
-            '<strong>2. No CantaAí:</strong> Vá em <strong>+ Adicionar ➔ Criar Música Manual</strong>.',
-            '<strong>3. Cole em "Letra e Cifra":</strong> O app identifica os acordes sozinho, cria as caixas azuis e deixa pronto pro palco!'
-          ],
-          type: 'gold'
-        }
-      },
-
-      // PASSO 5: IMPORTAR ARQUIVOS & GOOGLE DRIVE
-      {
-        target: '#btnMenuImportLocal',
-        fallbackTarget: '#btnDropdownAdd',
-        title: 'Arquivos & Google Drive ☁️',
-        description: 'Já tem arquivos no computador, celular ou nuvem? Importe dezenas de músicas juntas em segundos!',
+        title: 'Alimentar seu Repertório ➕',
+        description: 'É aqui no botão azul <strong>+ Adicionar</strong> que você coloca novas músicas no CantaAí PRO. Veja as opções:',
         onEnter: function () {
           var menu = document.getElementById('dropdownAddMenu');
           if (menu) menu.classList.remove('hidden');
@@ -113,83 +96,199 @@
           if (menu) menu.classList.add('hidden');
         },
         demo: {
-          title: '⚡ Super Rápido:',
+          title: '📋 Como você pode adicionar:',
           items: [
-            '<strong>Arquivos Locais:</strong> Puxe arquivos em <strong>Word (.docx), PDF (.pdf) ou Texto (.txt)</strong>.',
-            '<strong>Música Guia:</strong> Se tiver áudios (.mp3/.m4a) com o mesmo nome, ele conecta o áudio sozinho!',
-            '<strong>Google Drive:</strong> Conecte sua conta em 1 clique e baixe pastas completas.'
-          ],
-          type: 'blue'
-        }
-      },
-
-      // PASSO 6: ORDEM DAS MÚSICAS NO REPERTÓRIO
-      {
-        target: '#searchInput',
-        fallbackTarget: '#appHeader',
-        title: 'Sequência do Show 🎵',
-        description: 'Abra qualquer repertório e monte o roteiro exato do que vai tocar na noite!',
-        demo: {
-          title: '📋 Controle Total da Ordem:',
-          items: [
-            '<strong>Mudar de Posição:</strong> Use as setas <strong>▲ (Subir)</strong> e <strong>▼ (Descer)</strong> em cada música para acertar a sequência na hora!',
-            '<strong>🔤 Ordem A-Z:</strong> Deixa tudo em ordem alfabética num instante.',
-            '<strong>🖨️ Imprimir Setlist:</strong> Gera a lista com número e tom de cada música para mandar no zap da banda!'
+            '<strong>✏️ Criar Música Manual:</strong> Cole letras do Cifra Club ou Letras no campo <em>"Letra e Cifra"</em> (o app reconhece os acordes sozinho!)',
+            '<strong>📄 Importar Arquivos:</strong> Puxe arquivos Word (.docx), PDF e áudios do aparelho',
+            '<strong>☁️ Google Drive:</strong> Conecte sua nuvem e baixe pastas completas'
           ],
           type: 'gold'
         }
       },
 
-      // PASSO 7: MUDANÇA DE TONS EM 1 CLIQUE
+      // ── PASSO 5: FERRAMENTAS DO REPERTÓRIO (TELA: REPERTÓRIO) ──
       {
-        target: '#btnToggleTheme',
-        fallbackTarget: '#appHeader',
+        requiredView: 'repertoire',
+        target: '.rsv-actions',
+        fallbackTarget: '#btnRsvSortAZ',
+        title: 'Ferramentas do Repertório 🛠️',
+        description: 'Abrimos o repertório para você ver! No topo da lista você tem ferramentas práticas para o show:',
+        demo: {
+          title: '⚡ Recursos com 1 Clique:',
+          items: [
+            '<strong>🔤 Ordem A-Z:</strong> Organiza todas as músicas em ordem alfabética na hora',
+            '<strong>🧹 Limpar Duplicadas:</strong> Remove músicas repetidas importadas por engano',
+            '<strong>🖨️ Imprimir Setlist:</strong> Gera a tabela do show com os tons para a banda e o técnico!'
+          ],
+          type: 'blue'
+        }
+      },
+
+      // ── PASSO 6: ORDEM DAS MÚSICAS NO SHOW (TELA: REPERTÓRIO) ──
+      {
+        requiredView: 'repertoire',
+        target: '.song-list-row .song-row-actions',
+        fallbackTarget: '.song-list-row',
+        title: 'Sequência do Palco (▲ e ▼) 🎵',
+        description: 'Na lista de músicas, você comanda a ordem exata em que vai cantar no show:',
+        demo: {
+          title: '📋 Como organizar o setlist:',
+          items: [
+            'Clique na setinha <strong>▲ (Subir)</strong> para antecipar a música na apresentação',
+            'Clique na setinha <strong>▼ (Descer)</strong> para cantar mais tarde',
+            'Ou segure no ícone <strong>⋮⋮</strong> e arraste com o dedo no celular ou tablet!'
+          ],
+          type: 'gold'
+        }
+      },
+
+      // ── PASSO 7: MUDANÇA DE TONS EM 1 CLIQUE (TELA: PROMPTER) ──
+      {
+        requiredView: 'prompter',
+        target: '#prompterKeySelect',
+        fallbackTarget: '#prompterHeader',
         title: 'Mude o Tom em 1 Clique! 🎸',
-        description: 'O cantor ou cantora precisa mudar o tom da música? Não perca tempo fazendo conta de cabeça no palco:',
+        description: 'Abrimos a música no Teleprompter! O cantor ou convidado da noite precisa mudar o tom da música?',
         demo: {
           title: '🎵 Harmonia Automática:',
           items: [
-            'Dentro da música, clique no seletor <strong>Tom: E ▾</strong>.',
-            'Escolha qualquer tom (maior ou menor). O CantaAí <strong>transpõe todos os acordes da letra na hora</strong>!',
-            'O tom original fica guardado para você voltar sempre que quiser.'
+            'Toque no seletor <strong>Tom: E ▾</strong> e escolha qualquer tom',
+            'O CantaAí <strong>transpõe todos os acordes da letra inteira na hora</strong> sem desafinar!',
+            'O tom original de gravação fica gravado para você voltar sempre que quiser'
           ],
           type: 'blue'
         }
       },
 
-      // PASSO 8: NO PALCO — TELEPROMPTER E ROLAGEM
+      // ── PASSO 8: CONTROLES DE PALCO & ROLAGEM (TELA: PROMPTER) ──
       {
-        target: '#appHeader',
-        title: 'No Palco: Tela e Rolagem 🚀',
-        description: 'Ao tocar em qualquer música, a tela entra em modo de apresentação limpo com fundo preto anti-reflexo:',
+        requiredView: 'prompter',
+        target: '.prompter-controls',
+        fallbackTarget: '#btnToggleScroll',
+        title: 'Rolagem Suave & Palco 🚀',
+        description: 'Aqui na barra de controles você opera o teleprompter com conforto durante a apresentação:',
         demo: {
-          title: '📱 Feito pro seu Celular e Tablet:',
+          title: '📱 Com o Polegar no Pedestal:',
           items: [
-            '<strong>▶ Rolagem Suave:</strong> 1 toque na tela inicia ou pausa a descida do texto.',
-            '<strong>Ajustes no Polegar:</strong> Regule a velocidade no <strong>[-] 3x [+]</strong> e aumente a letra no <strong>[A+]</strong>.',
-            '<strong>🛡️ Tela Sempre Ativa:</strong> O app impede que a tela do celular apague durante a música!'
+            '<strong>▶ 1 Toque na tela:</strong> Inicia ou pausa a descida suave do texto',
+            '<strong>[-] 3x [+]:</strong> Ajuste a velocidade no polegar sem parar de tocar',
+            '<strong>[A+] Fonte:</strong> Aumente o tamanho da letra para enxergar de longe',
+            '<strong>🛡️ Tela Ativa:</strong> O CantaAí nunca deixa a tela do aparelho apagar durante o show'
           ],
           type: 'blue'
         }
       },
 
-      // PASSO 9: CONCLUÍDO & SUPORTE
+      // ── PASSO 9: FINALIZAÇÃO & SUPORTE (TELA: HOME) ──
       {
+        requiredView: 'home',
         target: '#btnHeaderNotifications',
-        fallbackTarget: '#appHeader',
+        fallbackTarget: '#userProfileDropdownContainer',
         title: 'Tudo Pronto pro Show! 🌟',
-        description: 'Viu como é fácil? Agora é só colocar suas músicas e arrasar no ensaio ou no palco!',
+        description: 'Voltamos para a tela inicial! Viu como o CantaAí PRO é prático e completo?',
         demo: {
-          title: '💬 Se precisar de ajuda:',
+          title: '💬 Dúvidas ou Ajuda:',
           items: [
-            'Toque no <strong>Sininho 🔔</strong> para novidades e chat direto com nossa equipe.',
-            'Para rever este tour quando quiser, toque no seu perfil <strong>🎤</strong> no topo e clique em <em>Tour Interativo</em>.',
-            'Bom show e boa música! 🎸🎤'
+            'Toque no <strong>Sininho 🔔</strong> para comunicados e chat direto com nossa equipe',
+            'Para rever este tour a qualquer hora, toque no seu <strong>Perfil 🎤</strong> no topo',
+            'Arrebenta no show e boa música! 🎸🎤'
           ],
           type: 'green'
         }
       }
     ],
+
+    // ── GESTÃO INTELIGENTE DE TRANSIÇÃO DE TELAS ──
+    navigateScreenForStep: function (stepIndex, callback) {
+      var step = this.steps[stepIndex];
+      if (!step) {
+        if (callback) callback();
+        return;
+      }
+
+      var self = this;
+      var required = step.requiredView || 'home';
+
+      // 1. Quer tela HOME
+      if (required === 'home') {
+        var isPrompterOpen = document.getElementById('prompterView') && !document.getElementById('prompterView').classList.contains('hidden') && document.getElementById('prompterView').style.display !== 'none';
+        var isRepertoireOpen = document.getElementById('repertoireSongsView') && !document.getElementById('repertoireSongsView').classList.contains('hidden');
+
+        if (isPrompterOpen || isRepertoireOpen) {
+          if (window.CantaApp && typeof window.CantaApp.closePrompterView === 'function') {
+            window.CantaApp.closePrompterView();
+          }
+          if (window.CantaApp && typeof window.CantaApp.closeRepertoireSongsView === 'function') {
+            window.CantaApp.closeRepertoireSongsView();
+          } else {
+            var btnBack = document.getElementById('btnRsvBack');
+            if (btnBack) btnBack.click();
+          }
+          setTimeout(function () { if (callback) callback(); }, 160);
+          return;
+        }
+        if (callback) callback();
+        return;
+      }
+
+      // 2. Quer tela de REPERTÓRIO
+      if (required === 'repertoire') {
+        var isPrompterOpen = document.getElementById('prompterView') && !document.getElementById('prompterView').classList.contains('hidden') && document.getElementById('prompterView').style.display !== 'none';
+        if (isPrompterOpen) {
+          if (window.CantaApp && typeof window.CantaApp.closePrompterView === 'function') {
+            window.CantaApp.closePrompterView();
+          } else {
+            var btnCloseP = document.getElementById('btnClosePrompter');
+            if (btnCloseP) btnCloseP.click();
+          }
+          setTimeout(function () { if (callback) callback(); }, 160);
+          return;
+        }
+
+        var isRepertoireOpen = document.getElementById('repertoireSongsView') && !document.getElementById('repertoireSongsView').classList.contains('hidden');
+        if (!isRepertoireOpen) {
+          self.tourOpenedRepertoire = true;
+          // Abre o primeiro repertório disponível
+          var firstRepBtn = document.querySelector('.btn-open-rep');
+          if (firstRepBtn) {
+            firstRepBtn.click();
+          } else if (window.CantaApp && typeof window.CantaApp.getState === 'function') {
+            var st = window.CantaApp.getState();
+            if (st && st.repertoires && st.repertoires.length > 0) {
+              window.CantaApp.openRepertoireSongs(st.repertoires[0].id);
+            }
+          }
+          setTimeout(function () { if (callback) callback(); }, 200);
+          return;
+        }
+        if (callback) callback();
+        return;
+      }
+
+      // 3. Quer tela do PROMPTER
+      if (required === 'prompter') {
+        var isPrompterOpen = document.getElementById('prompterView') && !document.getElementById('prompterView').classList.contains('hidden') && document.getElementById('prompterView').style.display !== 'none';
+        if (!isPrompterOpen) {
+          self.tourOpenedPrompter = true;
+          // Abre a primeira música disponível
+          var firstSongRow = document.querySelector('.song-list-row');
+          if (firstSongRow) {
+            firstSongRow.click();
+          } else if (window.CantaApp && typeof window.CantaApp.getState === 'function') {
+            var st = window.CantaApp.getState();
+            if (st && st.currentRepertoireSongs && st.currentRepertoireSongs.length > 0) {
+              window.CantaApp.openPrompterView(st.currentRepertoireSongs[0]);
+            }
+          }
+          setTimeout(function () { if (callback) callback(); }, 220);
+          return;
+        }
+        if (callback) callback();
+        return;
+      }
+
+      if (callback) callback();
+    },
 
     // ── INICIALIZAÇÃO DO MOTOR ──
     init: function () {
@@ -331,7 +430,7 @@
       
       this.elements.overlay.style.display = 'block';
       this.elements.overlay.classList.add('active');
-      this.renderStep(this.currentStep);
+      this.goToStep(this.currentStep);
     },
 
     next: function () {
@@ -355,7 +454,12 @@
       }
 
       this.currentStep = newIndex;
-      this.renderStep(this.currentStep);
+      var self = this;
+
+      // Navega a tela para a visão correta ANTES de renderizar o spotlight
+      this.navigateScreenForStep(this.currentStep, function () {
+        self.renderStep(self.currentStep);
+      });
     },
 
     close: function (markSeen) {
@@ -364,11 +468,28 @@
         currentStepObj.onLeave();
       }
 
-      // Fecha menus auxiliares
+      // Fecha menus suspensos
       var menu = document.getElementById('dropdownAddMenu');
       if (menu) menu.classList.add('hidden');
 
+      // Se o tour abriu o prompter, fecha e restaura
+      var prompterView = document.getElementById('prompterView');
+      if (prompterView && !prompterView.classList.contains('hidden') && prompterView.style.display !== 'none') {
+        if (window.CantaApp && typeof window.CantaApp.closePrompterView === 'function') {
+          window.CantaApp.closePrompterView();
+        }
+      }
+
+      // Se o tour abriu a tela de músicas e o usuário está saindo, retorna à Home
+      if (this.tourOpenedRepertoire || this.tourOpenedPrompter) {
+        if (window.CantaApp && typeof window.CantaApp.closeRepertoireSongsView === 'function') {
+          window.CantaApp.closeRepertoireSongsView();
+        }
+      }
+
       this.isOpen = false;
+      this.tourOpenedRepertoire = false;
+      this.tourOpenedPrompter = false;
       
       // DESBLOQUEIO IMEDIATO E TOTAL DA TELA
       this.elements.overlay.classList.remove('active');
@@ -451,13 +572,12 @@
 
       spotlight.style.display = 'block';
 
-      // Rola elemento para visão
+      // Rola elemento para a visão de forma suave
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
 
       var rect = targetEl.getBoundingClientRect();
       var pad = 6;
 
-      // Coordenadas do Spotlight
       var spotTop = Math.max(0, rect.top - pad);
       var spotLeft = Math.max(0, rect.left - pad);
       var spotWidth = Math.min(vw, rect.width + (pad * 2));

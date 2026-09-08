@@ -745,7 +745,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   window.CantaApp = {
     resetActiveState: resetActiveState,
-    loadRepertoires: loadRepertoires
+    loadRepertoires: loadRepertoires,
+    openRepertoireSongs: openRepertoireSongs,
+    openPrompterView: openPrompterView,
+    closePrompterView: closePrompterView,
+    closeRepertoireSongsView: closeRepertoireSongsView,
+    getState: function () { return state; }
   };
 
   function closeRepertoireSongsView() {
