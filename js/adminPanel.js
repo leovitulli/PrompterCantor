@@ -150,6 +150,23 @@
             songs_count: 12,
             last_seen: 'Agora mesmo',
             created_at: '2026-08-31'
+          },
+          {
+            id: 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908',
+            name: 'Aline Criss Allai',
+            email: 'alinecrissallai@gmail.com',
+            singer_code: '@alinecrissallai',
+            phone: '',
+            cpf: '',
+            instagram: '@alinecrissallai',
+            plan_tier: 'free',
+            plan_type: '⚡ PLANO FREE',
+            is_online: true,
+            status_text: '🟢 Conectado (Smartphone)',
+            reps_count: 0,
+            songs_count: 0,
+            last_seen: 'Agora mesmo',
+            created_at: '2026-09-08'
           }
         ];
 
@@ -184,6 +201,15 @@
           });
           if (!hasLeoOgum) {
             allUserData.push(defaultSeedSingers[1]);
+          }
+
+          var hasAline = allUserData.some(function(u) {
+            return (u.email && u.email.toLowerCase() === 'alinecrissallai@gmail.com') ||
+                   (u.singer_code && u.singer_code.toLowerCase() === '@alinecrissallai') ||
+                   u.id === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908';
+          });
+          if (!hasAline) {
+            allUserData.push(defaultSeedSingers[2]);
           }
 
           // Garantir que leovitulli@gmail.com possua instagram @leovitulli caso tenha sido zerado
@@ -485,7 +511,7 @@
                     '<form id="formCreateCoupon" onsubmit="return false;">' +
                       '<div class="form-group">' +
                         '<label>Código do Cupom:</label>' +
-                        '<input type="text" id="inputCouponCode" class="form-control" placeholder="Ex: VIP100, CANTOR50" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;">' +
+                        '<input type="text" id="inputCouponCode" class="form-control" placeholder="Ex: PRO30, SAMBA20" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;">' +
                       '</div>' +
                       '<div class="form-group">' +
                         '<label>Tipo de Benefício:</label>' +
@@ -675,7 +701,7 @@
                     '<div class="form-group" style="margin-bottom: 0;">' +
                       '<label style="font-size: 0.78rem; color: #cbd5e1; font-weight: 600;">🏷️ Cupom de Desconto / Cortesia Atribuído:</label>' +
                       '<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">' +
-                        '<input type="text" id="editSingerCoupon" list="availableCouponsList" class="form-control" placeholder="Digite ou escolha (ex: VIP100, PRO50)..." style="flex: 1; min-width: 170px; text-transform: uppercase; font-weight: 700; color: #fbbf24; border-color: rgba(251,191,36,0.4);">' +
+                        '<input type="text" id="editSingerCoupon" list="availableCouponsList" class="form-control" placeholder="Digite ou selecione um cupom..." style="flex: 1; min-width: 170px; text-transform: uppercase; font-weight: 700; color: #fbbf24; border-color: rgba(251,191,36,0.4);">' +
                         '<datalist id="availableCouponsList"></datalist>' +
                         '<select id="editSingerCouponSelect" class="form-control" style="width: auto; min-width: 160px; border-color: rgba(251,191,36,0.35); font-size: 0.8rem; background-color: #1e293b; color: #e2e8f0;">' +
                           '<option value="">Cupons do Sistema...</option>' +
