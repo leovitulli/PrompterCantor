@@ -178,13 +178,15 @@
           });
           localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
         } else {
-          // Filtrar qualquer usuário excluído
+          // Filtrar qualquer usuário excluído e expurgar cadastros fantasmas ou sem e-mail
           allUserData = allUserData.filter(function(u) {
+            if (!u) return false;
+            var uEmail = (u.email || '').toLowerCase().trim();
+            if (!uEmail || uEmail.indexOf('@') === -1 || uEmail.length < 5) return false;
             var uId = (u.id || '').toLowerCase();
-            var uEmail = (u.email || '').toLowerCase();
             var uCode = (u.singer_code || '').toLowerCase();
             if (uId && deletedSingers.indexOf(uId) !== -1) return false;
-            if (uEmail && deletedSingers.indexOf(uEmail) !== -1) return false;
+            if (deletedSingers.indexOf(uEmail) !== -1) return false;
             if (uCode && deletedSingers.indexOf(uCode) !== -1) return false;
             return true;
           });
@@ -192,6 +194,9 @@
           // Normalizar código de todos os usuários
           allUserData.forEach(function (u) {
             u.singer_code = normalizeSingerCode(u.singer_code, u.email);
+            if (!u.name || !u.name.trim()) {
+              u.name = u.email ? u.email.split('@')[0] : 'Cantor';
+            }
           });
 
           var hasLeoOgum = allUserData.some(function(u) {
@@ -800,12 +805,25 @@
           var sInput = document.getElementById('adminSearchInput');
           if (sInput) sInput.value = '';
 
+          var safetyWatchdog = setTimeout(function () {
+            if (isRefreshingData) {
+              isRefreshingData = false;
+              btnRefresh.disabled = false;
+              btnRefresh.innerHTML = oldHtml;
+              PrompterAdmin.renderUsersTable();
+              PrompterAdmin.updateMetrics();
+            }
+          }, 3500);
+
           PrompterAdmin.loadDashboardData(function (count) {
+            clearTimeout(safetyWatchdog);
             btnRefresh.disabled = false;
             btnRefresh.innerHTML = oldHtml;
             isRefreshingData = false;
+            PrompterAdmin.renderUsersTable();
+            PrompterAdmin.updateMetrics();
             if (window.showToast) {
-              window.showToast('🔄 Lista atualizada com a nuvem! ' + (allUserData.length) + ' cantores cadastrados.', 'success');
+              window.showToast('🔄 Lista sincronizada com sucesso! ' + (allUserData.length) + ' cantores cadastrados.', 'success');
             }
           });
         });
@@ -1297,6 +1315,8 @@
         if (sInput) sInput.value = '';
         this.switchTab(preferredTab || 'clients');
         this.loadDashboardData();
+        this.renderUsersTable();
+        this.updateMetrics();
         this.updateSignupsBadge();
         this.renderCouponsTable();
         this.loadPricingForm();
@@ -1789,27 +1809,32 @@
               };
             }
             if (sObj && (sObj.email || sObj.id)) {
-              var sEmail = (sObj.email || '').trim().toLowerCase();
-              var sCode = (sObj.singer_code || '').trim().toLowerCase();
-              var sId = (sObj.id || '').toLowerCase();
-              var deletedSingers = getDeletedSingers();
+              if (sObj && sObj.email && sObj.email.indexOf('@') !== -1) {
+                var sEmail = (sObj.email || '').trim().toLowerCase();
+                var sCode = (sObj.singer_code || '').trim().toLowerCase();
+                var sId = (sObj.id || '').toLowerCase();
+                var deletedSingers = getDeletedSingers();
 
-              if (deletedSingers.indexOf(sEmail) !== -1 || deletedSingers.indexOf(sCode) !== -1 || (sId && deletedSingers.indexOf(sId) !== -1)) {
-                return;
+                if (deletedSingers.indexOf(sEmail) !== -1 || deletedSingers.indexOf(sCode) !== -1 || (sId && deletedSingers.indexOf(sId) !== -1)) {
+                  return;
+                }
+
+                sObj.singer_code = normalizeSingerCode(sObj.singer_code, sObj.email);
+                if (!sObj.name || !sObj.name.trim()) {
+                  sObj.name = sObj.email.split('@')[0];
+                }
+
+                var existIdx = allUserData.findIndex(function(u) {
+                  return (sObj.id && u.id === sObj.id) ||
+                         (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
+                });
+                if (existIdx >= 0) {
+                  allUserData[existIdx] = Object.assign({}, allUserData[existIdx], sObj);
+                } else {
+                  allUserData.unshift(sObj);
+                }
+                changed = true;
               }
-
-              sObj.singer_code = normalizeSingerCode(sObj.singer_code, sObj.email);
-
-              var existIdx = allUserData.findIndex(function(u) {
-                return (sObj.id && u.id === sObj.id) ||
-                       (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
-              });
-              if (existIdx >= 0) {
-                allUserData[existIdx] = Object.assign({}, allUserData[existIdx], sObj);
-              } else {
-                allUserData.unshift(sObj);
-              }
-              changed = true;
             }
           } catch(e) {
             console.warn('Erro ao processar cantor da nuvem:', e);
@@ -1826,14 +1851,30 @@
       }
 
       // 2. Sincronizar da Nuvem: buscar todos os cantores registrados no System Registry
-      // Usar tanto o cliente Supabase quanto o endpoint REST público (anon) para garantir que cantores criados por outros usuários (ex: Aline) não sejam bloqueados pelo RLS do Postgres
       var pendingCount = 2;
+      var hasNotified = false;
+
       function notifyComplete() {
         pendingCount--;
-        if (pendingCount <= 0 && typeof onCompleteCallback === 'function') {
-          onCompleteCallback(allUserData.length);
+        if (pendingCount <= 0 && !hasNotified) {
+          hasNotified = true;
+          if (typeof onCompleteCallback === 'function') {
+            onCompleteCallback(allUserData.length);
+          }
         }
       }
+
+      // Failsafe watchdog interno: nunca travar mais do que 3.2 segundos
+      setTimeout(function () {
+        if (!hasNotified) {
+          hasNotified = true;
+          PrompterAdmin.renderUsersTable();
+          PrompterAdmin.updateMetrics();
+          if (typeof onCompleteCallback === 'function') {
+            onCompleteCallback(allUserData.length);
+          }
+        }
+      }, 3200);
 
       var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
       var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
@@ -1877,6 +1918,8 @@
           if (res.data && res.data.length > 0) {
             res.data.forEach(function(p) {
               var pEmail = (p.email || '').trim().toLowerCase();
+              if (!pEmail || pEmail.indexOf('@') === -1) return;
+
               var pCode = (p.singer_code || '').trim().toLowerCase();
               var pId = (p.id || '').toLowerCase();
               var deletedSingers = getDeletedSingers();
@@ -1891,7 +1934,6 @@
 
               var effectiveCode = normalizeSingerCode(p.singer_code, p.email);
 
-              // Atualizar no banco Supabase caso estivesse armazenado código legado (#CANTOR-3DEB6 ou com #)
               if (p.singer_code && (p.singer_code.startsWith('#') || p.singer_code.toUpperCase().indexOf('CANTOR-') !== -1)) {
                 sb.from('profiles').update({ singer_code: effectiveCode }).eq('id', p.id).catch(function() {});
               }
@@ -2023,7 +2065,11 @@
 
       var html = '';
       filtered.forEach(function (user) {
-        var initial = (user.name ? user.name.charAt(0) : user.email.charAt(0)).toUpperCase();
+        if (!user) return;
+        var uName = (user.name || '').trim();
+        var uEmail = (user.email || '').trim();
+        var displayName = uName || (uEmail ? uEmail.split('@')[0] : 'Cantor');
+        var initial = (uName ? uName.charAt(0) : (uEmail ? uEmail.charAt(0) : '🎤')).toUpperCase();
         var statusDot = user.is_online
           ? '<span class="status-dot-pulse-online" title="🟢 Online e Ativo"></span>'
           : '<span class="status-dot-offline" title="⚪ Offline"></span>';
@@ -2044,7 +2090,7 @@
 
         var cleanPhone = (user.phone || '').replace(/\D/g, '');
         if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = '55' + cleanPhone;
-        var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent('Olá ' + user.name + '! Tudo bem? Aqui é o Leonardo da equipe CantaAí PRO.');
+        var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent('Olá ' + displayName + '! Tudo bem? Aqui é o Leonardo da equipe CantaAí PRO.');
         var waButton = cleanPhone
           ? '<a href="' + waUrl + '" target="_blank" class="admin-table-btn-link admin-btn-wa" title="Chamar no WhatsApp direto" onclick="event.stopPropagation();">💬 ' + escapeHtml(user.phone) + '</a>'
           : '<span style="color:#64748b; font-size:0.8rem;">Sem WhatsApp</span>';
@@ -2063,14 +2109,14 @@
           : '<button type="button" class="btn btn-outline btn-xs btn-del-singer-row" data-user-id="' + user.id + '" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); padding: 2px 7px; border-radius: 6px; font-size: 0.75rem;" title="Excluir Cantor">🗑️</button>';
 
         html +=
-          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + escapeHtml(user.name) + '">' +
+          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + escapeHtml(displayName) + '">' +
             '<td style="text-align: center; width: 45px;">' + statusDot + '</td>' +
             '<td>' +
               '<div class="admin-user-cell">' +
                 '<div class="admin-user-avatar">' + initial + '</div>' +
                 '<div class="admin-user-details">' +
-                  '<span class="admin-user-name">' + escapeHtml(user.name) + (PrompterAdmin.isUserNew(user) ? ' <span class="badge-new-signup">✨ NOVO</span>' : '') + '</span>' +
-                  '<span class="admin-user-email">' + escapeHtml(user.email) + '</span>' +
+                  '<span class="admin-user-name">' + escapeHtml(displayName) + (PrompterAdmin.isUserNew(user) ? ' <span class="badge-new-signup">✨ NOVO</span>' : '') + '</span>' +
+                  '<span class="admin-user-email">' + escapeHtml(uEmail || '—') + '</span>' +
                 '</div>' +
               '</div>' +
             '</td>' +
@@ -2746,6 +2792,7 @@
     isUserNew: function (user) {
       if (!user) return false;
       var cleanEmail = (user.email || '').toLowerCase().trim();
+      if (!cleanEmail || cleanEmail.indexOf('@') === -1 || cleanEmail.length < 5) return false;
       if (cleanEmail === 'leovitulli@gmail.com') return false;
       var seen = this.getSeenUserIds();
       if (user.id && seen.indexOf(user.id) !== -1) return false;
@@ -2756,7 +2803,7 @@
     getUnreadSignups: function () {
       var self = this;
       return allUserData.filter(function (u) {
-        return self.isUserNew(u);
+        return u && u.email && u.email.indexOf('@') !== -1 && self.isUserNew(u);
       });
     },
 
@@ -2823,13 +2870,16 @@
           var detailsEl = document.getElementById('admRsbDetails');
           var waBtn = document.getElementById('admRsbWhatsApp');
 
+          var displayName = (latest.name || '').trim() || (latest.email ? latest.email.split('@')[0] : 'Cantor');
+          var codeDisplay = latest.singer_code || ('@' + (latest.email ? latest.email.split('@')[0] : 'cantor'));
+
           if (titleEl) {
-            titleEl.innerHTML = '🔔 Novo Cantor Cadastrado: <strong>' + escapeHtml(latest.name) + '</strong> (' + escapeHtml(latest.singer_code || '@cantor') + ')';
+            titleEl.innerHTML = '🔔 Novo Cantor Cadastrado: <strong>' + escapeHtml(displayName) + '</strong> (' + escapeHtml(codeDisplay) + ')';
           }
           if (detailsEl) {
             detailsEl.innerHTML = 'Plano: <strong>' + escapeHtml(latest.plan_type || '⚡ PLANO FREE') + '</strong> • ' +
               (latest.phone ? ('WhatsApp: <strong>' + escapeHtml(latest.phone) + '</strong>') : 'Sem telefone') +
-              ' • E-mail: ' + escapeHtml(latest.email);
+              ' • E-mail: ' + escapeHtml(latest.email || '—');
           }
           if (waBtn) {
             var cleanPhone = (latest.phone || '').replace(/\D/g, '');

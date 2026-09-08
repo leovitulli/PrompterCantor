@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/style.css?v=124">
   <link rel="stylesheet" href="css/admin.css?v=123">
   <link rel="stylesheet" href="css/landing.css?v=121">
-  <link rel="stylesheet" href="css/brand.css?v=38">
+  <link rel="stylesheet" href="css/brand.css?v=39">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
   <script>
@@ -126,8 +126,14 @@
           </div>
         </div>
 
-        <button id="btnHeaderSupport" class="btn btn-secondary btn-icon-sm" title="Central de Suporte & Mensagens" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
+        <button id="btnHeaderAnnouncements" class="btn btn-secondary btn-icon-sm" title="Comunicados e Avisos do CantaAí" style="position: relative; color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
+          📢
+          <span id="headerAnnounceBadge" class="header-announce-badge hidden">0</span>
+        </button>
+
+        <button id="btnHeaderSupport" class="btn btn-secondary btn-icon-sm" title="Central de Suporte & Mensagens" style="position: relative; color: #34d399; border-color: rgba(52, 211, 153, 0.3);">
           💬
+          <span id="headerSupportBadge" class="header-support-badge hidden">0</span>
         </button>
 
         <button id="btnToggleTheme" class="btn btn-secondary btn-icon-sm" title="Alternar Modo Claro/Escuro">
@@ -177,7 +183,12 @@
               <span class="upm-item-icon">👤</span> Meus Dados & @Login
             </button>
 
-            <button id="btnProfileOpenSupport" class="upm-item" style="color: #38bdf8;">
+            <button id="btnProfileAnnouncements" class="upm-item" style="color: #38bdf8;">
+              <span class="upm-item-icon">📢</span> Comunicados do SaaS
+              <span id="profileAnnounceBadge" class="admin-signups-badge hidden">0</span>
+            </button>
+
+            <button id="btnProfileOpenSupport" class="upm-item" style="color: #34d399;">
               <span class="upm-item-icon">💬</span> Suporte & Sugestões
             </button>
 
@@ -1593,7 +1604,7 @@
   <script src="js/supabaseClient.js?v=125"></script>
   <script src="js/db.js?v=123"></script>
   <script src="js/auth.js?v=129"></script>
-  <script src="js/adminPanel.js?v=131"></script>
+  <script src="js/adminPanel.js?v=132"></script>
   <script src="js/textParser.js?v=123"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
   <script src="js/transposer.js?v=123"></script>
@@ -1604,6 +1615,6 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/app.js?v=133"></script>
+  <script src="js/app.js?v=134"></script>
 </body>
 </html>

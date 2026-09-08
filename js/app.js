@@ -4719,11 +4719,16 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnRemoveTicketImage = document.getElementById('btnRemoveTicketImage');
     var currentTicketImageBase64 = '';
 
-    function openUserSupportModal() {
+    function openUserSupportModal(tabName) {
       if (!userSupportModal) return;
       if (userProfileMenu) userProfileMenu.classList.add('hidden');
       if (profileModal) profileModal.classList.add('hidden');
       userSupportModal.classList.remove('hidden');
+      if (tabName) {
+        switchSupportTab(tabName);
+      } else {
+        switchSupportTab('new');
+      }
     }
 
     function closeUserSupportModal() {
@@ -4745,14 +4750,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── CONTROLES DAS ABAS DO MODAL DE SUPORTE DO CANTOR ──
     var tabBtnNewTicket = document.getElementById('tabBtnNewTicket');
     var tabBtnTicketHistory = document.getElementById('tabBtnTicketHistory');
+    var tabBtnAnnouncements = document.getElementById('tabBtnAnnouncements');
     var paneNewTicket = document.getElementById('paneNewTicket');
     var paneTicketHistory = document.getElementById('paneTicketHistory');
+    var paneAnnouncements = document.getElementById('paneAnnouncements');
     var btnHeaderSupport = document.getElementById('btnHeaderSupport');
+    var btnHeaderAnnouncements = document.getElementById('btnHeaderAnnouncements');
+    var btnProfileAnnouncements = document.getElementById('btnProfileAnnouncements');
 
     function switchSupportTab(tabName) {
       if (tabName === 'history') {
         if (paneNewTicket) paneNewTicket.classList.add('hidden');
         if (paneTicketHistory) paneTicketHistory.classList.remove('hidden');
+        if (paneAnnouncements) paneAnnouncements.classList.add('hidden');
         if (tabBtnNewTicket) {
           tabBtnNewTicket.style.borderColor = 'rgba(255, 255, 255, 0.1)';
           tabBtnNewTicket.style.background = 'transparent';
@@ -4763,10 +4773,36 @@ document.addEventListener('DOMContentLoaded', function () {
           tabBtnTicketHistory.style.background = 'rgba(56, 189, 248, 0.15)';
           tabBtnTicketHistory.style.color = '#38bdf8';
         }
+        if (tabBtnAnnouncements) {
+          tabBtnAnnouncements.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnAnnouncements.style.background = 'transparent';
+          tabBtnAnnouncements.style.color = '#94a3b8';
+        }
         renderUserTicketsHistory();
+      } else if (tabName === 'announcements') {
+        if (paneNewTicket) paneNewTicket.classList.add('hidden');
+        if (paneTicketHistory) paneTicketHistory.classList.add('hidden');
+        if (paneAnnouncements) paneAnnouncements.classList.remove('hidden');
+        if (tabBtnNewTicket) {
+          tabBtnNewTicket.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnNewTicket.style.background = 'transparent';
+          tabBtnNewTicket.style.color = '#94a3b8';
+        }
+        if (tabBtnTicketHistory) {
+          tabBtnTicketHistory.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnTicketHistory.style.background = 'transparent';
+          tabBtnTicketHistory.style.color = '#94a3b8';
+        }
+        if (tabBtnAnnouncements) {
+          tabBtnAnnouncements.style.borderColor = '#38bdf8';
+          tabBtnAnnouncements.style.background = 'rgba(56, 189, 248, 0.15)';
+          tabBtnAnnouncements.style.color = '#38bdf8';
+        }
+        renderUserAnnouncementsList();
       } else {
         if (paneNewTicket) paneNewTicket.classList.remove('hidden');
         if (paneTicketHistory) paneTicketHistory.classList.add('hidden');
+        if (paneAnnouncements) paneAnnouncements.classList.add('hidden');
         if (tabBtnNewTicket) {
           tabBtnNewTicket.style.borderColor = '#38bdf8';
           tabBtnNewTicket.style.background = 'rgba(56, 189, 248, 0.15)';
@@ -4777,11 +4813,17 @@ document.addEventListener('DOMContentLoaded', function () {
           tabBtnTicketHistory.style.background = 'transparent';
           tabBtnTicketHistory.style.color = '#94a3b8';
         }
+        if (tabBtnAnnouncements) {
+          tabBtnAnnouncements.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnAnnouncements.style.background = 'transparent';
+          tabBtnAnnouncements.style.color = '#94a3b8';
+        }
       }
     }
 
     if (tabBtnNewTicket) tabBtnNewTicket.addEventListener('click', function () { switchSupportTab('new'); });
     if (tabBtnTicketHistory) tabBtnTicketHistory.addEventListener('click', function () { switchSupportTab('history'); });
+    if (tabBtnAnnouncements) tabBtnAnnouncements.addEventListener('click', function () { switchSupportTab('announcements'); });
 
     function renderUserTicketsHistory() {
       var container = document.getElementById('userTicketsHistoryList');
@@ -4861,6 +4903,14 @@ document.addEventListener('DOMContentLoaded', function () {
       var email = ((user && user.email) || (profile && profile.email) || '').trim().toLowerCase();
       var singerCode = ((profile && profile.singer_code) || '').trim().toLowerCase();
 
+      var readIds = [];
+      try {
+        var rawRead = localStorage.getItem('cantaai_read_announcements');
+        readIds = rawRead ? JSON.parse(rawRead) : [];
+      } catch (e) {
+        readIds = [];
+      }
+
       function isTargetMatch(target) {
         if (!target) return false;
         var t = String(target).trim().toLowerCase();
@@ -4886,14 +4936,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
       var html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
       myAnn.forEach(function (a) {
+        var isRead = a.id && readIds.indexOf(a.id) !== -1;
         var dateStr = a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente';
-        var typeBadge = '<span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;">📢 COMUNICADO</span>';
+        var isDirect = a.target && a.target !== 'all';
+        var targetBadge = isDirect
+          ? '<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">🎯 Mensagem Direcionada para Você</span>'
+          : '<span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;">📢 Para Todos os Cantores</span>';
+
+        var typeName = 'ℹ️ Aviso do Sistema';
+        if (a.type === 'update') typeName = '🚀 Nova Atualização';
+        if (a.type === 'promo' || a.type === 'feature') typeName = '🎉 Novidade & Benefício';
+        if (a.type === 'alert') typeName = '⚠️ Alerta Importante';
+
+        var readBtn = isRead
+          ? '<span style="color: #64748b; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">✓ Visualizado</span>'
+          : '<button type="button" class="btn btn-outline btn-xs btn-mark-ann-read" data-ann-id="' + escapeHtml(a.id) + '" style="color: #38bdf8; border-color: rgba(56,189,248,0.4); padding: 3px 9px; border-radius: 6px; font-size: 0.75rem;">✓ Marcar como Lido</button>';
 
         html +=
-          '<div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">' +
-            '<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">' +
-              typeBadge +
-              '<span style="color: #64748b; font-size: 0.75rem;">' + dateStr + '</span>' +
+          '<div style="background: ' + (isRead ? 'rgba(15, 23, 42, 0.6)' : 'rgba(15, 23, 42, 0.95)') + '; border: 1px solid ' + (isRead ? 'rgba(255, 255, 255, 0.08)' : 'rgba(56, 189, 248, 0.35)') + '; border-radius: 12px; padding: 14px; position: relative; transition: all 0.2s;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">' +
+              '<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">' +
+                '<span style="background: rgba(255,255,255,0.06); color: #e2e8f0; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;">' + typeName + '</span>' +
+                targetBadge +
+              '</div>' +
+              '<div style="display: flex; align-items: center; gap: 8px;">' +
+                '<span style="color: #64748b; font-size: 0.75rem;">' + dateStr + '</span>' +
+                readBtn +
+              '</div>' +
             '</div>' +
             '<div style="color: #f8fafc; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;">' + escapeHtml(a.title || 'Sem título') + '</div>' +
             '<div style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; background: rgba(7, 10, 18, 0.5); padding: 10px; border-radius: 8px;">' + escapeHtml(a.message || '') + '</div>' +
@@ -4901,36 +4970,32 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       html += '</div>';
       container.innerHTML = html;
-    }
 
-    if (tabBtnAnnouncements) {
-      tabBtnAnnouncements.addEventListener('click', function () {
-        if (paneNewTicket) paneNewTicket.classList.add('hidden');
-        if (paneTicketHistory) paneTicketHistory.classList.add('hidden');
-        if (paneAnnouncements) paneAnnouncements.classList.remove('hidden');
-
-        if (tabBtnNewTicket) {
-          tabBtnNewTicket.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-          tabBtnNewTicket.style.background = 'transparent';
-          tabBtnNewTicket.style.color = '#94a3b8';
-        }
-        if (tabBtnTicketHistory) {
-          tabBtnTicketHistory.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-          tabBtnTicketHistory.style.background = 'transparent';
-          tabBtnTicketHistory.style.color = '#94a3b8';
-        }
-        if (tabBtnAnnouncements) {
-          tabBtnAnnouncements.style.borderColor = '#38bdf8';
-          tabBtnAnnouncements.style.background = 'rgba(56, 189, 248, 0.15)';
-          tabBtnAnnouncements.style.color = '#38bdf8';
-        }
-        renderUserAnnouncementsList();
+      // Eventos para marcar individualmente como lido
+      container.querySelectorAll('.btn-mark-ann-read').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var annId = this.getAttribute('data-ann-id');
+          if (annId && readIds.indexOf(annId) === -1) {
+            readIds.push(annId);
+            try {
+              localStorage.setItem('cantaai_read_announcements', JSON.stringify(readIds));
+            } catch (err) {}
+            if (typeof updateClientAnnouncementsBadge === 'function') {
+              updateClientAnnouncementsBadge();
+            }
+            renderUserAnnouncementsList();
+            if (window.showToast) window.showToast('✓ Comunicado marcado como lido.', 'info');
+          }
+        });
       });
     }
 
-    if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', openUserSupportModal);
-    if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', openUserSupportModal);
-    if (btnHeaderSupport) btnHeaderSupport.addEventListener('click', openUserSupportModal);
+    if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', function() { openUserSupportModal('new'); });
+    if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', function() { openUserSupportModal('new'); });
+    if (btnHeaderSupport) btnHeaderSupport.addEventListener('click', function() { openUserSupportModal('new'); });
+    if (btnHeaderAnnouncements) btnHeaderAnnouncements.addEventListener('click', function() { openUserSupportModal('announcements'); });
+    if (btnProfileAnnouncements) btnProfileAnnouncements.addEventListener('click', function() { openUserSupportModal('announcements'); });
     if (btnCloseUserSupportModal) btnCloseUserSupportModal.addEventListener('click', closeUserSupportModal);
     if (userSupportOverlay) userSupportOverlay.addEventListener('click', closeUserSupportModal);
 
@@ -5132,6 +5197,61 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnSingerAnnClose) btnSingerAnnClose.addEventListener('click', closeSingerAnnouncementModal);
     if (btnSingerAnnConfirm) btnSingerAnnConfirm.addEventListener('click', closeSingerAnnouncementModal);
 
+    function updateClientAnnouncementsBadge() {
+      if (!window.PrompterAuth) return;
+      var user = window.PrompterAuth.getUser();
+      var profile = window.PrompterAuth.getProfile();
+      if (!user && !profile) return;
+
+      var email = ((user && user.email) || (profile && profile.email) || '').trim().toLowerCase();
+      var singerCode = ((profile && profile.singer_code) || '').trim().toLowerCase();
+      var readIds = [];
+      try {
+        var rawRead = localStorage.getItem('cantaai_read_announcements');
+        readIds = rawRead ? JSON.parse(rawRead) : [];
+      } catch (e) {
+        readIds = [];
+      }
+
+      function isTargetMatch(target) {
+        if (!target) return false;
+        var t = String(target).trim().toLowerCase();
+        if (t === 'all') return true;
+        if (email && t === email) return true;
+        if (singerCode && (t === singerCode || t === singerCode.replace('@', ''))) return true;
+        return false;
+      }
+
+      var rawLocal = localStorage.getItem('canta_ai_admin_announcements');
+      var localList = rawLocal ? JSON.parse(rawLocal) : [];
+      var unreadCount = 0;
+      if (Array.isArray(localList)) {
+        unreadCount = localList.filter(function (a) {
+          return a && a.id && isTargetMatch(a.target) && readIds.indexOf(a.id) === -1;
+        }).length;
+      }
+
+      var badgeHeader = document.getElementById('headerAnnounceBadge');
+      if (badgeHeader) {
+        if (unreadCount > 0) {
+          badgeHeader.innerText = unreadCount;
+          badgeHeader.classList.remove('hidden');
+        } else {
+          badgeHeader.classList.add('hidden');
+        }
+      }
+
+      var badgeProfile = document.getElementById('profileAnnounceBadge');
+      if (badgeProfile) {
+        if (unreadCount > 0) {
+          badgeProfile.innerText = unreadCount + ' novo' + (unreadCount !== 1 ? 's' : '');
+          badgeProfile.classList.remove('hidden');
+        } else {
+          badgeProfile.classList.add('hidden');
+        }
+      }
+    }
+
     function checkSingerAnnouncements() {
       if (!window.PrompterAuth) return;
       var user = window.PrompterAuth.getUser();
@@ -5165,7 +5285,7 @@ document.addEventListener('DOMContentLoaded', function () {
         singerAnnBody.innerText = ann.message || '';
 
         var type = ann.type || 'info';
-        if (type === 'feature') {
+        if (type === 'feature' || type === 'promo') {
           if (singerAnnBadge) {
             singerAnnBadge.innerText = 'NOVIDADE';
             singerAnnBadge.style.color = '#38bdf8';
@@ -5208,6 +5328,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
               localStorage.setItem('cantaai_read_announcements', JSON.stringify(readIds));
             } catch (e) {}
+            updateClientAnnouncementsBadge();
           }
         };
 
@@ -5227,7 +5348,10 @@ document.addEventListener('DOMContentLoaded', function () {
         singerAnnModal.classList.remove('hidden');
       }
 
-      // 1. Verificar cache local primeiro
+      // 1. Atualizar badges com os comunicados já salvos localmente
+      updateClientAnnouncementsBadge();
+
+      // Verificar cache local para popup inicial
       try {
         var rawLocal = localStorage.getItem('canta_ai_admin_announcements');
         var localList = rawLocal ? JSON.parse(rawLocal) : [];
@@ -5237,15 +5361,14 @@ document.addEventListener('DOMContentLoaded', function () {
           });
           if (matchedLocal.length > 0) {
             presentAnnouncement(matchedLocal[0]);
-            return;
           }
         }
       } catch (e) {}
 
-      // 2. Buscar da nuvem (Supabase REST)
+      // 2. Buscar da nuvem (Supabase REST) e mesclar na base local
       if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
         var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
-        var restUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.SYSTEM_ANNOUNCEMENT&order=id.desc&limit=15';
+        var restUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.SYSTEM_ANNOUNCEMENT&order=id.desc&limit=25';
         fetch(restUrl, {
           headers: {
             'apikey': window.SUPABASE_CONFIG.key,
@@ -5255,28 +5378,67 @@ document.addEventListener('DOMContentLoaded', function () {
           if (res.ok) return res.json();
           return [];
         }).then(function (rows) {
-          if (Array.isArray(rows)) {
+          if (Array.isArray(rows) && rows.length > 0) {
+            var rawCur = localStorage.getItem('canta_ai_admin_announcements');
+            var curList = rawCur ? JSON.parse(rawCur) : [];
+            var changed = false;
+
             for (var i = 0; i < rows.length; i++) {
               try {
                 if (rows[i].content) {
-                  var ann = JSON.parse(rows[i].content);
-                  if (ann && ann.id && isTargetMatch(ann.target) && readIds.indexOf(ann.id) === -1) {
-                    presentAnnouncement(ann);
-                    break;
+                  var annObj = typeof rows[i].content === 'string' ? JSON.parse(rows[i].content) : rows[i].content;
+                  if (annObj && annObj.id) {
+                    var exists = curList.some(function(item) { return item.id === annObj.id; });
+                    if (!exists) {
+                      curList.unshift(annObj);
+                      changed = true;
+                    }
                   }
                 }
               } catch (err) {}
+            }
+
+            if (changed) {
+              localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(curList));
+            }
+
+            updateClientAnnouncementsBadge();
+
+            // Se o modal de suporte estiver aberto na aba de comunicados, re-renderizar a lista
+            var paneAnn = document.getElementById('paneAnnouncements');
+            if (paneAnn && !paneAnn.classList.contains('hidden') && typeof renderUserAnnouncementsList === 'function') {
+              renderUserAnnouncementsList();
+            }
+
+            // Exibir popup se houver algum novo que ainda não foi visto
+            var unreadCloud = curList.filter(function(a) {
+              return isTargetMatch(a.target) && readIds.indexOf(a.id) === -1;
+            });
+            if (unreadCloud.length > 0 && (!singerAnnModal || singerAnnModal.classList.contains('hidden'))) {
+              presentAnnouncement(unreadCloud[0]);
             }
           }
         }).catch(function () {});
       }
     }
 
+    // Sincronização entre abas via storage event
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'canta_ai_admin_announcements' || e.key === 'cantaai_read_announcements') {
+        updateClientAnnouncementsBadge();
+        var paneAnn = document.getElementById('paneAnnouncements');
+        if (paneAnn && !paneAnn.classList.contains('hidden') && typeof renderUserAnnouncementsList === 'function') {
+          renderUserAnnouncementsList();
+        }
+      }
+    });
+
     // Checar comunicados após carregar autenticação ou na abertura do app
     setTimeout(checkSingerAnnouncements, 1200);
     window.addEventListener('cantaai:auth_ready', function () {
       setTimeout(checkSingerAnnouncements, 800);
     });
+    setInterval(checkSingerAnnouncements, 30000);
 
     // Inicialização da visualização: se usuário logado, vai direto ao App
     if (window.PrompterAuth && window.PrompterAuth.getUser()) {
