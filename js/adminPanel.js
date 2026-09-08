@@ -3258,6 +3258,19 @@
             '</div>' +
 
             photoHtml +
+            (t.reply ? (
+              '<div style="margin-top: 10px; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 10px 12px; border-radius: 6px;">' +
+                '<div style="font-size: 0.75rem; font-weight: 700; color: #38bdf8; margin-bottom: 3px;">💬 Resposta da Equipe CantaAí:</div>' +
+                '<div style="color: #f1f5f9; font-size: 0.85rem; line-height: 1.45; white-space: pre-wrap;">' + escapeHtml(t.reply) + '</div>' +
+                '<div style="font-size: 0.7rem; color: #64748b; margin-top: 4px;">Respondido em: ' + (t.replied_at ? new Date(t.replied_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente') + '</div>' +
+              '</div>'
+            ) : '') +
+
+            // Formulário de resposta direta do CEO/Admin
+            '<div class="admin-reply-box" style="margin-top: 12px; display: flex; gap: 8px;">' +
+              '<input type="text" class="form-control input-admin-reply" data-id="' + t.id + '" placeholder="Digite uma resposta direta para ' + escapeHtml(t.user_name || 'o cantor') + '..." style="flex: 1; font-size: 0.82rem; padding: 6px 12px; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.12);">' +
+              '<button class="btn btn-sm btn-primary btn-send-reply" data-id="' + t.id + '" style="font-size: 0.78rem; padding: 6px 14px; white-space: nowrap;">💬 Responder</button>' +
+            '</div>' +
 
             '<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">' +
               (!isResolved ? '<button class="btn btn-sm btn-primary btn-resolve-ticket" data-id="' + t.id + '" style="font-size: 0.78rem; padding: 6px 12px;">✅ Marcar como Resolvido</button>' : '') +
@@ -3282,6 +3295,53 @@
         });
       });
 
+      // Responder chamado diretamente
+      container.querySelectorAll('.btn-send-reply').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = this.getAttribute('data-id');
+          var card = this.closest('.admin-reply-box');
+          var input = card ? card.querySelector('.input-admin-reply') : null;
+          var replyText = input ? input.value.trim() : '';
+
+          if (!replyText) {
+            if (window.showToast) window.showToast('Digite uma resposta antes de enviar.', 'warning');
+            return;
+          }
+
+          var match = tickets.find(function (x) { return x.id === id; });
+          if (match) {
+            match.reply = replyText;
+            match.replied_at = new Date().toISOString();
+            match.status = 'resolved'; // Já marca como resolvido ao responder
+            localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
+
+            // Sincronizar na nuvem (Supabase REST)
+            if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+              var updateRow = {
+                repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
+                title: '💬 RESPOSTA SUPORTE: ' + (match.title || 'Chamado'),
+                artist: 'SUPPORT_REPLY',
+                composer: match.user_email || 'cantor',
+                content: JSON.stringify(match)
+              };
+              fetch(window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs', {
+                method: 'POST',
+                headers: {
+                  'apikey': window.SUPABASE_CONFIG.key,
+                  'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify([updateRow])
+              }).catch(function () {});
+            }
+
+            PrompterAdmin.renderTicketsList(tickets);
+            if (window.showToast) window.showToast('Resposta enviada para o cantor com sucesso!', 'success');
+          }
+        });
+      });
+
       // Ações de resolver e excluir chamado
       container.querySelectorAll('.btn-resolve-ticket').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -3290,10 +3350,6 @@
           if (match) {
             match.status = 'resolved';
             localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
-            var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-            if (sb) {
-              sb.from('tickets').update({ status: 'resolved' }).eq('id', id).catch(function() {});
-            }
             PrompterAdmin.renderTicketsList(tickets);
             if (window.showToast) window.showToast('Chamado marcado como resolvido!', 'success');
           }
@@ -3307,10 +3363,6 @@
           if (idx >= 0) {
             tickets.splice(idx, 1);
             localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
-            var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-            if (sb) {
-              sb.from('tickets').delete().eq('id', id).catch(function() {});
-            }
             PrompterAdmin.renderTicketsList(tickets);
             if (window.showToast) window.showToast('Chamado excluído.', 'info');
           }

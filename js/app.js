@@ -4835,10 +4835,97 @@ document.addEventListener('DOMContentLoaded', function () {
             '</div>' +
             '<div style="color: #f8fafc; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;">' + escapeHtml(t.title || 'Sem título') + '</div>' +
             '<div style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; background: rgba(7, 10, 18, 0.5); padding: 10px; border-radius: 8px;">' + escapeHtml(t.description || '') + '</div>' +
+            (t.reply ? (
+              '<div style="margin-top: 10px; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 10px 12px; border-radius: 6px;">' +
+                '<div style="font-size: 0.75rem; font-weight: 700; color: #38bdf8; margin-bottom: 3px;">💬 Resposta da Equipe CantaAí:</div>' +
+                '<div style="color: #f1f5f9; font-size: 0.85rem; line-height: 1.45; white-space: pre-wrap;">' + escapeHtml(t.reply) + '</div>' +
+                '<div style="font-size: 0.7rem; color: #64748b; margin-top: 4px;">Respondido em: ' + (t.replied_at ? new Date(t.replied_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente') + '</div>' +
+              '</div>'
+            ) : '') +
           '</div>';
       });
       html += '</div>';
       container.innerHTML = html;
+    }
+
+    // ── RENDERIZAÇÃO DA LISTA DE COMUNICADOS RECEBIDOS NA CENTRAL DE ATENDIMENTO ──
+    var tabBtnAnnouncements = document.getElementById('tabBtnAnnouncements');
+    var paneAnnouncements = document.getElementById('paneAnnouncements');
+
+    function renderUserAnnouncementsList() {
+      var container = document.getElementById('userAnnouncementsList');
+      if (!container) return;
+
+      var user = PrompterAuth.getUser();
+      var profile = PrompterAuth.getProfile();
+      var email = ((user && user.email) || (profile && profile.email) || '').trim().toLowerCase();
+      var singerCode = ((profile && profile.singer_code) || '').trim().toLowerCase();
+
+      function isTargetMatch(target) {
+        if (!target) return false;
+        var t = String(target).trim().toLowerCase();
+        if (t === 'all') return true;
+        if (email && t === email) return true;
+        if (singerCode && (t === singerCode || t === singerCode.replace('@', ''))) return true;
+        return false;
+      }
+
+      var raw = localStorage.getItem('canta_ai_admin_announcements');
+      var allAnn = raw ? JSON.parse(raw) : [];
+      var myAnn = allAnn.filter(function (a) {
+        return isTargetMatch(a.target);
+      });
+
+      if (!myAnn || myAnn.length === 0) {
+        container.innerHTML =
+          '<div style="text-align: center; padding: 28px; background: rgba(15,23,42,0.5); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.88rem;">' +
+            'Nenhum comunicado oficial recebido ainda.<br>Quando nossa equipe publicar avisos importantes ou novidades, você poderá consultar aqui a qualquer momento.' +
+          '</div>';
+        return;
+      }
+
+      var html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+      myAnn.forEach(function (a) {
+        var dateStr = a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente';
+        var typeBadge = '<span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;">📢 COMUNICADO</span>';
+
+        html +=
+          '<div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">' +
+              typeBadge +
+              '<span style="color: #64748b; font-size: 0.75rem;">' + dateStr + '</span>' +
+            '</div>' +
+            '<div style="color: #f8fafc; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;">' + escapeHtml(a.title || 'Sem título') + '</div>' +
+            '<div style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; background: rgba(7, 10, 18, 0.5); padding: 10px; border-radius: 8px;">' + escapeHtml(a.message || '') + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    if (tabBtnAnnouncements) {
+      tabBtnAnnouncements.addEventListener('click', function () {
+        if (paneNewTicket) paneNewTicket.classList.add('hidden');
+        if (paneTicketHistory) paneTicketHistory.classList.add('hidden');
+        if (paneAnnouncements) paneAnnouncements.classList.remove('hidden');
+
+        if (tabBtnNewTicket) {
+          tabBtnNewTicket.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnNewTicket.style.background = 'transparent';
+          tabBtnNewTicket.style.color = '#94a3b8';
+        }
+        if (tabBtnTicketHistory) {
+          tabBtnTicketHistory.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnTicketHistory.style.background = 'transparent';
+          tabBtnTicketHistory.style.color = '#94a3b8';
+        }
+        if (tabBtnAnnouncements) {
+          tabBtnAnnouncements.style.borderColor = '#38bdf8';
+          tabBtnAnnouncements.style.background = 'rgba(56, 189, 248, 0.15)';
+          tabBtnAnnouncements.style.color = '#38bdf8';
+        }
+        renderUserAnnouncementsList();
+      });
     }
 
     if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', openUserSupportModal);
