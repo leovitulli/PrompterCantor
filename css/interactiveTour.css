@@ -54,13 +54,13 @@
 .cantaai-tour-card {
   position: absolute;
   z-index: 9999920;
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
   border-radius: 14px;
   width: 92%;
   max-width: 440px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(37, 99, 235, 0.2);
-  color: #f8fafc;
+  color: #f8fafc !important;
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -81,8 +81,8 @@
 /* CABEÇALHO DO TOUR */
 .tour-card-header {
   padding: 12px 18px;
-  background: #131d35;
-  border-bottom: 1px solid #1e293b;
+  background: #131d35 !important;
+  border-bottom: 1px solid #1e293b !important;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -92,9 +92,9 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 800;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.15);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.15) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
   padding: 3px 9px;
   border-radius: 999px;
   letter-spacing: 0.3px;
@@ -102,9 +102,9 @@
 }
 
 .tour-btn-close {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
+  background: transparent !important;
+  border: none !important;
+  color: #94a3b8 !important;
   font-size: 16px;
   cursor: pointer;
   padding: 4px;
@@ -112,8 +112,8 @@
   border-radius: 6px;
 }
 .tour-btn-close:hover {
-  color: #ffffff;
-  background: #1e293b;
+  color: #ffffff !important;
+  background: #1e293b !important;
 }
 
 /* CONTEÚDO PRINCIPAL DO PASSO */
@@ -121,13 +121,14 @@
   padding: 18px;
   max-height: 70vh;
   overflow-y: auto;
+  background: #0f172a !important;
 }
 
 .tour-title {
   font-family: 'Bricolage Grotesque', sans-serif;
   font-size: 18px;
   font-weight: 800;
-  color: #ffffff;
+  color: #ffffff !important;
   margin-bottom: 8px;
   line-height: 1.25;
   display: flex;
@@ -138,7 +139,7 @@
 .tour-desc {
   font-size: 13.5px;
   line-height: 1.55;
-  color: #cbd5e1;
+  color: #cbd5e1 !important;
   margin-bottom: 14px;
 }
 
@@ -166,7 +167,7 @@
 .tour-demo-title {
   font-weight: 800;
   font-size: 12.5px;
-  color: #ffffff;
+  color: #ffffff !important;
   margin-bottom: 6px;
   display: flex;
   align-items: center;
@@ -177,14 +178,15 @@
   margin: 0;
   padding-left: 18px;
   font-size: 12px;
-  color: #cbd5e1;
+  color: #cbd5e1 !important;
   line-height: 1.6;
 }
 .tour-steps-mini li {
   margin-bottom: 4px;
+  color: #cbd5e1 !important;
 }
 .tour-steps-mini strong {
-  color: #38bdf8;
+  color: #38bdf8 !important;
 }
 
 /* BARRA DE PROGRESSO EM PONTINHOS */
@@ -209,8 +211,8 @@
 /* RODAPÉ DO CARTÃO */
 .tour-card-footer {
   padding: 12px 18px;
-  background: #0a0f1d;
-  border-top: 1px solid #1e293b;
+  background: #0a0f1d !important;
+  border-top: 1px solid #1e293b !important;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -239,32 +241,32 @@
 }
 
 .tour-btn-prev {
-  background: #17233d;
-  color: #cbd5e1;
-  border: 1px solid #334155;
+  background: #17233d !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
 }
 .tour-btn-prev:hover {
-  background: #1e2e50;
-  color: #ffffff;
+  background: #1e2e50 !important;
+  color: #ffffff !important;
 }
 
 .tour-btn-next {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
 }
 .tour-btn-next:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
 }
 
 .tour-btn-skip {
-  background: transparent;
-  color: #64748b;
+  background: transparent !important;
+  color: #64748b !important;
   padding: 8px 6px;
   font-size: 11.5px;
 }
 .tour-btn-skip:hover {
-  color: #cbd5e1;
+  color: #cbd5e1 !important;
 }
 
 /* OPÇÃO NÃO MOSTRAR NOVAMENTE */
@@ -273,9 +275,12 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #64748b;
+  color: #64748b !important;
   user-select: none;
   cursor: pointer;
+}
+.tour-dont-show-wrap span {
+  color: #64748b !important;
 }
 .tour-dont-show-wrap input[type="checkbox"] {
   accent-color: #2563eb;
