@@ -126,6 +126,10 @@
           </div>
         </div>
 
+        <button id="btnHeaderSupport" class="btn btn-secondary btn-icon-sm" title="Central de Suporte & Mensagens" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
+          💬
+        </button>
+
         <button id="btnToggleTheme" class="btn btn-secondary btn-icon-sm" title="Alternar Modo Claro/Escuro">
           🌙
         </button>
@@ -1111,63 +1115,86 @@
     </div>
   </div>
 
-  <!-- MODAL DE SUPORTE & ABERTURA DE CHAMADOS (COM UPLOAD DE FOTO/PRINT) -->
+  <!-- MODAL DE SUPORTE, COMUNICAÇÃO & MENSAGENS (CICLO COMPLETO DO CLIENTE) -->
   <div id="userSupportModal" class="modal hidden" style="z-index: 1000010;">
     <div class="modal-overlay" id="userSupportOverlay"></div>
-    <div class="modal-card" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
-      <div class="modal-header">
+    <div class="modal-card" style="max-width: 620px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 1.5rem;">💬</span>
           <div>
-            <h3 style="margin: 0; font-size: 1.2rem;">Central de Suporte & Sugestões</h3>
-            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Fale diretamente com o desenvolvedor do CantaAí PRO</p>
+            <h3 style="margin: 0; font-size: 1.2rem;">Canal de Atendimento & Comunicação</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Fale diretamente com a equipe do CantaAí PRO ou tire dúvidas</p>
           </div>
         </div>
         <button class="modal-close" id="btnCloseUserSupportModal">✕</button>
       </div>
-      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
-        <form id="formUserSupport" onsubmit="return false;">
-          <div class="form-group">
-            <label for="ticketCategory">Tipo de Solicitação:</label>
-            <select id="ticketCategory" class="form-control">
-              <option value="suggestion">💡 Sugestão de Melhoria</option>
-              <option value="bug">🐛 Relatar Problema / Bug</option>
-              <option value="doubt">❓ Dúvida sobre o App</option>
-              <option value="billing">💳 Assinatura & Planos</option>
-            </select>
-          </div>
 
-          <div class="form-group">
-            <label for="ticketTitle">Assunto / Resumo:</label>
-            <input type="text" id="ticketTitle" class="form-control" placeholder="Ex: Sugestão para o teleprompter ou Erro ao transpor tom" required>
-          </div>
+      <!-- Abas de Navegação da Central de Atendimento -->
+      <div style="display: flex; gap: 8px; padding: 10px 1.5rem; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); overflow-x: auto; flex-shrink: 0;">
+        <button type="button" id="tabBtnNewTicket" class="btn-legal-tab active" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; cursor: pointer;">
+          ✉️ Enviar Mensagem / Suporte
+        </button>
+        <button type="button" id="tabBtnTicketHistory" class="btn-legal-tab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">
+          📋 Minhas Mensagens & Respostas
+        </button>
+      </div>
 
-          <div class="form-group">
-            <label for="ticketDescription">Detalhes da sua mensagem:</label>
-            <textarea id="ticketDescription" class="form-control" rows="4" placeholder="Descreva com detalhes o que você precisa ou como podemos melhorar..." required></textarea>
-          </div>
+      <div class="modal-body" style="padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1;">
+        <!-- ABA 1: FORMULÁRIO DE ENVIO -->
+        <div id="paneNewTicket">
+          <form id="formUserSupport" onsubmit="return false;">
+            <div class="form-group">
+              <label for="ticketCategory">Tipo de Mensagem:</label>
+              <select id="ticketCategory" class="form-control">
+                <option value="duvida">❓ Dúvida sobre o Aplicativo</option>
+                <option value="sugestao">💡 Sugestão de Melhoria ou Ideia</option>
+                <option value="problema">🐛 Relatar Problema / Bug</option>
+                <option value="faturamento">💳 Assinatura, Pagamentos & Pix</option>
+                <option value="cifra">🎵 Dúvida sobre Cifra ou Transposição</option>
+                <option value="outro">📩 Outro Assunto</option>
+              </select>
+            </div>
 
-          <!-- Upload de Imagem / Print -->
-          <div class="form-group">
-            <label>Anexar Print ou Foto da Tela (Opcional):</label>
-            <div style="border: 2px dashed rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 14px; text-align: center; background: rgba(56, 189, 248, 0.04); cursor: pointer;" id="ticketDropZone">
-              <input type="file" id="ticketFileInput" accept="image/*" style="display: none;">
-              <div id="ticketUploadPrompt">
-                <span style="font-size: 1.5rem;">📸</span>
-                <div style="font-size: 0.85rem; font-weight: 600; color: #38bdf8; margin-top: 4px;">Clique para anexar imagem / print</div>
-                <small style="color: #64748b; font-size: 0.75rem;">Formatos aceitos: JPG, PNG, WEBP</small>
-              </div>
-              <div id="ticketPreviewContainer" class="hidden" style="margin-top: 10px; position: relative;">
-                <img id="ticketImagePreview" src="" alt="Preview" style="max-height: 140px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
-                <button type="button" id="btnRemoveTicketImage" style="position: absolute; top: -8px; right: 20%; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold;">✕</button>
+            <div class="form-group">
+              <label for="ticketTitle">Assunto:</label>
+              <input type="text" id="ticketTitle" class="form-control" placeholder="Ex: Dúvida sobre o plano PRO ou sugestão para o teleprompter" required>
+            </div>
+
+            <div class="form-group">
+              <label for="ticketDescription">Mensagem / Detalhes:</label>
+              <textarea id="ticketDescription" class="form-control" rows="4" placeholder="Escreva sua mensagem com detalhes. Nossa equipe lerá sua solicitação..." required></textarea>
+            </div>
+
+            <!-- Upload de Imagem / Print -->
+            <div class="form-group">
+              <label>Anexar Foto ou Print da Tela (Opcional):</label>
+              <div style="border: 2px dashed rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 14px; text-align: center; background: rgba(56, 189, 248, 0.04); cursor: pointer;" id="ticketDropZone">
+                <input type="file" id="ticketFileInput" accept="image/*" style="display: none;">
+                <div id="ticketUploadPrompt">
+                  <span style="font-size: 1.5rem;">📸</span>
+                  <div style="font-size: 0.85rem; font-weight: 600; color: #38bdf8; margin-top: 4px;">Toque para anexar print ou foto</div>
+                  <small style="color: #64748b; font-size: 0.75rem;">Formatos: JPG, PNG, WEBP</small>
+                </div>
+                <div id="ticketPreviewContainer" class="hidden" style="margin-top: 10px; position: relative;">
+                  <img id="ticketImagePreview" src="" alt="Preview" style="max-height: 140px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                  <button type="button" id="btnRemoveTicketImage" style="position: absolute; top: -8px; right: 20%; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold;">✕</button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <button type="button" id="btnSubmitTicket" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; margin-top: 0.5rem;">
-            🚀 Enviar Chamado para o Suporte
-          </button>
-        </form>
+            <button type="button" id="btnSubmitTicket" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; margin-top: 0.5rem;">
+              🚀 Enviar Mensagem para a Equipe
+            </button>
+          </form>
+        </div>
+
+        <!-- ABA 2: HISTÓRICO DE MENSAGENS ENVIADAS & STATUS -->
+        <div id="paneTicketHistory" class="hidden">
+          <div id="userTicketsHistoryList">
+            <!-- Renderizado dinamicamente -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1567,6 +1594,6 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/app.js?v=131"></script>
+  <script src="js/app.js?v=132"></script>
 </body>
 </html>

@@ -4742,8 +4742,108 @@ document.addEventListener('DOMContentLoaded', function () {
       if (ticketFileInput) ticketFileInput.value = '';
     }
 
+    // ── CONTROLES DAS ABAS DO MODAL DE SUPORTE DO CANTOR ──
+    var tabBtnNewTicket = document.getElementById('tabBtnNewTicket');
+    var tabBtnTicketHistory = document.getElementById('tabBtnTicketHistory');
+    var paneNewTicket = document.getElementById('paneNewTicket');
+    var paneTicketHistory = document.getElementById('paneTicketHistory');
+    var btnHeaderSupport = document.getElementById('btnHeaderSupport');
+
+    function switchSupportTab(tabName) {
+      if (tabName === 'history') {
+        if (paneNewTicket) paneNewTicket.classList.add('hidden');
+        if (paneTicketHistory) paneTicketHistory.classList.remove('hidden');
+        if (tabBtnNewTicket) {
+          tabBtnNewTicket.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnNewTicket.style.background = 'transparent';
+          tabBtnNewTicket.style.color = '#94a3b8';
+        }
+        if (tabBtnTicketHistory) {
+          tabBtnTicketHistory.style.borderColor = '#38bdf8';
+          tabBtnTicketHistory.style.background = 'rgba(56, 189, 248, 0.15)';
+          tabBtnTicketHistory.style.color = '#38bdf8';
+        }
+        renderUserTicketsHistory();
+      } else {
+        if (paneNewTicket) paneNewTicket.classList.remove('hidden');
+        if (paneTicketHistory) paneTicketHistory.classList.add('hidden');
+        if (tabBtnNewTicket) {
+          tabBtnNewTicket.style.borderColor = '#38bdf8';
+          tabBtnNewTicket.style.background = 'rgba(56, 189, 248, 0.15)';
+          tabBtnNewTicket.style.color = '#38bdf8';
+        }
+        if (tabBtnTicketHistory) {
+          tabBtnTicketHistory.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          tabBtnTicketHistory.style.background = 'transparent';
+          tabBtnTicketHistory.style.color = '#94a3b8';
+        }
+      }
+    }
+
+    if (tabBtnNewTicket) tabBtnNewTicket.addEventListener('click', function () { switchSupportTab('new'); });
+    if (tabBtnTicketHistory) tabBtnTicketHistory.addEventListener('click', function () { switchSupportTab('history'); });
+
+    function renderUserTicketsHistory() {
+      var container = document.getElementById('userTicketsHistoryList');
+      if (!container) return;
+
+      var user = PrompterAuth.getUser();
+      var profile = PrompterAuth.getProfile();
+      var uEmail = ((user && user.email) || (profile && profile.email) || '').trim().toLowerCase();
+
+      var raw = localStorage.getItem('canta_ai_support_tickets');
+      var allTickets = raw ? JSON.parse(raw) : [];
+      var myTickets = allTickets.filter(function (t) {
+        return !uEmail || (t.user_email && t.user_email.toLowerCase() === uEmail);
+      });
+
+      if (!myTickets || myTickets.length === 0) {
+        container.innerHTML =
+          '<div style="text-align: center; padding: 28px; background: rgba(15,23,42,0.5); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.88rem;">' +
+            'Você ainda não enviou mensagens para o suporte.<br>Use a aba <strong>"Enviar Mensagem / Suporte"</strong> para tirar dúvidas ou sugerir melhorias.' +
+          '</div>';
+        return;
+      }
+
+      var catLabels = {
+        'duvida': '❓ Dúvida',
+        'problema': '🐛 Problema / Bug',
+        'sugestao': '💡 Sugestão',
+        'cifra': '🎵 Cifra / Tom',
+        'faturamento': '💳 Assinatura',
+        'outro': '📩 Outro'
+      };
+
+      var html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+      myTickets.forEach(function (t) {
+        var isResolved = t.status === 'resolved';
+        var statusBadge = isResolved
+          ? '<span style="background: rgba(52, 211, 153, 0.2); color: #34d399; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">🟢 Resolvido</span>'
+          : '<span style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">🟡 Em Análise</span>';
+
+        var catName = catLabels[t.category] || '📩 Mensagem';
+        var dateStr = t.created_at ? new Date(t.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente';
+
+        html +=
+          '<div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">' +
+              '<div style="display: flex; align-items: center; gap: 8px;">' +
+                statusBadge +
+                '<span style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;">' + catName + '</span>' +
+              '</div>' +
+              '<span style="color: #64748b; font-size: 0.75rem;">' + dateStr + '</span>' +
+            '</div>' +
+            '<div style="color: #f8fafc; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;">' + escapeHtml(t.title || 'Sem título') + '</div>' +
+            '<div style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; background: rgba(7, 10, 18, 0.5); padding: 10px; border-radius: 8px;">' + escapeHtml(t.description || '') + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
     if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', openUserSupportModal);
     if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', openUserSupportModal);
+    if (btnHeaderSupport) btnHeaderSupport.addEventListener('click', openUserSupportModal);
     if (btnCloseUserSupportModal) btnCloseUserSupportModal.addEventListener('click', closeUserSupportModal);
     if (userSupportOverlay) userSupportOverlay.addEventListener('click', closeUserSupportModal);
 
@@ -4813,14 +4913,30 @@ document.addEventListener('DOMContentLoaded', function () {
         list.unshift(newTicket);
         localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
 
-        // Salvar no Supabase
-        var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-        if (sb) {
-          sb.from('tickets').insert([newTicket]).catch(function() {});
+        // Salvar no Supabase (System Registry / Songs fallback se tabela tickets não existir)
+        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+          var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+          var ticketRow = {
+            repertoire_id: sysRepId,
+            title: '📩 SUPORTE: ' + title,
+            artist: 'USER_SUPPORT_TICKET',
+            composer: uEmail,
+            content: JSON.stringify(newTicket)
+          };
+          fetch(window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs', {
+            method: 'POST',
+            headers: {
+              'apikey': window.SUPABASE_CONFIG.key,
+              'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify([ticketRow])
+          }).catch(function() {});
         }
 
         closeUserSupportModal();
-        showToast('🚀 Chamado enviado com sucesso! O desenvolvedor analisará sua solicitação.', 'success');
+        showToast('🚀 Mensagem enviada com sucesso! Nossa equipe responderá em breve.', 'success');
       });
     }
 
