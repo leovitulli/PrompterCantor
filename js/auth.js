@@ -378,10 +378,13 @@
         var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
         if (sb) {
           var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+          var currentUid = (profile && profile.id) || (currentUser ? currentUser.id : null);
           var songRow = {
             repertoire_id: regId,
+            user_id: (currentUid && String(currentUid).indexOf('-') !== -1 && String(currentUid).length >= 30) ? currentUid : null,
             title: singerItem.name,
             artist: singerItem.email,
+            composer: singerItem.singer_code || '',
             content: JSON.stringify(singerItem)
           };
           sb.from('songs')
@@ -390,11 +393,13 @@
             .eq('artist', singerItem.email)
             .then(function(res) {
               if (res.data && res.data.length > 0) {
-                songRow.id = res.data[0].id;
+                var existingRowId = res.data[0].id;
+                sb.from('songs').update(songRow).eq('id', existingRowId).then(function() {}).catch(function() {});
+              } else {
+                sb.from('songs').insert(songRow).then(function() {}).catch(function() {});
               }
-              sb.from('songs').upsert(songRow).catch(function() {});
             }).catch(function() {
-              sb.from('songs').upsert(songRow).catch(function() {});
+              sb.from('songs').insert(songRow).then(function() {}).catch(function() {});
             });
         }
       } catch (e) {

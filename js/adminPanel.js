@@ -1758,9 +1758,9 @@
                              (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
                     });
                     if (existIdx >= 0) {
-                      allUserData[existIdx] = Object.assign({}, sObj, allUserData[existIdx]);
+                      allUserData[existIdx] = Object.assign({}, allUserData[existIdx], sObj);
                     } else {
-                      allUserData.push(sObj);
+                      allUserData.unshift(sObj);
                     }
                   }
                 } catch(e) {
