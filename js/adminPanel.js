@@ -3280,38 +3280,27 @@
         container.innerHTML = '<div style="color: #94a3b8; padding: 24px; text-align: center;"><span class="auth-btn-spinner" style="width:16px;height:16px;border-width:2px;margin-right:8px;vertical-align:middle;display:inline-block;"></span> Carregando chamados dos cantores...</div>';
       }
 
+      if (window.NotificationsCenter && window.NotificationsCenter.fetchFromCloud) {
+        window.NotificationsCenter.fetchFromCloud(function (err, cloudTickets) {
+          if (btnRef) {
+            btnRef.disabled = false;
+            btnRef.innerHTML = '🔄 Atualizar Chamados';
+          }
+          var raw = localStorage.getItem('canta_ai_support_tickets');
+          var list = raw ? JSON.parse(raw) : (cloudTickets || []);
+          PrompterAdmin.renderTicketsList(list);
+        });
+        return;
+      }
+
       var localRaw = localStorage.getItem('canta_ai_support_tickets');
       var tickets = localRaw ? JSON.parse(localRaw) : [];
 
-      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-      var finishTicketsLoad = function (tList) {
-        if (btnRef) {
-          btnRef.disabled = false;
-          btnRef.innerHTML = '🔄 Atualizar Chamados';
-        }
-        PrompterAdmin.renderTicketsList(tList);
-      };
-
-      if (sb) {
-        sb.from('tickets').select('*').order('created_at', { ascending: false }).then(function (res) {
-          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-            res.data.forEach(function (cloudT) {
-              var idx = tickets.findIndex(function (x) { return x.id === cloudT.id; });
-              if (idx >= 0) {
-                tickets[idx] = Object.assign({}, tickets[idx], cloudT);
-              } else {
-                tickets.unshift(cloudT);
-              }
-            });
-            localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
-          }
-          finishTicketsLoad(tickets);
-        }).catch(function () {
-          finishTicketsLoad(tickets);
-        });
-      } else {
-        finishTicketsLoad(tickets);
+      if (btnRef) {
+        btnRef.disabled = false;
+        btnRef.innerHTML = '🔄 Atualizar Chamados';
       }
+      PrompterAdmin.renderTicketsList(tickets);
     },
 
     renderTicketsList: function (tickets) {

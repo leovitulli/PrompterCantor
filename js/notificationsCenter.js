@@ -3,9 +3,9 @@
  * CANTAAÍ PRO — NOTIFICATIONS & INTERACTIVE CHAT CENTER (FRONTEND ARCHITECTURE)
  * ═══════════════════════════════════════════════════════════════════════════
  * Responsibilities:
- * 1. UI Layer: Popover rápido de notificações no header & Central Modal de Chat/Comunicados
- * 2. Logic Layer: Controle de estado, threads de conversação e leitura
- * 3. Data Layer: Normalização retrocompatível e sincronização (LocalStorage + Supabase REST)
+ * 1. UI Layer: Popover rápido no header & Central Modal de Chat/Comunicados
+ * 2. Logic Layer: Controle de estado, visualização Admin vs Cantor, threads de diálogo
+ * 3. Data Layer: Varredura e sincronização bidirecional na nuvem (Supabase REST + LocalStorage)
  */
 
 (function (window, document) {
@@ -18,8 +18,10 @@
       activeTab: 'announcements', // 'announcements' | 'chat'
       activeTicketId: null,
       popoverFilter: 'all',       // 'all' | 'unread' | 'chat'
+      adminViewMode: 'all',       // 'all' | 'my_only' (para administradores)
       isPopoverOpen: false,
       isModalOpen: false,
+      isSyncingCloud: false,
       draftImageBase64: '',
       newTicketImageBase64: ''
     },
@@ -59,12 +61,19 @@
       var email = ((profile && profile.email) || (user && user.email) || '').trim().toLowerCase();
       var name = ((profile && profile.display_name) || (user && user.user_metadata && user.user_metadata.full_name) || (email ? email.split('@')[0] : 'Cantor'));
       var singerCode = ((profile && profile.singer_code) || '').trim().toLowerCase();
+
+      var isAdmin = (window.PrompterAuth && window.PrompterAuth.isAdmin && window.PrompterAuth.isAdmin()) ||
+                    (email === 'leovitulli@gmail.com') ||
+                    (profile && (profile.role === 'admin' || profile.email === 'leovitulli@gmail.com')) ||
+                    (user && user.email === 'leovitulli@gmail.com');
+
       return {
         user: user,
         profile: profile,
         email: email,
         name: name,
-        singerCode: singerCode
+        singerCode: singerCode,
+        isAdmin: !!isAdmin
       };
     },
 
@@ -115,9 +124,19 @@
       var self = this;
       var normalized = list.map(function (t) {
         return self.normalizeTicket(t);
-      });
+      }).filter(Boolean);
 
-      // Filtra para os tickets pertencentes ao usuário logado
+      // Se for administrador, por padrão vê todas as conversas dos cantores
+      if (ctx.isAdmin) {
+        if (self.state.adminViewMode === 'my_only') {
+          return normalized.filter(function (t) {
+            return t.user_email && t.user_email.toLowerCase() === ctx.email;
+          });
+        }
+        return normalized;
+      }
+
+      // Se for cantor comum, exibe apenas os seus próprios chamados
       return normalized.filter(function (t) {
         return !ctx.email || (t.user_email && t.user_email.toLowerCase() === ctx.email);
       });
@@ -151,7 +170,7 @@
         // Mensagem inicial criada pelo cantor
         if (copy.description || copy.title) {
           copy.messages.push({
-            id: copy.id + '-m0',
+            id: (copy.id || 'msg') + '-m0',
             sender: 'user',
             sender_name: copy.user_name || 'Cantor',
             text: copy.description || copy.title,
@@ -163,7 +182,7 @@
         // Resposta legada do suporte caso já existisse
         if (copy.reply) {
           copy.messages.push({
-            id: copy.id + '-m1',
+            id: (copy.id || 'msg') + '-m1',
             sender: 'support',
             sender_name: 'Equipe CantaAí',
             text: copy.reply,
@@ -179,6 +198,153 @@
       }
 
       return copy;
+    },
+
+    // ── SINCRONIZAÇÃO BIDIRECIONAL NA NUVEM (SUPABASE REST) ──
+    fetchFromCloud: function (callback) {
+      if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) {
+        if (callback) callback();
+        return;
+      }
+
+      var self = this;
+      self.state.isSyncingCloud = true;
+
+      // Animação no botão de sincronização se existir
+      var syncBtn = document.getElementById('btnSyncNotificationsCenter');
+      if (syncBtn) {
+        syncBtn.innerHTML = '<span class="auth-btn-spinner" style="width:12px;height:12px;border-width:2px;margin-right:6px;vertical-align:middle;display:inline-block;"></span> Sincronizando...';
+      }
+
+      var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
+      var headers = {
+        'apikey': window.SUPABASE_CONFIG.key,
+        'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
+        'Content-Type': 'application/json'
+      };
+
+      // 1. Busca chamados gravados na tabela songs (artist = USER_SUPPORT_TICKET ou SUPPORT_REPLY)
+      var pSongs = fetch(baseUrl + '/songs?artist=in.(USER_SUPPORT_TICKET,SUPPORT_REPLY)&order=created_at.desc', { headers: headers })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .catch(function () { return []; });
+
+      // 2. Busca comunicados oficiais em songs (artist = SYSTEM_ANNOUNCEMENT)
+      var pAnn = fetch(baseUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&artist=eq.SYSTEM_ANNOUNCEMENT&order=id.desc', { headers: headers })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .catch(function () { return []; });
+
+      // 3. Fallback tabela tickets nativa
+      var pTicketsTable = fetch(baseUrl + '/tickets?select=*&order=created_at.desc', { headers: headers })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .catch(function () { return []; });
+
+      Promise.all([pSongs, pAnn, pTicketsTable]).then(function (results) {
+        var songTickets = results[0] || [];
+        var songAnn = results[1] || [];
+        var rawTickets = results[2] || [];
+
+        // ── Processa Comunicados ──
+        var rawAnnLocal = localStorage.getItem('canta_ai_admin_announcements');
+        var annList = rawAnnLocal ? JSON.parse(rawAnnLocal) : [];
+        if (!Array.isArray(annList)) annList = [];
+
+        songAnn.forEach(function (row) {
+          try {
+            if (row.content) {
+              var a = JSON.parse(row.content);
+              if (a && a.id && !annList.some(function (m) { return m.id === a.id; })) {
+                annList.push(a);
+              }
+            }
+          } catch (e) {}
+        });
+        annList.sort(function (a, b) {
+          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        });
+        localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(annList));
+
+        // ── Processa Chamados / Tickets ──
+        var rawTkLocal = localStorage.getItem('canta_ai_support_tickets');
+        var localTickets = rawTkLocal ? JSON.parse(rawTkLocal) : [];
+        if (!Array.isArray(localTickets)) localTickets = [];
+
+        var cloudTickets = [];
+
+        // Extrai de songs
+        songTickets.forEach(function (row) {
+          try {
+            if (row.content) {
+              var parsed = JSON.parse(row.content);
+              if (parsed && (parsed.id || parsed.title)) {
+                // Se o JSON não tiver id explícito, usa id da linha
+                if (!parsed.id) parsed.id = row.id;
+                cloudTickets.push(parsed);
+              }
+            }
+          } catch (e) {}
+        });
+
+        // Extrai da tabela tickets
+        rawTickets.forEach(function (t) {
+          if (t && (t.id || t.title)) cloudTickets.push(t);
+        });
+
+        // Merge com deduplicação profunda
+        cloudTickets.forEach(function (cTicket) {
+          var normCloud = self.normalizeTicket(cTicket);
+          var existingIdx = localTickets.findIndex(function (x) { return x.id === normCloud.id; });
+          if (existingIdx >= 0) {
+            var existing = self.normalizeTicket(localTickets[existingIdx]);
+            // Junta as mensagens sem duplicar por ID ou texto idêntico
+            var mergedMsgs = [].concat(existing.messages || []);
+            (normCloud.messages || []).forEach(function (nm) {
+              if (!mergedMsgs.some(function (em) { return em.id === nm.id || (em.text === nm.text && em.created_at === nm.created_at); })) {
+                mergedMsgs.push(nm);
+              }
+            });
+            mergedMsgs.sort(function (m1, m2) {
+              return new Date(m1.created_at || 0) - new Date(m2.created_at || 0);
+            });
+
+            normCloud.messages = mergedMsgs;
+            if (normCloud.reply || existing.reply) {
+              normCloud.reply = normCloud.reply || existing.reply;
+              normCloud.replied_at = normCloud.replied_at || existing.replied_at;
+            }
+            localTickets[existingIdx] = normCloud;
+          } else {
+            localTickets.unshift(normCloud);
+          }
+        });
+
+        // Ordena com o chamado atualizado mais recente no topo
+        localTickets.sort(function (t1, t2) {
+          var d1 = new Date(t1.updated_at || t1.created_at || 0).getTime();
+          var d2 = new Date(t2.updated_at || t2.created_at || 0).getTime();
+          return d2 - d1;
+        });
+
+        localStorage.setItem('canta_ai_support_tickets', JSON.stringify(localTickets));
+
+        self.state.isSyncingCloud = false;
+        if (syncBtn) syncBtn.innerHTML = '🔄 Sincronizar';
+
+        self.updateBadges();
+
+        if (self.state.isPopoverOpen) {
+          self.renderPopover();
+        }
+        if (self.state.isModalOpen) {
+          if (self.state.activeTab === 'chat') self.renderChatLayout();
+          else self.renderAnnouncements();
+        }
+
+        if (callback) callback(null, localTickets);
+      }).catch(function (err) {
+        self.state.isSyncingCloud = false;
+        if (syncBtn) syncBtn.innerHTML = '🔄 Sincronizar';
+        if (callback) callback(err);
+      });
     },
 
     syncTicketToCloud: function (ticket) {
@@ -207,6 +373,7 @@
     calculateUnread: function () {
       var readAnnIds = this.getReadAnnouncementIds();
       var readMsgIds = this.getReadSupportMessageIds();
+      var ctx = this.getCurrentUserContext();
 
       // 1. Comunicados não lidos
       var annList = this.getAnnouncements();
@@ -214,21 +381,27 @@
         return a && a.id && readAnnIds.indexOf(a.id) === -1;
       });
 
-      // 2. Mensagens do suporte não lidas
+      // 2. Mensagens do suporte não lidas (ou novas mensagens de cantores se for admin)
       var tickets = this.getTickets();
       var unreadRepliesCount = 0;
       var unreadReplyTickets = [];
 
       tickets.forEach(function (t) {
         if (t.messages && t.messages.length > 0) {
-          var hasUnreadStaffMsg = false;
+          var hasUnread = false;
           t.messages.forEach(function (m) {
-            if (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1) {
-              hasUnreadStaffMsg = true;
+            // Para o cantor comum, notificações são mensagens do suporte
+            // Para o admin, notificações são mensagens enviadas pelos cantores
+            var isTargetUnread = ctx.isAdmin
+              ? (m.sender === 'user' && readMsgIds.indexOf(m.id) === -1 && t.user_email !== ctx.email)
+              : (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1);
+
+            if (isTargetUnread) {
+              hasUnread = true;
               unreadRepliesCount++;
             }
           });
-          if (hasUnreadStaffMsg) {
+          if (hasUnread) {
             unreadReplyTickets.push(t);
           }
         }
@@ -318,6 +491,9 @@
       this.state.isPopoverOpen = true;
       pop.classList.remove('hidden');
       this.renderPopover();
+
+      // Atualiza da nuvem em segundo plano
+      this.fetchFromCloud();
     },
 
     closePopover: function () {
@@ -333,6 +509,7 @@
       var readAnnIds = this.getReadAnnouncementIds();
       var readMsgIds = this.getReadSupportMessageIds();
       var filter = this.state.popoverFilter;
+      var ctx = this.getCurrentUserContext();
 
       // Coleta todos os itens para o feed
       var feedItems = [];
@@ -363,26 +540,30 @@
         });
       }
 
-      // 2. Chamados & Respostas de Suporte
+      // 2. Chamados & Mensagens
       if (filter !== 'announcements') {
         var tickets = this.getTickets();
         tickets.forEach(function (t) {
           var lastMsg = (t.messages && t.messages.length > 0) ? t.messages[t.messages.length - 1] : null;
-          var hasUnreadStaff = false;
+          var hasUnread = false;
 
           if (t.messages) {
             t.messages.forEach(function (m) {
-              if (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1) {
-                hasUnreadStaff = true;
-              }
+              var isTargetUnread = ctx.isAdmin
+                ? (m.sender === 'user' && readMsgIds.indexOf(m.id) === -1 && t.user_email !== ctx.email)
+                : (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1);
+              if (isTargetUnread) hasUnread = true;
             });
           }
 
-          var isRead = !hasUnreadStaff;
+          var isRead = !hasUnread;
           if (filter === 'unread' && isRead) return;
 
-          var iconType = hasUnreadStaff ? '💬' : '📩';
-          var titlePrefix = hasUnreadStaff ? 'Nova Resposta: ' : 'Atendimento: ';
+          var iconType = hasUnread ? '💬' : '📩';
+          var titlePrefix = hasUnread ? 'Nova Mensagem: ' : 'Atendimento: ';
+          if (ctx.isAdmin && t.user_name) {
+            titlePrefix += '[' + t.user_name + '] ';
+          }
 
           feedItems.push({
             type: 'ticket',
@@ -392,7 +573,7 @@
             date: (lastMsg && lastMsg.created_at) ? lastMsg.created_at : (t.created_at || new Date().toISOString()),
             isRead: isRead,
             icon: iconType,
-            iconClass: hasUnreadStaff ? 'icon-reply' : ''
+            iconClass: hasUnread ? 'icon-reply' : ''
           });
         });
       }
@@ -441,7 +622,6 @@
           if (type === 'ticket') {
             self.openModal('chat', id);
           } else {
-            // Marca como lido o comunicado
             self.markAnnouncementRead(id);
             self.openModal('announcements');
           }
@@ -460,13 +640,13 @@
       });
       localStorage.setItem('cantaai_read_announcements', JSON.stringify(readAnnIds));
 
-      // 2. Marca todas as respostas do suporte como lidas
+      // 2. Marca todas as mensagens como lidas
       var tickets = this.getTickets();
       var readMsgIds = this.getReadSupportMessageIds();
       tickets.forEach(function (t) {
         if (t.messages) {
           t.messages.forEach(function (m) {
-            if (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1) {
+            if (readMsgIds.indexOf(m.id) === -1) {
               readMsgIds.push(m.id);
             }
           });
@@ -501,7 +681,7 @@
       var changed = false;
 
       ticket.messages.forEach(function (m) {
-        if (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1) {
+        if (readMsgIds.indexOf(m.id) === -1) {
           readMsgIds.push(m.id);
           changed = true;
         }
@@ -530,6 +710,9 @@
       }
 
       this.switchTab(tabName || 'announcements');
+
+      // Sempre busca novidades da nuvem ao abrir a Central
+      this.fetchFromCloud();
     },
 
     closeModal: function () {
@@ -639,9 +822,47 @@
       var chatLayout = document.getElementById('scChatLayout');
       if (!sidebarList || !mainArea) return;
 
+      var ctx = this.getCurrentUserContext();
       var tickets = this.getTickets();
       var readMsgIds = this.getReadSupportMessageIds();
       var self = this;
+
+      // ── BARRA DE FILTRO ADMIN (TODOS OS CANTORES VS MEUS) ──
+      var adminFilterContainer = document.getElementById('scAdminFilterBar');
+      if (ctx.isAdmin) {
+        var sidebarHeader = document.querySelector('.sc-chat-sidebar-header');
+        if (sidebarHeader && !adminFilterContainer) {
+          adminFilterContainer = document.createElement('div');
+          adminFilterContainer.id = 'scAdminFilterBar';
+          adminFilterContainer.style.display = 'flex';
+          adminFilterContainer.style.gap = '6px';
+          adminFilterContainer.style.marginTop = '4px';
+          sidebarHeader.appendChild(adminFilterContainer);
+        }
+
+        if (adminFilterContainer) {
+          adminFilterContainer.innerHTML =
+            '<button type="button" class="btn btn-xs ' + (self.state.adminViewMode !== 'my_only' ? 'btn-primary' : 'btn-outline') + '" id="btnAdminViewAll" style="flex: 1; font-size: 0.72rem; padding: 4px 6px;">🌐 Todos os Cantores</button>' +
+            '<button type="button" class="btn btn-xs ' + (self.state.adminViewMode === 'my_only' ? 'btn-primary' : 'btn-outline') + '" id="btnAdminViewMine" style="flex: 1; font-size: 0.72rem; padding: 4px 6px;">👤 Meus Chamados</button>';
+
+          var bAll = document.getElementById('btnAdminViewAll');
+          var bMine = document.getElementById('btnAdminViewMine');
+          if (bAll) {
+            bAll.addEventListener('click', function () {
+              self.state.adminViewMode = 'all';
+              self.renderChatLayout();
+            });
+          }
+          if (bMine) {
+            bMine.addEventListener('click', function () {
+              self.state.adminViewMode = 'my_only';
+              self.renderChatLayout();
+            });
+          }
+        }
+      } else if (adminFilterContainer) {
+        adminFilterContainer.remove();
+      }
 
       // Se nenhum ticket estiver selecionado e houver tickets, seleciona o primeiro
       if (!this.state.activeTicketId && tickets.length > 0) {
@@ -652,7 +873,8 @@
       if (tickets.length === 0) {
         sidebarList.innerHTML =
           '<div style="padding: 24px 16px; text-align: center; color: #94a3b8; font-size: 0.82rem;">' +
-            'Nenhuma conversa ainda.<br>Clique em <strong>"+ Nova Conversa"</strong> acima para falar com a equipe.' +
+            'Nenhuma conversa encontrada.<br>' +
+            (ctx.isAdmin ? 'Clique em <strong>"🔄 Sincronizar"</strong> no topo para buscar da nuvem.' : 'Clique em <strong>"+ Iniciar Nova Conversa"</strong> acima para falar com a equipe.') +
           '</div>';
       } else {
         var sidebarHtml = '';
@@ -660,13 +882,14 @@
           var isActive = t.id === self.state.activeTicketId;
           var lastMsg = (t.messages && t.messages.length > 0) ? t.messages[t.messages.length - 1] : null;
 
-          // Verifica se há mensagem do suporte não lida
-          var hasUnreadSupport = false;
+          // Verifica mensagens não lidas
+          var hasUnread = false;
           if (t.messages) {
             t.messages.forEach(function (m) {
-              if (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1) {
-                hasUnreadSupport = true;
-              }
+              var isTargetUnread = ctx.isAdmin
+                ? (m.sender === 'user' && readMsgIds.indexOf(m.id) === -1 && t.user_email !== ctx.email)
+                : (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1);
+              if (isTargetUnread) hasUnread = true;
             });
           }
 
@@ -675,12 +898,16 @@
           if (t.status === 'resolved') {
             statusClass = 'status-resolved';
             statusText = '🟢 Resolvido';
-          } else if (hasUnreadSupport) {
+          } else if (hasUnread) {
             statusClass = 'status-answered';
-            statusText = '🔵 Nova Resposta';
+            statusText = ctx.isAdmin ? '🔵 Nova Msg Cantor' : '🔵 Nova Resposta';
           }
 
           var timeStr = self.formatRelativeTime((lastMsg && lastMsg.created_at) ? lastMsg.created_at : t.created_at);
+
+          var singerBadge = (ctx.isAdmin && t.user_email)
+            ? '<div style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">👤 ' + self.escapeHtml(t.user_name || 'Cantor') + ' &lt;' + self.escapeHtml(t.user_email) + '&gt;</div>'
+            : '';
 
           sidebarHtml +=
             '<div class="sc-chat-ticket-item ' + (isActive ? 'active' : '') + '" data-id="' + self.escapeHtml(t.id) + '">' +
@@ -688,6 +915,7 @@
                 '<span class="sc-ticket-status-pill ' + statusClass + '">' + statusText + '</span>' +
                 '<span class="sc-ticket-item-time">' + timeStr + '</span>' +
               '</div>' +
+              singerBadge +
               '<div class="sc-ticket-item-title">' + self.escapeHtml(t.title || 'Conversa') + '</div>' +
               '<div class="sc-ticket-item-preview">' + (lastMsg ? self.escapeHtml(lastMsg.text) : 'Sem mensagens') + '</div>' +
             '</div>';
@@ -726,6 +954,7 @@
 
     renderThreadView: function (container, ticket) {
       var self = this;
+      var ctx = this.getCurrentUserContext();
       var catLabels = {
         'duvida': '❓ Dúvida',
         'problema': '🐛 Bug / Problema',
@@ -736,6 +965,10 @@
       };
 
       var isResolved = ticket.status === 'resolved';
+
+      var singerDetail = (ctx.isAdmin && ticket.user_email)
+        ? ' • Cantor: <strong>' + self.escapeHtml(ticket.user_name || 'Cantor') + '</strong> &lt;' + self.escapeHtml(ticket.user_email) + '&gt;'
+        : '';
 
       var headerHtml =
         '<div class="sc-thread-header">' +
@@ -750,6 +983,7 @@
               '</div>' +
               '<div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">' +
                 (catLabels[ticket.category] || '📩 Atendimento') + ' • Chamado #' + self.escapeHtml(ticket.id.slice(-6)) +
+                singerDetail +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -763,9 +997,11 @@
       // Feed de Mensagens
       var messagesFeedHtml = '<div class="sc-thread-messages-feed" id="scChatMessagesFeed">';
       ticket.messages.forEach(function (msg) {
-        var isUser = msg.sender === 'user';
-        var senderName = isUser ? (msg.sender_name || 'Você') : 'Equipe CantaAí';
-        var avatarInitial = isUser ? (senderName ? senderName.charAt(0).toUpperCase() : '🎤') : '⭐';
+        var isUserMsg = msg.sender === 'user';
+        var isOwnMessage = isUserMsg ? (!ctx.isAdmin || ticket.user_email === ctx.email) : (ctx.isAdmin && ticket.user_email !== ctx.email);
+
+        var senderName = msg.sender_name || (isUserMsg ? (ticket.user_name || 'Cantor') : 'Equipe CantaAí');
+        var avatarInitial = isUserMsg ? (senderName ? senderName.charAt(0).toUpperCase() : '🎤') : '⭐';
         var timeStr = self.formatRelativeTime(msg.created_at);
 
         var photoHtml = '';
@@ -777,12 +1013,12 @@
         }
 
         messagesFeedHtml +=
-          '<div class="chat-bubble-row ' + (isUser ? 'is-user' : 'is-support') + '">' +
-            '<div class="chat-bubble-avatar ' + (isUser ? 'avatar-user' : 'avatar-support') + '">' + avatarInitial + '</div>' +
+          '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '">' +
+            '<div class="chat-bubble-avatar ' + (isUserMsg ? 'avatar-user' : 'avatar-support') + '">' + avatarInitial + '</div>' +
             '<div class="chat-bubble-body">' +
               '<div class="chat-bubble-meta">' +
                 '<span class="chat-bubble-sender">' + self.escapeHtml(senderName) + '</span>' +
-                (!isUser ? '<span class="chat-bubble-badge-staff">Suporte Oficial</span>' : '') +
+                (!isUserMsg ? '<span class="chat-bubble-badge-staff">Suporte Oficial</span>' : '') +
                 '<span>• ' + timeStr + '</span>' +
               '</div>' +
               '<div class="chat-bubble-box">' +
@@ -795,6 +1031,10 @@
       messagesFeedHtml += '</div>';
 
       // Barra de Composição / Envio
+      var placeholderText = (ctx.isAdmin && ticket.user_email !== ctx.email)
+        ? 'Responder como Equipe CantaAí para ' + self.escapeHtml(ticket.user_name || 'o cantor') + '...'
+        : 'Digite sua mensagem para a equipe... (Enter para enviar)';
+
       var composerHtml =
         '<div class="sc-chat-composer">' +
           '<div id="scComposerPreviewRow" class="sc-composer-attachment-preview hidden">' +
@@ -805,7 +1045,7 @@
           '<div class="sc-composer-input-row">' +
             '<input type="file" id="scChatFileInput" accept="image/*" style="display: none;">' +
             '<button type="button" id="btnAttachChatPhoto" class="sc-composer-btn-attach" title="Anexar foto ou print de tela">📎</button>' +
-            '<textarea id="scChatInputText" class="sc-composer-textarea" rows="1" placeholder="Digite sua mensagem para a equipe... (Enter para enviar)"></textarea>' +
+            '<textarea id="scChatInputText" class="sc-composer-textarea" rows="1" placeholder="' + placeholderText + '"></textarea>' +
             '<button type="button" id="btnSendChatMessage" class="sc-composer-btn-send" title="Enviar Mensagem">➤</button>' +
           '</div>' +
         '</div>';
@@ -895,18 +1135,26 @@
           return;
         }
 
-        var ctx = self.getCurrentUserContext();
+        var isTicketFromOtherUser = ticket.user_email && ctx.email && ticket.user_email.toLowerCase() !== ctx.email.toLowerCase();
+        var isSenderStaff = ctx.isAdmin && isTicketFromOtherUser;
+
         var newMsg = {
           id: 'msg-' + Date.now(),
-          sender: 'user',
-          sender_name: ctx.name || 'Cantor',
+          sender: isSenderStaff ? 'support' : 'user',
+          sender_name: isSenderStaff ? 'Equipe CantaAí' : (ctx.name || 'Cantor'),
           text: text,
           image_url: img,
           created_at: new Date().toISOString()
         };
 
         ticket.messages.push(newMsg);
-        ticket.status = 'open'; // Reabre o chamado se estava resolvido
+        if (isSenderStaff) {
+          ticket.reply = text;
+          ticket.replied_at = newMsg.created_at;
+          ticket.status = 'resolved';
+        } else {
+          ticket.status = 'open';
+        }
         ticket.updated_at = new Date().toISOString();
 
         self.saveAllTickets([ticket]);
@@ -919,7 +1167,7 @@
 
         self.renderChatLayout();
 
-        if (window.showToast) window.showToast('Mensagem enviada para o suporte!', 'success');
+        if (window.showToast) window.showToast(isSenderStaff ? 'Resposta enviada para o cantor!' : 'Mensagem enviada para o suporte!', 'success');
       };
 
       if (btnSend) btnSend.addEventListener('click', doSendMessage);
@@ -1121,6 +1369,19 @@
         });
       }
 
+      // Botão de Sincronização Manual
+      var btnSync = document.getElementById('btnSyncNotificationsCenter');
+      if (btnSync) {
+        btnSync.addEventListener('click', function (e) {
+          e.stopPropagation();
+          self.fetchFromCloud(function (err) {
+            if (!err && window.showToast) {
+              window.showToast('Sincronizado com a nuvem com sucesso!', 'success');
+            }
+          });
+        });
+      }
+
       // Ações do Popover
       var btnMarkAllRead = document.getElementById('btnNotifPopMarkAllRead');
       if (btnMarkAllRead) {
@@ -1226,8 +1487,9 @@
         }
       });
 
-      // Atualização inicial de badges
+      // Atualização inicial de badges e busca na nuvem
       self.updateBadges();
+      self.fetchFromCloud();
     }
   };
 
