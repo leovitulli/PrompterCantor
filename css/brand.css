@@ -1338,3 +1338,229 @@ body.light-mode button#btnScrollToTop.btn-floating-top:hover {
   }
 }
 
+/* ══════════════════════════════════════════════════════════
+   REGRAS DE IMPRESSÃO PROFISSIONAL (CantaAí PRO)
+   Garante tipografia oficial (Bricolage Grotesque & DM Sans)
+   e logotipo vetorial nítido no papel e PDF A4.
+   ══════════════════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm 10mm 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar tudo exceto a área de impressão */
+  body > *:not(#printArea) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #printArea {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .stage-setlist-container {
+    width: 100% !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
+
+  .stage-setlist-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 2.5px solid #000000 !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .stage-setlist-brand-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+  }
+
+  .stage-setlist-logo-lockup {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .stage-setlist-logo-icon {
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-block !important;
+    color: #000000 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .stage-setlist-logo-icon svg {
+    width: 100% !important;
+    height: 100% !important;
+    stroke: #000000 !important;
+    display: block !important;
+  }
+
+  .stage-setlist-logo-title {
+    font-family: 'Bricolage Grotesque', sans-serif !important;
+    font-size: 20pt !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+    color: #000000 !important;
+    line-height: 1 !important;
+  }
+
+  .stage-setlist-logo-ai {
+    font-family: 'Bricolage Grotesque', sans-serif !important;
+    font-weight: 800 !important;
+  }
+
+  .stage-setlist-logo-badge {
+    display: inline-block !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 7.5pt !important;
+    font-weight: 900 !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    letter-spacing: 0.8px !important;
+    margin-left: 2px !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+  }
+
+  .stage-setlist-slogan {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 7.5pt !important;
+    color: #444444 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.6px !important;
+    margin-top: 2px !important;
+  }
+
+  .stage-setlist-info-block {
+    text-align: right !important;
+  }
+
+  .stage-setlist-title {
+    font-family: 'Bricolage Grotesque', sans-serif !important;
+    font-size: 19pt !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.2px !important;
+    margin: 0 !important;
+    color: #000000 !important;
+    line-height: 1.1 !important;
+  }
+
+  .stage-setlist-meta {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 9pt !important;
+    font-weight: 700 !important;
+    color: #444444 !important;
+    margin-top: 4px !important;
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+  }
+
+  .stage-setlist-list {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .stage-setlist-row {
+    display: flex !important;
+    flex-direction: column !important;
+    border-bottom: none !important;
+    padding-top: 2px !important;
+    padding-bottom: 3px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .stage-setlist-title-line {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .stage-setlist-num {
+    font-size: 16pt !important;
+    font-weight: 800 !important;
+    min-width: 36px !important;
+    color: #000000 !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+
+  .stage-setlist-name {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 16.5pt !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    color: #000000 !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  .stage-setlist-key {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 15pt !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    margin-left: 2px !important;
+  }
+
+  .stage-setlist-lyric-intro {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 11pt !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+    color: #444444 !important;
+    padding-left: 36px !important;
+    margin-top: 1px !important;
+    line-height: 1.25 !important;
+  }
+
+  .stage-setlist-footer {
+    margin-top: 20px !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed #888888 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 8pt !important;
+    color: #555555 !important;
+    text-align: center !important;
+    font-weight: 600 !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+

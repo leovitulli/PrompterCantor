@@ -3341,8 +3341,28 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="stage-setlist-container">' +
         '<div class="stage-setlist-header">' +
           '<div class="stage-setlist-brand-block">' +
-            '<div class="stage-setlist-logo">🎤 CantaAí <span class="stage-setlist-logo-pro">PRO</span></div>' +
-            '<div class="stage-setlist-slogan">Plataforma Profissional para Cantores e Instrumentistas</div>' +
+            '<div class="stage-setlist-logo-lockup">' +
+              '<span class="stage-setlist-logo-icon" aria-hidden="true">' +
+                '<svg class="ca-logo-mark" viewBox="0 0 84 84" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round">' +
+                  '<line x1="42.00" y1="12.00" x2="42.00" y2="4.00" stroke-width="5"/>' +
+                  '<line x1="57.00" y1="16.02" x2="60.00" y2="10.82" stroke-width="3"/>' +
+                  '<line x1="67.98" y1="27.00" x2="73.18" y2="24.00" stroke-width="3"/>' +
+                  '<line x1="72.00" y1="42.00" x2="78.00" y2="42.00" stroke-width="3"/>' +
+                  '<line x1="67.98" y1="57.00" x2="73.18" y2="60.00" stroke-width="3"/>' +
+                  '<line x1="57.00" y1="67.98" x2="60.00" y2="73.18" stroke-width="3"/>' +
+                  '<line x1="42.00" y1="72.00" x2="42.00" y2="78.00" stroke-width="3"/>' +
+                  '<line x1="27.00" y1="67.98" x2="24.00" y2="73.18" stroke-width="3"/>' +
+                  '<line x1="16.02" y1="57.00" x2="10.82" y2="60.00" stroke-width="3"/>' +
+                  '<line x1="12.00" y1="42.00" x2="6.00" y2="42.00" stroke-width="3"/>' +
+                  '<line x1="16.02" y1="27.00" x2="10.82" y2="24.00" stroke-width="3"/>' +
+                  '<line x1="27.00" y1="16.02" x2="24.00" y2="10.82" stroke-width="3"/>' +
+                  '<path d="M33 50 L51 34" stroke-width="9"/>' +
+                '</svg>' +
+              '</span>' +
+              '<span class="stage-setlist-logo-title">Canta<span class="stage-setlist-logo-ai">Aí</span></span>' +
+              '<span class="stage-setlist-logo-badge">PRO</span>' +
+            '</div>' +
+            '<div class="stage-setlist-slogan">Plataforma Profissional para Cantores e Músicos</div>' +
           '</div>' +
           '<div class="stage-setlist-info-block">' +
             '<h1 class="stage-setlist-title">' + escapeHtml(repName) + '</h1>' +
@@ -3381,7 +3401,7 @@ document.addEventListener('DOMContentLoaded', function () {
     html +=
         '</div>' +
         '<div class="stage-setlist-footer">' +
-          '<span>Gerado no CantaAí PRO • cantaai.com.br • Teleprompter e Gestão Inteligente de Repertórios</span>' +
+          '<span>Gerado no CantaAí PRO • cantaaipro.com • Gestão Inteligente de Repertórios & Teleprompter</span>' +
         '</div>' +
       '</div>';
 
