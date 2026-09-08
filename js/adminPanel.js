@@ -3364,12 +3364,37 @@
 
             '<div style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 8px;">' +
               '👤 <strong>' + escapeHtml(t.user_name || 'Cantor') + '</strong> &lt;' + escapeHtml(t.user_email || '') + '&gt;' +
-            '</div>' +
+            '</div>';
 
+        // Renderização em formato de Thread / Histórico de Diálogo
+        var hasThreadMessages = t.messages && Array.isArray(t.messages) && t.messages.length > 0;
+        if (hasThreadMessages) {
+          html += '<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: rgba(7, 10, 18, 0.5); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); max-height: 280px; overflow-y: auto;">';
+          t.messages.forEach(function (m) {
+            var isStaff = m.sender === 'support';
+            var mSender = isStaff ? 'Equipe CantaAí (Suporte)' : (m.sender_name || t.user_name || 'Cantor');
+            var mDate = m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+            var mPhoto = m.image_url
+              ? '<div style="margin-top: 6px;"><img src="' + m.image_url + '" class="ticket-thumb-clickable" data-src="' + m.image_url + '" alt="Anexo" style="max-height: 80px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></div>'
+              : '';
+
+            html +=
+              '<div style="padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; ' + (isStaff ? 'background: rgba(56, 189, 248, 0.1); border-left: 3px solid #38bdf8;' : 'background: rgba(255, 255, 255, 0.04); border-left: 3px solid #64748b;') + '">' +
+                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 0.74rem;">' +
+                  '<strong style="color: ' + (isStaff ? '#38bdf8' : '#e2e8f0') + ';">' + escapeHtml(mSender) + '</strong>' +
+                  '<span style="color: #64748b;">' + mDate + '</span>' +
+                '</div>' +
+                '<div style="color: #f1f5f9; white-space: pre-wrap; line-height: 1.45;">' + escapeHtml(m.text || '') + '</div>' +
+                mPhoto +
+              '</div>';
+          });
+          html += '</div>';
+        } else {
+          // Fallback formato legado
+          html +=
             '<div style="color: #e2e8f0; font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; background: rgba(7, 10, 18, 0.6); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">' +
               escapeHtml(t.description || '') +
             '</div>' +
-
             photoHtml +
             (t.reply ? (
               '<div style="margin-top: 10px; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 10px 12px; border-radius: 6px;">' +
@@ -3377,8 +3402,10 @@
                 '<div style="color: #f1f5f9; font-size: 0.85rem; line-height: 1.45; white-space: pre-wrap;">' + escapeHtml(t.reply) + '</div>' +
                 '<div style="font-size: 0.7rem; color: #64748b; margin-top: 4px;">Respondido em: ' + (t.replied_at ? new Date(t.replied_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente') + '</div>' +
               '</div>'
-            ) : '') +
+            ) : '');
+        }
 
+        html +=
             // Formulário de resposta direta do CEO/Admin
             '<div class="admin-reply-box" style="margin-top: 12px; display: flex; gap: 8px;">' +
               '<input type="text" class="form-control input-admin-reply" data-id="' + t.id + '" placeholder="Digite uma resposta direta para ' + escapeHtml(t.user_name || 'o cantor') + '..." style="flex: 1; font-size: 0.82rem; padding: 6px 12px; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.12);">' +
@@ -3423,9 +3450,34 @@
 
           var match = tickets.find(function (x) { return x.id === id; });
           if (match) {
+            // Garante inicialização da array de mensagens
+            if (!match.messages || !Array.isArray(match.messages)) {
+              match.messages = [];
+              if (match.description || match.title) {
+                match.messages.push({
+                  id: match.id + '-m0',
+                  sender: 'user',
+                  sender_name: match.user_name || 'Cantor',
+                  text: match.description || match.title,
+                  image_url: match.image_url || '',
+                  created_at: match.created_at || new Date().toISOString()
+                });
+              }
+            }
+
+            var nowIso = new Date().toISOString();
+            match.messages.push({
+              id: 'msg-' + Date.now(),
+              sender: 'support',
+              sender_name: 'Equipe CantaAí',
+              text: replyText,
+              created_at: nowIso
+            });
+
             match.reply = replyText;
-            match.replied_at = new Date().toISOString();
+            match.replied_at = nowIso;
             match.status = 'resolved'; // Já marca como resolvido ao responder
+            match.updated_at = nowIso;
             localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
 
             // Sincronizar na nuvem (Supabase REST)

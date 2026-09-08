@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/admin.css?v=123">
   <link rel="stylesheet" href="css/landing.css?v=121">
   <link rel="stylesheet" href="css/brand.css?v=40">
+  <link rel="stylesheet" href="css/notifications.css?v=1">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
   <script>
@@ -126,13 +127,48 @@
           </div>
         </div>
 
-        <button id="btnHeaderNotifications" class="btn btn-secondary btn-icon-sm" title="Notificações & Central de Atendimento" style="position: relative;">
-          <svg class="ca-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="18" height="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span id="headerNotificationBadge" class="header-announce-badge hidden">0</span>
-        </button>
+        <!-- Âncora e Popover de Notificações Rápidas -->
+        <div class="notifications-anchor">
+          <button id="btnHeaderNotifications" class="btn btn-secondary btn-icon-sm" title="Notificações & Central de Atendimento" style="position: relative;">
+            <svg class="ca-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="18" height="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span id="headerNotificationBadge" class="header-announce-badge hidden">0</span>
+          </button>
+
+          <!-- POPOVER FLUTUANTE DE NOTIFICAÇÕES RÁPIDAS -->
+          <div id="notificationsQuickPopover" class="notifications-popover hidden">
+            <div class="notif-pop-header">
+              <div class="notif-pop-title-area">
+                <h4 class="notif-pop-title">🔔 Notificações</h4>
+                <span id="notifPopBadge" class="notif-pop-badge" style="display: none;">0</span>
+              </div>
+              <button type="button" id="btnNotifPopMarkAllRead" class="notif-pop-btn-action">
+                ✓ Ler todas
+              </button>
+            </div>
+
+            <!-- Filtros rápidos do Popover -->
+            <div class="notif-pop-filters">
+              <button type="button" class="notif-pop-filter-btn active" data-filter="all">Todas</button>
+              <button type="button" class="notif-pop-filter-btn" data-filter="unread">Não lidas</button>
+              <button type="button" class="notif-pop-filter-btn" data-filter="chat">Suporte / Chat</button>
+            </div>
+
+            <!-- Feed de Notificações -->
+            <div id="notifPopList" class="notif-pop-list">
+              <!-- Renderizado dinamicamente por NotificationsCenter -->
+            </div>
+
+            <!-- Rodapé do Popover -->
+            <div class="notif-pop-footer">
+              <a href="#" id="btnNotifPopOpenFull" class="notif-pop-footer-link">
+                Abrir Central Completa & Suporte ↗
+              </a>
+            </div>
+          </div>
+        </div>
 
         <button id="btnToggleTheme" class="btn btn-secondary btn-icon-sm" title="Alternar Modo Claro/Escuro">
           🌙
@@ -1120,97 +1156,69 @@
     </div>
   </div>
 
-  <!-- MODAL DE SUPORTE, COMUNICAÇÃO & MENSAGENS (CICLO COMPLETO DO CLIENTE) -->
+  <!-- MODAL MASTER: CENTRAL DE ATENDIMENTO, NOTIFICAÇÕES & CHAT INTERATIVO -->
   <div id="userSupportModal" class="modal hidden" style="z-index: 1000010;">
     <div class="modal-overlay" id="userSupportOverlay"></div>
-    <div class="modal-card" style="max-width: 620px; max-height: 90vh; display: flex; flex-direction: column;">
-      <div class="modal-header" style="flex-shrink: 0;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.5rem;">🔔</span>
+    <div class="modal-card support-center-modal-card">
+      
+      <!-- Cabeçalho Elegante da Central -->
+      <div class="sc-modal-header">
+        <div class="sc-modal-header-info">
+          <div class="sc-modal-icon-badge">🔔</div>
           <div>
-            <h3 style="margin: 0; font-size: 1.2rem;">Notificações & Central de Atendimento</h3>
-            <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Comunicados do SaaS, suporte direto e histórico de mensagens</p>
+            <h3 class="sc-modal-title">Central de Notificações & Atendimento</h3>
+            <p class="sc-modal-desc">Comunicados oficiais da plataforma e canal direto de chat com nossa equipe</p>
           </div>
         </div>
-        <button class="modal-close" id="btnCloseUserSupportModal">✕</button>
+        <button class="modal-close" id="btnCloseUserSupportModal" title="Fechar">✕</button>
       </div>
 
-      <!-- Abas de Navegação da Central de Atendimento -->
-      <div style="display: flex; gap: 8px; padding: 10px 1.5rem; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); overflow-x: auto; flex-shrink: 0;">
-        <button type="button" id="tabBtnAnnouncements" class="btn-legal-tab active" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; cursor: pointer;">
-          🔔 Notificações & Comunicados
+      <!-- Abas Principais da Central -->
+      <div class="sc-nav-tabs">
+        <button type="button" id="scTabBtnAnnouncements" class="sc-tab-btn active">
+          <span>📢</span> Notificações & Novidades
+          <span id="scTabAnnBadge" class="sc-tab-badge" style="display: none;">0</span>
         </button>
-        <button type="button" id="tabBtnNewTicket" class="btn-legal-tab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">
-          ✉️ Enviar Mensagem
-        </button>
-        <button type="button" id="tabBtnTicketHistory" class="btn-legal-tab" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: #94a3b8; cursor: pointer;">
-          📋 Minhas Mensagens & Respostas
+        <button type="button" id="scTabBtnChat" class="sc-tab-btn">
+          <span>💬</span> Chat & Atendimento
+          <span id="scTabChatBadge" class="sc-tab-badge" style="display: none;">0</span>
         </button>
       </div>
 
-      <div class="modal-body" style="padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1;">
-        <!-- ABA 1: FORMULÁRIO DE ENVIO -->
-        <div id="paneNewTicket">
-          <form id="formUserSupport" onsubmit="return false;">
-            <div class="form-group">
-              <label for="ticketCategory">Tipo de Mensagem:</label>
-              <select id="ticketCategory" class="form-control">
-                <option value="duvida">❓ Dúvida sobre o Aplicativo</option>
-                <option value="sugestao">💡 Sugestão de Melhoria ou Ideia</option>
-                <option value="problema">🐛 Relatar Problema / Bug</option>
-                <option value="faturamento">💳 Assinatura, Pagamentos & Pix</option>
-                <option value="cifra">🎵 Dúvida sobre Cifra ou Transposição</option>
-                <option value="outro">📩 Outro Assunto</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="ticketTitle">Assunto:</label>
-              <input type="text" id="ticketTitle" class="form-control" placeholder="Ex: Dúvida sobre o plano PRO ou sugestão para o teleprompter" required>
-            </div>
-
-            <div class="form-group">
-              <label for="ticketDescription">Mensagem / Detalhes:</label>
-              <textarea id="ticketDescription" class="form-control" rows="4" placeholder="Escreva sua mensagem com detalhes. Nossa equipe lerá sua solicitação..." required></textarea>
-            </div>
-
-            <!-- Upload de Imagem / Print -->
-            <div class="form-group">
-              <label>Anexar Foto ou Print da Tela (Opcional):</label>
-              <div style="border: 2px dashed rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 14px; text-align: center; background: rgba(56, 189, 248, 0.04); cursor: pointer;" id="ticketDropZone">
-                <input type="file" id="ticketFileInput" accept="image/*" style="display: none;">
-                <div id="ticketUploadPrompt">
-                  <span style="font-size: 1.5rem;">📸</span>
-                  <div style="font-size: 0.85rem; font-weight: 600; color: #38bdf8; margin-top: 4px;">Toque para anexar print ou foto</div>
-                  <small style="color: #64748b; font-size: 0.75rem;">Formatos: JPG, PNG, WEBP</small>
-                </div>
-                <div id="ticketPreviewContainer" class="hidden" style="margin-top: 10px; position: relative;">
-                  <img id="ticketImagePreview" src="" alt="Preview" style="max-height: 140px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
-                  <button type="button" id="btnRemoveTicketImage" style="position: absolute; top: -8px; right: 20%; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold;">✕</button>
-                </div>
-              </div>
-            </div>
-
-            <button type="button" id="btnSubmitTicket" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; margin-top: 0.5rem;">
-              🚀 Enviar Mensagem para a Equipe
-            </button>
-          </form>
-        </div>
-
-        <!-- ABA 2: HISTÓRICO DE MENSAGENS ENVIADAS & STATUS -->
-        <div id="paneTicketHistory" class="hidden">
-          <div id="userTicketsHistoryList">
-            <!-- Renderizado dinamicamente -->
+      <!-- Área de Conteúdo dos Painéis -->
+      <div class="sc-body-content">
+        
+        <!-- PAINEL 1: COMUNICADOS E NOTIFICAÇÕES -->
+        <div id="scPaneAnnouncements" class="sc-announcements-pane">
+          <div id="scAnnouncementsList">
+            <!-- Renderizado dinamicamente por NotificationsCenter -->
           </div>
         </div>
 
-        <!-- ABA 3: COMUNICADOS E AVISOS OFICIAIS DO SAAS RECEBIDOS -->
-        <div id="paneAnnouncements" class="hidden">
-          <div id="userAnnouncementsList">
-            <!-- Renderizado dinamicamente com comunicados para o cantor ou broadcast -->
+        <!-- PAINEL 2: CHAT INTERATIVO (HELP DESK COM THREADS) -->
+        <div id="scPaneChat" class="sc-chat-layout hidden" id="scChatLayout">
+          
+          <!-- Barra Lateral de Conversas -->
+          <div class="sc-chat-sidebar">
+            <div class="sc-chat-sidebar-header">
+              <button type="button" id="btnNewChatTicket" class="btn-new-chat-ticket">
+                <span>➕</span> Iniciar Nova Conversa
+              </button>
+            </div>
+            <div id="scChatTicketsList" class="sc-chat-tickets-list">
+              <!-- Renderizado dinamicamente por NotificationsCenter -->
+            </div>
           </div>
+
+          <!-- Área Principal da Thread de Conversa -->
+          <div id="scChatMainArea" class="sc-chat-main-area">
+            <!-- Renderizado dinamicamente (Thread ativa ou formulário de novo chamado) -->
+          </div>
+
         </div>
+
       </div>
+
     </div>
   </div>
 
@@ -1609,6 +1617,7 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/app.js?v=135"></script>
+  <script src="js/notificationsCenter.js?v=1"></script>
+  <script src="js/app.js?v=136"></script>
 </body>
 </html>

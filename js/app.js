@@ -4720,6 +4720,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var currentTicketImageBase64 = '';
 
     function openUserSupportModal(tabName) {
+      if (window.NotificationsCenter) {
+        var mappedTab = (tabName === 'history' || tabName === 'new') ? 'chat' : (tabName || 'announcements');
+        window.NotificationsCenter.openModal(mappedTab);
+        return;
+      }
       if (!userSupportModal) return;
       if (userProfileMenu) userProfileMenu.classList.add('hidden');
       if (profileModal) profileModal.classList.add('hidden');
@@ -4989,13 +4994,13 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    if (btnHeaderNotifications) btnHeaderNotifications.addEventListener('click', function() { openUserSupportModal('announcements'); });
+    // btnHeaderNotifications é controlado pelo NotificationsCenter (abre popover rápido)
     if (btnProfileNotifications) btnProfileNotifications.addEventListener('click', function() { openUserSupportModal('announcements'); });
     if (btnHeaderAnnouncements) btnHeaderAnnouncements.addEventListener('click', function() { openUserSupportModal('announcements'); });
     if (btnProfileAnnouncements) btnProfileAnnouncements.addEventListener('click', function() { openUserSupportModal('announcements'); });
-    if (btnHeaderSupport) btnHeaderSupport.addEventListener('click', function() { openUserSupportModal('new'); });
-    if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', function() { openUserSupportModal('new'); });
-    if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', function() { openUserSupportModal('new'); });
+    if (btnHeaderSupport) btnHeaderSupport.addEventListener('click', function() { openUserSupportModal('chat'); });
+    if (btnProfileOpenSupport) btnProfileOpenSupport.addEventListener('click', function() { openUserSupportModal('chat'); });
+    if (btnProfileModalSupport) btnProfileModalSupport.addEventListener('click', function() { openUserSupportModal('chat'); });
     if (btnCloseUserSupportModal) btnCloseUserSupportModal.addEventListener('click', closeUserSupportModal);
     if (userSupportOverlay) userSupportOverlay.addEventListener('click', closeUserSupportModal);
 
@@ -5198,6 +5203,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnSingerAnnConfirm) btnSingerAnnConfirm.addEventListener('click', closeSingerAnnouncementModal);
 
     function updateClientAnnouncementsBadge() {
+      if (window.NotificationsCenter) {
+        window.NotificationsCenter.updateBadges();
+        return;
+      }
       if (!window.PrompterAuth) return;
       var user = window.PrompterAuth.getUser();
       var profile = window.PrompterAuth.getProfile();
