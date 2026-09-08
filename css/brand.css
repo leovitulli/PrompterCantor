@@ -1104,3 +1104,145 @@ body .logo-title .logo-ai, body.light-mode .logo-title .logo-ai { color: var(--c
   border: 1px solid var(--border-color) !important;
   background: transparent !important;
 }
+
+/* ══════════════════════════════════════════════════════════
+   FEEDBACK VISUAL NO TOPO & ESTADOS DO BOTÃO DE AUTENTICAÇÃO
+   ══════════════════════════════════════════════════════════ */
+/* Toast Container SEMPRE no topo e acima de tudo */
+.toast-container {
+  position: fixed !important;
+  top: 20px !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999999999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  pointer-events: none !important;
+  min-width: 320px !important;
+  max-width: 92vw !important;
+}
+
+.toast {
+  pointer-events: auto !important;
+  padding: 12px 20px !important;
+  border-radius: 12px !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+  animation: toastSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  line-height: 1.4 !important;
+  border-width: 1.5px !important;
+}
+
+@keyframes toastSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-warning {
+  background: #1f1d19 !important;
+  border-color: #f59e0b !important;
+  color: #fef08a !important;
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.35) !important;
+}
+
+.toast-danger, .toast-error {
+  background: #201314 !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4) !important;
+}
+
+.toast-success {
+  background: #0f2017 !important;
+  border-color: #22c55e !important;
+  color: #86efac !important;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.35) !important;
+}
+
+.toast-info {
+  background: #101c2c !important;
+  border-color: #38bdf8 !important;
+  color: #bae6fd !important;
+  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35) !important;
+}
+
+/* Spinner no Botão de Autenticação */
+.auth-btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(0, 0, 0, 0.25);
+  border-top-color: #161513;
+  border-radius: 50%;
+  animation: spinAuthBtn 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spinAuthBtn {
+  to { transform: rotate(360deg); }
+}
+
+.btn-auth-submit:disabled, .btn-auth-submit.btn-loading {
+  opacity: 0.9 !important;
+  cursor: wait !important;
+  pointer-events: none;
+}
+
+.btn-auth-submit.btn-auth-error {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  animation: shakeInput 0.4s ease;
+}
+
+/* Banner de Erro/Aviso dentro do modal */
+.auth-error-banner {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  animation: toastSlideDown 0.25s ease;
+}
+
+.auth-error-banner.hidden {
+  display: none !important;
+}
+
+.aeb-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.aeb-text {
+  flex: 1;
+  font-weight: 600;
+}
+
+/* Destaque visual de input com erro */
+.input-error-highlight {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3) !important;
+  animation: shakeInput 0.4s ease;
+}
+
+@keyframes shakeInput {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}

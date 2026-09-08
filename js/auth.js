@@ -201,10 +201,14 @@
         }
       }).then(function (res) {
         if (res.error) {
-          if (res.error.message.includes('User already registered') || res.error.message.includes('already exists')) {
+          var errStr = String(res.error.message || res.error.msg || res.error.error_description || res.error || '');
+          if (errStr.indexOf('User already registered') !== -1 || errStr.indexOf('already exists') !== -1) {
             throw new Error('Este e-mail já está cadastrado. Por favor, clique na aba "Entrar".');
           }
-          throw new Error(res.error.message || 'Erro ao realizar cadastro.');
+          if (errStr.indexOf('at least 6 characters') !== -1 || errStr.indexOf('least 6') !== -1) {
+            throw new Error('A senha deve ter no mínimo 6 caracteres.');
+          }
+          throw new Error(errStr || 'Erro ao realizar cadastro.');
         }
 
         if (res.data && res.data.user && res.data.user.identities && res.data.user.identities.length === 0) {

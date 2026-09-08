@@ -3476,6 +3476,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function closeAuthModal() {
+      clearAuthErrors();
       if (authModal) authModal.classList.add('hidden');
     }
 
@@ -3483,6 +3484,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnForgotPassword = document.getElementById('btnForgotPassword');
 
     function setAuthMode(mode) {
+      clearAuthErrors();
       currentAuthMode = mode;
       var signUpFields = document.getElementById('signUpFieldsGroup');
       var emailLabel = document.getElementById('authEmailLabel');
@@ -3640,16 +3642,98 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    var authErrorBanner = document.getElementById('authErrorBanner');
+    var authErrorText = document.getElementById('authErrorText');
+    var authBtnResetTimer = null;
+
+    function clearAuthErrors() {
+      if (authErrorBanner) authErrorBanner.classList.add('hidden');
+      if (authErrorText) authErrorText.innerText = '';
+      document.querySelectorAll('#formAuth .input-error-highlight').forEach(function(el) {
+        el.classList.remove('input-error-highlight');
+      });
+      if (authBtnResetTimer) {
+        clearTimeout(authBtnResetTimer);
+        authBtnResetTimer = null;
+      }
+      if (btnSubmitAuth) {
+        btnSubmitAuth.classList.remove('btn-auth-error');
+      }
+    }
+
+    function showAuthError(msg, targetInputEl) {
+      if (!msg) return;
+      clearAuthErrors();
+
+      // 1. Banner de erro dentro do modal de autenticação
+      if (authErrorBanner && authErrorText) {
+        authErrorText.innerText = msg;
+        authErrorBanner.classList.remove('hidden');
+        try {
+          authErrorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch(e) {}
+      }
+
+      // 2. Notificação por cima de tudo no topo da tela
+      showToast(msg, 'warning');
+
+      // 3. Destacar campo com erro e focar nele
+      if (targetInputEl) {
+        targetInputEl.classList.add('input-error-highlight');
+        try {
+          targetInputEl.focus();
+          targetInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch(e) {}
+        var onInputClear = function() {
+          targetInputEl.classList.remove('input-error-highlight');
+          if (authErrorBanner) authErrorBanner.classList.add('hidden');
+          targetInputEl.removeEventListener('input', onInputClear);
+          targetInputEl.removeEventListener('change', onInputClear);
+        };
+        targetInputEl.addEventListener('input', onInputClear);
+        targetInputEl.addEventListener('change', onInputClear);
+      }
+
+      // 4. Mostrar feedback no próprio botão
+      if (btnSubmitAuth) {
+        btnSubmitAuth.disabled = false;
+        btnSubmitAuth.classList.remove('btn-loading');
+        btnSubmitAuth.classList.add('btn-auth-error');
+        btnSubmitAuth.innerText = '⚠️ Verifique os dados acima';
+        authBtnResetTimer = setTimeout(function() {
+          if (btnSubmitAuth && !btnSubmitAuth.classList.contains('btn-loading')) {
+            btnSubmitAuth.classList.remove('btn-auth-error');
+            btnSubmitAuth.innerText = (currentAuthMode === 'signup') ? 'Finalizar Cadastro & Acessar' : 'Entrar na Conta';
+          }
+        }, 3000);
+      }
+    }
+
+    function setAuthButtonState(loading, text) {
+      if (!btnSubmitAuth) return;
+      if (authBtnResetTimer) {
+        clearTimeout(authBtnResetTimer);
+        authBtnResetTimer = null;
+      }
+      btnSubmitAuth.classList.remove('btn-auth-error');
+      if (loading) {
+        btnSubmitAuth.disabled = true;
+        btnSubmitAuth.classList.add('btn-loading');
+        btnSubmitAuth.innerHTML = '<span class="auth-btn-spinner"></span> ' + (text || 'Processando...');
+      } else {
+        btnSubmitAuth.disabled = false;
+        btnSubmitAuth.classList.remove('btn-loading');
+        btnSubmitAuth.innerText = (currentAuthMode === 'signup') ? 'Finalizar Cadastro & Acessar' : 'Entrar na Conta';
+      }
+    }
+
     function handleAuthSubmit() {
+      clearAuthErrors();
+
       var emailEl = document.getElementById('authEmail');
       var passEl = document.getElementById('authPassword');
       var email = emailEl ? emailEl.value.trim() : '';
       var pass = passEl ? passEl.value : '';
-
-      if (!email || !pass) {
-        showToast('Preencha e-mail e senha.', 'warning');
-        return;
-      }
 
       if (currentAuthMode === 'signup') {
         var nameEl = document.getElementById('authName');
@@ -3658,6 +3742,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var cpfEl = document.getElementById('authCpf');
         var instaEl = document.getElementById('authInstagram');
         var couponEl = document.getElementById('authCouponCode');
+        var chkTerms = document.getElementById('authAcceptTerms');
 
         var name = nameEl ? nameEl.value.trim() : '';
         var singerCode = singerCodeEl ? singerCodeEl.value.trim() : '';
@@ -3666,35 +3751,68 @@ document.addEventListener('DOMContentLoaded', function () {
         var instagram = instaEl ? instaEl.value.trim() : '';
         var couponCode = couponEl ? couponEl.value.trim() : '';
 
-        if (!name) {
-          showToast('Por favor, informe seu Nome Completo ou Artístico.', 'warning');
+        // 1. Validação do Nome
+        if (!name || name.length < 2) {
+          showAuthError('Por favor, informe seu Nome Completo ou Artístico.', nameEl);
           return;
         }
 
+        // 2. Validação do @Login
         if (!singerCode) {
-          showToast('Por favor, escolha seu @Login de usuário.', 'warning');
+          showAuthError('Por favor, escolha seu @Login de usuário (ex: @meunome).', singerCodeEl);
+          return;
+        }
+        var cleanHandle = singerCode.replace('@', '').trim();
+        if (cleanHandle.length < 3) {
+          showAuthError('Seu @Login deve conter no mínimo 3 caracteres.', singerCodeEl);
           return;
         }
 
-        if (!phone) {
-          showToast('Por favor, informe seu WhatsApp com DDD.', 'warning');
+        // 3. Validação do WhatsApp
+        var cleanPhoneDigits = phone.replace(/\D/g, '');
+        if (!phone || cleanPhoneDigits.length < 10) {
+          showAuthError('Por favor, informe seu WhatsApp com DDD (mínimo 10 dígitos).', phoneEl);
           return;
         }
 
-        var chkTerms = document.getElementById('authAcceptTerms');
+        // 4. Validação do E-mail
+        if (!email) {
+          showAuthError('Por favor, informe seu e-mail de acesso.', emailEl);
+          return;
+        }
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          showAuthError('Por favor, informe um e-mail válido (ex: seuemail@dominio.com).', emailEl);
+          return;
+        }
+
+        // 5. Validação da Senha
+        if (!pass) {
+          showAuthError('Por favor, crie uma senha para sua conta.', passEl);
+          return;
+        }
+        if (pass.length < 6) {
+          showAuthError('A senha deve conter no mínimo 6 caracteres.', passEl);
+          return;
+        }
+
+        // 6. Termos e LGPD
         if (chkTerms && !chkTerms.checked) {
-          showToast('⚠️ É obrigatório concordar com os Termos de Uso e Política de Privacidade (LGPD).', 'warning');
+          showAuthError('⚠️ É obrigatório concordar com os Termos de Uso e Política de Privacidade.', chkTerms);
           return;
         }
 
-        showToast('Verificando @Login de usuário...', 'info');
+        // Iniciar Verificação do @Login com feedback visual no botão
+        setAuthButtonState(true, 'Verificando @login...');
         PrompterAuth.checkSingerCodeAvailability(singerCode, null).then(function (checkRes) {
           if (!checkRes.available) {
-            showToast(checkRes.message || 'Este @Login já está em uso.', 'warning');
+            setAuthButtonState(false);
+            showAuthError(checkRes.message || 'Este @Login já está em uso por outro cantor.', singerCodeEl);
             return;
           }
 
-          showToast('Criando e configurando sua conta...', 'info');
+          // Criar Conta no Supabase com feedback no botão
+          setAuthButtonState(true, 'Criando sua conta...');
           return PrompterAuth.signUp({
             name: name,
             singerCode: singerCode,
@@ -3705,25 +3823,49 @@ document.addEventListener('DOMContentLoaded', function () {
             email: email,
             password: pass
           }).then(function (res) {
-            closeAuthModal();
-            showApp();
-            showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
-            openWelcomeOnboardingModal({
-              name: name,
-              singerCode: singerCode,
-              planType: (res && res.profile && res.profile.plan_type) ? res.profile.plan_type : '⚡ PLANO FREE'
-            });
+            setAuthButtonState(true, 'Conta criada! Entrando...');
+            setTimeout(function () {
+              setAuthButtonState(false);
+              closeAuthModal();
+              showApp();
+              showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
+              openWelcomeOnboardingModal({
+                name: name,
+                singerCode: singerCode,
+                planType: (res && res.profile && res.profile.plan_type) ? res.profile.plan_type : '⚡ PLANO FREE'
+              });
+            }, 600);
           });
         }).catch(function (err) {
-          showToast(err.message || 'Erro ao criar conta.', 'warning');
+          setAuthButtonState(false);
+          var msg = (err && err.message) ? err.message : 'Erro ao criar conta. Verifique os dados e tente novamente.';
+          showAuthError(msg, null);
         });
+
       } else {
-        showToast('Autenticando...', 'info');
+        // Modo SIGNIN (Entrar)
+        if (!email) {
+          showAuthError('Por favor, informe seu e-mail ou @login.', emailEl);
+          return;
+        }
+        if (!pass) {
+          showAuthError('Por favor, informe sua senha.', passEl);
+          return;
+        }
+
+        setAuthButtonState(true, 'Entrando na conta...');
         PrompterAuth.signIn(email, pass).then(function () {
-          showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
-          showApp();
+          setAuthButtonState(true, 'Conectado com sucesso!');
+          setTimeout(function () {
+            setAuthButtonState(false);
+            closeAuthModal();
+            showApp();
+            showToast('🎉 Bem-vindo ao CantaAí PRO!', 'success');
+          }, 500);
         }).catch(function (err) {
-          showToast(err.message || 'E-mail ou senha incorretos.', 'warning');
+          setAuthButtonState(false);
+          var msg = (err && err.message) ? err.message : 'E-mail ou senha incorretos.';
+          showAuthError(msg, passEl);
         });
       }
     }
