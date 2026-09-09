@@ -1,36 +1,46 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * CANTAAÍ PRO — NOTIFICATIONS & INTERACTIVE CHAT CENTER (FRONTEND ARCHITECTURE)
+ * CANTAAÍ PRO — CENTRAL DE COMUNICAÇÃO & ATENDIMENTO AO CLIENTE
  * ═══════════════════════════════════════════════════════════════════════════
- * Responsibilities:
- * 1. UI Layer: Popover rápido no header & Central Modal de Chat/Comunicados
- * 2. Logic Layer: Controle de estado, visualização Admin vs Cantor, threads de diálogo
- * 3. Data Layer: Varredura e sincronização bidirecional na nuvem (Supabase REST + LocalStorage)
+ * Arquitetura de Comunicação:
+ * 1. MURAL DE COMUNICADOS (1-WAY / UNIDIRECIONAL):
+ *    - Desenvolvedor: Publica avisos de versões, melhorias e comunicados (gerais ou individuais).
+ *    - Clientes/Cantores: Leem comunicados, visualizam badges e marcam como lidos. Sem chat.
+ * 
+ * 2. ATENDIMENTO & CHAT INTERATIVO (2-WAY / BIDIRECIONAL):
+ *    - Desenvolvedor: Helpdesk omnichannel com lista de todos os cantores (ex: Aline),
+ *      filtros por status (Abertos/Resolvidos), respostas em tempo real e anexos de prints.
+ *    - Clientes/Cantores: Abrem chamados/dúvidas/sugestões e conversam diretamente com o dev.
+ * 
+ * 3. CAMADA DE DADOS & SINCRONIZAÇÃO EM NUVEM:
+ *    - Supabase REST direto nas tabelas 'tickets' e 'announcements' usando auth_token real.
+ *    - Fallback inteligente para LocalStorage com merge ordenado por timestamps.
+ *    - Auto-polling de 20s para recebimento imediato de mensagens sem recarregar.
  */
 
 (function (window, document) {
   'use strict';
 
-  var SYSTEM_REGISTRY_REPERTOIRE_ID = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
-
   var NotificationsCenter = {
+    // ── ESTADO DA APLICAÇÃO ──
     state: {
-      activeTab: 'announcements', // 'announcements' | 'chat'
-      activeTicketId: null,
-      isNewConversationMode: false, // true quando usuário clicou em "+ Nova Conversa"
-      popoverFilter: 'all',       // 'all' | 'unread' | 'chat'
-      adminViewMode: 'all',       // 'all' | 'my_only' (para administradores)
+      activeTab: 'announcements',     // 'announcements' | 'chat'
+      activeTicketId: null,           // ID do chamado selecionado no chat
+      isNewConversationMode: false,   // true quando usuário clica em "+ Iniciar Nova Conversa"
+      popoverFilter: 'all',           // 'all' | 'unread' | 'chat'
+      adminTicketFilter: 'all',       // 'all' | 'open' | 'resolved'
+      adminSearchQuery: '',           // Busca textual por cantor ou assunto
       isPopoverOpen: false,
       isModalOpen: false,
       isSyncingCloud: false,
-      draftImageBase64: '',
-      newTicketImageBase64: ''
+      draftImageBase64: '',           // Foto anexada na resposta do chat
+      newTicketImageBase64: '',       // Foto anexada no novo chamado
+      profilesCache: []               // Lista de perfis de cantores para o select do admin
     },
 
-    // Retorna headers de autenticação com o token real do usuário (não apenas anon key)
-    // Essencial para que cantores consigam gravar na tabela com RLS ativo
+    // ── HEADERS DE AUTENTICAÇÃO SUPABASE COM JWT REAL ──
     getAuthHeaders: function () {
-      var anon = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.key : '';
+      var anon = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) ? window.SUPABASE_CONFIG.key : '';
       var token = anon;
       try {
         var raw = localStorage.getItem('prompter_auth_user');
@@ -46,7 +56,31 @@
       };
     },
 
-    // ── HELPERS & UTILITIES ──
+    // ── DETECÇÃO DO CONTEXTO DO USUÁRIO (DESENVOLVEDOR VS. CLIENTE) ──
+    getCurrentUserContext: function () {
+      var user = (window.PrompterAuth && typeof window.PrompterAuth.getUser === 'function') ? window.PrompterAuth.getUser() : null;
+      var profile = (window.PrompterAuth && typeof window.PrompterAuth.getProfile === 'function') ? window.PrompterAuth.getProfile() : null;
+      
+      var email = ((profile && profile.email) || (user && user.email) || '').trim().toLowerCase();
+      var name = ((profile && profile.display_name) || (user && user.user_metadata && user.user_metadata.full_name) || (email ? email.split('@')[0] : 'Cantor'));
+      var singerCode = ((profile && profile.singer_code) || '').trim().toLowerCase();
+
+      var isAdmin = (window.PrompterAuth && typeof window.PrompterAuth.isAdmin === 'function' && window.PrompterAuth.isAdmin()) ||
+                    (email === 'leovitulli@gmail.com') ||
+                    (profile && (profile.role === 'admin' || profile.email === 'leovitulli@gmail.com')) ||
+                    (user && user.email === 'leovitulli@gmail.com');
+
+      return {
+        user: user,
+        profile: profile,
+        email: email,
+        name: name,
+        singerCode: singerCode,
+        isAdmin: !!isAdmin
+      };
+    },
+
+    // ── UTILITÁRIOS ──
     escapeHtml: function (str) {
       if (!str) return '';
       return String(str)
@@ -70,45 +104,27 @@
       if (diffSec < 60) return 'Agora';
       if (diffMin < 60) return diffMin + ' min atrás';
       if (diffHours < 24) return diffHours + 'h atrás';
-      if (diffDays === 1) return 'Ontem';
+      if (diffDays === 1) return 'Ontem ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       if (diffDays < 7) return diffDays + 'd atrás';
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     },
 
-    getCurrentUserContext: function () {
-      var user = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
-      var profile = window.PrompterAuth ? window.PrompterAuth.getProfile() : null;
-      var email = ((profile && profile.email) || (user && user.email) || '').trim().toLowerCase();
-      var name = ((profile && profile.display_name) || (user && user.user_metadata && user.user_metadata.full_name) || (email ? email.split('@')[0] : 'Cantor'));
-      var singerCode = ((profile && profile.singer_code) || '').trim().toLowerCase();
-
-      var isAdmin = (window.PrompterAuth && window.PrompterAuth.isAdmin && window.PrompterAuth.isAdmin()) ||
-                    (email === 'leovitulli@gmail.com') ||
-                    (profile && (profile.role === 'admin' || profile.email === 'leovitulli@gmail.com')) ||
-                    (user && user.email === 'leovitulli@gmail.com');
-
-      return {
-        user: user,
-        profile: profile,
-        email: email,
-        name: name,
-        singerCode: singerCode,
-        isAdmin: !!isAdmin
-      };
-    },
-
-    // ── DATA ACCESS & NORMALIZATION ──
+    // ── ACESSO A DADOS LOCAIS ──
     getAnnouncements: function () {
       var raw = localStorage.getItem('canta_ai_admin_announcements');
       var list = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(list)) list = [];
       var ctx = this.getCurrentUserContext();
 
+      // Desenvolvedor vê todos os comunicados
+      if (ctx.isAdmin) return list;
+
+      // Cantor vê apenas comunicados gerais ou direcionados a ele
       return list.filter(function (a) {
-        if (!a || !a.target) return false;
-        var t = String(a.target).trim().toLowerCase();
-        if (t === 'all') return true;
-        if (ctx.email && t === ctx.email) return true;
+        if (!a) return false;
+        var t = String(a.target || a.target_user_email || 'all').trim().toLowerCase();
+        if (t === 'all' || t === '' || t === 'todos') return true;
+        if (ctx.email && (t === ctx.email || t === ctx.email.toLowerCase())) return true;
         if (ctx.singerCode && (t === ctx.singerCode || t === ctx.singerCode.replace('@', ''))) return true;
         return false;
       });
@@ -139,36 +155,30 @@
       var list = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(list)) list = [];
       var ctx = this.getCurrentUserContext();
-
-      // Normaliza cada ticket para formato thread de chat
       var self = this;
+
       var normalized = list.map(function (t) {
         return self.normalizeTicket(t);
       }).filter(Boolean);
 
-      // Se for administrador, por padrão vê todas as conversas dos cantores
+      // Desenvolvedor: visualiza todos os atendimentos
       if (ctx.isAdmin) {
-        if (self.state.adminViewMode === 'my_only') {
-          return normalized.filter(function (t) {
-            return t.user_email && t.user_email.toLowerCase() === ctx.email;
-          });
-        }
         return normalized;
       }
 
-      // Se for cantor comum, exibe apenas os seus próprios chamados
+      // Cantor comum: visualiza estritamente os seus chamados
       return normalized.filter(function (t) {
-        return !ctx.email || (t.user_email && t.user_email.toLowerCase() === ctx.email);
+        if (!ctx.email) return true;
+        return t.user_email && t.user_email.toLowerCase() === ctx.email;
       });
     },
 
-    saveAllTickets: function (updatedUserTickets) {
+    saveAllTickets: function (updatedTickets) {
       var raw = localStorage.getItem('canta_ai_support_tickets');
       var allTickets = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(allTickets)) allTickets = [];
 
-      // Atualiza ou insere na lista global do localStorage
-      updatedUserTickets.forEach(function (ut) {
+      updatedTickets.forEach(function (ut) {
         var idx = allTickets.findIndex(function (x) { return x.id === ut.id; });
         if (idx >= 0) {
           allTickets[idx] = ut;
@@ -184,10 +194,21 @@
       if (!t) return null;
       var copy = Object.assign({}, t);
 
-      if (!copy.messages || !Array.isArray(copy.messages) || copy.messages.length === 0) {
-        copy.messages = [];
+      // Se mensagens veio como string JSON do Supabase
+      if (typeof copy.messages === 'string') {
+        try {
+          copy.messages = JSON.parse(copy.messages);
+        } catch (e) {
+          copy.messages = [];
+        }
+      }
 
-        // Mensagem inicial criada pelo cantor
+      if (!Array.isArray(copy.messages)) {
+        copy.messages = [];
+      }
+
+      // Se não possui mensagens, extrai da descrição inicial e da resposta legada
+      if (copy.messages.length === 0) {
         if (copy.description || copy.title) {
           copy.messages.push({
             id: (copy.id || 'msg') + '-m0',
@@ -198,23 +219,20 @@
             created_at: copy.created_at || new Date().toISOString()
           });
         }
-
-        // Resposta legada do suporte caso já existisse
-        if (copy.reply) {
+        if (copy.admin_response || copy.reply) {
           copy.messages.push({
             id: (copy.id || 'msg') + '-m1',
             sender: 'support',
-            sender_name: 'Equipe CantaAí',
-            text: copy.reply,
+            sender_name: 'Leonardo Vitulli (Desenvolvedor)',
+            text: copy.admin_response || copy.reply,
             image_url: '',
-            created_at: copy.replied_at || copy.created_at || new Date().toISOString()
+            created_at: copy.replied_at || copy.updated_at || copy.created_at || new Date().toISOString()
           });
         }
       }
 
-      // Garante status válido
       if (!copy.status) {
-        copy.status = copy.reply ? 'resolved' : 'open';
+        copy.status = (copy.admin_response || copy.reply) ? 'resolved' : 'open';
       }
 
       return copy;
@@ -236,112 +254,97 @@
       }
 
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
-      var headers = self.getAuthHeaders(); // token real do usuário para RLS
+      var headers = self.getAuthHeaders();
 
-      // 1. Busca chamados gravados na tabela songs (artist = USER_SUPPORT_TICKET ou SUPPORT_REPLY)
-      var pSongs = fetch(baseUrl + '/songs?artist=in.(USER_SUPPORT_TICKET,SUPPORT_REPLY)&order=created_at.desc', { headers: headers })
+      // 1. Busca Comunicados Oficiais na tabela dedicada 'announcements'
+      var pAnnouncements = fetch(baseUrl + '/announcements?select=*&is_active=neq.false&order=created_at.desc', { headers: headers })
         .then(function (r) { return r.ok ? r.json() : []; })
         .catch(function () { return []; });
 
-      // 2. Busca comunicados oficiais em songs (artist = SYSTEM_ANNOUNCEMENT)
-      var pAnn = fetch(baseUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&artist=eq.SYSTEM_ANNOUNCEMENT&order=id.desc', { headers: headers })
+      // 2. Busca Chamados / Tickets de Atendimento na tabela dedicada 'tickets'
+      var pTickets = fetch(baseUrl + '/tickets?select=*&order=updated_at.desc,created_at.desc', { headers: headers })
         .then(function (r) { return r.ok ? r.json() : []; })
         .catch(function () { return []; });
 
-      // 3. Fallback tabela tickets nativa
-      var pTicketsTable = fetch(baseUrl + '/tickets?select=*&order=created_at.desc', { headers: headers })
-        .then(function (r) { return r.ok ? r.json() : []; })
-        .catch(function () { return []; });
+      // 3. Se for Admin, busca lista de perfis para alimentar o select de cantores
+      var ctx = self.getCurrentUserContext();
+      var pProfiles = ctx.isAdmin
+        ? fetch(baseUrl + '/profiles?select=id,email,display_name,singer_code&order=display_name.asc', { headers: headers })
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .catch(function () { return []; })
+        : Promise.resolve([]);
 
-      Promise.all([pSongs, pAnn, pTicketsTable]).then(function (results) {
-        var songTickets = results[0] || [];
-        var songAnn = results[1] || [];
-        var rawTickets = results[2] || [];
+      Promise.all([pAnnouncements, pTickets, pProfiles]).then(function (results) {
+        var cloudAnnouncements = results[0] || [];
+        var cloudTickets = results[1] || [];
+        var cloudProfiles = results[2] || [];
 
-        // ── Processa Comunicados ──
+        if (Array.isArray(cloudProfiles) && cloudProfiles.length > 0) {
+          self.state.profilesCache = cloudProfiles;
+        }
+
+        // ── PROCESSA COMUNICADOS ──
         var rawAnnLocal = localStorage.getItem('canta_ai_admin_announcements');
-        var annList = rawAnnLocal ? JSON.parse(rawAnnLocal) : [];
-        if (!Array.isArray(annList)) annList = [];
+        var localAnn = rawAnnLocal ? JSON.parse(rawAnnLocal) : [];
+        if (!Array.isArray(localAnn)) localAnn = [];
 
-        songAnn.forEach(function (row) {
-          try {
-            if (row.content) {
-              var a = JSON.parse(row.content);
-              if (a && a.id && !annList.some(function (m) { return m.id === a.id; })) {
-                annList.push(a);
-              }
-            }
-          } catch (e) {}
+        var mergedAnn = [].concat(localAnn);
+        cloudAnnouncements.forEach(function (ca) {
+          if (!ca || !ca.id) return;
+          var idx = mergedAnn.findIndex(function (x) { return x.id === ca.id; });
+          if (idx >= 0) {
+            mergedAnn[idx] = Object.assign({}, mergedAnn[idx], ca);
+          } else {
+            mergedAnn.push(ca);
+          }
         });
-        annList.sort(function (a, b) {
-          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-        });
-        localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(annList));
 
-        // ── Processa Chamados / Tickets ──
+        mergedAnn.sort(function (a, b) {
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        });
+        localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(mergedAnn));
+
+        // ── PROCESSA ATENDIMENTOS / TICKETS ──
         var rawTkLocal = localStorage.getItem('canta_ai_support_tickets');
         var localTickets = rawTkLocal ? JSON.parse(rawTkLocal) : [];
         if (!Array.isArray(localTickets)) localTickets = [];
 
-        var cloudTickets = [];
-
-        // Extrai de songs
-        songTickets.forEach(function (row) {
-          try {
-            if (row.content) {
-              var parsed = JSON.parse(row.content);
-              if (parsed && (parsed.id || parsed.title)) {
-                if (!parsed.id) parsed.id = row.id;
-                cloudTickets.push(parsed);
-              }
-            }
-          } catch (e) {}
-        });
-
-        // Extrai da tabela tickets
-        rawTickets.forEach(function (t) {
-          if (t && (t.id || t.title)) cloudTickets.push(t);
-        });
-
-        // Merge inteligente: usa o vencedor com updated_at mais recente como base
-        // Evita que o cloud sobreescreva status local recém-salvo (ex: Marcar Resolvido)
         cloudTickets.forEach(function (cTicket) {
           var normCloud = self.normalizeTicket(cTicket);
           if (!normCloud || !normCloud.id) return;
+
           var existingIdx = localTickets.findIndex(function (x) { return x.id === normCloud.id; });
           if (existingIdx >= 0) {
             var existing = self.normalizeTicket(localTickets[existingIdx]);
 
-            // Junta as mensagens sem duplicar por ID ou texto+timestamp idênticos
+            // Une as mensagens sem duplicidade
             var mergedMsgs = [].concat(existing.messages || []);
             (normCloud.messages || []).forEach(function (nm) {
-              if (!mergedMsgs.some(function (em) {
-                return em.id === nm.id || (em.text === nm.text && em.created_at === nm.created_at);
-              })) {
+              var alreadyExists = mergedMsgs.some(function (em) {
+                return (em.id && nm.id && em.id === nm.id) ||
+                       (em.text === nm.text && em.created_at === nm.created_at);
+              });
+              if (!alreadyExists) {
                 mergedMsgs.push(nm);
               }
             });
+
             mergedMsgs.sort(function (m1, m2) {
-              return new Date(m1.created_at || 0) - new Date(m2.created_at || 0);
+              return new Date(m1.created_at || 0).getTime() - new Date(m2.created_at || 0).getTime();
             });
 
-            // Decide qual versão tem os metadados mais recentes
+            // Decide versão com metadados mais recentes (status, etc.)
             var localTime = new Date(existing.updated_at || existing.created_at || 0).getTime();
             var cloudTime = new Date(normCloud.updated_at || normCloud.created_at || 0).getTime();
-            var winner = localTime > cloudTime ? existing : normCloud;
+            var winner = (localTime > cloudTime) ? existing : normCloud;
 
             winner.messages = mergedMsgs;
-            if (existing.reply || normCloud.reply) {
-              winner.reply = (localTime > cloudTime ? existing : normCloud).reply || winner.reply;
-              winner.replied_at = (localTime > cloudTime ? existing : normCloud).replied_at || winner.replied_at;
-            }
             localTickets[existingIdx] = winner;
           } else {
             localTickets.unshift(normCloud);
           }
         });
 
-        // Ordena com o chamado atualizado mais recente no topo
         localTickets.sort(function (t1, t2) {
           var d1 = new Date(t1.updated_at || t1.created_at || 0).getTime();
           var d2 = new Date(t2.updated_at || t2.created_at || 0).getTime();
@@ -378,92 +381,170 @@
       });
     },
 
+    // Sincroniza um ticket criado ou atualizado diretamente na tabela 'tickets'
     syncTicketToCloud: function (ticket) {
       if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) return;
 
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
-      var headers = this.getAuthHeaders(); // usa token real do usuário para RLS
+      var headers = this.getAuthHeaders();
+      var ctx = this.getCurrentUserContext();
 
-      // Estratégia UPSERT:
-      // 1. Usa composer = 'TICKET:' + ticket.id como chave única
-      // 2. Busca se a row já existe
-      // 3. Se sim: PATCH (atualiza content com ticket completo)
-      // 4. Se não: POST (cria a row)
-      // → Garante 1 row por ticket no Supabase, sempre com mensagens mais recentes
+      var payload = {
+        user_id: ticket.user_id || (ctx.user ? ctx.user.id : null),
+        user_email: ticket.user_email || ctx.email || 'cantor@cantaaipro.com',
+        user_name: ticket.user_name || ctx.name || 'Cantor',
+        category: ticket.category || 'sugestao',
+        title: ticket.title || 'Atendimento',
+        description: ticket.description || '',
+        image_url: ticket.image_url || '',
+        status: ticket.status || 'open',
+        messages: JSON.stringify(ticket.messages || []),
+        updated_at: new Date().toISOString()
+      };
 
-      var uniqueComposer = 'TICKET:' + (ticket.id || '');
-      var rowContent = JSON.stringify(ticket);
+      var isNumericOrCustomId = String(ticket.id).startsWith('tkt-');
 
-      // Busca row existente por composer único
-      fetch(baseUrl + '/songs?artist=eq.USER_SUPPORT_TICKET&composer=eq.' + encodeURIComponent(uniqueComposer) + '&limit=1', {
-        headers: headers
-      }).then(function(r) {
-        return r.ok ? r.json() : [];
-      }).then(function(existing) {
-        if (existing && existing.length > 0) {
-          // PATCH na row existente
-          var rowId = existing[0].id;
-          fetch(baseUrl + '/songs?id=eq.' + encodeURIComponent(rowId), {
-            method: 'PATCH',
-            headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
-            body: JSON.stringify({ content: rowContent, updated_at: new Date().toISOString() })
-          }).catch(function() {});
-        } else {
-          // INSERT nova row
-          fetch(baseUrl + '/songs', {
+      if (!isNumericOrCustomId) {
+        // PATCH no ticket existente
+        fetch(baseUrl + '/tickets?id=eq.' + encodeURIComponent(ticket.id), {
+          method: 'PATCH',
+          headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify(payload)
+        }).catch(function () {});
+      } else {
+        // Tenta buscar se já foi inserido por ID ou cria
+        payload.id = ticket.id;
+        fetch(baseUrl + '/tickets', {
+          method: 'POST',
+          headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify([payload])
+        }).catch(function () {
+          var payloadNoId = Object.assign({}, payload);
+          delete payloadNoId.id;
+          fetch(baseUrl + '/tickets', {
             method: 'POST',
-            headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
-            body: JSON.stringify([{
-              repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
-              title: '\uD83D\uDCAC SUPORTE CHAT: ' + (ticket.title || 'Chamado'),
-              artist: 'USER_SUPPORT_TICKET',
-              composer: uniqueComposer,
-              content: rowContent
-            }])
-          }).catch(function() {});
-        }
-      }).catch(function() {});
+            headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
+            body: JSON.stringify([payloadNoId])
+          }).then(function(r) { return r.ok ? r.json() : []; })
+            .then(function(createdRows) {
+              if (createdRows && createdRows[0] && createdRows[0].id) {
+                ticket.id = createdRows[0].id;
+                var raw = localStorage.getItem('canta_ai_support_tickets');
+                var list = raw ? JSON.parse(raw) : [];
+                var idx = list.findIndex(function(x) { return x.title === ticket.title && x.created_at === ticket.created_at; });
+                if (idx >= 0) {
+                  list[idx].id = createdRows[0].id;
+                  localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
+                }
+              }
+            }).catch(function () {});
+        });
+      }
     },
 
-    // ── BADGE COUNTER CALCULATOR ──
+    // Publica um novo comunicado oficial na nuvem
+    publishAnnouncementToCloud: function (announcement, callback) {
+      var raw = localStorage.getItem('canta_ai_admin_announcements');
+      var list = raw ? JSON.parse(raw) : [];
+      list.unshift(announcement);
+      localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+
+      if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+        var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
+        var headers = this.getAuthHeaders();
+        
+        var payload = {
+          type: announcement.type || 'update',
+          title: announcement.title || 'Comunicado',
+          message: announcement.message || '',
+          target: announcement.target || 'all',
+          target_user_email: (announcement.target !== 'all') ? announcement.target : '',
+          created_by: 'Leonardo Vitulli (Desenvolvedor & CEO)',
+          is_active: true,
+          created_at: announcement.created_at || new Date().toISOString()
+        };
+
+        fetch(baseUrl + '/announcements', {
+          method: 'POST',
+          headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
+          body: JSON.stringify([payload])
+        }).then(function(r) { return r.ok ? r.json() : []; })
+          .then(function(created) {
+            if (created && created[0] && created[0].id) {
+              announcement.id = created[0].id;
+              localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+            }
+            if (callback) callback(null, announcement);
+          }).catch(function(err) {
+            if (callback) callback(err);
+          });
+      } else {
+        if (callback) callback(null, announcement);
+      }
+    },
+
+    // Exclui comunicado na nuvem e localmente
+    deleteAnnouncement: function (annId, callback) {
+      var raw = localStorage.getItem('canta_ai_admin_announcements');
+      var list = raw ? JSON.parse(raw) : [];
+      list = list.filter(function (a) { return a.id !== annId; });
+      localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+
+      if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key && annId) {
+        var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
+        var headers = this.getAuthHeaders();
+
+        fetch(baseUrl + '/announcements?id=eq.' + encodeURIComponent(annId), {
+          method: 'PATCH',
+          headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ is_active: false })
+        }).then(function() {
+          if (callback) callback();
+        }).catch(function() {
+          if (callback) callback();
+        });
+      } else {
+        if (callback) callback();
+      }
+    },
+
+    // ── CÁLCULO DE BADGES & CONTADORES NÃO LIDOS ──
     calculateUnread: function () {
       var readAnnIds = this.getReadAnnouncementIds();
       var readMsgIds = this.getReadSupportMessageIds();
       var ctx = this.getCurrentUserContext();
 
-      // 1. Comunicados não lidos
+      // 1. Comunicados não lidos (apenas clientes contam comunicados)
       var annList = this.getAnnouncements();
       var unreadAnn = annList.filter(function (a) {
         return a && a.id && readAnnIds.indexOf(a.id) === -1;
       });
 
-      // 2. Mensagens do suporte não lidas (ou novas mensagens de cantores se for admin)
+      // 2. Mensagens não lidas
       var tickets = this.getTickets();
       var unreadRepliesCount = 0;
       var unreadReplyTickets = [];
 
       tickets.forEach(function (t) {
         if (t.messages && t.messages.length > 0) {
-          var hasUnread = false;
+          var hasUnreadInTicket = false;
           t.messages.forEach(function (m) {
-            // Para o cantor comum, notificações são mensagens do suporte
-            // Para o admin, notificações são mensagens enviadas pelos cantores
             var isTargetUnread = ctx.isAdmin
               ? (m.sender === 'user' && readMsgIds.indexOf(m.id) === -1 && t.user_email !== ctx.email)
               : (m.sender === 'support' && readMsgIds.indexOf(m.id) === -1);
 
             if (isTargetUnread) {
-              hasUnread = true;
+              hasUnreadInTicket = true;
               unreadRepliesCount++;
             }
           });
-          if (hasUnread) {
+          if (hasUnreadInTicket) {
             unreadReplyTickets.push(t);
           }
         }
       });
 
-      var total = unreadAnn.length + unreadRepliesCount;
+      var total = ctx.isAdmin ? unreadRepliesCount : (unreadAnn.length + unreadRepliesCount);
 
       return {
         total: total,
@@ -476,7 +557,6 @@
     updateBadges: function () {
       var counts = this.calculateUnread();
 
-      // Badge no botão do cabeçalho
       var badgeHeader = document.getElementById('headerNotificationBadge');
       if (badgeHeader) {
         if (counts.total > 0) {
@@ -487,7 +567,6 @@
         }
       }
 
-      // Badge no menu de perfil do cantor
       var badgeProfile = document.getElementById('profileNotificationBadge');
       if (badgeProfile) {
         if (counts.total > 0) {
@@ -498,14 +577,12 @@
         }
       }
 
-      // Badge do Popover
       var popBadge = document.getElementById('notifPopBadge');
       if (popBadge) {
-        popBadge.innerText = counts.total > 0 ? counts.total + ' não lida' + (counts.total !== 1 ? 's' : '') : 'Tudo lido';
+        popBadge.innerText = counts.total > 0 ? counts.total + ' pendente' + (counts.total !== 1 ? 's' : '') : 'Tudo lido';
         popBadge.style.display = counts.total > 0 ? 'inline-block' : 'none';
       }
 
-      // Badges das abas do modal
       var tabAnnBadge = document.getElementById('scTabAnnBadge');
       if (tabAnnBadge) {
         if (counts.unreadAnnouncements.length > 0) {
@@ -527,7 +604,7 @@
       }
     },
 
-    // ── POPOVER RÁPIDO DO CABEÇALHO ──
+    // ── POPOVER RÁPIDO DO CABEÇALHO (SINO) ──
     togglePopover: function () {
       if (this.state.isPopoverOpen) {
         this.closePopover();
@@ -540,15 +617,12 @@
       var pop = document.getElementById('notificationsQuickPopover');
       if (!pop) return;
 
-      // Fecha dropdown de perfil se estiver aberto
       var userProfileMenu = document.getElementById('userProfileMenu');
       if (userProfileMenu) userProfileMenu.classList.add('hidden');
 
       this.state.isPopoverOpen = true;
       pop.classList.remove('hidden');
       this.renderPopover();
-
-      // Atualiza da nuvem em segundo plano
       this.fetchFromCloud();
     },
 
@@ -566,8 +640,8 @@
       var readMsgIds = this.getReadSupportMessageIds();
       var filter = this.state.popoverFilter;
       var ctx = this.getCurrentUserContext();
+      var self = this;
 
-      // Coleta todos os itens para o feed
       var feedItems = [];
 
       // 1. Comunicados
@@ -586,7 +660,7 @@
           feedItems.push({
             type: 'announcement',
             id: a.id,
-            title: a.title || 'Comunicado Oficial',
+            title: (ctx.isAdmin ? '📢 [Comunicado Enviado] ' : '📢 ') + (a.title || 'Comunicado Oficial'),
             snippet: a.message || '',
             date: a.created_at || new Date().toISOString(),
             isRead: isRead,
@@ -615,10 +689,9 @@
           var isRead = !hasUnread;
           if (filter === 'unread' && isRead) return;
 
-          var iconType = hasUnread ? '💬' : '📩';
-          var titlePrefix = hasUnread ? 'Nova Mensagem: ' : 'Atendimento: ';
+          var titlePrefix = hasUnread ? '💬 Nova Mensagem: ' : '📩 Atendimento: ';
           if (ctx.isAdmin && t.user_name) {
-            titlePrefix += '[' + t.user_name + '] ';
+            titlePrefix = (hasUnread ? '🔵 ' : '👤 ') + '[' + t.user_name + '] ';
           }
 
           feedItems.push({
@@ -628,13 +701,12 @@
             snippet: lastMsg ? lastMsg.text : (t.description || ''),
             date: (lastMsg && lastMsg.created_at) ? lastMsg.created_at : (t.created_at || new Date().toISOString()),
             isRead: isRead,
-            icon: iconType,
+            icon: hasUnread ? '💬' : '📩',
             iconClass: hasUnread ? 'icon-reply' : ''
           });
         });
       }
 
-      // Ordenação cronológica (mais recente primeiro)
       feedItems.sort(function (a, b) {
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       });
@@ -643,13 +715,12 @@
         container.innerHTML =
           '<div class="notif-pop-empty">' +
             '<span class="notif-pop-empty-icon">🔔</span>' +
-            '<span class="notif-pop-empty-text">Nenhuma notificação encontrada</span>' +
+            '<span class="notif-pop-empty-text">Nenhuma notificação no momento</span>' +
             '<span class="notif-pop-empty-sub">Você está em dia com todas as novidades!</span>' +
           '</div>';
         return;
       }
 
-      var self = this;
       var html = '';
       feedItems.forEach(function (item) {
         html +=
@@ -667,7 +738,6 @@
 
       container.innerHTML = html;
 
-      // Evento de clique no item do Popover
       container.querySelectorAll('.notif-pop-item').forEach(function (el) {
         el.addEventListener('click', function () {
           var type = this.getAttribute('data-type');
@@ -686,7 +756,6 @@
     },
 
     markAllAsRead: function () {
-      // 1. Marca todos comunicados como lidos
       var annList = this.getAnnouncements();
       var readAnnIds = this.getReadAnnouncementIds();
       annList.forEach(function (a) {
@@ -696,7 +765,6 @@
       });
       localStorage.setItem('cantaai_read_announcements', JSON.stringify(readAnnIds));
 
-      // 2. Marca todas as mensagens como lidas
       var tickets = this.getTickets();
       var readMsgIds = this.getReadSupportMessageIds();
       tickets.forEach(function (t) {
@@ -749,7 +817,7 @@
       }
     },
 
-    // ── CENTRAL DE ATENDIMENTO (MODAL PRINCIPAL) ──
+    // ── CENTRAL DE COMUNICAÇÃO & ATENDIMENTO (MODAL PRINCIPAL) ──
     openModal: function (tabName, ticketId) {
       var modal = document.getElementById('userSupportModal');
       if (!modal) return;
@@ -763,11 +831,10 @@
 
       if (ticketId) {
         this.state.activeTicketId = ticketId;
+        this.state.isNewConversationMode = false;
       }
 
       this.switchTab(tabName || 'announcements');
-
-      // Sempre busca novidades da nuvem ao abrir a Central
       this.fetchFromCloud();
     },
 
@@ -803,64 +870,183 @@
       this.updateBadges();
     },
 
-    // ── RENDERIZAÇÃO DE COMUNICADOS (ABA 1) ──
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 📢 ABA 1: MURAL DE COMUNICADOS & ATUALIZAÇÕES (UNIDIRECIONAL)
+    // ═══════════════════════════════════════════════════════════════════════════
     renderAnnouncements: function () {
       var container = document.getElementById('scAnnouncementsList');
       if (!container) return;
 
+      var ctx = this.getCurrentUserContext();
       var annList = this.getAnnouncements();
       var readIds = this.getReadAnnouncementIds();
-
-      if (!annList || annList.length === 0) {
-        container.innerHTML =
-          '<div style="text-align: center; padding: 40px 20px; color: #94a3b8; background: rgba(15, 23, 42, 0.4); border-radius: 14px; border: 1px dashed rgba(255, 255, 255, 0.08);">' +
-            '<span style="font-size: 2rem; display: block; margin-bottom: 8px;">📢</span>' +
-            '<strong style="color: #f8fafc; font-size: 1rem;">Nenhum comunicado oficial no momento</strong><br>' +
-            '<span style="font-size: 0.85rem;">Quando nossa equipe publicar avisos importantes ou novidades, você poderá consultar aqui a qualquer momento.</span>' +
-          '</div>';
-        return;
-      }
-
       var self = this;
+
       var html = '';
-      annList.forEach(function (a) {
-        var isRead = readIds.indexOf(a.id) !== -1;
-        var dateStr = a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente';
-        var isDirect = a.target && a.target !== 'all';
 
-        var tagTarget = isDirect
-          ? '<span class="sc-ann-tag sc-ann-tag-direct">🎯 Direcionado para Você</span>'
-          : '<span class="sc-ann-tag sc-ann-tag-broadcast">📢 Para Todos os Cantores</span>';
-
-        var typeTag = '<span class="sc-ann-tag sc-ann-tag-default">ℹ️ Informação Geral</span>';
-        if (a.type === 'update') typeTag = '<span class="sc-ann-tag" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">🚀 Nova Atualização</span>';
-        if (a.type === 'feature' || a.type === 'promo') typeTag = '<span class="sc-ann-tag" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">🎉 Benefício / Novidade</span>';
-        if (a.type === 'alert') typeTag = '<span class="sc-ann-tag" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">⚠️ Alerta Importante</span>';
-
-        var markBtn = isRead
-          ? '<span style="color: #64748b; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">✓ Visualizado</span>'
-          : '<button type="button" class="btn btn-outline btn-xs btn-read-ann" data-id="' + self.escapeHtml(a.id) + '" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">✓ Marcar como Lido</button>';
+      // ── SE FOR DESENVOLVEDOR (ADMIN): FORMULÁRIO DE PUBLICAÇÃO NO TOPO ──
+      if (ctx.isAdmin) {
+        var singerOptions = '<option value="all">🌐 Todos os Cantores (Broadcast Geral)</option>';
+        if (self.state.profilesCache && self.state.profilesCache.length > 0) {
+          singerOptions += '<optgroup label="Cantor Específico">';
+          self.state.profilesCache.forEach(function (p) {
+            if (p.email && p.email !== 'leovitulli@gmail.com') {
+              var label = (p.display_name || p.email.split('@')[0]) + ' (' + (p.singer_code || p.email) + ')';
+              singerOptions += '<option value="' + self.escapeHtml(p.email) + '">👤 ' + self.escapeHtml(label) + '</option>';
+            }
+          });
+          singerOptions += '</optgroup>';
+        }
 
         html +=
-          '<div class="sc-ann-card ' + (!isRead ? 'is-unread' : '') + '">' +
-            '<div class="sc-ann-header">' +
-              '<div class="sc-ann-tags">' +
-                typeTag +
-                tagTarget +
+          '<div class="admin-announcement-composer" style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 18px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">' +
+            '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">' +
+              '<div style="display: flex; align-items: center; gap: 8px;">' +
+                '<span style="font-size: 1.3rem;">📢</span>' +
+                '<strong style="color: #f8fafc; font-size: 0.98rem; font-family: \'Bricolage Grotesque\', sans-serif;">Publicar Comunicado ou Novidade de Versão</strong>' +
               '</div>' +
-              '<div style="display: flex; align-items: center; gap: 10px;">' +
-                '<span style="color: #64748b; font-size: 0.78rem;">' + dateStr + '</span>' +
-                markBtn +
-              '</div>' +
+              '<span class="badge-plan-executive" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px;">👨‍💻 Modo Desenvolvedor</span>' +
             '</div>' +
-            '<h4 class="sc-ann-title">' + self.escapeHtml(a.title || 'Sem título') + '</h4>' +
-            '<div class="sc-ann-body">' + self.escapeHtml(a.message || '') + '</div>' +
+            '<form id="formAdminNewAnnouncement" onsubmit="return false;">' +
+              '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">' +
+                '<div>' +
+                  '<label style="display: block; font-size: 0.76rem; font-weight: 700; color: #94a3b8; margin-bottom: 4px;">Tipo de Aviso:</label>' +
+                  '<select id="admAnnType" class="form-control" style="width: 100%; border-radius: 8px; font-size: 0.82rem;">' +
+                    '<option value="update">🚀 Nova Versão / Atualização</option>' +
+                    '<option value="feature">🎉 Nova Ferramenta / Benefício</option>' +
+                    '<option value="info">ℹ️ Informação Geral</option>' +
+                    '<option value="alert">⚠️ Alerta de Sistema / Manutenção</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div>' +
+                  '<label style="display: block; font-size: 0.76rem; font-weight: 700; color: #94a3b8; margin-bottom: 4px;">Destinatário:</label>' +
+                  '<select id="admAnnTarget" class="form-control" style="width: 100%; border-radius: 8px; font-size: 0.82rem;">' +
+                    singerOptions +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
+              '<div style="margin-bottom: 12px;">' +
+                '<label style="display: block; font-size: 0.76rem; font-weight: 700; color: #94a3b8; margin-bottom: 4px;">Título do Comunicado:</label>' +
+                '<input type="text" id="admAnnTitle" class="form-control" placeholder="Ex: Versão 2.5 Disponível — Novo Transpositor e Cifras Mais Rápidas" style="width: 100%; border-radius: 8px; font-size: 0.85rem;" required>' +
+              '</div>' +
+              '<div style="margin-bottom: 14px;">' +
+                '<label style="display: block; font-size: 0.76rem; font-weight: 700; color: #94a3b8; margin-bottom: 4px;">Mensagem Detalhada:</label>' +
+                '<textarea id="admAnnMessage" class="form-control" rows="3" placeholder="Descreva as melhorias, novidades ou informações para os cantores..." style="width: 100%; border-radius: 8px; font-size: 0.82rem;" required></textarea>' +
+              '</div>' +
+              '<div style="display: flex; justify-content: flex-end;">' +
+                '<button type="button" id="btnAdminPublishAnn" class="btn btn-primary" style="padding: 8px 18px; font-weight: 700; font-size: 0.85rem; border-radius: 8px;">' +
+                  '🚀 Publicar Comunicado Oficial' +
+                '</button>' +
+              '</div>' +
+            '</form>' +
+          '</div>' +
+          '<h4 style="color: #cbd5e1; font-size: 0.88rem; margin: 0 0 12px 4px; font-weight: 700;">📋 Comunicados Publicados Anteriormente:</h4>';
+      }
+
+      // ── LISTAGEM DE COMUNICADOS ──
+      if (!annList || annList.length === 0) {
+        html +=
+          '<div style="text-align: center; padding: 40px 20px; color: #94a3b8; background: rgba(15, 23, 42, 0.4); border-radius: 14px; border: 1px dashed rgba(255, 255, 255, 0.08);">' +
+            '<span style="font-size: 2rem; display: block; margin-bottom: 8px;">📢</span>' +
+            '<strong style="color: #f8fafc; font-size: 1rem;">Nenhum comunicado no momento</strong><br>' +
+            '<span style="font-size: 0.85rem;">' + (ctx.isAdmin ? 'Use o formulário acima para publicar notícias e melhorias para os cantores.' : 'Quando o desenvolvedor publicar avisos importantes ou novidades, você poderá consultar aqui.') + '</span>' +
           '</div>';
-      });
+      } else {
+        html += '<div style="display: flex; flex-direction: column; gap: 12px;">';
+        annList.forEach(function (a) {
+          var isRead = readIds.indexOf(a.id) !== -1;
+          var dateStr = a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recente';
+          var isDirect = a.target && a.target !== 'all' && a.target !== 'todos';
+
+          var tagTarget = isDirect
+            ? '<span class="sc-ann-tag sc-ann-tag-direct">🎯 ' + (ctx.isAdmin ? 'Para: ' + self.escapeHtml(a.target) : 'Direcionado para Você') + '</span>'
+            : '<span class="sc-ann-tag sc-ann-tag-broadcast">📢 Todos os Cantores</span>';
+
+          var typeTag = '<span class="sc-ann-tag sc-ann-tag-default">ℹ️ Informação Geral</span>';
+          if (a.type === 'update') typeTag = '<span class="sc-ann-tag" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">🚀 Atualização de Versão</span>';
+          if (a.type === 'feature' || a.type === 'promo') typeTag = '<span class="sc-ann-tag" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">🎉 Novidade / Benefício</span>';
+          if (a.type === 'alert') typeTag = '<span class="sc-ann-tag" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">⚠️ Alerta do Sistema</span>';
+
+          var actionBtn = '';
+          if (ctx.isAdmin) {
+            actionBtn = '<button type="button" class="btn btn-outline btn-xs btn-del-ann" data-id="' + self.escapeHtml(a.id) + '" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4); padding: 3px 8px; font-size: 0.72rem; border-radius: 6px;" title="Excluir este comunicado">🗑️ Excluir</button>';
+          } else {
+            actionBtn = isRead
+              ? '<span style="color: #64748b; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">✓ Visualizado</span>'
+              : '<button type="button" class="btn btn-outline btn-xs btn-read-ann" data-id="' + self.escapeHtml(a.id) + '" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">✓ Marcar como Lido</button>';
+          }
+
+          html +=
+            '<div class="sc-ann-card ' + (!isRead && !ctx.isAdmin ? 'is-unread' : '') + '">' +
+              '<div class="sc-ann-header">' +
+                '<div class="sc-ann-tags">' +
+                  typeTag +
+                  tagTarget +
+                '</div>' +
+                '<div style="display: flex; align-items: center; gap: 10px;">' +
+                  '<span style="color: #64748b; font-size: 0.78rem;">' + dateStr + '</span>' +
+                  actionBtn +
+                '</div>' +
+              '</div>' +
+              '<h4 class="sc-ann-title">' + self.escapeHtml(a.title || 'Sem título') + '</h4>' +
+              '<div class="sc-ann-body" style="white-space: pre-wrap; line-height: 1.5;">' + self.escapeHtml(a.message || '') + '</div>' +
+            '</div>';
+        });
+        html += '</div>';
+      }
 
       container.innerHTML = html;
 
-      // Eventos de clique para marcar como lido
+      // Evento de Publicação do Admin
+      var btnPub = document.getElementById('btnAdminPublishAnn');
+      if (btnPub) {
+        btnPub.addEventListener('click', function () {
+          var type = document.getElementById('admAnnType').value;
+          var target = document.getElementById('admAnnTarget').value;
+          var title = (document.getElementById('admAnnTitle').value || '').trim();
+          var msg = (document.getElementById('admAnnMessage').value || '').trim();
+
+          if (!title || !msg) {
+            if (window.showToast) window.showToast('Preencha o título e a mensagem do comunicado.', 'warning');
+            return;
+          }
+
+          btnPub.disabled = true;
+          btnPub.innerHTML = 'Publicando...';
+
+          var newAnn = {
+            id: 'ann-' + Date.now(),
+            type: type,
+            target: target,
+            title: title,
+            message: msg,
+            created_at: new Date().toISOString()
+          };
+
+          self.publishAnnouncementToCloud(newAnn, function () {
+            btnPub.disabled = false;
+            btnPub.innerHTML = '🚀 Publicar Comunicado Oficial';
+            self.renderAnnouncements();
+            if (window.showToast) window.showToast('📢 Comunicado publicado com sucesso para ' + (target === 'all' ? 'todos os cantores' : target) + '!', 'success');
+          });
+        });
+      }
+
+      // Eventos de Exclusão do Admin
+      container.querySelectorAll('.btn-del-ann').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = this.getAttribute('data-id');
+          if (confirm('Deseja realmente excluir este comunicado?')) {
+            self.deleteAnnouncement(id, function () {
+              self.renderAnnouncements();
+              if (window.showToast) window.showToast('Comunicado excluído.', 'info');
+            });
+          }
+        });
+      });
+
+      // Eventos de Marcar como Lido pelo Cantor
       container.querySelectorAll('.btn-read-ann').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -871,11 +1057,13 @@
       });
     },
 
-    // ── RENDERIZAÇÃO DO CHAT INTERATIVO (ABA 2) ──
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 💬 ABA 2: ATENDIMENTO & CHAT INTERATIVO (BIDIRECIONAL)
+    // ═══════════════════════════════════════════════════════════════════════════
     renderChatLayout: function () {
       var sidebarList = document.getElementById('scChatTicketsList');
       var mainArea = document.getElementById('scChatMainArea');
-      var chatLayout = document.getElementById('scChatLayout');
+      var chatLayout = document.getElementById('scPaneChat');
       if (!sidebarList || !mainArea) return;
 
       var ctx = this.getCurrentUserContext();
@@ -883,63 +1071,92 @@
       var readMsgIds = this.getReadSupportMessageIds();
       var self = this;
 
-      // ── BARRA DE FILTRO ADMIN (TODOS OS CANTORES VS MEUS) ──
-      var adminFilterContainer = document.getElementById('scAdminFilterBar');
-      if (ctx.isAdmin) {
-        var sidebarHeader = document.querySelector('.sc-chat-sidebar-header');
-        if (sidebarHeader && !adminFilterContainer) {
-          adminFilterContainer = document.createElement('div');
-          adminFilterContainer.id = 'scAdminFilterBar';
-          adminFilterContainer.style.display = 'flex';
-          adminFilterContainer.style.gap = '6px';
-          adminFilterContainer.style.marginTop = '4px';
-          sidebarHeader.appendChild(adminFilterContainer);
-        }
+      // ── ATUALIZA CABEÇALHO DA SIDEBAR DE ACORDO COM O PAPEL (DEV VS. CANTOR) ──
+      var sidebarHeader = document.querySelector('.sc-chat-sidebar-header');
+      if (sidebarHeader) {
+        if (ctx.isAdmin) {
+          // Desenvolvedor: Barra de Busca e Filtros de Status
+          var pendingCount = tickets.filter(function(t) { return t.status !== 'resolved'; }).length;
+          sidebarHeader.innerHTML =
+            '<div style="margin-bottom: 8px;">' +
+              '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
+                '<strong style="color: #f8fafc; font-size: 0.85rem;">👥 Atendimentos aos Cantores</strong>' +
+                '<span style="background: ' + (pendingCount > 0 ? 'rgba(251, 191, 36, 0.2)' : 'rgba(52, 211, 153, 0.2)') + '; color: ' + (pendingCount > 0 ? '#fbbf24' : '#34d399') + '; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: 700;">' + pendingCount + ' pendente' + (pendingCount !== 1 ? 's' : '') + '</span>' +
+              '</div>' +
+              '<input type="text" id="scAdminTicketSearch" class="form-control" placeholder="🔍 Buscar por cantor, email..." value="' + self.escapeHtml(self.state.adminSearchQuery) + '" style="width: 100%; border-radius: 6px; font-size: 0.76rem; padding: 4px 8px; margin-bottom: 6px;">' +
+              '<div style="display: flex; gap: 4px;">' +
+                '<button type="button" class="btn btn-xs ' + (self.state.adminTicketFilter === 'all' ? 'btn-primary' : 'btn-outline') + '" id="btnFilterTkAll" style="flex: 1; font-size: 0.7rem; padding: 3px 4px;">Todos (' + tickets.length + ')</button>' +
+                '<button type="button" class="btn btn-xs ' + (self.state.adminTicketFilter === 'open' ? 'btn-primary' : 'btn-outline') + '" id="btnFilterTkOpen" style="flex: 1; font-size: 0.7rem; padding: 3px 4px; color: #fbbf24;">🟡 Abertos (' + pendingCount + ')</button>' +
+                '<button type="button" class="btn btn-xs ' + (self.state.adminTicketFilter === 'resolved' ? 'btn-primary' : 'btn-outline') + '" id="btnFilterTkResolved" style="flex: 1; font-size: 0.7rem; padding: 3px 4px; color: #34d399;">🟢 Resolvidos</button>' +
+              '</div>' +
+            '</div>';
 
-        if (adminFilterContainer) {
-          adminFilterContainer.innerHTML =
-            '<button type="button" class="btn btn-xs ' + (self.state.adminViewMode !== 'my_only' ? 'btn-primary' : 'btn-outline') + '" id="btnAdminViewAll" style="flex: 1; font-size: 0.72rem; padding: 4px 6px;">🌐 Todos os Cantores</button>' +
-            '<button type="button" class="btn btn-xs ' + (self.state.adminViewMode === 'my_only' ? 'btn-primary' : 'btn-outline') + '" id="btnAdminViewMine" style="flex: 1; font-size: 0.72rem; padding: 4px 6px;">👤 Meus Chamados</button>';
-
-          var bAll = document.getElementById('btnAdminViewAll');
-          var bMine = document.getElementById('btnAdminViewMine');
-          if (bAll) {
-            bAll.addEventListener('click', function () {
-              self.state.adminViewMode = 'all';
+          var searchInput = document.getElementById('scAdminTicketSearch');
+          if (searchInput) {
+            searchInput.addEventListener('input', function () {
+              self.state.adminSearchQuery = this.value;
               self.renderChatLayout();
             });
           }
-          if (bMine) {
-            bMine.addEventListener('click', function () {
-              self.state.adminViewMode = 'my_only';
+
+          var bAll = document.getElementById('btnFilterTkAll');
+          var bOpen = document.getElementById('btnFilterTkOpen');
+          var bRes = document.getElementById('btnFilterTkResolved');
+          if (bAll) bAll.addEventListener('click', function() { self.state.adminTicketFilter = 'all'; self.renderChatLayout(); });
+          if (bOpen) bOpen.addEventListener('click', function() { self.state.adminTicketFilter = 'open'; self.renderChatLayout(); });
+          if (bRes) bRes.addEventListener('click', function() { self.state.adminTicketFilter = 'resolved'; self.renderChatLayout(); });
+        } else {
+          // Cantor: Botão em destaque para abrir nova conversa
+          sidebarHeader.innerHTML =
+            '<button type="button" id="btnNewChatTicket" class="btn-new-chat-ticket" style="width: 100%; justify-content: center; font-weight: 700; padding: 10px; border-radius: 8px;">' +
+              '<span>➕</span> Falar com o Desenvolvedor' +
+            '</button>';
+
+          var btnNew = document.getElementById('btnNewChatTicket');
+          if (btnNew) {
+            btnNew.addEventListener('click', function () {
+              self.state.activeTicketId = null;
+              self.state.isNewConversationMode = true;
               self.renderChatLayout();
             });
           }
         }
-      } else if (adminFilterContainer) {
-        adminFilterContainer.remove();
       }
 
-      // Auto-seleciona o primeiro ticket APENAS se nenhum estiver ativo
-      // e o usuário NÃO clicou explicitamente em "+ Nova Conversa"
-      if (!this.state.activeTicketId && tickets.length > 0 && !this.state.isNewConversationMode) {
-        this.state.activeTicketId = tickets[0].id;
+      // Aplica filtros de busca e status para o Desenvolvedor
+      var filteredTickets = tickets.filter(function (t) {
+        if (!ctx.isAdmin) return true;
+        if (self.state.adminTicketFilter === 'open' && t.status === 'resolved') return false;
+        if (self.state.adminTicketFilter === 'resolved' && t.status !== 'resolved') return false;
+        if (self.state.adminSearchQuery) {
+          var q = self.state.adminSearchQuery.toLowerCase();
+          var matchName = t.user_name && t.user_name.toLowerCase().indexOf(q) !== -1;
+          var matchEmail = t.user_email && t.user_email.toLowerCase().indexOf(q) !== -1;
+          var matchTitle = t.title && t.title.toLowerCase().indexOf(q) !== -1;
+          if (!matchName && !matchEmail && !matchTitle) return false;
+        }
+        return true;
+      });
+
+      // Auto-seleciona o primeiro ticket se nenhum estiver selecionado e o usuário NÃO clicou em novo chamado
+      if (!this.state.activeTicketId && filteredTickets.length > 0 && !this.state.isNewConversationMode) {
+        this.state.activeTicketId = filteredTickets[0].id;
       }
 
-      // Renderiza itens da sidebar de chamados
-      if (tickets.length === 0) {
+      // ── RENDERIZAÇÃO DA SIDEBAR DE TICKETS ──
+      if (filteredTickets.length === 0) {
         sidebarList.innerHTML =
           '<div style="padding: 24px 16px; text-align: center; color: #94a3b8; font-size: 0.82rem;">' +
-            'Nenhuma conversa encontrada.<br>' +
-            (ctx.isAdmin ? 'O sistema sincroniza automaticamente a cada 30s.' : 'Clique em <strong>"+ Iniciar Nova Conversa"</strong> acima para falar com a equipe.') +
+            (ctx.isAdmin
+              ? 'Nenhum atendimento encontrado com este filtro.<br><small style="color: #64748b;">Sincronizado com a nuvem.</small>'
+              : 'Nenhum chamado aberto ainda.<br>Clique em <strong>"+ Falar com o Desenvolvedor"</strong> acima para tirar dúvidas ou solicitar melhorias.') +
           '</div>';
       } else {
         var sidebarHtml = '';
-        tickets.forEach(function (t) {
-          var isActive = t.id === self.state.activeTicketId;
+        filteredTickets.forEach(function (t) {
+          var isActive = t.id === self.state.activeTicketId && !self.state.isNewConversationMode;
           var lastMsg = (t.messages && t.messages.length > 0) ? t.messages[t.messages.length - 1] : null;
 
-          // Verifica mensagens não lidas
           var hasUnread = false;
           if (t.messages) {
             t.messages.forEach(function (m) {
@@ -957,29 +1174,39 @@
             statusText = '🟢 Resolvido';
           } else if (hasUnread) {
             statusClass = 'status-answered';
-            statusText = ctx.isAdmin ? '🔵 Nova Msg Cantor' : '🔵 Nova Resposta';
+            statusText = ctx.isAdmin ? '🔵 Nova Msg Cantor' : '🔵 Resposta do Dev';
           }
 
           var timeStr = self.formatRelativeTime((lastMsg && lastMsg.created_at) ? lastMsg.created_at : t.created_at);
 
-          var singerBadge = (ctx.isAdmin && t.user_email)
-            ? '<div style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">👤 ' + self.escapeHtml(t.user_name || 'Cantor') + ' &lt;' + self.escapeHtml(t.user_email) + '&gt;</div>'
+          var headerCardHtml = (ctx.isAdmin && t.user_email)
+            ? '<div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">' +
+                '<span style="font-size: 0.9rem;">🎤</span>' +
+                '<strong style="color: #38bdf8; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + self.escapeHtml(t.user_name || 'Cantor') + '</strong>' +
+                '<span style="color: #64748b; font-size: 0.68rem; margin-left: auto;">' + timeStr + '</span>' +
+              '</div>'
+            : '<div class="sc-ticket-item-top">' +
+                '<span class="sc-ticket-status-pill ' + statusClass + '">' + statusText + '</span>' +
+                '<span class="sc-ticket-item-time">' + timeStr + '</span>' +
+              '</div>';
+
+          var subSingerBadge = (ctx.isAdmin && t.user_email)
+            ? '<div style="font-size: 0.7rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;">&lt;' + self.escapeHtml(t.user_email) + '&gt;</div>'
             : '';
 
           sidebarHtml +=
             '<div class="sc-chat-ticket-item ' + (isActive ? 'active' : '') + '" data-id="' + self.escapeHtml(t.id) + '">' +
-              '<div class="sc-ticket-item-top">' +
-                '<span class="sc-ticket-status-pill ' + statusClass + '">' + statusText + '</span>' +
-                '<span class="sc-ticket-item-time">' + timeStr + '</span>' +
-              '</div>' +
-              singerBadge +
-              '<div class="sc-ticket-item-title">' + self.escapeHtml(t.title || 'Conversa') + '</div>' +
-              '<div class="sc-ticket-item-preview">' + (lastMsg ? self.escapeHtml(lastMsg.text) : 'Sem mensagens') + '</div>' +
+              headerCardHtml +
+              subSingerBadge +
+              '<div class="sc-ticket-item-title" style="font-weight: 700; color: #f8fafc; font-size: 0.82rem;">' + self.escapeHtml(t.title || 'Conversa') + '</div>' +
+              '<div class="sc-ticket-item-preview" style="color: #94a3b8; font-size: 0.74rem;">' + (lastMsg ? self.escapeHtml(lastMsg.text) : 'Sem mensagens') + '</div>' +
+              (ctx.isAdmin
+                ? '<div style="margin-top: 4px;"><span class="sc-ticket-status-pill ' + statusClass + '" style="font-size: 0.65rem; padding: 1px 6px;">' + statusText + '</span></div>'
+                : '') +
             '</div>';
         });
         sidebarList.innerHTML = sidebarHtml;
 
-        // Seleção de ticket ao clicar
         sidebarList.querySelectorAll('.sc-chat-ticket-item').forEach(function (el) {
           el.addEventListener('click', function () {
             var tid = this.getAttribute('data-id');
@@ -988,16 +1215,26 @@
         });
       }
 
-      // Renderiza a thread ativa na área principal
-      if (!this.state.activeTicketId || tickets.length === 0) {
+      // ── RENDERIZAÇÃO DA ÁREA PRINCIPAL (THREAD OU FORMULÁRIO DE NOVO CHAMADO) ──
+      if (this.state.isNewConversationMode || (!this.state.activeTicketId && !ctx.isAdmin)) {
         if (chatLayout) chatLayout.classList.remove('thread-open');
         this.renderNewTicketForm(mainArea);
-      } else {
+      } else if (this.state.activeTicketId) {
         var activeTicket = tickets.find(function (x) { return x.id === self.state.activeTicketId; });
         if (activeTicket) {
           if (chatLayout) chatLayout.classList.add('thread-open');
           this.markTicketMessagesAsRead(activeTicket);
           this.renderThreadView(mainArea, activeTicket);
+        } else {
+          if (ctx.isAdmin) {
+            mainArea.innerHTML = '<div style="padding: 60px 20px; text-align: center; color: #94a3b8;"><span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">💬</span>Selecione uma conversa ao lado para responder ao cantor.</div>';
+          } else {
+            this.renderNewTicketForm(mainArea);
+          }
+        }
+      } else {
+        if (ctx.isAdmin) {
+          mainArea.innerHTML = '<div style="padding: 60px 20px; text-align: center; color: #94a3b8;"><span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">💬</span>Selecione um cantor ao lado para visualizar o atendimento.</div>';
         } else {
           this.renderNewTicketForm(mainArea);
         }
@@ -1006,10 +1243,11 @@
 
     selectTicket: function (ticketId) {
       this.state.activeTicketId = ticketId;
-      this.state.isNewConversationMode = false; // usuário selecionou um ticket existente
+      this.state.isNewConversationMode = false;
       this.renderChatLayout();
     },
 
+    // ── THREAD DE MENSAGENS INTERATIVA ──
     renderThreadView: function (container, ticket) {
       var self = this;
       var ctx = this.getCurrentUserContext();
@@ -1018,8 +1256,8 @@
         'problema': '🐛 Bug / Problema',
         'sugestao': '💡 Sugestão',
         'cifra': '🎵 Cifra / Tom',
-        'faturamento': '💳 Assinatura',
-        'outro': '📩 Outro'
+        'faturamento': '💳 Assinatura / Pagamento',
+        'outro': '📩 Atendimento'
       };
 
       var isResolved = ticket.status === 'resolved';
@@ -1029,57 +1267,57 @@
         : '';
 
       var headerHtml =
-        '<div class="sc-thread-header">' +
+        '<div class="sc-thread-header" style="background: rgba(15, 23, 42, 0.7); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 14px 18px;">' +
           '<div class="sc-thread-title-area">' +
             '<button type="button" class="sc-btn-back-sidebar" id="btnBackToTicketsList" title="Voltar à lista">←</button>' +
             '<div>' +
               '<div style="display: flex; align-items: center; gap: 8px;">' +
-                '<h4 class="sc-thread-title">' + self.escapeHtml(ticket.title || 'Chamado de Atendimento') + '</h4>' +
+                '<h4 class="sc-thread-title" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #f8fafc;">' + self.escapeHtml(ticket.title || 'Atendimento') + '</h4>' +
                 '<span class="sc-ticket-status-pill ' + (isResolved ? 'status-resolved' : 'status-open') + '">' +
                   (isResolved ? '🟢 Resolvido' : '🟡 Em Aberto') +
                 '</span>' +
               '</div>' +
-              '<div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">' +
-                (catLabels[ticket.category] || '📩 Atendimento') + ' • Chamado #' + self.escapeHtml(ticket.id.slice(-6)) +
+              '<div style="font-size: 0.75rem; color: #94a3b8; margin-top: 3px;">' +
+                (catLabels[ticket.category] || '📩 Atendimento') + ' • Chamado #' + self.escapeHtml(String(ticket.id).slice(-6)) +
                 singerDetail +
               '</div>' +
             '</div>' +
           '</div>' +
           '<div class="sc-thread-actions">' +
             (!isResolved
-              ? '<button type="button" id="btnMarkTicketResolved" class="btn btn-outline btn-xs" style="color: #34d399; border-color: rgba(52, 211, 153, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 4px 10px;">✅ Marcar Resolvido</button>'
-              : '<button type="button" id="btnReopenTicket" class="btn btn-outline btn-xs" style="color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 4px 10px;">🔄 Reabrir Conversa</button>') +
+              ? '<button type="button" id="btnMarkTicketResolved" class="btn btn-outline btn-xs" style="color: #34d399; border-color: rgba(52, 211, 153, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 5px 12px; cursor: pointer;">✅ Marcar Resolvido</button>'
+              : '<button type="button" id="btnReopenTicket" class="btn btn-outline btn-xs" style="color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 5px 12px; cursor: pointer;">🔄 Reabrir Atendimento</button>') +
           '</div>' +
         '</div>';
 
       // Feed de Mensagens
       var messagesFeedHtml = '<div class="sc-thread-messages-feed" id="scChatMessagesFeed">';
       ticket.messages.forEach(function (msg) {
-        var isUserMsg = msg.sender === 'user';
-        var isOwnMessage = isUserMsg ? (!ctx.isAdmin || ticket.user_email === ctx.email) : (ctx.isAdmin && ticket.user_email !== ctx.email);
+        var isSenderUser = msg.sender === 'user';
+        var isOwnMessage = ctx.isAdmin ? !isSenderUser : isSenderUser;
 
-        var senderName = msg.sender_name || (isUserMsg ? (ticket.user_name || 'Cantor') : 'Equipe CantaAí');
-        var avatarInitial = isUserMsg ? (senderName ? senderName.charAt(0).toUpperCase() : '🎤') : '⭐';
+        var senderName = msg.sender_name || (isSenderUser ? (ticket.user_name || 'Cantor') : 'Leonardo Vitulli (Desenvolvedor)');
+        var avatarInitial = isSenderUser ? (senderName ? senderName.charAt(0).toUpperCase() : '🎤') : '👨‍💻';
         var timeStr = self.formatRelativeTime(msg.created_at);
 
         var photoHtml = '';
         if (msg.image_url) {
           photoHtml =
-            '<div class="chat-bubble-attachment">' +
-              '<img src="' + msg.image_url + '" class="chat-attachment-img ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Anexo do chamado" title="Clique para ampliar">' +
+            '<div class="chat-bubble-attachment" style="margin-top: 8px;">' +
+              '<img src="' + msg.image_url + '" class="chat-attachment-img ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Anexo do chamado" title="Clique para ampliar em tela cheia" style="max-height: 180px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15);">' +
             '</div>';
         }
 
         messagesFeedHtml +=
           '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '">' +
-            '<div class="chat-bubble-avatar ' + (isUserMsg ? 'avatar-user' : 'avatar-support') + '">' + avatarInitial + '</div>' +
+            '<div class="chat-bubble-avatar ' + (isSenderUser ? 'avatar-user' : 'avatar-support') + '">' + avatarInitial + '</div>' +
             '<div class="chat-bubble-body">' +
               '<div class="chat-bubble-meta">' +
                 '<span class="chat-bubble-sender">' + self.escapeHtml(senderName) + '</span>' +
-                (!isUserMsg ? '<span class="chat-bubble-badge-staff">Suporte Oficial</span>' : '') +
+                (!isSenderUser ? '<span class="chat-bubble-badge-staff" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Desenvolvedor</span>' : '') +
                 '<span>• ' + timeStr + '</span>' +
               '</div>' +
-              '<div class="chat-bubble-box">' +
+              '<div class="chat-bubble-box" style="white-space: pre-wrap; line-height: 1.45;">' +
                 self.escapeHtml(msg.text || '') +
                 photoHtml +
               '</div>' +
@@ -1089,16 +1327,16 @@
       messagesFeedHtml += '</div>';
 
       // Barra de Composição / Envio
-      var placeholderText = (ctx.isAdmin && ticket.user_email !== ctx.email)
-        ? 'Responder como Equipe CantaAí para ' + self.escapeHtml(ticket.user_name || 'o cantor') + '...'
-        : 'Digite sua mensagem para a equipe... (Enter para enviar)';
+      var placeholderText = ctx.isAdmin
+        ? 'Responder como Leonardo Vitulli para ' + self.escapeHtml(ticket.user_name || 'o cantor') + '... (Enter para enviar)'
+        : 'Digite sua mensagem para o desenvolvedor... (Enter para enviar)';
 
       var composerHtml =
         '<div class="sc-chat-composer">' +
-          '<div id="scComposerPreviewRow" class="sc-composer-attachment-preview hidden">' +
-            '<img id="scComposerPreviewImg" class="sc-composer-attachment-img" src="" alt="Preview">' +
-            '<span style="font-size: 0.75rem; color: #38bdf8;">Foto anexada</span>' +
-            '<button type="button" id="btnRemoveComposerImg" style="background: transparent; border: none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 2px 6px;">✕</button>' +
+          '<div id="scComposerPreviewRow" class="sc-composer-attachment-preview hidden" style="padding: 6px 12px; background: rgba(56, 189, 248, 0.08); border-top: 1px solid rgba(56, 189, 248, 0.2); display: flex; align-items: center; gap: 8px;">' +
+            '<img id="scComposerPreviewImg" class="sc-composer-attachment-img" src="" alt="Preview" style="height: 36px; border-radius: 4px;">' +
+            '<span style="font-size: 0.75rem; color: #38bdf8; font-weight: 600;">Print anexado pronto para envio</span>' +
+            '<button type="button" id="btnRemoveComposerImg" style="background: transparent; border: none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 2px 6px; margin-left: auto;">✕ Remover</button>' +
           '</div>' +
           '<div class="sc-composer-input-row">' +
             '<input type="file" id="scChatFileInput" accept="image/*" style="display: none;">' +
@@ -1110,7 +1348,6 @@
 
       container.innerHTML = headerHtml + messagesFeedHtml + composerHtml;
 
-      // Scroll para o fim das mensagens
       var feed = document.getElementById('scChatMessagesFeed');
       if (feed) feed.scrollTop = feed.scrollHeight;
 
@@ -1118,7 +1355,7 @@
       var btnBack = document.getElementById('btnBackToTicketsList');
       if (btnBack) {
         btnBack.addEventListener('click', function () {
-          var chatLayout = document.getElementById('scChatLayout');
+          var chatLayout = document.getElementById('scPaneChat');
           if (chatLayout) chatLayout.classList.remove('thread-open');
         });
       }
@@ -1127,10 +1364,11 @@
       if (btnResolve) {
         btnResolve.addEventListener('click', function () {
           ticket.status = 'resolved';
+          ticket.updated_at = new Date().toISOString();
           self.saveAllTickets([ticket]);
           self.syncTicketToCloud(ticket);
           self.renderChatLayout();
-          if (window.showToast) window.showToast('Conversa marcada como resolvida!', 'success');
+          if (window.showToast) window.showToast('Atendimento marcado como resolvido!', 'success');
         });
       }
 
@@ -1138,10 +1376,11 @@
       if (btnReopen) {
         btnReopen.addEventListener('click', function () {
           ticket.status = 'open';
+          ticket.updated_at = new Date().toISOString();
           self.saveAllTickets([ticket]);
           self.syncTicketToCloud(ticket);
           self.renderChatLayout();
-          if (window.showToast) window.showToast('Conversa reaberta com sucesso.', 'info');
+          if (window.showToast) window.showToast('Atendimento reaberto com sucesso.', 'info');
         });
       }
 
@@ -1189,31 +1428,30 @@
         var img = self.state.draftImageBase64 || '';
 
         if (!text && !img) {
-          if (window.showToast) window.showToast('Digite uma mensagem ou anexe uma foto antes de enviar.', 'warning');
+          if (window.showToast) window.showToast('Digite uma mensagem ou anexe um print antes de enviar.', 'warning');
           return;
         }
 
-        var isTicketFromOtherUser = ticket.user_email && ctx.email && ticket.user_email.toLowerCase() !== ctx.email.toLowerCase();
-        var isSenderStaff = ctx.isAdmin && isTicketFromOtherUser;
+        var isSenderStaff = ctx.isAdmin;
+        var nowIso = new Date().toISOString();
 
         var newMsg = {
           id: 'msg-' + Date.now(),
           sender: isSenderStaff ? 'support' : 'user',
-          sender_name: isSenderStaff ? 'Equipe CantaAí' : (ctx.name || 'Cantor'),
+          sender_name: isSenderStaff ? 'Leonardo Vitulli (Desenvolvedor)' : (ctx.name || 'Cantor'),
           text: text,
           image_url: img,
-          created_at: new Date().toISOString()
+          created_at: nowIso
         };
 
         ticket.messages.push(newMsg);
         if (isSenderStaff) {
-          ticket.reply = text;
-          ticket.replied_at = newMsg.created_at;
+          ticket.admin_response = text;
           ticket.status = 'resolved';
         } else {
           ticket.status = 'open';
         }
-        ticket.updated_at = new Date().toISOString();
+        ticket.updated_at = nowIso;
 
         self.saveAllTickets([ticket]);
         self.syncTicketToCloud(ticket);
@@ -1225,7 +1463,9 @@
 
         self.renderChatLayout();
 
-        if (window.showToast) window.showToast(isSenderStaff ? 'Resposta enviada para o cantor!' : 'Mensagem enviada para o suporte!', 'success');
+        if (window.showToast) {
+          window.showToast(isSenderStaff ? 'Resposta enviada com sucesso para o cantor!' : 'Mensagem enviada com sucesso para o desenvolvedor!', 'success');
+        }
       };
 
       if (btnSend) btnSend.addEventListener('click', doSendMessage);
@@ -1253,44 +1493,44 @@
       });
     },
 
-    // ── VISTA DE NOVO CHAMADO / NOVA CONVERSA ──
+    // ── VISTA DE NOVO ATENDIMENTO / NOVA CONVERSA DO CLIENTE ──
     renderNewTicketForm: function (container) {
       var self = this;
       self.state.newTicketImageBase64 = '';
 
       var formHtml =
-        '<div class="sc-new-ticket-view">' +
-          '<div class="sc-new-ticket-header">' +
-            '<h3 class="sc-new-ticket-title">💬 Iniciar Nova Conversa com o Suporte</h3>' +
-            '<p class="sc-new-ticket-sub">Nossa equipe responderá diretamente aqui. Você poderá trocar mensagens, tirar dúvidas e anexar fotos.</p>' +
+        '<div class="sc-new-ticket-view" style="padding: 24px; max-width: 600px; margin: 0 auto;">' +
+          '<div class="sc-new-ticket-header" style="margin-bottom: 20px; text-align: center;">' +
+            '<h3 class="sc-new-ticket-title" style="font-size: 1.25rem; font-weight: 800; color: #f8fafc; font-family: \'Bricolage Grotesque\', sans-serif;">💬 Falar Diretamente com o Desenvolvedor</h3>' +
+            '<p class="sc-new-ticket-sub" style="font-size: 0.84rem; color: #94a3b8; margin-top: 6px;">Tire dúvidas, envie sugestões de melhorias ou relate problemas. Responderemos diretamente nesta tela.</p>' +
           '</div>' +
           '<form id="scFormNewTicket" onsubmit="return false;">' +
             '<div class="form-group" style="margin-bottom: 14px;">' +
-              '<label for="scNewTicketCategory" style="display: block; font-size: 0.82rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Categoria da Solicitação:</label>' +
+              '<label for="scNewTicketCategory" style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Categoria:</label>' +
               '<select id="scNewTicketCategory" class="form-control" style="width: 100%; border-radius: 8px;">' +
                 '<option value="duvida">❓ Dúvida sobre o Aplicativo</option>' +
                 '<option value="sugestao">💡 Sugestão de Melhoria ou Ideia</option>' +
                 '<option value="problema">🐛 Relatar Problema / Bug</option>' +
-                '<option value="faturamento">💳 Assinatura, Pagamentos & Pix</option>' +
                 '<option value="cifra">🎵 Dúvida sobre Cifra ou Transposição</option>' +
+                '<option value="faturamento">💳 Assinatura, Pagamentos & Pix</option>' +
                 '<option value="outro">📩 Outro Assunto</option>' +
               '</select>' +
             '</div>' +
             '<div class="form-group" style="margin-bottom: 14px;">' +
-              '<label for="scNewTicketTitle" style="display: block; font-size: 0.82rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Assunto:</label>' +
-              '<input type="text" id="scNewTicketTitle" class="form-control" placeholder="Ex: Dúvida sobre o plano PRO ou problema ao importar repertório" style="width: 100%; border-radius: 8px;" required>' +
+              '<label for="scNewTicketTitle" style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Assunto:</label>' +
+              '<input type="text" id="scNewTicketTitle" class="form-control" placeholder="Ex: Sugestão para o modo escuro ou ajuda para transpor tom" style="width: 100%; border-radius: 8px;" required>' +
             '</div>' +
             '<div class="form-group" style="margin-bottom: 14px;">' +
-              '<label for="scNewTicketDesc" style="display: block; font-size: 0.82rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Mensagem Inicial:</label>' +
-              '<textarea id="scNewTicketDesc" class="form-control" rows="4" placeholder="Explique com detalhes o que você precisa..." style="width: 100%; border-radius: 8px;" required></textarea>' +
+              '<label for="scNewTicketDesc" style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Sua Mensagem:</label>' +
+              '<textarea id="scNewTicketDesc" class="form-control" rows="4" placeholder="Explique com detalhes a sua dúvida ou ideia..." style="width: 100%; border-radius: 8px;" required></textarea>' +
             '</div>' +
             '<div class="form-group" style="margin-bottom: 18px;">' +
-              '<label style="display: block; font-size: 0.82rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Anexar Print ou Foto da Tela (Opcional):</label>' +
+              '<label style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Anexar Print ou Foto da Tela (Opcional):</label>' +
               '<div id="scNewDropZone" style="border: 2px dashed rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 14px; text-align: center; background: rgba(56, 189, 248, 0.04); cursor: pointer;">' +
                 '<input type="file" id="scNewFileInput" accept="image/*" style="display: none;">' +
                 '<div id="scNewUploadPrompt">' +
                   '<span style="font-size: 1.5rem;">📸</span>' +
-                  '<div style="font-size: 0.84rem; font-weight: 700; color: #38bdf8; margin-top: 4px;">Toque para selecionar imagem ou print</div>' +
+                  '<div style="font-size: 0.84rem; font-weight: 700; color: #38bdf8; margin-top: 4px;">Toque para anexar imagem ou print</div>' +
                   '<small style="color: #64748b; font-size: 0.74rem;">Formatos: JPG, PNG, WEBP</small>' +
                 '</div>' +
                 '<div id="scNewPreviewContainer" class="hidden" style="margin-top: 8px; position: relative;">' +
@@ -1300,14 +1540,13 @@
               '</div>' +
             '</div>' +
             '<button type="button" id="btnSubmitNewTicket" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 800; border-radius: 10px; font-size: 0.95rem;">' +
-              '🚀 Iniciar Conversa com a Equipe' +
+              '🚀 Enviar Mensagem para o Desenvolvedor' +
             '</button>' +
           '</form>' +
         '</div>';
 
       container.innerHTML = formHtml;
 
-      // Manipulação de Arquivo / Foto
       var dropZone = document.getElementById('scNewDropZone');
       var fileInput = document.getElementById('scNewFileInput');
       var promptBox = document.getElementById('scNewUploadPrompt');
@@ -1346,7 +1585,6 @@
         });
       }
 
-      // Envio do formulário
       var btnSubmit = document.getElementById('btnSubmitNewTicket');
       if (btnSubmit) {
         btnSubmit.addEventListener('click', function () {
@@ -1355,7 +1593,7 @@
           var desc = (document.getElementById('scNewTicketDesc').value || '').trim();
 
           if (!title || !desc) {
-            if (window.showToast) window.showToast('Preencha o assunto e a mensagem inicial.', 'warning');
+            if (window.showToast) window.showToast('Por favor, informe o assunto e a mensagem inicial.', 'warning');
             return;
           }
 
@@ -1367,7 +1605,7 @@
             id: ticketId,
             user_id: ctx.user ? ctx.user.id : null,
             user_email: ctx.email || 'cantor@cantaaipro.com',
-            user_name: ctx.name || 'Cantor CantaAí',
+            user_name: ctx.name || 'Cantor',
             category: category,
             title: title,
             description: desc,
@@ -1391,19 +1629,19 @@
           self.syncTicketToCloud(newTicket);
 
           self.state.activeTicketId = newTicket.id;
-          self.state.isNewConversationMode = false; // mostra a thread do novo ticket
+          self.state.isNewConversationMode = false;
           self.renderChatLayout();
 
-          if (window.showToast) window.showToast('🚀 Conversa iniciada com sucesso! Responderemos em breve.', 'success');
+          if (window.showToast) window.showToast('🚀 Mensagem enviada com sucesso! Responderemos em breve.', 'success');
         });
       }
     },
 
-    // ── INICIALIZAÇÃO E BINDINGS ──
+    // ── INICIALIZAÇÃO & BINDINGS DE EVENTOS ──
     init: function () {
       var self = this;
 
-      // Botão do Sino no Header (Abre Popover)
+      // Botão Sino no Header (abre Popover)
       var btnBell = document.getElementById('btnHeaderNotifications');
       if (btnBell) {
         btnBell.addEventListener('click', function (e) {
@@ -1412,7 +1650,7 @@
         });
       }
 
-      // Botão Notificações no menu de perfil (Abre Modal Completo)
+      // Botão Notificações no menu de perfil
       var btnProfileNotif = document.getElementById('btnProfileNotifications');
       if (btnProfileNotif) {
         btnProfileNotif.addEventListener('click', function () {
@@ -1420,24 +1658,11 @@
         });
       }
 
-      // Botão de suporte no modal de perfil
+      // Botão de suporte no menu de perfil
       var btnProfileModalSupport = document.getElementById('btnProfileModalSupport');
       if (btnProfileModalSupport) {
         btnProfileModalSupport.addEventListener('click', function () {
           self.openModal('chat');
-        });
-      }
-
-      // Botão de Sincronização Manual (legado — mantido para compatibilidade, mas o botão foi removido da UI)
-      var btnSync = document.getElementById('btnSyncNotificationsCenter');
-      if (btnSync) {
-        btnSync.addEventListener('click', function (e) {
-          e.stopPropagation();
-          self.fetchFromCloud(function (err) {
-            if (!err && window.showToast) {
-              window.showToast('Sincronizado com a nuvem!', 'success');
-            }
-          });
         });
       }
 
@@ -1482,7 +1707,7 @@
         }
       });
 
-      // Fechar modal no botão fechar ou overlay
+      // Fechar Modal
       var btnCloseModal = document.getElementById('btnCloseUserSupportModal');
       if (btnCloseModal) {
         btnCloseModal.addEventListener('click', function () {
@@ -1497,7 +1722,7 @@
         });
       }
 
-      // Navegação por abas na Central
+      // Navegação por Abas
       var tabBtnAnn = document.getElementById('scTabBtnAnnouncements');
       if (tabBtnAnn) {
         tabBtnAnn.addEventListener('click', function () {
@@ -1512,16 +1737,6 @@
         });
       }
 
-      // Botão "+ Nova Conversa" na sidebar do chat
-      var btnNewChat = document.getElementById('btnNewChatTicket');
-      if (btnNewChat) {
-        btnNewChat.addEventListener('click', function () {
-          self.state.activeTicketId = null;
-          self.state.isNewConversationMode = true; // impede o auto-select do primeiro ticket
-          self.renderChatLayout();
-        });
-      }
-
       // Fechar com Escape
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
@@ -1530,7 +1745,7 @@
         }
       });
 
-      // Sincronização entre abas (storage event)
+      // Sincronização entre Abas (Storage Event)
       window.addEventListener('storage', function (e) {
         if (
           e.key === 'canta_ai_admin_announcements' ||
@@ -1547,26 +1762,21 @@
         }
       });
 
-      // Atualização inicial de badges com dados já no localStorage (sem busca na nuvem).
-      // A sincronização com a nuvem acontece de forma lazy: ao abrir o popover ou o modal.
+      // Atualização inicial de badges
       self.updateBadges();
 
-      // Auto-polling em background: busca mensagens novas a cada 30s
-      // Garante que o admin veja msgs da Aline sem precisar clicar em nada
+      // Auto-polling em segundo plano a cada 20 segundos
       self._pollInterval = setInterval(function () {
-        // Só busca se há um usuário logado e o Supabase está configurado
         if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url &&
             window.PrompterAuth && window.PrompterAuth.getUser()) {
           self.fetchFromCloud();
         }
-      }, 30000);
+      }, 20000);
     }
   };
 
-  // Expõe globalmente
   window.NotificationsCenter = NotificationsCenter;
 
-  // Auto inicializa após carregamento do DOM
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       NotificationsCenter.init();

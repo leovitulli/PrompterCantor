@@ -3140,13 +3140,23 @@
       // Render inicial imediato com dados locais
       renderList(localList);
 
-      // Sincronizar da nuvem em segundo plano
+      // Sincronizar da nuvem em segundo plano via tabela announcements
       if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
-        var restUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&artist=eq.SYSTEM_ANNOUNCEMENT&order=id.desc';
+        var restUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/announcements?is_active=neq.false&order=created_at.desc';
+        var anon = window.SUPABASE_CONFIG.key;
+        var token = anon;
+        try {
+          var rawU = localStorage.getItem('prompter_auth_user');
+          if (rawU) {
+            var u = JSON.parse(rawU);
+            if (u && u.access_token) token = u.access_token;
+          }
+        } catch(e) {}
+
         fetch(restUrl, {
           headers: {
-            'apikey': window.SUPABASE_CONFIG.key,
-            'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key
+            'apikey': anon,
+            'Authorization': 'Bearer ' + token
           }
         }).then(function(res) {
           if (res.ok) return res.json();
@@ -3154,15 +3164,10 @@
         }).then(function(cloudRows) {
           if (Array.isArray(cloudRows) && cloudRows.length > 0) {
             var merged = [].concat(localList);
-            cloudRows.forEach(function(row) {
-              try {
-                if (row.content) {
-                  var ann = JSON.parse(row.content);
-                  if (ann && ann.id && !merged.some(function(m) { return m.id === ann.id; })) {
-                    merged.push(ann);
-                  }
-                }
-              } catch(e) {}
+            cloudRows.forEach(function(ann) {
+              if (ann && ann.id && !merged.some(function(m) { return m.id === ann.id; })) {
+                merged.push(ann);
+              }
             });
             merged.sort(function(a, b) {
               return new Date(b.created_at || 0) - new Date(a.created_at || 0);
@@ -3203,7 +3208,6 @@
         btnSend.innerHTML = '<span class="auth-btn-spinner" style="width:13px;height:13px;border-width:2px;margin-right:6px;vertical-align:middle;display:inline-block;"></span> Publicando...';
       }
 
-      // Failsafe de 6 segundos para NUNCA travar o botão
       var failsafeTimer = setTimeout(function () {
         resetSendButton();
       }, 6000);
@@ -3217,16 +3221,24 @@
         created_at: new Date().toISOString()
       };
 
-      try {
-        var raw = localStorage.getItem('canta_ai_admin_announcements');
-        var list = raw ? JSON.parse(raw) : [];
-        list.unshift(newAnn);
-        localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
-      } catch (e) {
-        console.warn('Erro ao salvar anúncio local:', e);
-      }
+      if (window.NotificationsCenter && typeof window.NotificationsCenter.publishAnnouncementToCloud === 'function') {
+        window.NotificationsCenter.publishAnnouncementToCloud(newAnn, function () {
+          clearTimeout(failsafeTimer);
+          if (titleEl) titleEl.value = '';
+          if (msgEl) msgEl.value = '';
+          resetSendButton();
+          PrompterAdmin.loadAnnouncements();
+          var targetLabel = (target === 'all') ? 'todos os cantores' : target;
+          if (window.showToast) window.showToast('📢 Comunicado publicado com sucesso para ' + targetLabel + '!', 'success');
+        });
+      } else {
+        try {
+          var raw = localStorage.getItem('canta_ai_admin_announcements');
+          var list = raw ? JSON.parse(raw) : [];
+          list.unshift(newAnn);
+          localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+        } catch (e) {}
 
-      function finalizeSuccess() {
         clearTimeout(failsafeTimer);
         if (titleEl) titleEl.value = '';
         if (msgEl) msgEl.value = '';
@@ -3234,36 +3246,6 @@
         PrompterAdmin.loadAnnouncements();
         var targetLabel = (target === 'all') ? 'todos os cantores' : target;
         if (window.showToast) window.showToast('📢 Comunicado publicado com sucesso para ' + targetLabel + '!', 'success');
-      }
-
-      // Sincronizar na nuvem (System Registry) via REST fetch nativo e seguro
-      if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
-        var restUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs';
-        var row = {
-          repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
-          title: '📢 COMUNICADO: ' + title,
-          artist: 'SYSTEM_ANNOUNCEMENT',
-          composer: target,
-          content: JSON.stringify(newAnn)
-        };
-
-        fetch(restUrl, {
-          method: 'POST',
-          headers: {
-            'apikey': window.SUPABASE_CONFIG.key,
-            'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify([row])
-        }).then(function() {
-          finalizeSuccess();
-        }).catch(function(err) {
-          console.warn('Aviso ao sincronizar comunicado na nuvem (salvo localmente):', err);
-          finalizeSuccess();
-        });
-      } else {
-        setTimeout(finalizeSuccess, 300);
       }
     },
 
@@ -3469,25 +3451,9 @@
             match.updated_at = nowIso;
             localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
 
-            // Sincronizar na nuvem (Supabase REST)
-            if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
-              var updateRow = {
-                repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
-                title: '💬 RESPOSTA SUPORTE: ' + (match.title || 'Chamado'),
-                artist: 'SUPPORT_REPLY',
-                composer: match.user_email || 'cantor',
-                content: JSON.stringify(match)
-              };
-              fetch(window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs', {
-                method: 'POST',
-                headers: {
-                  'apikey': window.SUPABASE_CONFIG.key,
-                  'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
-                  'Content-Type': 'application/json',
-                  'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify([updateRow])
-              }).catch(function () {});
+            // Sincronizar na nuvem
+            if (window.NotificationsCenter && typeof window.NotificationsCenter.syncTicketToCloud === 'function') {
+              window.NotificationsCenter.syncTicketToCloud(match);
             }
 
             PrompterAdmin.renderTicketsList(tickets);
@@ -3503,7 +3469,11 @@
           var match = tickets.find(function (x) { return x.id === id; });
           if (match) {
             match.status = 'resolved';
+            match.updated_at = new Date().toISOString();
             localStorage.setItem('canta_ai_support_tickets', JSON.stringify(tickets));
+            if (window.NotificationsCenter && typeof window.NotificationsCenter.syncTicketToCloud === 'function') {
+              window.NotificationsCenter.syncTicketToCloud(match);
+            }
             PrompterAdmin.renderTicketsList(tickets);
             if (window.showToast) window.showToast('Chamado marcado como resolvido!', 'success');
           }

@@ -151,50 +151,75 @@ SET singer_code = CASE
 END
 WHERE singer_code LIKE '#%' OR singer_code IS NULL OR singer_code = '';
 
--- 7. TABELA DE CHAMADOS & FEEDBACK (COM FOTO/PRINT)
+-- 7. TABELA DE CHAMADOS & FEEDBACK / CHAT COM O DESENVOLVEDOR
 CREATE TABLE IF NOT EXISTS public.tickets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     user_email TEXT NOT NULL,
     user_name TEXT DEFAULT '',
-    category TEXT DEFAULT 'suggestion', -- 'bug', 'suggestion', 'doubt', 'billing'
+    category TEXT DEFAULT 'suggestion', -- 'bug', 'suggestion', 'doubt', 'billing', 'cifra'
     title TEXT NOT NULL,
-    description TEXT NOT NULL,
+    description TEXT DEFAULT '',
     image_url TEXT DEFAULT '',
     status TEXT DEFAULT 'open', -- 'open', 'in_progress', 'resolved'
     admin_response TEXT DEFAULT '',
+    messages JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Adicionar colunas caso já existam em versões anteriores
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT '';
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'suggestion';
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Tickets viewable by owner or admin" ON public.tickets;
 CREATE POLICY "Tickets viewable by owner or admin" ON public.tickets
     FOR SELECT USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+
 DROP POLICY IF EXISTS "Tickets insertable" ON public.tickets;
 CREATE POLICY "Tickets insertable" ON public.tickets
-    FOR INSERT WITH CHECK (true);
-DROP POLICY IF EXISTS "Tickets updatable by admin" ON public.tickets;
-CREATE POLICY "Tickets updatable by admin" ON public.tickets
+    FOR INSERT WITH CHECK (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com' OR true);
+
+DROP POLICY IF EXISTS "Tickets updatable by owner or admin" ON public.tickets;
+CREATE POLICY "Tickets updatable by owner or admin" ON public.tickets
     FOR UPDATE USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
 
--- 8. TABELA DE COMUNICADOS & MENSAGENS
+-- 8. TABELA DE COMUNICADOS & MENSAGENS (MURAL DE NOVIDADES & ATUALIZAÇÕES)
 CREATE TABLE IF NOT EXISTS public.announcements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     target_user_id UUID DEFAULT NULL, -- NULL para todos os cantores (Broadcast)
-    target_user_email TEXT DEFAULT '', -- Vazio para broadcast geral
+    target_user_email TEXT DEFAULT '', -- Vazio ou 'all' para broadcast geral
+    target TEXT DEFAULT 'all', -- 'all' ou email/código do cantor
     type TEXT DEFAULT 'update', -- 'update', 'info', 'promo', 'alert'
     title TEXT NOT NULL,
     message TEXT NOT NULL,
-    created_by TEXT DEFAULT 'Leonardo Vitulli (CEO)',
+    created_by TEXT DEFAULT 'Leonardo Vitulli (Desenvolvedor & CEO)',
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS target TEXT DEFAULT 'all';
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS target_user_email TEXT DEFAULT '';
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
 
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Announcements viewable by target or all" ON public.announcements;
 CREATE POLICY "Announcements viewable by target or all" ON public.announcements
-    FOR SELECT USING (target_user_id IS NULL OR target_user_id = auth.uid() OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+    FOR SELECT USING (
+        target_user_id IS NULL
+        OR target_user_id = auth.uid()
+        OR target_user_email = ''
+        OR target_user_email = 'all'
+        OR target_user_email = auth.jwt() ->> 'email'
+        OR target = 'all'
+        OR is_admin()
+        OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com'
+    );
+
 DROP POLICY IF EXISTS "Announcements manageable by admin" ON public.announcements;
 CREATE POLICY "Announcements manageable by admin" ON public.announcements
     FOR ALL USING (is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
