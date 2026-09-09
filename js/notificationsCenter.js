@@ -210,10 +210,9 @@
       var self = this;
       self.state.isSyncingCloud = true;
 
-      // Animação no botão de sincronização se existir
-      var syncBtn = document.getElementById('btnSyncNotificationsCenter');
-      if (syncBtn) {
-        syncBtn.innerHTML = '<span class="auth-btn-spinner" style="width:12px;height:12px;border-width:2px;margin-right:6px;vertical-align:middle;display:inline-block;"></span> Sincronizando...';
+      var syncStatus = document.getElementById('ncAutoSyncStatus');
+      if (syncStatus) {
+        syncStatus.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:#fbbf24;display:inline-block;"></span> Sincronizando...';
       }
 
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
@@ -327,7 +326,11 @@
         localStorage.setItem('canta_ai_support_tickets', JSON.stringify(localTickets));
 
         self.state.isSyncingCloud = false;
-        if (syncBtn) syncBtn.innerHTML = '🔄 Sincronizar';
+        var nowStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        var syncStatus2 = document.getElementById('ncAutoSyncStatus');
+        if (syncStatus2) {
+          syncStatus2.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:#34d399;display:inline-block;animation:nc-pulse 2s infinite;"></span> Auto-sync &bull; ' + nowStr;
+        }
 
         self.updateBadges();
 
@@ -342,31 +345,63 @@
         if (callback) callback(null, localTickets);
       }).catch(function (err) {
         self.state.isSyncingCloud = false;
-        if (syncBtn) syncBtn.innerHTML = '🔄 Sincronizar';
+        var syncStatusErr = document.getElementById('ncAutoSyncStatus');
+        if (syncStatusErr) {
+          syncStatusErr.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;"></span> Offline';
+        }
         if (callback) callback(err);
       });
     },
 
     syncTicketToCloud: function (ticket) {
-      if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
-        var row = {
-          repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
-          title: '💬 SUPORTE CHAT: ' + (ticket.title || 'Chamado'),
-          artist: 'USER_SUPPORT_TICKET',
-          composer: ticket.user_email || 'cantor',
-          content: JSON.stringify(ticket)
-        };
-        fetch(window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs', {
-          method: 'POST',
-          headers: {
-            'apikey': window.SUPABASE_CONFIG.key,
-            'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify([row])
-        }).catch(function () {});
-      }
+      if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) return;
+
+      var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
+      var headers = {
+        'apikey': window.SUPABASE_CONFIG.key,
+        'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
+        'Content-Type': 'application/json'
+      };
+
+      // Estratégia UPSERT:
+      // 1. Usa composer = 'TICKET:' + ticket.id como chave única
+      // 2. Busca se a row já existe
+      // 3. Se sim: PATCH (atualiza content com ticket completo)
+      // 4. Se não: POST (cria a row)
+      // → Garante 1 row por ticket no Supabase, sempre com mensagens mais recentes
+
+      var uniqueComposer = 'TICKET:' + (ticket.id || '');
+      var rowContent = JSON.stringify(ticket);
+
+      // Busca row existente por composer único
+      fetch(baseUrl + '/songs?artist=eq.USER_SUPPORT_TICKET&composer=eq.' + encodeURIComponent(uniqueComposer) + '&limit=1', {
+        headers: headers
+      }).then(function(r) {
+        return r.ok ? r.json() : [];
+      }).then(function(existing) {
+        if (existing && existing.length > 0) {
+          // PATCH na row existente
+          var rowId = existing[0].id;
+          fetch(baseUrl + '/songs?id=eq.' + encodeURIComponent(rowId), {
+            method: 'PATCH',
+            headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify({ content: rowContent, updated_at: new Date().toISOString() })
+          }).catch(function() {});
+        } else {
+          // INSERT nova row
+          fetch(baseUrl + '/songs', {
+            method: 'POST',
+            headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify([{
+              repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
+              title: '\uD83D\uDCAC SUPORTE CHAT: ' + (ticket.title || 'Chamado'),
+              artist: 'USER_SUPPORT_TICKET',
+              composer: uniqueComposer,
+              content: rowContent
+            }])
+          }).catch(function() {});
+        }
+      }).catch(function() {});
     },
 
     // ── BADGE COUNTER CALCULATOR ──
@@ -1369,14 +1404,14 @@
         });
       }
 
-      // Botão de Sincronização Manual
+      // Botão de Sincronização Manual (legado — mantido para compatibilidade, mas o botão foi removido da UI)
       var btnSync = document.getElementById('btnSyncNotificationsCenter');
       if (btnSync) {
         btnSync.addEventListener('click', function (e) {
           e.stopPropagation();
           self.fetchFromCloud(function (err) {
             if (!err && window.showToast) {
-              window.showToast('Sincronizado com a nuvem com sucesso!', 'success');
+              window.showToast('Sincronizado com a nuvem!', 'success');
             }
           });
         });
@@ -1490,6 +1525,16 @@
       // Atualização inicial de badges com dados já no localStorage (sem busca na nuvem).
       // A sincronização com a nuvem acontece de forma lazy: ao abrir o popover ou o modal.
       self.updateBadges();
+
+      // Auto-polling em background: busca mensagens novas a cada 30s
+      // Garante que o admin veja msgs da Aline sem precisar clicar em nada
+      self._pollInterval = setInterval(function () {
+        // Só busca se há um usuário logado e o Supabase está configurado
+        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url &&
+            window.PrompterAuth && window.PrompterAuth.getUser()) {
+          self.fetchFromCloud();
+        }
+      }, 30000);
     }
   };
 

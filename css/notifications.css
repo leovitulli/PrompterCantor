@@ -1396,3 +1396,10 @@ body.light-mode #singerAnnouncementModal .modal-content > div:last-child {
     max-width: 92%;
   }
 }
+
+/* ── AUTO-SYNC INDICATOR ── */
+@keyframes nc-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+

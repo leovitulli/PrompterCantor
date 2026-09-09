@@ -1180,7 +1180,10 @@
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <button type="button" id="btnSupportOpenTour" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 5px 12px; font-size: 0.78rem; border-radius: 8px;" title="Ver o Passo a Passo do Aplicativo">📖 Tour do App</button>
-          <button type="button" id="btnSyncNotificationsCenter" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 5px 12px; font-size: 0.78rem; border-radius: 8px;" title="Sincronizar com a nuvem">🔄 Sincronizar</button>
+          <span id="ncAutoSyncStatus" title="Sincronização automática ativa" style="font-size: 0.72rem; color: #64748b; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block; animation: nc-pulse 2s infinite;"></span>
+            Auto-sync
+          </span>
           <button class="modal-close" id="btnCloseUserSupportModal" title="Fechar">✕</button>
         </div>
       </div>
@@ -1629,7 +1632,7 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=123"></script>
   <script src="js/gdriveUI.js?v=123"></script>
-  <script src="js/notificationsCenter.js?v=3"></script>
+  <script src="js/notificationsCenter.js?v=4"></script>
   <script src="js/interactiveTour.js?v=4"></script>
   <script src="js/app.js?v=140"></script>
 </body>
