@@ -17,6 +17,7 @@
     state: {
       activeTab: 'announcements', // 'announcements' | 'chat'
       activeTicketId: null,
+      isNewConversationMode: false, // true quando usuário clicou em "+ Nova Conversa"
       popoverFilter: 'all',       // 'all' | 'unread' | 'chat'
       adminViewMode: 'all',       // 'all' | 'my_only' (para administradores)
       isPopoverOpen: false,
@@ -24,6 +25,25 @@
       isSyncingCloud: false,
       draftImageBase64: '',
       newTicketImageBase64: ''
+    },
+
+    // Retorna headers de autenticação com o token real do usuário (não apenas anon key)
+    // Essencial para que cantores consigam gravar na tabela com RLS ativo
+    getAuthHeaders: function () {
+      var anon = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.key : '';
+      var token = anon;
+      try {
+        var raw = localStorage.getItem('prompter_auth_user');
+        if (raw) {
+          var u = JSON.parse(raw);
+          if (u && u.access_token) token = u.access_token;
+        }
+      } catch (e) {}
+      return {
+        'apikey': anon,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      };
     },
 
     // ── HELPERS & UTILITIES ──
@@ -216,11 +236,7 @@
       }
 
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
-      var headers = {
-        'apikey': window.SUPABASE_CONFIG.key,
-        'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
-        'Content-Type': 'application/json'
-      };
+      var headers = self.getAuthHeaders(); // token real do usuário para RLS
 
       // 1. Busca chamados gravados na tabela songs (artist = USER_SUPPORT_TICKET ou SUPPORT_REPLY)
       var pSongs = fetch(baseUrl + '/songs?artist=in.(USER_SUPPORT_TICKET,SUPPORT_REPLY)&order=created_at.desc', { headers: headers })
@@ -275,7 +291,6 @@
             if (row.content) {
               var parsed = JSON.parse(row.content);
               if (parsed && (parsed.id || parsed.title)) {
-                // Se o JSON não tiver id explícito, usa id da linha
                 if (!parsed.id) parsed.id = row.id;
                 cloudTickets.push(parsed);
               }
@@ -288,16 +303,21 @@
           if (t && (t.id || t.title)) cloudTickets.push(t);
         });
 
-        // Merge com deduplicação profunda
+        // Merge inteligente: usa o vencedor com updated_at mais recente como base
+        // Evita que o cloud sobreescreva status local recém-salvo (ex: Marcar Resolvido)
         cloudTickets.forEach(function (cTicket) {
           var normCloud = self.normalizeTicket(cTicket);
+          if (!normCloud || !normCloud.id) return;
           var existingIdx = localTickets.findIndex(function (x) { return x.id === normCloud.id; });
           if (existingIdx >= 0) {
             var existing = self.normalizeTicket(localTickets[existingIdx]);
-            // Junta as mensagens sem duplicar por ID ou texto idêntico
+
+            // Junta as mensagens sem duplicar por ID ou texto+timestamp idênticos
             var mergedMsgs = [].concat(existing.messages || []);
             (normCloud.messages || []).forEach(function (nm) {
-              if (!mergedMsgs.some(function (em) { return em.id === nm.id || (em.text === nm.text && em.created_at === nm.created_at); })) {
+              if (!mergedMsgs.some(function (em) {
+                return em.id === nm.id || (em.text === nm.text && em.created_at === nm.created_at);
+              })) {
                 mergedMsgs.push(nm);
               }
             });
@@ -305,12 +325,17 @@
               return new Date(m1.created_at || 0) - new Date(m2.created_at || 0);
             });
 
-            normCloud.messages = mergedMsgs;
-            if (normCloud.reply || existing.reply) {
-              normCloud.reply = normCloud.reply || existing.reply;
-              normCloud.replied_at = normCloud.replied_at || existing.replied_at;
+            // Decide qual versão tem os metadados mais recentes
+            var localTime = new Date(existing.updated_at || existing.created_at || 0).getTime();
+            var cloudTime = new Date(normCloud.updated_at || normCloud.created_at || 0).getTime();
+            var winner = localTime > cloudTime ? existing : normCloud;
+
+            winner.messages = mergedMsgs;
+            if (existing.reply || normCloud.reply) {
+              winner.reply = (localTime > cloudTime ? existing : normCloud).reply || winner.reply;
+              winner.replied_at = (localTime > cloudTime ? existing : normCloud).replied_at || winner.replied_at;
             }
-            localTickets[existingIdx] = normCloud;
+            localTickets[existingIdx] = winner;
           } else {
             localTickets.unshift(normCloud);
           }
@@ -357,11 +382,7 @@
       if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) return;
 
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
-      var headers = {
-        'apikey': window.SUPABASE_CONFIG.key,
-        'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
-        'Content-Type': 'application/json'
-      };
+      var headers = this.getAuthHeaders(); // usa token real do usuário para RLS
 
       // Estratégia UPSERT:
       // 1. Usa composer = 'TICKET:' + ticket.id como chave única
@@ -899,8 +920,9 @@
         adminFilterContainer.remove();
       }
 
-      // Se nenhum ticket estiver selecionado e houver tickets, seleciona o primeiro
-      if (!this.state.activeTicketId && tickets.length > 0) {
+      // Auto-seleciona o primeiro ticket APENAS se nenhum estiver ativo
+      // e o usuário NÃO clicou explicitamente em "+ Nova Conversa"
+      if (!this.state.activeTicketId && tickets.length > 0 && !this.state.isNewConversationMode) {
         this.state.activeTicketId = tickets[0].id;
       }
 
@@ -909,7 +931,7 @@
         sidebarList.innerHTML =
           '<div style="padding: 24px 16px; text-align: center; color: #94a3b8; font-size: 0.82rem;">' +
             'Nenhuma conversa encontrada.<br>' +
-            (ctx.isAdmin ? 'Clique em <strong>"🔄 Sincronizar"</strong> no topo para buscar da nuvem.' : 'Clique em <strong>"+ Iniciar Nova Conversa"</strong> acima para falar com a equipe.') +
+            (ctx.isAdmin ? 'O sistema sincroniza automaticamente a cada 30s.' : 'Clique em <strong>"+ Iniciar Nova Conversa"</strong> acima para falar com a equipe.') +
           '</div>';
       } else {
         var sidebarHtml = '';
@@ -984,6 +1006,7 @@
 
     selectTicket: function (ticketId) {
       this.state.activeTicketId = ticketId;
+      this.state.isNewConversationMode = false; // usuário selecionou um ticket existente
       this.renderChatLayout();
     },
 
@@ -1368,6 +1391,7 @@
           self.syncTicketToCloud(newTicket);
 
           self.state.activeTicketId = newTicket.id;
+          self.state.isNewConversationMode = false; // mostra a thread do novo ticket
           self.renderChatLayout();
 
           if (window.showToast) window.showToast('🚀 Conversa iniciada com sucesso! Responderemos em breve.', 'success');
@@ -1493,6 +1517,7 @@
       if (btnNewChat) {
         btnNewChat.addEventListener('click', function () {
           self.state.activeTicketId = null;
+          self.state.isNewConversationMode = true; // impede o auto-select do primeiro ticket
           self.renderChatLayout();
         });
       }
