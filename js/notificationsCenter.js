@@ -1487,9 +1487,9 @@
         }
       });
 
-      // Atualização inicial de badges e busca na nuvem
+      // Atualização inicial de badges com dados já no localStorage (sem busca na nuvem).
+      // A sincronização com a nuvem acontece de forma lazy: ao abrir o popover ou o modal.
       self.updateBadges();
-      self.fetchFromCloud();
     }
   };
 

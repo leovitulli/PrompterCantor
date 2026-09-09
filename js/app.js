@@ -3439,6 +3439,8 @@ document.addEventListener('DOMContentLoaded', function () {
     container.appendChild(toast);
     setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3500);
   }
+  // Expõe globalmente para que módulos externos (notificationsCenter, etc.) possam usar
+  window.showToast = showToast;
 
   // Sugerir nome ao abrir o modal do Drive
   var gDriveModal2 = document.getElementById('gDriveModal');
@@ -5300,6 +5302,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function checkSingerAnnouncements() {
+      // DELEGAÇÃO: Se o NotificationsCenter estiver ativo, ele gerencia busca + badges.
+      // Evita requisições duplicadas ao Supabase e atualizações redundantes de badge.
+      if (window.NotificationsCenter) {
+        updateClientAnnouncementsBadge();
+        return;
+      }
+
       if (!window.PrompterAuth) return;
       var user = window.PrompterAuth.getUser();
       var profile = window.PrompterAuth.getProfile();
@@ -5470,7 +5479,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Sincronização entre abas via storage event
+    // Guard: o NotificationsCenter já escuta este evento internamente com lógica completa
     window.addEventListener('storage', function(e) {
+      if (window.NotificationsCenter) return;
       if (e.key === 'canta_ai_admin_announcements' || e.key === 'cantaai_read_announcements') {
         updateClientAnnouncementsBadge();
         var paneAnn = document.getElementById('paneAnnouncements');
