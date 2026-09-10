@@ -39,6 +39,18 @@
   var STORAGE_DELETED_KEY = 'canta_ai_deleted_singers';
   var SYSTEM_REGISTRY_REPERTOIRE_ID = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
 
+  function safeQuery(q) {
+    try {
+      if (!q) return Promise.resolve(null);
+      if (typeof q.then === 'function') {
+        return q.then(function(res) { return res; }, function() { return null; });
+      }
+      return Promise.resolve(null);
+    } catch (e) {
+      return Promise.resolve(null);
+    }
+  }
+
   function isPlatformDeveloper(email) {
     if (!email) return false;
     var em = String(email).toLowerCase().trim();
@@ -435,11 +447,11 @@
               content: JSON.stringify(pricingConfig)
             };
             if (res.data && res.data.length > 0) {
-              sb.from('songs').update(row).eq('id', res.data[0].id).catch(function() {});
+              safeQuery(sb.from('songs').update(row).eq('id', res.data[0].id));
             } else {
-              sb.from('songs').insert(row).catch(function() {});
+              safeQuery(sb.from('songs').insert(row));
             }
-          }).catch(function() {});
+          }, function() {});
       }
     },
 
@@ -989,7 +1001,7 @@
                     '<div class="form-group">' +
                       '<label>Plano de Assinatura & Acesso:</label>' +
                       '<select id="editSingerPlan" class="form-control">' +
-                        '<option value="vip">👑 VIP 100% OFF (Acesso Vitalício)</option>' +
+                        '<option value="vip">👑 VIP Parceiro (100% OFF Vitalício)</option>' +
                         '<option value="pro_annual">💎 PRO ANUAL</option>' +
                         '<option value="pro_monthly">⚡ PRO MENSAL</option>' +
                         '<option value="trial">⚡ DEGUSTAÇÃO PRO (7 DIAS)</option>' +
@@ -2094,7 +2106,7 @@
         document.getElementById('editSingerInstagram').value = user.instagram || '';
         document.getElementById('editSingerCode').value = normalizeSingerCode(user.singer_code, user.email);
         
-        var isUserVip = !!user.is_vip || (user.plan_type && user.plan_type.indexOf('VIP') !== -1) || user.coupon_used === 'VIP100';
+        var isUserVip = !!user.is_vip || user.plan_tier === 'vip' || (user.plan_type && (user.plan_type.indexOf('VIP') !== -1 || user.plan_type.indexOf('PARCEIRO') !== -1)) || user.coupon_used === 'VIP100';
         if (chkVip) chkVip.checked = isUserVip;
         if (vipNotice) vipNotice.style.display = isUserVip ? 'block' : 'none';
 
@@ -2229,12 +2241,12 @@
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
         if (isValidUUID(actualId)) {
-          sb.from('profiles').delete().eq('id', actualId).then(function() {}).catch(function () {});
-          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('id', actualId).then(function() {}).catch(function () {});
+          safeQuery(sb.from('profiles').delete().eq('id', actualId));
+          safeQuery(sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('id', actualId));
         }
         if (userEmail) {
-          sb.from('profiles').delete().eq('email', userEmail).then(function() {}).catch(function () {});
-          sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('artist', userEmail).then(function() {}).catch(function () {});
+          safeQuery(sb.from('profiles').delete().eq('email', userEmail));
+          safeQuery(sb.from('songs').delete().eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID).eq('artist', userEmail));
         }
       }
 
@@ -2423,7 +2435,7 @@
     },
 
     executeSaveSinger: function (id, name, email, phone, cpf, instagram, code, planVal, statusVal, couponVal, isVip, dueDateVal) {
-      var isVipActive = !!isVip || planVal === 'vip' || couponVal === 'VIP100';
+      var isVipActive = (planVal === 'vip') || (!!isVip && planVal !== 'free' && planVal !== 'pro_annual' && planVal !== 'pro_monthly' && planVal !== 'trial');
       var isTrial = (planVal === 'trial');
       var isPro = isVipActive || (planVal !== 'free' && !isTrial);
 
@@ -2431,14 +2443,19 @@
       var planTier = isVipActive ? 'vip' : (isTrial ? 'trial' : (planVal === 'free' ? 'free' : 'pro'));
 
       if (isVipActive) {
-        planType = '👑 VIP 100% OFF';
+        planType = '👑 VIP Parceiro (100% OFF)';
         couponVal = couponVal || 'VIP100';
       } else if (isTrial) {
         planType = '⚡ DEGUSTAÇÃO PRO (7 DIAS)';
+        if (couponVal === 'VIP100') couponVal = '';
       } else if (planVal === 'pro_monthly') {
         planType = '⚡ PRO MENSAL';
+        if (couponVal === 'VIP100') couponVal = '';
       } else if (planVal === 'free') {
         planType = '⚡ PLANO FREE';
+        if (couponVal === 'VIP100') couponVal = '';
+      } else {
+        if (couponVal === 'VIP100') couponVal = '';
       }
 
       var cleanEmail = (email || '').trim().toLowerCase();
@@ -2562,36 +2579,77 @@
           profPayload.id = singerId;
         }
 
-        sb.from('profiles').upsert(profPayload).then(function(res) {
-          if (res && res.error) {
-            return sb.from('profiles').update(profPayload).eq('email', cleanEmail);
-          }
-          return res;
-        }).catch(function() {
-          return sb.from('profiles').update(profPayload).eq('email', cleanEmail).catch(function() {});
-        });
+        safeQuery(sb.from('profiles').upsert(profPayload));
+        safeQuery(sb.from('profiles').update(profPayload).eq('email', cleanEmail));
 
         // Persistir no System Registry (sempre acessível na nuvem)
         var songRow = {
           repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
           title: name,
           artist: email,
+          composer: cleanCode,
           content: JSON.stringify(singerPayload)
         };
         if (isValidUUID(singerId)) {
           songRow.id = singerId;
         }
+
+        // 1. Gravação direta via REST fetch com apikey (100% garantida)
+        var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
+        var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
+        if (supUrl && anonKey && email) {
+          try {
+            var checkUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&artist=eq.' + encodeURIComponent(email) + '&select=id';
+            fetch(checkUrl, {
+              method: 'GET',
+              headers: {
+                'apikey': anonKey,
+                'Authorization': 'Bearer ' + anonKey,
+                'Content-Type': 'application/json'
+              }
+            }).then(function(r) { return r.json(); }).then(function(existingRows) {
+              var songsRestUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs';
+              if (Array.isArray(existingRows) && existingRows.length > 0) {
+                var rowId = existingRows[0].id;
+                fetch(songsRestUrl + '?id=eq.' + encodeURIComponent(rowId), {
+                  method: 'PATCH',
+                  headers: {
+                    'apikey': anonKey,
+                    'Authorization': 'Bearer ' + anonKey,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify(songRow)
+                }).catch(function() {});
+              } else {
+                fetch(songsRestUrl, {
+                  method: 'POST',
+                  headers: {
+                    'apikey': anonKey,
+                    'Authorization': 'Bearer ' + anonKey,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify(songRow)
+                }).catch(function() {});
+              }
+            }).catch(function() {});
+          } catch(e) {}
+        }
+
+        // 2. Gravação complementar via SDK
         sb.from('songs')
           .select('id')
           .eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID)
           .eq('artist', email)
           .then(function(res) {
             if (res.data && res.data.length > 0) {
-              songRow.id = res.data[0].id;
+              safeQuery(sb.from('songs').update(songRow).eq('id', res.data[0].id));
+            } else {
+              safeQuery(sb.from('songs').insert(songRow));
             }
-            sb.from('songs').upsert(songRow).catch(function() {});
-          }).catch(function() {
-            sb.from('songs').upsert(songRow).catch(function() {});
+          }, function() {
+            safeQuery(sb.from('songs').insert(songRow));
           });
       }
 
@@ -2760,6 +2818,60 @@
         }).catch(function() {
           notifyComplete();
         });
+        // 2b. Auto-descoberta de cantores por repertórios criados na nuvem (garantia contra perda de cadastros)
+        var repUrl = supUrl.replace(/\/$/, '') + '/rest/v1/repertoires?select=id,user_id,name,created_at&id=neq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&order=created_at.desc&limit=100';
+        fetch(repUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': anonKey,
+            'Authorization': 'Bearer ' + anonKey,
+            'Content-Type': 'application/json'
+          }
+        }).then(function(r) { return r.json(); }).then(function(repRows) {
+          if (Array.isArray(repRows) && repRows.length > 0) {
+            var discChanged = false;
+            repRows.forEach(function(rep) {
+              if (!rep.user_id) return;
+              var uId = String(rep.user_id).trim().toLowerCase();
+              var exists = allUserData.some(function(u) {
+                return (u.id && String(u.id).toLowerCase() === uId);
+              });
+              if (!exists && isValidUUID(uId)) {
+                var dName = rep.name ? ('Cantor (' + rep.name + ')') : 'Cantor Cadastrado';
+                var dEmail = 'cantor_' + uId.slice(0, 8) + '@cantaai.com';
+                var newDiscovered = {
+                  id: rep.user_id,
+                  name: dName,
+                  email: dEmail,
+                  singer_code: '@cantor_' + uId.slice(0, 6),
+                  phone: '',
+                  cpf: '',
+                  instagram: '',
+                  plan_tier: 'free',
+                  plan_type: '⚡ PLANO FREE',
+                  is_vip: false,
+                  coupon_used: '',
+                  is_online: true,
+                  status_text: '🟢 Conectado e Ativo',
+                  reps_count: 1,
+                  songs_count: 0,
+                  last_seen: 'Hoje',
+                  created_at: rep.created_at || new Date().toISOString()
+                };
+                allUserData.unshift(newDiscovered);
+                discChanged = true;
+              }
+            });
+            if (discChanged) {
+              PrompterAdmin.saveStoredUsers();
+              PrompterAdmin.updateMetrics();
+              PrompterAdmin.renderUsersTable();
+              if (typeof PrompterAdmin.updateSignupsBadge === 'function') {
+                PrompterAdmin.updateSignupsBadge();
+              }
+            }
+          }
+        }).catch(function() {});
       } else {
         notifyComplete();
       }
@@ -2774,13 +2886,13 @@
               processRegistrySongs(res.data);
             }
             notifyComplete();
-          }).catch(function() {
+          }, function() {
             notifyComplete();
           });
 
         // 3. Tentar também ler profiles caso o Supabase conceda permissão
-        sb.from('profiles').select('*').then(function(res) {
-          if (res.data && res.data.length > 0) {
+        safeQuery(sb.from('profiles').select('*')).then(function(res) {
+          if (res && res.data && res.data.length > 0) {
             res.data.forEach(function(p) {
               var pEmail = (p.email || '').trim().toLowerCase();
               if (!pEmail || pEmail.indexOf('@') === -1 || isPlatformDeveloper(pEmail)) return;
@@ -2800,7 +2912,7 @@
               var effectiveCode = normalizeSingerCode(p.singer_code, p.email);
 
               if (p.singer_code && (p.singer_code.startsWith('#') || p.singer_code.toUpperCase().indexOf('CANTOR-') !== -1)) {
-                sb.from('profiles').update({ singer_code: effectiveCode }).eq('id', p.id).catch(function() {});
+                safeQuery(sb.from('profiles').update({ singer_code: effectiveCode }).eq('id', p.id));
               }
 
               var profInsta = p.instagram || (existIdx >= 0 ? allUserData[existIdx].instagram : '') || (pEmail === 'leovitulli@gmail.com' ? '@leovitulli' : '');
@@ -2809,14 +2921,14 @@
               // Princípio da Imutabilidade de Privilégios: impedir que leitura padrão 'free' da nuvem rebaixe VIP/PRO locais
               var isVipSinger = !!(
                 pEmail === 'alinecrissallai@gmail.com' ||
-                (localUser && (localUser.is_vip || localUser.plan_tier === 'vip' || (localUser.plan_type && localUser.plan_type.indexOf('VIP') !== -1) || localUser.coupon_used === 'VIP100')) ||
-                (p && (p.is_vip || p.plan_tier === 'vip' || (p.plan_type && p.plan_type.indexOf('VIP') !== -1) || p.coupon_used === 'VIP100'))
+                (localUser && (localUser.is_vip || localUser.plan_tier === 'vip' || (localUser.plan_type && (localUser.plan_type.indexOf('VIP') !== -1 || localUser.plan_type.indexOf('PARCEIRO') !== -1)) || localUser.coupon_used === 'VIP100')) ||
+                (p && (p.is_vip || p.plan_tier === 'vip' || (p.plan_type && (p.plan_type.indexOf('VIP') !== -1 || p.plan_type.indexOf('PARCEIRO') !== -1)) || p.coupon_used === 'VIP100'))
               );
               var isProSinger = isVipSinger || (localUser && localUser.plan_tier === 'pro') || (p && p.plan_tier === 'pro') || pEmail === 'leovitulli@gmail.com';
 
               var resolvedTier = isVipSinger ? 'vip' : (isProSinger ? 'pro' : ((p && p.plan_tier) || (localUser && localUser.plan_tier) || 'free'));
               var resolvedPlanType = isVipSinger
-                ? '👑 VIP 100% OFF'
+                ? ((localUser && localUser.plan_type && localUser.plan_type.indexOf('PARCEIRO') !== -1) ? localUser.plan_type : '👑 VIP Parceiro (100% OFF)')
                 : (isProSinger
                     ? ((localUser && localUser.plan_type && localUser.plan_type.indexOf('MENSAL') !== -1) || (p && p.plan_type && p.plan_type.indexOf('MENSAL') !== -1) ? '⚡ PRO MENSAL' : '💎 PRO ANUAL')
                     : '⚡ PLANO FREE');
@@ -2851,13 +2963,13 @@
 
               // Auto-cura do Supabase caso o banco remoto estivesse com status free desatualizado
               if (isVipSinger && (p.plan_tier !== 'vip' || !p.is_vip)) {
-                sb.from('profiles').update({
+                safeQuery(sb.from('profiles').update({
                   plan_tier: 'vip',
-                  plan_type: '👑 VIP 100% OFF',
+                  plan_type: resolvedPlanType,
                   is_vip: true,
                   coupon_used: resolvedCoupon || 'VIP100',
                   billing_due_date: '2099-12-31T23:59:59.000Z'
-                }).eq('id', p.id).catch(function() {});
+                }).eq('id', p.id));
               }
             });
             PrompterAdmin.saveStoredUsers();
@@ -2865,7 +2977,7 @@
             PrompterAdmin.renderUsersTable();
             PrompterAdmin.renderGrowthDashboard();
           }
-        }).catch(function() {});
+        });
 
         // 4. Carregar total de cifras e repertórios reais para Growth & Telemetria
         sb.from('songs').select('id, user_id, repertoire_id').then(function(sRes) {
@@ -2884,7 +2996,7 @@
             PrompterAdmin.saveStoredUsers();
             PrompterAdmin.renderGrowthDashboard();
           }
-        }).catch(function() {});
+        }, function() {});
 
         sb.from('repertoires').select('id, user_id').then(function(rRes) {
           if (rRes.data && Array.isArray(rRes.data)) {
@@ -2902,7 +3014,7 @@
             PrompterAdmin.saveStoredUsers();
             PrompterAdmin.renderGrowthDashboard();
           }
-        }).catch(function() {});
+        }, function() {});
       } else {
         notifyComplete();
       }
@@ -2948,7 +3060,7 @@
       var isVip = !!(
         u.is_vip ||
         u.plan_tier === 'vip' ||
-        (u.plan_type && u.plan_type.indexOf('VIP') !== -1) ||
+        (u.plan_type && (u.plan_type.indexOf('VIP') !== -1 || u.plan_type.indexOf('PARCEIRO') !== -1)) ||
         u.coupon_used === 'VIP100' ||
         uEmail === 'alinecrissallai@gmail.com' ||
         uCode === '@alinecrissallai' ||
@@ -2958,10 +3070,10 @@
       if (isVip) {
         return {
           tier: 'vip',
-          label: 'Plano VIP (100% OFF)',
-          badgeText: '👑 VIP 100% OFF',
+          label: '👑 VIP Parceiro (100% OFF)',
+          badgeText: '👑 VIP Parceiro',
           badgeClass: 'badge-plan-vip',
-          badgeHtml: '<span class="badge-plan-executive badge-plan-vip">👑 VIP 100% OFF</span>',
+          badgeHtml: '<span class="badge-plan-executive badge-plan-vip">👑 VIP Parceiro</span>',
           badgeCompactHtml: '<span class="badge-plan-executive badge-plan-vip">👑 VIP</span>',
           isVip: true,
           isPro: true,

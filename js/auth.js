@@ -456,7 +456,7 @@
 
         var resolvedTier = isVip ? 'vip' : (isPro ? 'pro' : ((profile && profile.plan_tier) || (existingUser && existingUser.plan_tier) || 'free'));
         var resolvedPlanType = isVip
-          ? '👑 VIP 100% OFF'
+          ? '👑 VIP Parceiro (100% OFF)'
           : (isPro
               ? ((profile && profile.plan_type && profile.plan_type.indexOf('MENSAL') !== -1) || (existingUser && existingUser.plan_type && existingUser.plan_type.indexOf('MENSAL') !== -1) ? '⚡ PRO MENSAL' : '💎 PRO ANUAL')
               : '⚡ PLANO FREE');
@@ -540,18 +540,63 @@
         } catch (e) {}
 
         // Sincronizar no System Registry na nuvem
+        var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+        var currentUid = (profile && profile.id) || (currentUser ? currentUser.id : null);
+        var songRow = {
+          repertoire_id: regId,
+          user_id: (currentUid && String(currentUid).indexOf('-') !== -1 && String(currentUid).length >= 30) ? currentUid : null,
+          title: singerItem.name,
+          artist: singerItem.email,
+          composer: singerItem.singer_code || '',
+          content: JSON.stringify(singerItem)
+        };
+
+        // 1. Gravação direta via REST fetch com apikey (garantia absoluta contra falhas na SDK)
+        var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
+        var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
+        if (supUrl && anonKey && singerItem.email) {
+          try {
+            var checkUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(regId) + '&artist=eq.' + encodeURIComponent(singerItem.email) + '&select=id';
+            fetch(checkUrl, {
+              method: 'GET',
+              headers: {
+                'apikey': anonKey,
+                'Authorization': 'Bearer ' + anonKey,
+                'Content-Type': 'application/json'
+              }
+            }).then(function(r) { return r.json(); }).then(function(existingRows) {
+              var songsRestUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs';
+              if (Array.isArray(existingRows) && existingRows.length > 0) {
+                var rowId = existingRows[0].id;
+                fetch(songsRestUrl + '?id=eq.' + encodeURIComponent(rowId), {
+                  method: 'PATCH',
+                  headers: {
+                    'apikey': anonKey,
+                    'Authorization': 'Bearer ' + anonKey,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify(songRow)
+                }).catch(function() {});
+              } else {
+                fetch(songsRestUrl, {
+                  method: 'POST',
+                  headers: {
+                    'apikey': anonKey,
+                    'Authorization': 'Bearer ' + anonKey,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify(songRow)
+                }).catch(function() {});
+              }
+            }).catch(function() {});
+          } catch(e) {}
+        }
+
+        // 2. Gravação complementar via SDK Supabase
         var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
         if (sb) {
-          var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
-          var currentUid = (profile && profile.id) || (currentUser ? currentUser.id : null);
-          var songRow = {
-            repertoire_id: regId,
-            user_id: (currentUid && String(currentUid).indexOf('-') !== -1 && String(currentUid).length >= 30) ? currentUid : null,
-            title: singerItem.name,
-            artist: singerItem.email,
-            composer: singerItem.singer_code || '',
-            content: JSON.stringify(singerItem)
-          };
           sb.from('songs')
             .select('id')
             .eq('repertoire_id', regId)
@@ -1271,7 +1316,7 @@
         if (currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip')) {
           payload.is_vip = true;
           payload.plan_tier = 'vip';
-          payload.plan_type = '👑 VIP 100% OFF';
+          payload.plan_type = '👑 VIP Parceiro (100% OFF)';
           payload.coupon_used = currentProfile.coupon_used || 'VIP100';
           payload.billing_due_date = '2099-12-31T23:59:59.000Z';
         }
@@ -1282,6 +1327,46 @@
 
         // Atualizar no System Registry em songs
         var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+        var isRegVip = !!(currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.coupon_used === 'VIP100'));
+
+        // 1. Gravação direta via REST fetch com apikey (garantia absoluta contra falhas na SDK)
+        var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
+        var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
+        if (supUrl && anonKey && currentUser.email) {
+          try {
+            var checkUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(regId) + '&artist=eq.' + encodeURIComponent(currentUser.email) + '&select=id,content';
+            fetch(checkUrl, {
+              method: 'GET',
+              headers: {
+                'apikey': anonKey,
+                'Authorization': 'Bearer ' + anonKey,
+                'Content-Type': 'application/json'
+              }
+            }).then(function(r) { return r.json(); }).then(function(rows) {
+              var songsRestUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs';
+              if (Array.isArray(rows) && rows.length > 0) {
+                var row = rows[0];
+                var obj = null;
+                try { obj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content; } catch(e) {}
+                if (!obj) obj = {};
+                obj.name = name;
+                if (cleanCode) obj.singer_code = cleanCode;
+                fetch(songsRestUrl + '?id=eq.' + encodeURIComponent(row.id), {
+                  method: 'PATCH',
+                  headers: {
+                    'apikey': anonKey,
+                    'Authorization': 'Bearer ' + anonKey,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify({ title: name, content: JSON.stringify(obj) })
+                }).catch(function() {});
+              }
+            }).catch(function() {});
+          } catch(e) {}
+        }
+
+        // 2. Gravação complementar via SDK
         sb.from('songs').select('id, content').eq('repertoire_id', regId).eq('artist', currentUser.email).then(function(res) {
           if (res.data && res.data.length > 0) {
             var row = res.data[0];
@@ -1292,14 +1377,13 @@
             if (cleanCode) obj.singer_code = cleanCode;
             safeQuery(sb.from('songs').update({ title: name, content: JSON.stringify(obj) }).eq('id', row.id));
           } else {
-            var isRegVip = !!(currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.coupon_used === 'VIP100'));
             var newRegObj = {
               id: currentUser.id,
               name: name,
               email: currentUser.email,
               singer_code: cleanCode || '@cantor',
               plan_tier: isRegVip ? 'vip' : (currentProfile.plan_tier || 'pro'),
-              plan_type: isRegVip ? '👑 VIP 100% OFF' : (currentProfile.plan_type || '💎 PRO ANUAL'),
+              plan_type: isRegVip ? '👑 VIP Parceiro (100% OFF)' : (currentProfile.plan_type || '💎 PRO ANUAL'),
               is_vip: isRegVip,
               coupon_used: (currentProfile && currentProfile.coupon_used) || (isRegVip ? 'VIP100' : ''),
               billing_due_date: isRegVip ? '2099-12-31T23:59:59.000Z' : (currentProfile && currentProfile.billing_due_date ? currentProfile.billing_due_date : null),
@@ -1315,6 +1399,10 @@
             }));
           }
         }, function() {});
+
+        try {
+          this.syncNewUserToAdmin(currentProfile);
+        } catch(e) {}
       }
       return Promise.resolve(true);
     },
