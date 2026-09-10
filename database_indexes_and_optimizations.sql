@@ -10,6 +10,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_singer_code ON public.profiles(singer_co
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
 CREATE INDEX IF NOT EXISTS idx_profiles_plan_tier ON public.profiles(plan_tier);
+CREATE INDEX IF NOT EXISTS idx_profiles_is_vip ON public.profiles(is_vip);
 CREATE INDEX IF NOT EXISTS idx_profiles_last_seen ON public.profiles(last_seen_at DESC);
 
 -- 2. ÍNDICES NA TABELA TICKETS (CHAMADOS & FEEDBACK)

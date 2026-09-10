@@ -216,17 +216,23 @@
             }
           });
 
-          // Assegurar integridade absoluta do status VIP da cantora Aline Criss Allai
+          // Assegurar integridade absoluta do status VIP para Aline e qualquer outro usuário VIP registrado
           allUserData.forEach(function (u) {
-            if (u && (
+            if (!u) return;
+            var isVip = !!(
               (u.email && u.email.toLowerCase() === 'alinecrissallai@gmail.com') ||
               (u.singer_code && u.singer_code.toLowerCase() === '@alinecrissallai') ||
-              u.id === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908'
-            )) {
+              u.id === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908' ||
+              u.is_vip ||
+              u.plan_tier === 'vip' ||
+              (u.plan_type && u.plan_type.indexOf('VIP') !== -1) ||
+              u.coupon_used === 'VIP100'
+            );
+            if (isVip) {
               u.plan_tier = 'vip';
-              u.plan_type = '👑 VIP 100% OFF';
+              u.plan_type = (u.plan_type && u.plan_type.indexOf('VIP') !== -1) ? u.plan_type : '👑 VIP 100% OFF';
               u.is_vip = true;
-              u.coupon_used = 'VIP100';
+              u.coupon_used = u.coupon_used || 'VIP100';
               if (!u.billing_due_date) u.billing_due_date = '2099-12-31T23:59:59.000Z';
             }
           });
@@ -2490,6 +2496,7 @@
           plan_tier: planTier,
           plan_type: planType,
           coupon_used: couponVal || '',
+          is_vip: isVipActive,
           is_trial: isTrial,
           billing_due_date: dueIso,
           auto_renew: singerPayload.auto_renew,
@@ -2742,6 +2749,25 @@
               }
 
               var profInsta = p.instagram || (existIdx >= 0 ? allUserData[existIdx].instagram : '') || (pEmail === 'leovitulli@gmail.com' ? '@leovitulli' : '');
+              var localUser = existIdx >= 0 ? allUserData[existIdx] : null;
+
+              // Princípio da Imutabilidade de Privilégios: impedir que leitura padrão 'free' da nuvem rebaixe VIP/PRO locais
+              var isVipSinger = !!(
+                pEmail === 'alinecrissallai@gmail.com' ||
+                (localUser && (localUser.is_vip || localUser.plan_tier === 'vip' || (localUser.plan_type && localUser.plan_type.indexOf('VIP') !== -1) || localUser.coupon_used === 'VIP100')) ||
+                (p && (p.is_vip || p.plan_tier === 'vip' || (p.plan_type && p.plan_type.indexOf('VIP') !== -1) || p.coupon_used === 'VIP100'))
+              );
+              var isProSinger = isVipSinger || (localUser && localUser.plan_tier === 'pro') || (p && p.plan_tier === 'pro') || pEmail === 'leovitulli@gmail.com';
+
+              var resolvedTier = isVipSinger ? 'vip' : (isProSinger ? 'pro' : ((p && p.plan_tier) || (localUser && localUser.plan_tier) || 'free'));
+              var resolvedPlanType = isVipSinger
+                ? '👑 VIP 100% OFF'
+                : (isProSinger
+                    ? ((localUser && localUser.plan_type && localUser.plan_type.indexOf('MENSAL') !== -1) || (p && p.plan_type && p.plan_type.indexOf('MENSAL') !== -1) ? '⚡ PRO MENSAL' : '💎 PRO ANUAL')
+                    : '⚡ PLANO FREE');
+              var resolvedCoupon = (localUser && localUser.coupon_used) || (p && p.coupon_used) || (isVipSinger ? 'VIP100' : '');
+              var resolvedDueDate = isVipSinger ? '2099-12-31T23:59:59.000Z' : ((localUser && localUser.billing_due_date) || (p && p.billing_due_date) || null);
+
               var profData = {
                 id: p.id,
                 name: p.display_name || (existIdx >= 0 ? allUserData[existIdx].name : (p.email ? p.email.split('@')[0] : 'Cantor')),
@@ -2750,8 +2776,11 @@
                 cpf: p.cpf || (existIdx >= 0 ? allUserData[existIdx].cpf : ''),
                 instagram: profInsta,
                 singer_code: effectiveCode,
-                plan_tier: p.plan_tier || (existIdx >= 0 ? allUserData[existIdx].plan_tier : 'free'),
-                plan_type: p.plan_type || (p.plan_tier === 'pro' ? '💎 PRO ANUAL' : '⚡ PLANO FREE'),
+                plan_tier: resolvedTier,
+                plan_type: resolvedPlanType,
+                is_vip: isVipSinger,
+                coupon_used: resolvedCoupon,
+                billing_due_date: resolvedDueDate,
                 is_online: existIdx >= 0 ? allUserData[existIdx].is_online : false,
                 status_text: existIdx >= 0 ? allUserData[existIdx].status_text : '⚪ Offline',
                 reps_count: existIdx >= 0 ? allUserData[existIdx].reps_count : 0,
@@ -2763,6 +2792,17 @@
                 allUserData[existIdx] = Object.assign({}, allUserData[existIdx], profData);
               } else {
                 allUserData.push(profData);
+              }
+
+              // Auto-cura do Supabase caso o banco remoto estivesse com status free desatualizado
+              if (isVipSinger && (p.plan_tier !== 'vip' || !p.is_vip)) {
+                sb.from('profiles').update({
+                  plan_tier: 'vip',
+                  plan_type: '👑 VIP 100% OFF',
+                  is_vip: true,
+                  coupon_used: resolvedCoupon || 'VIP100',
+                  billing_due_date: '2099-12-31T23:59:59.000Z'
+                }).eq('id', p.id).catch(function() {});
               }
             });
             PrompterAdmin.saveStoredUsers();

@@ -150,6 +150,35 @@ document.addEventListener('DOMContentLoaded', function () {
     var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
     var cleanEmail = (email || '').trim().toLowerCase();
 
+    // Sincronização em tempo real com canta_ai_admin_users para garantir imunidade de cantores VIP/PRO
+    try {
+      var rawAdminUsers = localStorage.getItem('canta_ai_admin_users');
+      if (rawAdminUsers && cleanEmail) {
+        var aList = JSON.parse(rawAdminUsers);
+        var matchedAdmin = aList.find(function(u) {
+          return (u.email && u.email.trim().toLowerCase() === cleanEmail) || (user && user.id && u.id === user.id);
+        });
+        if (matchedAdmin) {
+          var isMatchedVip = !!matchedAdmin.is_vip || matchedAdmin.plan_tier === 'vip' || (matchedAdmin.plan_type && matchedAdmin.plan_type.indexOf('VIP') !== -1) || matchedAdmin.coupon_used === 'VIP100';
+          if (isMatchedVip) {
+            if (profile) {
+              profile.is_vip = true;
+              profile.plan_tier = 'vip';
+              profile.plan_type = matchedAdmin.plan_type || '👑 VIP 100% OFF';
+              profile.coupon_used = matchedAdmin.coupon_used || 'VIP100';
+              if (matchedAdmin.billing_due_date) profile.billing_due_date = matchedAdmin.billing_due_date;
+            }
+          } else if (matchedAdmin.plan_tier === 'pro') {
+            if (profile && profile.plan_tier !== 'vip') {
+              profile.plan_tier = 'pro';
+              profile.plan_type = matchedAdmin.plan_type || '💎 PRO ANUAL';
+              if (matchedAdmin.billing_due_date) profile.billing_due_date = matchedAdmin.billing_due_date;
+            }
+          }
+        }
+      }
+    } catch(e) {}
+
     var isCeo = cleanEmail === 'leovitulli@gmail.com' || (profile && profile.role === 'admin');
     var isVip = !!(profile && (profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.plan_tier === 'vip' || profile.coupon_used === 'VIP100' || cleanEmail === 'alinecrissallai@gmail.com'));
 
@@ -5217,17 +5246,27 @@ document.addEventListener('DOMContentLoaded', function () {
       var profile = PrompterAuth.getProfile() || {};
       var cleanEmail = (email || '').trim().toLowerCase();
 
-      var nowDt = new Date();
-      var dueDate = new Date(nowDt.getTime());
-      if (isAnnual) {
-        dueDate.setFullYear(dueDate.getFullYear() + 1);
-      } else {
-        dueDate.setMonth(dueDate.getMonth() + 1);
-      }
-      var dueIso = dueDate.toISOString();
+      var isVipActive = (Number(finalAmt) === 0) || (payMethod === 'cupom_vip') || (planTier === 'vip') || (cleanEmail === 'alinecrissallai@gmail.com');
+      var effectiveTier = isVipActive ? 'vip' : (planTier || 'pro');
+      var effectivePlanType = isVipActive ? '👑 VIP 100% OFF' : (planType || (isAnnual ? '💎 PRO ANUAL' : '⚡ PRO MENSAL'));
+      var effectiveCoupon = isVipActive ? 'VIP100' : '';
 
-      profile.plan_tier = planTier;
-      profile.plan_type = planType;
+      var nowDt = new Date();
+      var dueIso = '2099-12-31T23:59:59.000Z';
+      if (!isVipActive) {
+        var dueDate = new Date(nowDt.getTime());
+        if (isAnnual) {
+          dueDate.setFullYear(dueDate.getFullYear() + 1);
+        } else {
+          dueDate.setMonth(dueDate.getMonth() + 1);
+        }
+        dueIso = dueDate.toISOString();
+      }
+
+      profile.plan_tier = effectiveTier;
+      profile.plan_type = effectivePlanType;
+      profile.is_vip = isVipActive;
+      profile.coupon_used = effectiveCoupon;
       profile.display_name = name;
       profile.phone = phone;
       profile.cpf = cpf;
@@ -5250,8 +5289,10 @@ document.addEventListener('DOMContentLoaded', function () {
           foundUser.name = name;
           foundUser.phone = phone;
           foundUser.cpf = cpf;
-          foundUser.plan_tier = planTier;
-          foundUser.plan_type = planType;
+          foundUser.plan_tier = effectiveTier;
+          foundUser.plan_type = effectivePlanType;
+          foundUser.is_vip = isVipActive;
+          foundUser.coupon_used = effectiveCoupon;
           foundUser.billing_due_date = dueIso;
           foundUser.payment_method = payMethod;
           foundUser.auto_renew = true;
@@ -5264,8 +5305,10 @@ document.addEventListener('DOMContentLoaded', function () {
             phone: phone,
             cpf: cpf,
             singer_code: profile.singer_code || ('@' + cleanEmail.split('@')[0]),
-            plan_tier: planTier,
-            plan_type: planType,
+            plan_tier: effectiveTier,
+            plan_type: effectivePlanType,
+            is_vip: isVipActive,
+            coupon_used: effectiveCoupon,
             billing_due_date: dueIso,
             payment_method: payMethod,
             auto_renew: true,
@@ -5294,12 +5337,12 @@ document.addEventListener('DOMContentLoaded', function () {
           user_email: email,
           user_code: profile.singer_code || ('@' + cleanEmail.split('@')[0]),
           amount: Number(finalAmt),
-          plan_tier: 'pro',
-          plan_type: planType,
+          plan_tier: effectiveTier,
+          plan_type: effectivePlanType,
           method: payMethod,
           paid_at: new Date().toISOString(),
           due_date: dueIso,
-          notes: 'Pagamento oficial liquidado via Mercado Pago (ID ' + paymentId + ')'
+          notes: isVipActive ? 'Assinatura VIP 100% OFF ativada com isenção vitalícia' : ('Pagamento oficial liquidado via Mercado Pago (ID ' + paymentId + ')')
         });
         localStorage.setItem('canta_ai_finance_ledger', JSON.stringify(finLedger));
         if (window.PrompterAdmin && typeof window.PrompterAdmin.renderFinanceDashboard === 'function') {
@@ -5316,8 +5359,10 @@ document.addEventListener('DOMContentLoaded', function () {
           display_name: name,
           phone: phone,
           cpf: cpf,
-          plan_tier: planTier,
-          plan_type: planType,
+          plan_tier: effectiveTier,
+          plan_type: effectivePlanType,
+          is_vip: isVipActive,
+          coupon_used: effectiveCoupon,
           billing_due_date: dueIso,
           payment_method: payMethod,
           last_payment_id: String(paymentId),
@@ -5357,7 +5402,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // 1. Caso Especial: Cupom VIP 100% OFF (Gratuito)
         if (finalAmt === 0) {
           showToast('👑 Ativando Assinatura VIP 100% OFF...', 'info');
-          activateProSubscription('VIP-FREE-' + Date.now(), 'cupom_vip', 0, planTier, planType, isAnnual, name, email, phone, cpf);
+          activateProSubscription('VIP-FREE-' + Date.now(), 'cupom_vip', 0, 'vip', '👑 VIP 100% OFF', true, name, email, phone, cpf);
           closeCheckoutSaaSModal();
           showToast('👑 Parabéns! Sua assinatura VIP CANTAAÍ PRO foi ativada com sucesso!', 'success');
           return;
