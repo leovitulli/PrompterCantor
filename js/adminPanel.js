@@ -230,7 +230,7 @@
             );
             if (isVip) {
               u.plan_tier = 'vip';
-              u.plan_type = (u.plan_type && u.plan_type.indexOf('VIP') !== -1) ? u.plan_type : '👑 VIP 100% OFF';
+              u.plan_type = '👑 VIP 100% OFF';
               u.is_vip = true;
               u.coupon_used = u.coupon_used || 'VIP100';
               if (!u.billing_due_date) u.billing_due_date = '2099-12-31T23:59:59.000Z';
@@ -534,8 +534,8 @@
                     '</div>' +
 
                     '<div class="growth-box-card" id="growthTopSingersBox">' +
-                      '<div class="growth-section-title">🌟 Top Cantores / Power Users <span class="growth-section-badge">Para Parcerias & Depoimentos</span></div>' +
-                      '<p style="color:#94a3b8; font-size:0.76rem; margin:0 0 10px 0;">Estes cantores mais usam o app. Chame-os no WhatsApp para colher depoimentos em vídeo!</p>' +
+                      '<div class="growth-section-title">🌟 Top Cantores Mais Ativos <span class="growth-section-badge">Engajamento no Palco</span></div>' +
+                      '<p style="color:#94a3b8; font-size:0.75rem; margin:0 0 10px 0;">Músicos que mais utilizam o aplicativo ao vivo em seus shows e repertórios.</p>' +
                       '<div class="growth-period-selector" id="growthPeriodSelector">' +
                         '<button type="button" class="growth-period-btn active" data-period="week">⚡ Semanal (Shows)</button>' +
                         '<button type="button" class="growth-period-btn" data-period="month">🗓️ Mensal</button>' +
@@ -565,23 +565,25 @@
                   '</div>' +
                 '</div>' +
 
-                '<div class="admin-toolbar-row">' +
-                  '<form class="admin-search-wrapper" autocomplete="off" onsubmit="return false;" style="margin:0;">' +
-                    '<input type="text" name="fake_admin_user" style="display:none;" tabindex="-1">' +
-                    '<input type="search" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar por cantor, e-mail, WhatsApp, CPF ou código..." autocomplete="off" readonly onfocus="this.removeAttribute(\'readonly\');">' +
-                  '</form>' +
-                  '<div class="admin-filter-pills">' +
-                    '<button class="filter-pill active" data-filter="all">Todos (<span id="countPillAll">0</span>)</button>' +
-                    '<button class="filter-pill" data-filter="new" style="color: #f87171; font-weight: 800;">🔔 Novos (<span id="countPillNew">0</span>)</button>' +
-                    '<button class="filter-pill" data-filter="pro">Assinantes PRO (<span id="countPillPro">0</span>)</button>' +
-                    '<button class="filter-pill" data-filter="live">Ativos / Ao Vivo (<span id="countPillLive">0</span>)</button>' +
-                    '<button class="filter-pill" data-filter="free">Plano Free (<span id="countPillFree">0</span>)</button>' +
+                '<div class="admin-crm-toolbar">' +
+                  '<div class="admin-crm-toolbar-top">' +
+                    '<form class="admin-search-wrapper" autocomplete="off" onsubmit="return false;" style="margin:0;">' +
+                      '<input type="text" name="fake_admin_user" style="display:none;" tabindex="-1">' +
+                      '<input type="search" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Buscar cantor por nome, @login, e-mail, WhatsApp ou CPF..." autocomplete="off" readonly onfocus="this.removeAttribute(\'readonly\');">' +
+                    '</form>' +
+                    '<div class="admin-crm-actions">' +
+                      '<button type="button" id="btnExportCSV" class="btn btn-outline btn-sm" title="Exportar cadastro dos cantores em arquivo CSV" style="display:inline-flex; align-items:center; gap:5px;">📊 Exportar CSV</button>' +
+                      '<button type="button" id="btnOpenNewSingerModal" class="btn btn-primary btn-sm" style="font-weight:800; display:inline-flex; align-items:center; gap:6px;">👑 + Novo Cantor VIP</button>' +
+                    '</div>' +
                   '</div>' +
-                  '<div class="admin-toolbar-buttons">' +
-                    '<button id="btnMarkAllSignupsSeen" class="btn btn-outline btn-sm" title="Marcar todos os cadastros como visualizados">👁️ Marcar Vistos</button>' +
-                    '<button id="btnOpenNewSingerModal" class="btn btn-primary btn-sm">➕ Novo Cantor VIP</button>' +
-                    '<button id="btnExportCSV" class="btn btn-outline btn-sm">📊 Exportar CSV</button>' +
-                    '<button id="btnRefreshAdminData" class="btn btn-secondary btn-sm">🔄 Atualizar</button>' +
+                  '<div class="admin-crm-toolbar-bottom">' +
+                    '<div class="admin-filter-pills">' +
+                      '<button type="button" class="filter-pill active" data-filter="all">Todos (<span id="countPillAll">0</span>)</button>' +
+                      '<button type="button" class="filter-pill" data-filter="pro">👑 VIP & PRO (<span id="countPillPro">0</span>)</button>' +
+                      '<button type="button" class="filter-pill" data-filter="live">🟢 Ao Vivo no Palco (<span id="countPillLive">0</span>)</button>' +
+                      '<button type="button" class="filter-pill" data-filter="free">⚡ Plano Free (<span id="countPillFree">0</span>)</button>' +
+                      '<button type="button" class="filter-pill hidden" id="pillFilterNew" data-filter="new" style="color: #f87171; font-weight: 800;">🔔 Novos (<span id="countPillNew">0</span>)</button>' +
+                    '</div>' +
                   '</div>' +
                 '</div>' +
 
@@ -2853,22 +2855,137 @@
       }
     },
 
+    getSingerPlanInfo: function (u) {
+      if (!u) {
+        return {
+          tier: 'free',
+          label: 'Plano Free',
+          badgeText: '⚡ PLANO FREE',
+          badgeClass: 'badge-plan-free',
+          badgeHtml: '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>',
+          badgeCompactHtml: '<span class="badge-plan-executive badge-plan-free">⚡ FREE</span>',
+          isVip: false,
+          isPro: false,
+          isCeo: false,
+          isFree: true
+        };
+      }
+
+      var uEmail = (u.email || '').toLowerCase().trim();
+      var uCode = (u.singer_code || '').toLowerCase().trim();
+      var uId = (u.id || '').toLowerCase().trim();
+
+      // Caso Especial: Fundador & CEO
+      if (isPlatformDeveloper(uEmail) || uId === 'a597be32-b59a-4a79-94ed-34dfd5f939ef' || uId === 'admin-leovitulli-id' || uCode === '@leovitulli') {
+        return {
+          tier: 'ceo',
+          label: 'CEO & Fundador',
+          badgeText: '⭐ CEO & FUNDADOR',
+          badgeClass: 'badge-plan-ceo',
+          badgeHtml: '<span class="badge-plan-executive badge-plan-ceo">⭐ CEO & FUNDADOR</span>',
+          badgeCompactHtml: '<span class="badge-plan-executive badge-plan-ceo">⭐ CEO</span>',
+          isVip: true,
+          isPro: true,
+          isCeo: true,
+          isFree: false
+        };
+      }
+
+      // VIP (100% OFF Vitalício / Cortesia / Parceiro)
+      var isVip = !!(
+        u.is_vip ||
+        u.plan_tier === 'vip' ||
+        (u.plan_type && u.plan_type.indexOf('VIP') !== -1) ||
+        u.coupon_used === 'VIP100' ||
+        uEmail === 'alinecrissallai@gmail.com' ||
+        uCode === '@alinecrissallai' ||
+        uId === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908'
+      );
+
+      if (isVip) {
+        return {
+          tier: 'vip',
+          label: 'Plano VIP (100% OFF)',
+          badgeText: '👑 VIP 100% OFF',
+          badgeClass: 'badge-plan-vip',
+          badgeHtml: '<span class="badge-plan-executive badge-plan-vip">👑 VIP 100% OFF</span>',
+          badgeCompactHtml: '<span class="badge-plan-executive badge-plan-vip">👑 VIP</span>',
+          isVip: true,
+          isPro: true,
+          isCeo: false,
+          isFree: false
+        };
+      }
+
+      // PRO (Assinatura Anual ou Mensal)
+      var isAnnual = !!(u.plan_type && u.plan_type.toLowerCase().indexOf('anual') !== -1);
+      var isMonthly = !!(u.plan_type && u.plan_type.toLowerCase().indexOf('mensal') !== -1);
+      var isPro = u.plan_tier === 'pro' || isAnnual || isMonthly;
+
+      if (isPro) {
+        var pText = isMonthly ? '💎 PRO MENSAL' : '💎 PRO ANUAL';
+        return {
+          tier: 'pro',
+          label: isMonthly ? 'Assinante PRO (Mensal)' : 'Assinante PRO (Anual)',
+          badgeText: pText,
+          badgeClass: 'badge-plan-pro',
+          badgeHtml: '<span class="badge-plan-executive badge-plan-pro">' + pText + '</span>',
+          badgeCompactHtml: '<span class="badge-plan-executive badge-plan-pro">💎 PRO</span>',
+          isVip: false,
+          isPro: true,
+          isCeo: false,
+          isFree: false
+        };
+      }
+
+      // Degustação / Trial PRO
+      if (u.plan_tier === 'trial' || u.is_trial) {
+        return {
+          tier: 'trial',
+          label: 'Degustação PRO (7 Dias)',
+          badgeText: '⚡ DEGUSTAÇÃO PRO',
+          badgeClass: 'badge-plan-pro',
+          badgeHtml: '<span class="badge-plan-executive badge-plan-pro">⚡ DEGUSTAÇÃO PRO</span>',
+          badgeCompactHtml: '<span class="badge-plan-executive badge-plan-pro">⚡ TRIAL</span>',
+          isVip: false,
+          isPro: true,
+          isCeo: false,
+          isFree: false
+        };
+      }
+
+      // Default: Free
+      return {
+        tier: 'free',
+        label: 'Plano Gratuito',
+        badgeText: '⚡ PLANO FREE',
+        badgeClass: 'badge-plan-free',
+        badgeHtml: '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>',
+        badgeCompactHtml: '<span class="badge-plan-executive badge-plan-free">⚡ FREE</span>',
+        isVip: false,
+        isPro: false,
+        isCeo: false,
+        isFree: true
+      };
+    },
+
     updateMetrics: function () {
       var customerUsers = allUserData.filter(function(u) {
         return u && !isPlatformDeveloper(u.email);
       });
       var total = customerUsers.length;
       var pro = customerUsers.filter(function (u) {
-        return u.plan_tier === 'pro' || u.plan_tier === 'vip' || !!u.is_vip || (u.plan_type && u.plan_type.indexOf('VIP') !== -1) || u.coupon_used === 'VIP100';
+        var pInfo = PrompterAdmin.getSingerPlanInfo(u);
+        return pInfo.isPro;
       }).length;
       var free = customerUsers.filter(function (u) {
-        var isVipOrPro = u.plan_tier === 'pro' || u.plan_tier === 'vip' || !!u.is_vip || (u.plan_type && u.plan_type.indexOf('VIP') !== -1) || u.coupon_used === 'VIP100';
-        return !isVipOrPro;
+        var pInfo = PrompterAdmin.getSingerPlanInfo(u);
+        return pInfo.isFree;
       }).length;
       var online = customerUsers.filter(function (u) { return u.is_online; }).length;
       var payingPro = customerUsers.filter(function (u) {
-        var isVip = !!u.is_vip || u.plan_tier === 'vip' || (u.plan_type && u.plan_type.indexOf('VIP') !== -1) || u.coupon_used === 'VIP100';
-        return !isVip && (u.plan_tier === 'pro');
+        var pInfo = PrompterAdmin.getSingerPlanInfo(u);
+        return pInfo.isPro && !pInfo.isVip;
       }).length;
       var estimatedMRR = (payingPro * (pricingConfig.monthlyPrice || 39.90)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -2889,12 +3006,15 @@
       var pLive = document.getElementById('countPillLive');
       var pFree = document.getElementById('countPillFree');
       var pNew = document.getElementById('countPillNew');
+      var pillNewEl = document.getElementById('pillFilterNew');
 
       if (pAll) pAll.innerText = total;
       if (pPro) pPro.innerText = pro;
       if (pLive) pLive.innerText = online;
       if (pFree) pFree.innerText = free;
-      if (pNew) pNew.innerText = this.getUnreadSignups().length;
+      var unreadCount = this.getUnreadSignups().length;
+      if (pNew) pNew.innerText = unreadCount;
+      if (pillNewEl) pillNewEl.classList.toggle('hidden', unreadCount === 0);
 
       // Buscar contagem real de músicas e repertórios no banco local e nuvem
       if (window.PrompterDB) {
@@ -2915,11 +3035,10 @@
 
       var filtered = allUserData.filter(function (u) {
         if (!u || isPlatformDeveloper(u.email)) return false;
-        var isUserVip = !!u.is_vip || u.plan_tier === 'vip' || (u.plan_type && u.plan_type.indexOf('VIP') !== -1) || u.coupon_used === 'VIP100';
-        var isUserPro = isUserVip || u.plan_tier === 'pro';
+        var pInfo = PrompterAdmin.getSingerPlanInfo(u);
         if (currentFilter === 'new' && !PrompterAdmin.isUserNew(u)) return false;
-        if (currentFilter === 'pro' && !isUserPro) return false;
-        if (currentFilter === 'free' && isUserPro) return false;
+        if (currentFilter === 'pro' && !pInfo.isPro) return false;
+        if (currentFilter === 'free' && !pInfo.isFree) return false;
         if (currentFilter === 'live' && !u.is_online) return false;
 
         if (searchQuery) {
@@ -2970,16 +3089,11 @@
           ? '<span class="status-dot-pulse-online" title="🟢 Online e Ativo"></span>'
           : '<span class="status-dot-offline" title="⚪ Offline"></span>';
 
-        var isVip = !!user.is_vip || (user.plan_type && user.plan_type.indexOf('VIP') !== -1) || user.coupon_used === 'VIP100';
-        var planBadge = '';
+        var pInfo = PrompterAdmin.getSingerPlanInfo(user);
+        var planBadge = pInfo.badgeHtml;
         var finStatus = PrompterAdmin.getUserFinancialStatus ? PrompterAdmin.getUserFinancialStatus(user) : null;
 
-        if (isVip) {
-          // Comunicação ÚNICA e elegante de Governança VIP (elimina duplicidade de tags)
-          planBadge = '<span class="badge-plan-executive" style="background: rgba(251,191,36,0.16); color: #fbbf24; border: 1px solid rgba(251,191,36,0.45); font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">👑 PARCEIRO VIP (100% OFF)</span>';
-        } else if (user.plan_tier === 'pro') {
-          var pType = user.plan_type || '💎 PRO ANUAL';
-          planBadge = '<span class="badge-plan-executive badge-plan-pro">' + escapeHtml(pType) + '</span>';
+        if (pInfo.isPro && !pInfo.isVip) {
           if (finStatus) {
             var finPill = '';
             if (finStatus.status === 'paid') {
@@ -2996,8 +3110,6 @@
           if (user.coupon_used && user.coupon_used !== 'VIP100') {
             planBadge += '<div style="font-size: 0.72rem; color: #a7f3d0; margin-top: 3px; font-weight: 600;">🏷️ ' + escapeHtml(user.coupon_used) + '</div>';
           }
-        } else {
-          planBadge = '<span class="badge-plan-executive badge-plan-free">⚡ PLANO FREE</span>';
         }
 
         // Metadados Administrativos: Data de Cadastro e Tempo de Casa (Tenure)
@@ -3442,9 +3554,11 @@
 
         var st = PrompterAdmin.getUserFinancialStatus(user);
 
+        var pInfo = PrompterAdmin.getSingerPlanInfo(user);
+
         // Badge do Status Financeiro
         var statusBadgeHtml = '';
-        if (st.status === 'vip') {
+        if (pInfo.isVip) {
           statusBadgeHtml = '<span class="badge-fin-vip">👑 ISENTO VIP</span>';
         } else if (st.status === 'paid') {
           statusBadgeHtml = '<span class="badge-fin-paid">🟢 EM DIA</span>';
@@ -3458,12 +3572,11 @@
 
         // Informação de Plano & Valor
         var planInfoHtml = '';
-        if (st.status === 'vip') {
-          planInfoHtml = '<strong style="color:#c084fc; font-size:0.82rem;">👑 Cortesia VIP</strong><div style="font-size:0.72rem; color:#94a3b8;">Isenção 100% OFF</div>';
-        } else if (user.plan_tier === 'pro') {
-          var pType = user.plan_type || (st.isAnnual ? '💎 PRO ANUAL' : '💎 PRO MENSAL');
+        if (pInfo.isVip) {
+          planInfoHtml = '<strong style="color:#fbbf24; font-size:0.82rem;">👑 Plano VIP</strong><div style="font-size:0.72rem; color:#f59e0b;">Isenção 100% OFF</div>';
+        } else if (pInfo.isPro) {
           var pValStr = PrompterAdmin.formatBRL(st.amount) + (st.isAnnual ? '/ano' : '/mês');
-          planInfoHtml = '<strong style="color:#38bdf8; font-size:0.82rem;">' + escapeHtml(pType) + '</strong><div style="font-size:0.75rem; color:#f8fafc; font-weight:700;">' + pValStr + '</div>';
+          planInfoHtml = '<strong style="color:#38bdf8; font-size:0.82rem;">' + escapeHtml(pInfo.badgeText) + '</strong><div style="font-size:0.75rem; color:#f8fafc; font-weight:700;">' + pValStr + '</div>';
         } else {
           planInfoHtml = '<strong style="color:#94a3b8; font-size:0.82rem;">Plano Gratuito</strong><div style="font-size:0.72rem; color:#64748b;">R$ 0,00</div>';
         }
@@ -4112,10 +4225,31 @@
       var allSongs = PrompterAdmin.masterSongsCache || [];
       var users = allUserData || [];
 
-      // Mapa de usuários por ID
+      // Mapeamento abrangente de usuários por ID, e-mail e singer_code
       var userMap = {};
+
+      // Injetar conta oficial do Fundador & CEO para reconhecimento no Acervo Global
+      var ceoId = 'a597be32-b59a-4a79-94ed-34dfd5f939ef';
+      var ceoObj = {
+        id: ceoId,
+        name: 'Leonardo Vitulli (CEO & Fundador)',
+        email: 'leovitulli@gmail.com',
+        singer_code: '@leovitulli',
+        is_ceo: true,
+        is_vip: true,
+        plan_tier: 'ceo',
+        plan_type: '⭐ CEO & FUNDADOR'
+      };
+      userMap[ceoId] = ceoObj;
+      userMap['admin-leovitulli-id'] = ceoObj;
+      userMap['leovitulli@gmail.com'] = ceoObj;
+      userMap['@leovitulli'] = ceoObj;
+
       users.forEach(function (u) {
-        userMap[u.id] = u;
+        if (!u) return;
+        if (u.id) userMap[u.id] = u;
+        if (u.email) userMap[u.email.toLowerCase().trim()] = u;
+        if (u.singer_code) userMap[u.singer_code.toLowerCase().trim()] = u;
       });
 
       // Agrupar repertórios e músicas por user_id
@@ -4124,8 +4258,12 @@
       allReps.forEach(function (r) {
         var uId = r.user_id || 'unknown';
         if (!userGroups[uId]) {
+          var matchedUser = userMap[uId] || (uId === ceoId ? ceoObj : null);
+          if (!matchedUser) {
+            matchedUser = { name: 'Cantor (' + uId.slice(0, 8) + ')', email: uId, plan_type: '⚡ PLANO FREE' };
+          }
           userGroups[uId] = {
-            user: userMap[uId] || { name: 'Cantor (' + uId.slice(0, 8) + ')', email: uId, plan_type: '⚡ PLANO FREE' },
+            user: matchedUser,
             repertoires: {}
           };
         }
@@ -4155,8 +4293,12 @@
           }
           if (!found) {
             if (!userGroups[uId]) {
+              var matchedUser = userMap[uId] || (uId === ceoId ? ceoObj : null);
+              if (!matchedUser) {
+                matchedUser = { name: 'Cantor (' + uId.slice(0, 8) + ')', email: uId, plan_type: '⚡ PLANO FREE' };
+              }
               userGroups[uId] = {
-                user: userMap[uId] || { name: 'Cantor (' + uId.slice(0, 8) + ')', email: uId, plan_type: '⚡ PLANO FREE' },
+                user: matchedUser,
                 repertoires: {}
               };
             }
@@ -4217,19 +4359,27 @@
 
         var userInitial = (uInfo.name || uInfo.email || 'C').charAt(0).toUpperCase();
         var isSingerExp = query ? true : !!PrompterAdmin.expandedSingers[uid];
+        var pInfo = PrompterAdmin.getSingerPlanInfo(uInfo);
+
+        var avatarStyle = 'width: 42px; height: 42px; font-size: 1.15rem; flex-shrink: 0;';
+        if (pInfo.isCeo) {
+          avatarStyle += ' background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #ffffff; border: 1px solid rgba(168,85,247,0.5);';
+        } else if (pInfo.isVip) {
+          avatarStyle += ' background: linear-gradient(135deg, #d97706, #b45309); color: #ffffff; border: 1px solid rgba(251,191,36,0.5);';
+        }
 
         html +=
           '<div class="master-singer-card ' + (isSingerExp ? 'is-expanded' : '') + '" data-singer-id="' + escapeHtml(uid) + '">' +
             '<!-- CABEÇALHO DO CANTOR (CLICÁVEL PARA RETRAIR/EXPANDIR) -->' +
             '<div class="master-singer-header" onclick="PrompterAdmin.toggleSingerGroup(\'' + escapeHtml(uid).replace(/'/g, "\\'") + '\')">' +
               '<div class="master-singer-info">' +
-                '<div class="user-avatar-initial" style="width: 42px; height: 42px; font-size: 1.15rem; flex-shrink: 0;">' + escapeHtml(userInitial) + '</div>' +
+                '<div class="user-avatar-initial" style="' + avatarStyle + '">' + escapeHtml(userInitial) + '</div>' +
                 '<div>' +
                   '<div style="font-weight: 800; font-size: 1.05rem; color: #f8fafc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' +
                     '<span>' + escapeHtml(uInfo.name || uInfo.email) + '</span>' +
-                    '<span class="badge" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); font-weight: 700;">' + escapeHtml(uInfo.plan_type || 'FREE') + '</span>' +
+                    pInfo.badgeHtml +
                   '</div>' +
-                  '<div style="font-size: 0.8rem; color: #94a3b8;">' + escapeHtml(uInfo.email) + '</div>' +
+                  '<div style="font-size: 0.8rem; color: #94a3b8;">' + escapeHtml(uInfo.email || (uInfo.singer_code || '')) + '</div>' +
                 '</div>' +
               '</div>' +
               '<div class="master-singer-meta">' +
@@ -4887,25 +5037,52 @@
           return;
         }
 
+        var songsByUserId = {};
+        var repsByUserId = {};
+        (PrompterAdmin.masterSongsCache || []).forEach(function(s) {
+          var uid = s.user_id;
+          if (uid) songsByUserId[uid] = (songsByUserId[uid] || 0) + 1;
+        });
+        (PrompterAdmin.masterRepsCache || []).forEach(function(r) {
+          var uid = r.user_id;
+          if (uid) repsByUserId[uid] = (repsByUserId[uid] || 0) + 1;
+        });
+
+        var getSingerSongCount = function (s) {
+          if (!s) return 0;
+          return s.songs_count || songsByUserId[s.id] || 0;
+        };
+        var getSingerRepCount = function (s) {
+          if (!s) return 0;
+          return s.reps_count || repsByUserId[s.id] || 0;
+        };
+
         var sortedSingers = [].concat(customerSingers).sort(function (a, b) {
+          var aSongs = getSingerSongCount(a);
+          var bSongs = getSingerSongCount(b);
+          var aReps = getSingerRepCount(a);
+          var bReps = getSingerRepCount(b);
+          var aPlan = PrompterAdmin.getSingerPlanInfo(a);
+          var bPlan = PrompterAdmin.getSingerPlanInfo(b);
+
           if (period === 'week') {
             // Foco Semanal: quem está no palco ao vivo agora ou ativo recentemente
             var aOnline = a.is_online ? 50 : 0;
             var bOnline = b.is_online ? 50 : 0;
             var aRecent = (a.last_seen && (a.last_seen.indexOf('Hoje') !== -1 || a.last_seen.indexOf('Agora') !== -1 || a.last_seen.indexOf('min') !== -1 || a.last_seen.indexOf('hora') !== -1)) ? 35 : 0;
             var bRecent = (b.last_seen && (b.last_seen.indexOf('Hoje') !== -1 || b.last_seen.indexOf('Agora') !== -1 || b.last_seen.indexOf('min') !== -1 || b.last_seen.indexOf('hora') !== -1)) ? 35 : 0;
-            var aScore = aOnline + aRecent + (a.songs_count || 0) + ((a.reps_count || 0) * 4);
-            var bScore = bOnline + bRecent + (b.songs_count || 0) + ((b.reps_count || 0) * 4);
+            var aScore = aOnline + aRecent + aSongs + (aReps * 4);
+            var bScore = bOnline + bRecent + bSongs + (bReps * 4);
             return bScore - aScore;
           } else if (period === 'month') {
             // Foco Mensal: volume ponderado por repertórios montados
-            var aScore = ((a.reps_count || 0) * 8) + ((a.songs_count || 0) * 2) + (a.is_online ? 20 : 0) + (a.plan_tier === 'pro' ? 15 : 0);
-            var bScore = ((b.reps_count || 0) * 8) + ((b.songs_count || 0) * 2) + (b.is_online ? 20 : 0) + (b.plan_tier === 'pro' ? 15 : 0);
+            var aScore = (aReps * 8) + (aSongs * 2) + (a.is_online ? 20 : 0) + (aPlan.isPro ? 15 : 0);
+            var bScore = (bReps * 8) + (bSongs * 2) + (b.is_online ? 20 : 0) + (bPlan.isPro ? 15 : 0);
             return bScore - aScore;
           } else {
             // Foco Anual / Geral: histórico acumulado de cifras e repertórios
-            var aScore = (a.songs_count || 0) + ((a.reps_count || 0) * 6) + (a.plan_tier === 'pro' ? 25 : 0);
-            var bScore = (b.songs_count || 0) + ((b.reps_count || 0) * 6) + (b.plan_tier === 'pro' ? 25 : 0);
+            var aScore = aSongs + (aReps * 6) + (aPlan.isPro ? 25 : 0);
+            var bScore = bSongs + (bReps * 6) + (bPlan.isPro ? 25 : 0);
             return bScore - aScore;
           }
         });
@@ -4918,10 +5095,8 @@
           var sName = escapeHtml(singer.name || (singer.email ? singer.email.split('@')[0] : 'Cantor'));
           var initial = (sName ? sName.charAt(0) : '🎤').toUpperCase();
           var sCode = escapeHtml(normalizeSingerCode(singer.singer_code, singer.email));
-          var isVip = !!singer.is_vip || (singer.plan_type && singer.plan_type.indexOf('VIP') !== -1) || singer.coupon_used === 'VIP100';
-          var planTag = isVip
-            ? '<span style="color:#fbbf24; font-size:0.68rem; font-weight:800;">👑 VIP</span>'
-            : (singer.plan_tier === 'pro' ? '<span style="color:#38bdf8; font-size:0.68rem; font-weight:800;">💎 PRO</span>' : '<span style="color:#94a3b8; font-size:0.68rem;">⚡ FREE</span>');
+          var planInfo = PrompterAdmin.getSingerPlanInfo(singer);
+          var planTag = planInfo.badgeCompactHtml;
 
           var periodBadge = '';
           if (period === 'week') {
@@ -4936,20 +5111,31 @@
             periodBadge = '<span style="color:#fbbf24; font-size:0.68rem; font-weight:700; background:rgba(251,191,36,0.12); padding:1px 6px; border-radius:4px; border:1px solid rgba(251,191,36,0.3);">🏆 Geral Acumulado</span>';
           }
 
-          var songsNum = singer.songs_count || 0;
-          var repsNum = singer.reps_count || 0;
+          var songsNum = getSingerSongCount(singer);
+          var repsNum = getSingerRepCount(singer);
 
           var cleanPhone = (singer.phone || '').replace(/\D/g, '');
           if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = '55' + cleanPhone;
 
-          var pitchText = encodeURIComponent(
-            'Olá ' + sName + '! Aqui é o Leonardo, CEO e criador do CantaAí PRO 🎤. Vi que você é um dos nossos cantores mais ativos no palco! Queria te presentear com uma condição especial de parceiro VIP oficial em troca de um depoimento rápido contando como o app te ajuda nos shows. Topa conversar?'
-          );
-          var waPitchUrl = 'https://wa.me/' + cleanPhone + '?text=' + pitchText;
-
-          var actionHtml = cleanPhone
-            ? '<a href="' + waPitchUrl + '" target="_blank" class="btn-crm-wa" title="Chamar no WhatsApp para Parceria VIP & Depoimento">📲 Pedir Depoimento VIP</a>'
-            : '<button type="button" class="btn-crm-chat btn-attend-top-singer" data-user-id="' + singer.id + '">💬 Atender no App</button>';
+          var actionHtml = '';
+          if (cleanPhone) {
+            var msgText = '';
+            var btnText = '';
+            if (planInfo.isVip) {
+              msgText = 'Olá ' + sName + '! Aqui é o Leonardo, CEO do CantaAí PRO 🎤. Vi que você tá mandando super bem no palco com o app! Como nossa parceira VIP oficial, queria te ouvir: o que você mais tem curtido nos seus shows e toparia gravar um mini depoimento em vídeo sobre a sua experiência?';
+              btnText = '💬 WhatsApp (Depoimento)';
+            } else if (planInfo.isPro) {
+              msgText = 'Olá ' + sName + '! Aqui é o Leonardo do CantaAí PRO 🎤. Vi que você é um dos nossos cantores mais ativos no palco! O que está achando da sua assinatura PRO? Se puder me dar um feedback rápido dos seus shows, agradeço demais!';
+              btnText = '💬 WhatsApp (Feedback)';
+            } else {
+              msgText = 'Fala ' + sName + '! Aqui é o Leonardo, criador do CantaAí PRO 🎤. Vi que você tá usando bastante o app no palco! Queria te presentear com uma condição especial de Parceiro VIP oficial com acesso total. Bora bater um papo rápido?';
+              btnText = '💬 WhatsApp (Convidar VIP)';
+            }
+            var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(msgText);
+            actionHtml = '<a href="' + waUrl + '" target="_blank" class="btn-crm-wa" title="Conversar no WhatsApp">' + btnText + '</a>';
+          } else {
+            actionHtml = '<button type="button" class="btn-crm-chat btn-attend-top-singer" data-user-id="' + singer.id + '">💬 Atender no App</button>';
+          }
 
           html +=
             '<div class="power-user-row">' +

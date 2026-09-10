@@ -256,17 +256,41 @@
 }
 
 /* ── TOOLBAR DE FILTROS & BUSCA ───────────────────── */
-.admin-toolbar-row {
+.admin-toolbar-row,
+.admin-crm-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.admin-crm-toolbar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  padding: 10px 14px;
+  gap: 12px;
+  width: 100%;
+}
+
+.admin-crm-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.admin-crm-toolbar-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+  width: 100%;
 }
 
 .admin-search-wrapper {
@@ -519,25 +543,43 @@
 }
 
 .badge-plan-executive {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.76rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.74rem;
   font-weight: 800;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
+.badge-plan-vip,
+.badge-fin-vip {
+  background: rgba(251, 191, 36, 0.16) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(251, 191, 36, 0.45) !important;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.12);
+}
+
 .badge-plan-pro {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.12);
 }
 
 .badge-plan-free {
-  background: rgba(148, 163, 184, 0.12);
-  color: #94a3b8;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(148, 163, 184, 0.12) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+}
+
+.badge-plan-ceo {
+  background: rgba(168, 85, 247, 0.18) !important;
+  color: #c084fc !important;
+  border: 1px solid rgba(168, 85, 247, 0.5) !important;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
 }
 
 .admin-reps-stat {
@@ -867,10 +909,21 @@
     gap: 10px !important;
   }
 
-  .admin-toolbar-row {
+  .admin-toolbar-row,
+  .admin-crm-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .admin-crm-toolbar-top {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 8px !important;
+  }
+
+  .admin-crm-actions {
+    justify-content: flex-end;
   }
 
   .admin-search-wrapper {
@@ -1918,9 +1971,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(168, 85, 247, 0.15);
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  color: #c084fc;
+  background: rgba(251, 191, 36, 0.16) !important;
+  border: 1px solid rgba(251, 191, 36, 0.45) !important;
+  color: #fbbf24 !important;
   font-size: 0.7rem;
   font-weight: 800;
   padding: 3px 8px;
