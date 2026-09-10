@@ -220,19 +220,32 @@ body.light-mode .app-header { background: var(--ca-papel) !important; }
 .prompter-header {
   border-bottom: 1px solid var(--border-color) !important;
 }
-#prompterSongTitle { font-size: 1.35rem !important; text-transform: uppercase; letter-spacing: -0.02em !important; }
+#prompterSongTitle { 
+  font-size: clamp(1.2rem, 3.5vw, 1.55rem) !important; 
+  text-transform: uppercase; 
+  letter-spacing: -0.02em !important; 
+  white-space: normal !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
+  line-height: 1.25 !important;
+}
 
-/* Seletor "Tom de Cantar" (o dropdown existente) vira o chip colorido do tom */
+/* Seletor "Tom de Cantar" (o dropdown existente) vira o chip colorido do tom com largura livre para exibir o tom todo */
 .key-selector-dropdown {
   background-color: var(--tom-chip-bg) !important;
   color: var(--tom-chip-fg) !important;
   border: 1px solid transparent !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   font-family: var(--ca-font-display) !important;
   font-weight: 800 !important;
-  font-size: 1rem !important;
-  padding: 0.3rem 0.6rem !important;
+  font-size: 0.95rem !important;
+  padding: 0.35rem 0.75rem !important;
   letter-spacing: -0.02em !important;
+  min-width: 92px !important;
+  width: auto !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 .key-selector-dropdown:hover { background-color: var(--tom-chip-bg) !important; filter: brightness(0.95); }
 .key-selector-dropdown option { background-color: var(--bg-secondary) !important; color: var(--text-main) !important; font-family: var(--ca-font-body) !important; font-weight: 600 !important; }

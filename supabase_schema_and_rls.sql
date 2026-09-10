@@ -63,8 +63,16 @@ BEGIN
     u_phone := COALESCE(NEW.raw_user_meta_data->>'phone', '');
     u_cpf := COALESCE(NEW.raw_user_meta_data->>'cpf', '');
     u_insta := COALESCE(NEW.raw_user_meta_data->>'instagram', '');
-    u_tier := CASE WHEN NEW.email = 'leovitulli@gmail.com' THEN 'pro' ELSE COALESCE(NEW.raw_user_meta_data->>'plan_tier', 'free') END;
-    u_type := CASE WHEN NEW.email = 'leovitulli@gmail.com' THEN '💎 PRO ANUAL' ELSE '⚡ PLANO FREE' END;
+    u_tier := CASE 
+        WHEN NEW.email = 'leovitulli@gmail.com' THEN 'pro' 
+        WHEN NEW.email = 'alinecrissallai@gmail.com' THEN 'vip' 
+        ELSE COALESCE(NEW.raw_user_meta_data->>'plan_tier', 'free') 
+    END;
+    u_type := CASE 
+        WHEN NEW.email = 'leovitulli@gmail.com' THEN '💎 PRO ANUAL' 
+        WHEN NEW.email = 'alinecrissallai@gmail.com' THEN '👑 VIP 100% OFF' 
+        ELSE '⚡ PLANO FREE' 
+    END;
 
     INSERT INTO public.profiles (id, email, display_name, phone, cpf, instagram, singer_code, role, plan_tier, plan_type)
     VALUES (
@@ -131,8 +139,16 @@ SELECT
         ELSE COALESCE(NULLIF(au.raw_user_meta_data->>'singer_code', ''), '@' || split_part(au.email, '@', 1))
     END,
     CASE WHEN au.email = 'leovitulli@gmail.com' THEN 'admin' ELSE 'user' END,
-    CASE WHEN au.email = 'leovitulli@gmail.com' THEN 'pro' ELSE 'free' END,
-    CASE WHEN au.email = 'leovitulli@gmail.com' THEN '💎 PRO ANUAL' ELSE '⚡ PLANO FREE' END
+    CASE 
+        WHEN au.email = 'leovitulli@gmail.com' THEN 'pro' 
+        WHEN au.email = 'alinecrissallai@gmail.com' THEN 'vip' 
+        ELSE 'free' 
+    END,
+    CASE 
+        WHEN au.email = 'leovitulli@gmail.com' THEN '💎 PRO ANUAL' 
+        WHEN au.email = 'alinecrissallai@gmail.com' THEN '👑 VIP 100% OFF' 
+        ELSE '⚡ PLANO FREE' 
+    END
 FROM auth.users au
 ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,

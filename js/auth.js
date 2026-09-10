@@ -41,6 +41,15 @@
             currentProfile.instagram = '@leovitulli';
           }
 
+          if (uEmail === 'alinecrissallai@gmail.com') {
+            if (!currentProfile) currentProfile = {};
+            currentProfile.is_vip = true;
+            currentProfile.plan_tier = 'vip';
+            currentProfile.plan_type = '👑 VIP 100% OFF';
+            currentProfile.coupon_used = 'VIP100';
+            currentProfile.billing_due_date = '2099-12-31T23:59:59.000Z';
+          }
+
           // Sincronizar com canta_ai_admin_users caso haja alterações mais recentes salvas no painel
           try {
             var rawAdminList = localStorage.getItem('canta_ai_admin_users');
@@ -54,6 +63,8 @@
                 if (matchedUser.name) currentProfile.display_name = matchedUser.name;
                 if (matchedUser.plan_tier) currentProfile.plan_tier = matchedUser.plan_tier;
                 if (matchedUser.plan_type) currentProfile.plan_type = matchedUser.plan_type;
+                if (matchedUser.is_vip !== undefined) currentProfile.is_vip = matchedUser.is_vip;
+                if (matchedUser.coupon_used) currentProfile.coupon_used = matchedUser.coupon_used;
                 if (matchedUser.instagram) currentProfile.instagram = matchedUser.instagram;
                 if (matchedUser.phone) currentProfile.phone = matchedUser.phone;
                 if (matchedUser.cpf) currentProfile.cpf = matchedUser.cpf;
@@ -84,6 +95,7 @@
               }, 200);
             } else if (event === 'SIGNED_IN' && session && session.user) {
               currentUser = session.user;
+              if (session.access_token) currentUser.access_token = session.access_token;
               PrompterAuth.fetchProfile(currentUser.id).then(function (profile) {
                 currentProfile = profile;
                 PrompterAuth.saveSession(currentUser, currentProfile);
@@ -210,10 +222,11 @@
       var instagram = (payload && payload.instagram) ? payload.instagram.trim() : '';
       var coupon = (payload && payload.couponCode) ? payload.couponCode.trim().toUpperCase() : '';
 
-      var isVipCoupon = coupon === 'VIP100' || coupon === 'CORTESIA' || coupon === 'DEV';
+      var isAline = cleanEmail === 'alinecrissallai@gmail.com';
+      var isVipCoupon = coupon === 'VIP100' || coupon === 'CORTESIA' || coupon === 'DEV' || isAline;
       var isPro = cleanEmail === 'leovitulli@gmail.com' || isVipCoupon;
-      var planTier = isPro ? 'pro' : 'free';
-      var planType = isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE';
+      var planTier = (isAline || coupon === 'VIP100') ? 'vip' : (isPro ? 'pro' : 'free');
+      var planType = (isAline || coupon === 'VIP100') ? '👑 VIP 100% OFF' : (isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE');
       
       var customSingerCode = (payload && payload.singerCode) ? PrompterAuth.formatSingerCode(payload.singerCode) : '';
       var singerCode = customSingerCode || (cleanEmail === 'leovitulli@gmail.com' ? '@leovitulli' : ('@' + cleanEmail.split('@')[0]));
@@ -532,6 +545,9 @@
 
         var user = res.data ? res.data.user : null;
         if (!user) throw new Error('Usuário não retornado pelo servidor.');
+        if (res.data.session && res.data.session.access_token) {
+          user.access_token = res.data.session.access_token;
+        }
 
         currentUser = user;
         return PrompterAuth.fetchProfile(user.id).then(function (profile) {
@@ -717,8 +733,13 @@
         var email = (currentProfile && currentProfile.email) ? currentProfile.email : (currentUser.email || '');
         var cleanEmail = email.trim().toLowerCase();
 
-        // 1. Sincronizar dados em tempo real com as alterações salvas em canta_ai_admin_users ou custom_handle
-        var customHandle = localStorage.getItem('cantaai_user_custom_handle');
+        // 1. Sincronizar dados em tempo real com as alterações salvas em canta_ai_admin_users
+        var userCustomHandleKey = 'cantaai_user_custom_handle_' + cleanEmail;
+        var customHandle = localStorage.getItem(userCustomHandleKey);
+        if (cleanEmail === 'leovitulli@gmail.com' && !customHandle) {
+          customHandle = localStorage.getItem('cantaai_user_custom_handle');
+        }
+
         try {
           var rawAdminList = localStorage.getItem('canta_ai_admin_users');
           if (rawAdminList) {
@@ -737,6 +758,12 @@
               if (matchedUser.instagram) currentProfile.instagram = matchedUser.instagram;
               if (matchedUser.phone) currentProfile.phone = matchedUser.phone;
               if (matchedUser.cpf) currentProfile.cpf = matchedUser.cpf;
+              if (matchedUser.billing_due_date) currentProfile.billing_due_date = matchedUser.billing_due_date;
+              if (matchedUser.created_at) currentProfile.created_at = matchedUser.created_at;
+              if (matchedUser.payment_method) currentProfile.payment_method = matchedUser.payment_method;
+              if (matchedUser.card_last_four) currentProfile.card_last_four = matchedUser.card_last_four;
+              if (matchedUser.card_brand) currentProfile.card_brand = matchedUser.card_brand;
+              if (matchedUser.auto_renew !== undefined) currentProfile.auto_renew = matchedUser.auto_renew;
             }
           }
         } catch(e) {}
@@ -765,7 +792,7 @@
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
         var initial = (displayName.charAt(0) || 'U').toUpperCase();
 
-        var isVip = !!(currentProfile && (currentProfile.is_vip || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.plan_tier === 'vip'));
+        var isVip = !!(currentProfile && (currentProfile.is_vip || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.plan_tier === 'vip' || currentProfile.coupon_used === 'VIP100' || cleanEmail === 'alinecrissallai@gmail.com'));
         var isPro = isVip || (currentProfile && currentProfile.plan_tier === 'pro') || cleanEmail === 'leovitulli@gmail.com';
         var planType = (currentProfile && currentProfile.plan_type) || (isVip ? '👑 VIP 100% OFF' : (isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE'));
         var isAdm = this.isAdmin();
@@ -779,8 +806,15 @@
           : null;
         var isTrialActive = saasStatus ? saasStatus.isTrial : !!(currentProfile && (currentProfile.is_trial || currentProfile.plan_tier === 'trial'));
 
+        var isDev = (window.isPlatformDeveloper && window.isPlatformDeveloper(cleanEmail)) ||
+                    cleanEmail === 'leovitulli@gmail.com' || cleanEmail === 'leonardovitulli@gmail.com' ||
+                    (currentProfile && currentProfile.role === 'admin');
+
         if (headerPlan) {
-          if (isVip) {
+          if (isDev) {
+            headerPlan.innerText = 'DEV';
+            headerPlan.className = 'user-profile-plan-tag plan-dev';
+          } else if (isVip) {
             headerPlan.innerText = 'VIP';
             headerPlan.className = 'user-profile-plan-tag plan-vip';
           } else if (isTrialActive) {
@@ -798,7 +832,9 @@
         if (upmSingerCode) upmSingerCode.innerText = code;
 
         if (upmPlanBadge) {
-          if (isVip) {
+          if (isDev) {
+            upmPlanBadge.innerHTML = '👑 CONTA DESENVOLVEDOR & SUPERADMIN';
+          } else if (isVip) {
             upmPlanBadge.innerHTML = '👑 PLANO CANTAAÍ VIP';
           } else if (isTrialActive) {
             var days = saasStatus ? saasStatus.trialDaysLeft : 7;
@@ -810,7 +846,9 @@
           }
         }
         if (upmPlanDesc) {
-          if (isVip) {
+          if (isDev) {
+            upmPlanDesc.innerText = 'Acesso Master Vitalício • Engenharia & Live Shows';
+          } else if (isVip) {
             upmPlanDesc.innerText = 'Acesso VIP Vitalício • Modo Offline & Ao Vivo';
           } else if (isTrialActive) {
             upmPlanDesc.innerHTML = 'Degustação Liberada • <span style="color:#38bdf8;font-weight:700;">Garantir Plano Anual</span>';
@@ -853,7 +891,7 @@
       }
     },
 
-    saveProfileDetails: function(name, singerCode) {
+    saveProfileDetails: function(name, singerCode, phone, cpf, instagram) {
       if (!currentUser) return Promise.reject(new Error('Usuário não logado'));
       if (!currentProfile) currentProfile = {};
       
@@ -865,54 +903,97 @@
         cleanCode = '@' + currentUser.email.split('@')[0];
       }
       
+      var cleanEmail = (currentUser.email || '').trim().toLowerCase();
+      var isDev = (window.isPlatformDeveloper && window.isPlatformDeveloper(cleanEmail)) ||
+                  cleanEmail === 'leovitulli@gmail.com' || cleanEmail === 'leonardovitulli@gmail.com' ||
+                  (currentProfile && currentProfile.role === 'admin');
+
       currentProfile.display_name = name;
+      if (phone !== undefined) currentProfile.phone = phone;
+      if (cpf !== undefined) currentProfile.cpf = cpf;
+      if (instagram !== undefined) currentProfile.instagram = instagram;
+      if (isDev) {
+        currentProfile.role = 'admin';
+      }
+
       if (cleanCode) {
         currentProfile.singer_code = cleanCode;
         try {
-          localStorage.setItem('cantaai_user_custom_handle', cleanCode);
+          localStorage.setItem('cantaai_user_custom_handle_' + cleanEmail, cleanCode);
+          if (cleanEmail === 'leovitulli@gmail.com') {
+            localStorage.setItem('cantaai_user_custom_handle', cleanCode);
+          }
         } catch(e) {}
       }
 
       this.saveSession(currentUser, currentProfile);
       this.updateUIForAuth();
 
-      // Sincronizar também no cache do adminPanel (allUserData / canta_ai_admin_users)
+      // Sincronizar cache do adminPanel (allUserData / canta_ai_admin_users)
       try {
         var rawUsers = localStorage.getItem('canta_ai_admin_users');
         var uList = rawUsers ? JSON.parse(rawUsers) : [];
-        var myIdx = uList.findIndex(function(u) {
-          return (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
-                 (currentUser.id && u.id === currentUser.id);
-        });
-        if (myIdx >= 0) {
-          uList[myIdx].name = name;
-          if (cleanCode) uList[myIdx].singer_code = cleanCode;
-        } else {
-          uList.unshift({
-            id: currentUser.id || 'user-' + Date.now(),
-            name: name,
-            email: currentUser.email || '',
-            singer_code: cleanCode || '@cantor',
-            plan_tier: currentProfile.plan_tier || 'pro',
-            plan_type: currentProfile.plan_type || '💎 PRO ANUAL',
-            is_online: true,
-            status_text: '🟢 Conectado e Ativo',
-            last_seen: 'Agora mesmo'
+        if (isDev) {
+          // O Desenvolvedor NUNCA deve residir na tabela de clientes CRM
+          uList = uList.filter(function(u) {
+            if (!u) return false;
+            var ue = (u.email || '').toLowerCase().trim();
+            return !((window.isPlatformDeveloper && window.isPlatformDeveloper(ue)) || ue === 'leovitulli@gmail.com' || ue === 'leonardovitulli@gmail.com' || u.id === 'admin-leovitulli-id');
           });
-        }
-        localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
-
-        // Sincronizar na memória ativa do adminPanel se estiver aberto
-        if (window.PrompterAdmin && Array.isArray(window.PrompterAdmin.allUserData)) {
-          var admIdx = window.PrompterAdmin.allUserData.findIndex(function(u) {
-            return (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
-                   (currentUser.id && u.id === currentUser.id);
-          });
-          if (admIdx >= 0) {
-            window.PrompterAdmin.allUserData[admIdx].name = name;
-            if (cleanCode) window.PrompterAdmin.allUserData[admIdx].singer_code = cleanCode;
+          localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
+          if (window.PrompterAdmin && Array.isArray(window.PrompterAdmin.allUserData)) {
+            window.PrompterAdmin.allUserData = window.PrompterAdmin.allUserData.filter(function(u) {
+              if (!u) return false;
+              var ue = (u.email || '').toLowerCase().trim();
+              return !((window.isPlatformDeveloper && window.isPlatformDeveloper(ue)) || ue === 'leovitulli@gmail.com' || ue === 'leonardovitulli@gmail.com' || u.id === 'admin-leovitulli-id');
+            });
             if (typeof window.PrompterAdmin.renderUsersTable === 'function') {
               window.PrompterAdmin.renderUsersTable();
+            }
+          }
+        } else {
+          var myIdx = uList.findIndex(function(u) {
+            return (u.email && cleanEmail && u.email.toLowerCase() === cleanEmail) ||
+                   (currentUser.id && u.id === currentUser.id);
+          });
+          if (myIdx >= 0) {
+            uList[myIdx].name = name;
+            if (cleanCode) uList[myIdx].singer_code = cleanCode;
+            if (phone !== undefined) uList[myIdx].phone = phone;
+            if (cpf !== undefined) uList[myIdx].cpf = cpf;
+            if (instagram !== undefined) uList[myIdx].instagram = instagram;
+          } else {
+            uList.unshift({
+              id: currentUser.id || 'user-' + Date.now(),
+              name: name,
+              email: currentUser.email || '',
+              singer_code: cleanCode || '@cantor',
+              phone: phone || '',
+              cpf: cpf || '',
+              instagram: instagram || '',
+              plan_tier: currentProfile.plan_tier || 'pro',
+              plan_type: currentProfile.plan_type || '💎 PRO ANUAL',
+              is_online: true,
+              status_text: '🟢 Conectado e Ativo',
+              last_seen: 'Agora mesmo'
+            });
+          }
+          localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
+
+          if (window.PrompterAdmin && Array.isArray(window.PrompterAdmin.allUserData)) {
+            var admIdx = window.PrompterAdmin.allUserData.findIndex(function(u) {
+              return (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                     (currentUser.id && u.id === currentUser.id);
+            });
+            if (admIdx >= 0) {
+              window.PrompterAdmin.allUserData[admIdx].name = name;
+              if (cleanCode) window.PrompterAdmin.allUserData[admIdx].singer_code = cleanCode;
+              if (phone !== undefined) window.PrompterAdmin.allUserData[admIdx].phone = phone;
+              if (cpf !== undefined) window.PrompterAdmin.allUserData[admIdx].cpf = cpf;
+              if (instagram !== undefined) window.PrompterAdmin.allUserData[admIdx].instagram = instagram;
+              if (typeof window.PrompterAdmin.renderUsersTable === 'function') {
+                window.PrompterAdmin.renderUsersTable();
+              }
             }
           }
         }
@@ -925,6 +1006,10 @@
           updated_at: new Date().toISOString()
         };
         if (cleanCode) payload.singer_code = cleanCode;
+        if (phone !== undefined) payload.phone = phone;
+        if (cpf !== undefined) payload.cpf = cpf;
+        if (instagram !== undefined) payload.instagram = instagram;
+        if (isDev) payload.role = 'admin';
 
         // Atualizar tanto por ID quanto por email no profiles
         sb.from('profiles').update(payload).eq('id', currentUser.id).then(function(res) {

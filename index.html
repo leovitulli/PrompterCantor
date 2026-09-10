@@ -503,53 +503,55 @@
       <header class="prompter-header" id="prompterHeader">
         <div class="prompter-title-area">
           <button id="btnClosePrompter" class="btn btn-back">‹ Voltar</button>
-          <div class="song-metadata-header">
+          
+          <div class="prompter-title-center">
             <h2 id="prompterSongTitle">Título da Música</h2>
-            <div class="song-badges">
-              <select id="prompterKeySelect" class="key-selector-dropdown" title="Alterar Tom de Cantar">
-                <option value="">Tom: —</option>
-                <optgroup label="Tons Maiores">
-                  <option value="C">C (Dó)</option>
-                  <option value="C#">C# / Db</option>
-                  <option value="D">D (Ré)</option>
-                  <option value="D#">D# / Eb</option>
-                  <option value="E">E (Mi)</option>
-                  <option value="F">F (Fá)</option>
-                  <option value="F#">F# / Gb</option>
-                  <option value="G">G (Sol)</option>
-                  <option value="G#">G# / Ab</option>
-                  <option value="A">A (Lá)</option>
-                  <option value="A#">A# / Bb</option>
-                  <option value="B">B (Si)</option>
-                </optgroup>
-                <optgroup label="Tons Menores">
-                  <option value="Cm">Cm (Dó m)</option>
-                  <option value="C#m">C#m / Dbm</option>
-                  <option value="Dm">Dm (Ré m)</option>
-                  <option value="D#m">D#m / Ebm</option>
-                  <option value="Em">Em (Mi m)</option>
-                  <option value="Fm">Fm (Fá m)</option>
-                  <option value="F#m">F#m / Gbm</option>
-                  <option value="Gm">Gm (Sol m)</option>
-                  <option value="G#m">G#m / Abm</option>
-                  <option value="Am">Am (Lá m)</option>
-                  <option value="Bbm">Bbm / A#m</option>
-                  <option value="Bm">Bm (Si m)</option>
-                </optgroup>
-              </select>
-              <div class="prompter-nav-group">
-                <button id="btnPrompterPrevSong" class="btn btn-secondary btn-sm prompter-nav-btn" title="Música Anterior (Seta Esquerda / Pedal)">‹<span class="nav-btn-text"> Anterior</span></button>
-                <span id="prompterShowPos" class="badge badge-submeta prompter-pos-badge" title="Posição da música">1 / 1</span>
-                <button id="btnPrompterNextSong" class="btn btn-secondary btn-sm prompter-nav-btn" title="Próxima Música (Seta Direita / Pedal)"><span class="nav-btn-text">Próxima </span>›</button>
-              </div>
-              <button id="btnPrompterYoutube" class="btn btn-secondary btn-sm hidden" title="Áudio Guia de Referência no YouTube">🎵 Áudio YT</button>
-              <button id="btnPrompterSpotify" class="btn btn-secondary btn-sm hidden" title="Abrir no Spotify" style="border-color:#1db954;color:#1db954;">🟢 Spotify</button>
-              <button id="btnPrompterEdit" class="btn btn-secondary btn-sm" title="Editar Letra e Cifra">✏️ Editar</button>
-            </div>
             <div id="prompterSongSubmeta" class="prompter-song-submeta">
               <span id="prompterSongArtist" class="badge-submeta"></span>
               <span id="prompterSongComposer" class="badge-submeta"></span>
             </div>
+          </div>
+
+          <div class="song-badges">
+            <select id="prompterKeySelect" class="key-selector-dropdown" title="Alterar Tom de Cantar">
+              <option value="">Tom: —</option>
+              <optgroup label="Tons Maiores">
+                <option value="C">C (Dó)</option>
+                <option value="C#">C# / Db</option>
+                <option value="D">D (Ré)</option>
+                <option value="D#">D# / Eb</option>
+                <option value="E">E (Mi)</option>
+                <option value="F">F (Fá)</option>
+                <option value="F#">F# / Gb</option>
+                <option value="G">G (Sol)</option>
+                <option value="G#">G# / Ab</option>
+                <option value="A">A (Lá)</option>
+                <option value="A#">A# / Bb</option>
+                <option value="B">B (Si)</option>
+              </optgroup>
+              <optgroup label="Tons Menores">
+                <option value="Cm">Cm (Dó m)</option>
+                <option value="C#m">C#m / Dbm</option>
+                <option value="Dm">Dm (Ré m)</option>
+                <option value="D#m">D#m / Ebm</option>
+                <option value="Em">Em (Mi m)</option>
+                <option value="Fm">Fm (Fá m)</option>
+                <option value="F#m">F#m / Gbm</option>
+                <option value="Gm">Gm (Sol m)</option>
+                <option value="G#m">G#m / Abm</option>
+                <option value="Am">Am (Lá m)</option>
+                <option value="Bbm">Bbm / A#m</option>
+                <option value="Bm">Bm (Si m)</option>
+              </optgroup>
+            </select>
+            <div class="prompter-nav-group">
+              <button id="btnPrompterPrevSong" class="btn btn-secondary btn-sm prompter-nav-btn" title="Música Anterior (Seta Esquerda / Pedal)">‹<span class="nav-btn-text"> Anterior</span></button>
+              <span id="prompterShowPos" class="badge badge-submeta prompter-pos-badge" title="Posição da música">1 / 1</span>
+              <button id="btnPrompterNextSong" class="btn btn-secondary btn-sm prompter-nav-btn" title="Próxima Música (Seta Direita / Pedal)"><span class="nav-btn-text">Próxima </span>›</button>
+            </div>
+            <button id="btnPrompterYoutube" class="btn btn-secondary btn-sm hidden" title="Áudio Guia de Referência no YouTube">🎵 Áudio YT</button>
+            <button id="btnPrompterSpotify" class="btn btn-secondary btn-sm hidden" title="Abrir no Spotify" style="border-color:#1db954;color:#1db954;">🟢 Spotify</button>
+            <button id="btnPrompterEdit" class="btn btn-secondary btn-sm" title="Editar Letra e Cifra">✏️<span class="btn-edit-text"> Editar</span></button>
           </div>
         </div>
 
@@ -1095,71 +1097,343 @@
   </div>
 
   <!-- ─── MODAL DE PERFIL DO CANTOR & GOVERNANÇA DE ASSINATURA ─── -->
-  <div id="profileModal" class="modal hidden">
+  <!-- ─── MODAL DE PERFIL DO CANTOR & GOVERNANÇA DE ASSINATURA ─── -->
+  <div id="profileModal" class="modal hidden" style="z-index: 10000050 !important;">
     <div class="modal-overlay" id="profileModalOverlay"></div>
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>👤 Meu Perfil & Assinatura</h3>
+    <div class="modal-card profile-executive-modal-card" style="max-width: 680px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.4rem;">👤</span>
+          <div>
+            <h3 id="profileModalMainTitle" style="margin: 0; font-size: 1.2rem; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;">Meu Perfil & Governança de Assinatura</h3>
+            <p id="profileModalSubTitle" style="margin: 0; font-size: 0.78rem; color: #94a3b8;">Gerencie seus dados artísticos, faturamento, cartão, Pix e ciclo de renovação.</p>
+          </div>
+        </div>
         <button class="modal-close" id="btnCloseProfileModal">✕</button>
       </div>
+
       <div class="modal-body">
-        <form id="formProfileSettings" onsubmit="return false;">
-          <!-- Card de Identificação do Cantor -->
-          <div class="profile-card-header-box">
+        
+        <!-- 1. IDENTIFICAÇÃO DO CANTOR & METADADOS ADMINISTRATIVOS -->
+        <div class="profile-card-header-box">
+          <div style="display: flex; align-items: center; gap: 14px;">
             <div class="profile-avatar-big" id="profileModalAvatar">🎤</div>
             <div class="profile-header-info">
               <div class="profile-email-title" id="profileModalEmail">cantor@cantaaipro.com</div>
               <div class="profile-code-pill" id="profileModalCodePill">Código: @cantor</div>
             </div>
           </div>
-
-          <div class="form-group" style="margin-top: 1.25rem;">
-            <label for="profileDisplayNameInput">Nome Artístico / Cantor</label>
-            <input type="text" id="profileDisplayNameInput" class="form-control" placeholder="Ex: Jorge Aragão ou Beth Carvalho">
+          <div class="profile-lifecycle-pill" id="profileLifecycleBadge">
+            <span>📅 Cadastro: <strong id="profileCreatedDateDisplay" style="color: #ffffff;">--/--/----</strong></span>
+            <span>•</span>
+            <span style="color: #38bdf8; font-weight: 700;">⏳ <span id="profileTenureDisplay">--</span></span>
           </div>
+        </div>
 
-          <div class="form-group">
-            <label for="profileSingerCodeInput">@Login de Identificação (Compartilhamento)</label>
-            <input type="text" id="profileSingerCodeInput" class="form-control" placeholder="Ex: @cantor_show ou @voz_e_violao" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">
-            <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;">Seu identificador único para login rápido e para outros cantores compartilharem repertórios com você.</small>
+        <!-- 2. FORMULÁRIO DE DADOS CADASTRAIS -->
+        <form id="formProfileSettings" onsubmit="return false;" style="background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 1rem 1.25rem;">
+          <div class="form-grid-2cols">
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label for="profileDisplayNameInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">Nome Artístico / Cantor:</label>
+              <input type="text" id="profileDisplayNameInput" class="form-control" placeholder="Ex: Jorge Aragão">
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label for="profileSingerCodeInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">@Login Único (Repertórios & Busca):</label>
+              <input type="text" id="profileSingerCodeInput" class="form-control" placeholder="@cantor_show" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">
+            </div>
           </div>
-
-          <button type="button" id="btnSaveProfileSettings" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">💾 Salvar Alterações</button>
+          <div class="form-grid-2cols">
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label for="profilePhoneInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">WhatsApp (Notificações de Show & Suporte):</label>
+              <input type="tel" id="profilePhoneInput" class="form-control" placeholder="(11) 99999-9999">
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label for="profileInstagramInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">Instagram (@nomedeusuario):</label>
+              <input type="text" id="profileInstagramInput" class="form-control" placeholder="@meu_perfil_show">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="profileCpfInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">CPF (Faturamento / Nota Fiscal):</label>
+            <input type="text" id="profileCpfInput" class="form-control" placeholder="000.000.000-00">
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+            <button type="button" id="btnSaveProfileSettings" class="btn btn-primary btn-sm" style="padding: 7px 18px;">
+              💾 Salvar Dados do Perfil
+            </button>
+          </div>
         </form>
 
-        <div class="dropdown-divider" style="margin: 1.5rem 0;"></div>
+        <!-- 3. CONTA DESENVOLVEDOR & SUPERADMIN MASTER (EXCLUSIVO CEO / DEV) -->
+        <div id="profileDeveloperCard" style="display: none; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%); border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 1.35rem; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 0.9rem;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.6rem;">🛠️</span>
+              <div>
+                <div style="font-size: 1.05rem; font-weight: 900; color: #38bdf8; font-family: 'Bricolage Grotesque', sans-serif; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
+                  Conta Desenvolvedor &amp; SuperAdmin
+                  <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.5); color: #38bdf8; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">👑 MASTER KEY</span>
+                </div>
+                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Proprietário da Plataforma • Acesso Nativo Global Vitalício</div>
+              </div>
+            </div>
+            <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 20px;">🟢 Privilégios Máximos</span>
+          </div>
 
-        <!-- Governança de Assinatura & Planos -->
-        <div class="profile-subscription-section">
-          <div class="editor-section-title" style="margin-bottom: 0.8rem;">💎 Governança de Assinatura & Plano</div>
-          <div class="subscription-status-card" id="subscriptionStatusCard">
-            <div class="sub-status-header">
-              <span class="sub-plan-badge" id="profileSubPlanBadge">👑 PLANO CANTAAÍ PRO</span>
-              <span class="sub-status-pill" id="profileSubStatusPill">🟢 Ativa</span>
+          <p style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; margin: 0 0 1rem 0; background: rgba(0, 0, 0, 0.25); padding: 10px 14px; border-radius: 10px; border-left: 3px solid #38bdf8;">
+            Sua conta possui <strong>privilégios ilimitados de Engenharia</strong>: transposição em tempo real nos shows, repertórios e cifras ilimitadas, sem restrições de planos, faturamento ou mensalidades.
+          </p>
+
+          <!-- Grade de Privilégios Master -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1.1rem;">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px;">
+              <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Nível de Acesso</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; margin-top: 2px;">👑 SuperAdmin Master</div>
+              <div style="font-size: 0.72rem; color: #38bdf8;">Acesso Irrestrito</div>
             </div>
-            <div class="sub-benefits-list" id="profileSubBenefitsList">
-              <div>✓ Armazenamento Local Seguro & 100% Offline</div>
-              <div>✓ Transposição Inteligente de Tom Instantânea</div>
-              <div>✓ Músicas & Repertórios Ilimitados</div>
-              <div>✓ Áudio Guia e Picture-in-Picture</div>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px;">
+              <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Músicas &amp; Palco</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #34d399; margin-top: 2px;">⚡ Ilimitado Vitalício</div>
+              <div style="font-size: 0.72rem; color: #94a3b8;">Transposição &amp; Cifras PRO</div>
             </div>
-            <div class="sub-actions-row" style="margin-top: 1.2rem; display: flex; gap: 10px; flex-wrap: wrap;">
-              <button id="btnUpgradePlan" class="btn btn-primary btn-sm hidden">⚡ Fazer Upgrade para PRO</button>
-              <button id="btnManageOrCancelPlan" class="btn btn-outline btn-sm" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">
-                ✕ Gerenciar ou Cancelar Plano
-              </button>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px;">
+              <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Cobrança / Faturas</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-top: 2px;">🛡️ Isento Permanente</div>
+              <div style="font-size: 0.72rem; color: #94a3b8;">Sem faturas ou renovações</div>
             </div>
           </div>
 
-          <div style="margin-top: 1.25rem;">
-            <button type="button" id="btnProfileModalSupport" class="btn btn-outline" style="width: 100%; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              💬 Abrir Chamado ou Sugerir Melhoria (com Foto)
+          <!-- Ações Rápidas de SuperAdmin -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" id="btnDevOpenAdminModal" class="btn btn-primary btn-sm" style="flex: 1; min-width: 200px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid rgba(56, 189, 248, 0.5); padding: 9px 14px;">
+              🚀 Abrir Painel Administrativo / CRM
+            </button>
+            <button type="button" id="btnDevOpenHelpdeskModal" class="btn btn-outline btn-sm" style="flex: 1; min-width: 200px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; padding: 9px 14px;">
+              💬 Central de Atendimento &amp; Mensagens
             </button>
           </div>
         </div>
+
+        <!-- 4. GOVERNANÇA DE ASSINATURA & PLANO VIGENTE (CLIENTES) -->
+        <div id="profileGovernanceCard" class="profile-governance-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem;">
+            <div>
+              <span class="sub-plan-badge" id="profileSubPlanBadge" style="font-size: 1.05rem; font-weight: 900; color: #34d399; letter-spacing: 0.5px;">👑 PLANO CANTAAÍ PRO ANUAL</span>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">Assinatura CantaAí PRO • Acesso irrestrito a todos os recursos de palco</div>
+            </div>
+            <span class="sub-status-pill" id="profileSubStatusPill" style="font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;">🟢 Assinatura Ativa</span>
+          </div>
+
+          <!-- Grade de Informações Financeiras e Ciclo de Cobrança -->
+          <div class="profile-governance-metrics-grid" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px; margin-bottom: 1rem;">
+            <div>
+              <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Valor do Plano</div>
+              <div id="profilePlanPriceDisplay" style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">R$ 299,00 <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">/ano</span></div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Próxima Renovação</div>
+              <div id="profileDueDateDisplay" style="font-size: 1.05rem; font-weight: 800; color: #38bdf8;">--/--/----</div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Contagem do Ciclo</div>
+              <div id="profileDaysRemainingDisplay" style="font-size: 0.95rem; font-weight: 800; color: #34d399;">-- dias restantes</div>
+            </div>
+          </div>
+
+          <!-- Status de Renovação Automática -->
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: #cbd5e1; padding: 6px 0;">
+            <div id="profileAutoRenewDisplay" style="display: flex; align-items: center; gap: 6px;">
+              <span>🔄</span> Renovação automática ativa no método cadastrado
+            </div>
+            <button type="button" id="btnManageOrCancelPlan" class="btn btn-outline btn-xs" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4); padding: 4px 10px;">
+              ✕ Gerenciar ou Cancelar Assinatura
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. FORMAS DE PAGAMENTO & COBRANÇA (PIX VS CARTÃO DE CRÉDITO) -->
+        <div id="profilePaymentMethodsBox" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 1.25rem;">
+          <div style="font-size: 0.85rem; font-weight: 800; color: #f8fafc; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 8px;">
+            <span>💳</span> Formas de Pagamento & Cobrança
+          </div>
+          <div class="profile-payment-methods-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <!-- Opção 1: Pix Direto -->
+            <div class="profile-pay-card" style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="font-weight: 800; color: #34d399; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                  <span>⚡</span> Pix Instantâneo
+                </div>
+                <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4; margin-bottom: 10px;">
+                  Chave Pix & QR Code dinâmico para pagamento rápido ou baixa manual pelo WhatsApp.
+                </div>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" id="btnProfilePayPix" class="btn btn-outline btn-xs" style="color: #34d399; border-color: rgba(16, 185, 129, 0.4); flex: 1;">
+                  ⚡ Pagar com Pix
+                </button>
+                <a href="#" target="_blank" id="btnProfileSendPixProof" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);" title="Enviar comprovante ao suporte">
+                  📲 Comprovante
+                </a>
+              </div>
+            </div>
+
+            <!-- Opção 2: Cartão de Crédito -->
+            <div class="profile-pay-card" style="background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="font-weight: 800; color: #38bdf8; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                  <span>💳</span> Cartão de Crédito
+                </div>
+                <div id="profileCardStatusDisplay" style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 10px;">
+                  Nenhum cartão cadastrado no checkout transparente.
+                </div>
+              </div>
+              <div>
+                <button type="button" id="btnProfileUpdateCard" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); width: 100%;">
+                  💳 Adicionar / Alterar Cartão
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. CALLOUT DE UPGRADE & ECONOMIA ANUAL (CONDICIONAL) -->
+        <div id="profileUpgradeBanner" class="profile-upgrade-callout" style="display: none; background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.05) 100%); border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 12px; padding: 12px 16px; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">💡</span>
+            <div>
+              <div style="font-weight: 800; color: #fbbf24; font-size: 0.88rem;">Economize R$ 179,80 migrando para o Plano Anual!</div>
+              <div style="font-size: 0.78rem; color: #fef08a;">Tenha 12 meses completos de CantaAí PRO por apenas R$ 24,91/mês.</div>
+            </div>
+          </div>
+          <button type="button" id="btnProfileUpgradeAnnual" class="btn btn-primary btn-xs" style="background: #fbbf24; color: #000000; font-weight: 800; border: none; white-space: nowrap;">
+            ⚡ Migrar para Anual
+          </button>
+        </div>
+
+        <!-- 7. HISTÓRICO DE FATURAS & COMPROVANTES DO CANTOR -->
+        <div id="profileInvoicesSection" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 1.25rem;">
+          <div style="font-size: 0.85rem; font-weight: 800; color: #f8fafc; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>🧾</span> Histórico de Faturas & Recibos
+            </div>
+            <span style="font-size: 0.72rem; color: #94a3b8;">Sincronizado em tempo real</span>
+          </div>
+          <div id="profileInvoicesContainer" style="overflow-x: auto;">
+            <table class="admin-table" style="width: 100%; font-size: 0.78rem; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; color: #94a3b8;">
+                  <th style="padding: 6px 8px;">Data</th>
+                  <th style="padding: 6px 8px;">Plano / Descrição</th>
+                  <th style="padding: 6px 8px;">Método</th>
+                  <th style="padding: 6px 8px;">Valor</th>
+                  <th style="padding: 6px 8px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="profileInvoicesList">
+                <!-- Preenchido dinamicamente via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 8. BOTÃO PARA SUPORTE / CHAMADOS -->
+        <div id="profileSupportSection">
+          <button type="button" id="btnProfileModalSupport" class="btn btn-outline" style="width: 100%; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem;">
+            💬 Abrir Chamado, Tirar Dúvidas ou Sugerir Melhorias
+          </button>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="flex-shrink: 0;">
+        <button id="btnCancelProfileModal" class="btn btn-secondary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL DE GERENCIAMENTO RESPONSÁVEL & RETENÇÃO DE CANCELAMENTO ─── -->
+  <div id="modalCancelSubscription" class="modal hidden" style="z-index: 10000070 !important;">
+    <div class="modal-overlay" id="modalCancelSubOverlay"></div>
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.4rem;">⏸️</span>
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800;">Gerenciar ou Cancelar Assinatura</h3>
+        </div>
+        <button class="modal-close" id="btnCloseCancelSubModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.25rem;">
+          Sentiremos sua falta no palco! Antes de prosseguir, lembre-se de que no <strong>CantaAí PRO</strong> todas as suas letras, cifras transpostas e repertórios ilimitados estão protegidos.
+        </p>
+
+        <!-- Opção 1: Pausar por 30 dias -->
+        <div class="cancel-sub-option-box" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;">
+          <div style="font-weight: 800; color: #38bdf8; font-size: 0.88rem; margin-bottom: 4px;">⏸️ Pausar Assinatura por 30 dias</div>
+          <div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px;">Vai dar uma pausa nos shows? Pause a cobrança por 30 dias sem perder nada do seu repertório.</div>
+          <button type="button" id="btnPauseSubscription" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.5);">Pausar por 30 Dias</button>
+        </div>
+
+        <!-- Opção 2: Falar no WhatsApp com o CEO -->
+        <div class="cancel-sub-option-box" style="background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;">
+          <div style="font-weight: 800; color: #fbbf24; font-size: 0.88rem; margin-bottom: 4px;">💬 Condição Especial no WhatsApp</div>
+          <div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px;">O valor apertou ou quer sugerir um recurso? Converse diretamente com o Leonardo (criador do app).</div>
+          <a href="#" target="_blank" id="btnCancelSubWaCeo" class="btn btn-outline btn-xs" style="color: #fbbf24; border-color: rgba(251, 191, 36, 0.5);">Conversar com CEO no WhatsApp</a>
+        </div>
+
+        <!-- Opção 3: Confirmar Cancelamento da Auto-Renovação -->
+        <div class="cancel-sub-option-box" style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; padding: 12px 14px;">
+          <div style="font-weight: 800; color: #f87171; font-size: 0.88rem; margin-bottom: 4px;">✕ Cancelar Renovação Automática</div>
+          <div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 10px;" id="cancelSubCycleNotice">
+            Seu acesso PRO continuará 100% ativo até o final do período faturado. Nenhuma cobrança futura será realizada.
+          </div>
+          <button type="button" id="btnConfirmCancelAutoRenew" class="btn btn-outline btn-xs" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">
+            Confirmar Cancelamento da Renovação
+          </button>
+        </div>
       </div>
       <div class="modal-footer">
-        <button id="btnCancelProfileModal" class="btn btn-secondary">Fechar</button>
+        <button type="button" id="btnCloseCancelSubFooter" class="btn btn-secondary">Manter Assinatura Ativa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SUB-MODAL: PAGAMENTO & RENOVAÇÃO VIA PIX DO CLIENTE ─── -->
+  <div id="modalProfilePixPayment" class="modal hidden" style="z-index: 10000080 !important;">
+    <div class="modal-overlay" id="modalProfilePixOverlay"></div>
+    <div class="modal-card" style="max-width: 440px; text-align: center;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.4rem;">⚡</span>
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800;">Pagamento & Renovação via Pix</h3>
+        </div>
+        <button class="modal-close" id="btnCloseProfilePixModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 1rem;">
+          Pague com Pix para liberação expressa. Aponte a câmera do seu banco para o QR Code abaixo:
+        </div>
+
+        <div style="background: #ffffff; padding: 14px; border-radius: 12px; display: inline-block; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+          <img id="profilePixQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=00020126580014br.gov.bcb.pix0136leovitulli@gmail.com5204000053039865802BR5916Leonardo%20Vitulli6009Sao%20Paulo62070503***6304E64A" alt="QR Code Pix" style="width: 170px; height: 170px; display: block; margin: 0 auto;">
+        </div>
+
+        <div style="margin-bottom: 1.25rem; text-align: left;">
+          <label style="font-size: 0.78rem; color: #cbd5e1; display: block; margin-bottom: 6px; font-weight: 700;">Chave Pix Copia e Cola:</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="profilePixCodeInput" class="form-control" readonly value="leovitulli@gmail.com" style="font-size: 0.8rem; font-family: var(--font-mono); color: #34d399; background: rgba(15, 23, 42, 0.8);">
+            <button type="button" id="btnCopyProfilePixCode" class="btn btn-outline" style="color: #34d399; border-color: rgba(16, 185, 129, 0.4); padding: 6px 12px; font-size: 0.8rem;">📋 Copiar</button>
+          </div>
+        </div>
+
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 10px 12px; font-size: 0.78rem; color: #a7f3d0; margin-bottom: 1.25rem; text-align: left;">
+          💡 <strong>Dica de Agilidade:</strong> Após transferir, clique no botão abaixo para enviar o comprovante diretamente no WhatsApp do suporte.
+        </div>
+
+        <a href="#" target="_blank" id="btnProfileSendPixProofDirect" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          📲 Enviar Comprovante no WhatsApp
+        </a>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnCloseProfilePixFooter" class="btn btn-secondary">Fechar</button>
       </div>
     </div>
   </div>
@@ -1405,6 +1679,78 @@
           </div>
 
         </form>
+
+        <!-- ÁREA DINÂMICA DE PAGAMENTO & CONFIRMAÇÃO BANCÁRIA MERCADO PAGO -->
+        <div id="checkoutPixPendingArea" class="hidden" style="text-align: center; padding: 0.5rem 0;">
+          <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 12px 16px; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="pulse-dot" style="width: 12px; height: 12px; border-radius: 50%; background: #34d399; box-shadow: 0 0 10px #34d399; display: inline-block;"></span>
+              <div style="text-align: left;">
+                <strong style="color: #34d399; font-size: 0.95rem;">Pix Dinâmico Gerado no Mercado Pago</strong>
+                <div style="font-size: 0.78rem; color: #94a3b8;">Aguardando liquidação bancária automática</div>
+              </div>
+            </div>
+            <div id="checkoutPixCountdownBadge" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; color: #cbd5e1; font-weight: 700;">
+              ⏱️ Expira em: <span id="checkoutPixCountdown" style="color: #38bdf8;">15:00</span>
+            </div>
+          </div>
+
+          <!-- Card do QR Code Oficial -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 1.25rem;">
+            <div style="background: #ffffff; padding: 14px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: inline-block; position: relative; max-width: 250px;">
+              <img id="checkoutDynamicQrImg" src="" alt="QR Code Pix Oficial Mercado Pago" style="width: 220px; height: 220px; display: block; border-radius: 8px; margin: 0 auto; object-fit: contain;">
+              <div id="checkoutQrLoadingOverlay" class="hidden" style="position: absolute; inset: 0; background: rgba(15,23,42,0.9); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
+                <span style="font-size: 1.8rem; margin-bottom: 6px;">🔄</span>
+                <span style="font-size: 0.85rem; font-weight: 700; color: #38bdf8;">Gerando QR Code...</span>
+              </div>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.85rem; color: #cbd5e1; font-weight: 600;">
+              Abra o app do seu banco e escaneie o QR Code acima
+            </div>
+            <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 2px;">
+              Favorecido: <strong style="color: #e2e8f0;">Leonardo Vitulli</strong> • Processamento Seguro Mercado Pago
+            </div>
+          </div>
+
+          <!-- Bloco Copia e Cola -->
+          <div style="margin-bottom: 1.25rem; text-align: left;">
+            <label style="font-size: 0.82rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+              <span>Ou copie o código Pix Copia e Cola:</span>
+              <span id="pixCopySuccessNotice" style="color: #34d399; font-size: 0.75rem; display: none; font-weight: 800;">✅ Copiado com Sucesso!</span>
+            </label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="checkoutDynamicPixCode" readonly class="form-control" style="font-family: monospace; font-size: 0.75rem; background: rgba(15, 23, 42, 0.7); cursor: text; text-overflow: ellipsis; color: #94a3b8;" placeholder="Código Pix oficial Mercado Pago">
+              <button type="button" id="btnCopyDynamicPix" class="btn btn-secondary" style="white-space: nowrap; font-weight: 700; font-size: 0.82rem; background: #38bdf8; color: #0f172a; border-color: #38bdf8;">
+                📋 Copiar Código Pix
+              </button>
+            </div>
+          </div>
+
+          <!-- Radar de Confirmação Bancária em Tempo Real -->
+          <div id="checkoutBankStatusBanner" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
+              <span class="spinner-small" id="checkoutBankStatusSpinner" style="width: 18px; height: 18px; border: 2px solid rgba(56, 189, 248, 0.3); border-top-color: #38bdf8; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span>
+              <div>
+                <div id="checkoutBankStatusText" style="font-size: 0.85rem; font-weight: 700; color: #38bdf8;">🔄 Aguardando Confirmação Bancária...</div>
+                <div id="checkoutBankStatusSubtext" style="font-size: 0.75rem; color: #94a3b8;">Consultando compensação no Banco Central / Mercado Pago a cada 4 segundos</div>
+              </div>
+            </div>
+            <button type="button" id="btnCheckPaymentNow" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 6px 12px; white-space: nowrap; border-color: #38bdf8; color: #38bdf8;">
+              🔄 Verificar Agora
+            </button>
+          </div>
+
+          <!-- Rodapé de Ações: Voltar e Ajuda WhatsApp -->
+          <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 12px; flex-wrap: wrap;">
+            <button type="button" id="btnBackToCheckoutForm" class="btn btn-outline btn-sm" style="color: #94a3b8; border-color: rgba(255, 255, 255, 0.15);">
+              ← Alterar Dados / Voltar
+            </button>
+            <button type="button" id="btnPixDirectWhatsApp" class="btn btn-sm" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 0.78rem;">
+              💬 Enviar Comprovante no WhatsApp
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

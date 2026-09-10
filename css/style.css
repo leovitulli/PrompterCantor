@@ -553,6 +553,13 @@ textarea {
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
 }
 
+.user-profile-plan-tag.plan-dev {
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #0f172a;
+  font-weight: 900;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+}
+
 .user-profile-menu {
   position: absolute;
   top: calc(100% + 10px);
@@ -742,11 +749,73 @@ textarea {
   font-family: var(--font-mono);
 }
 
-.subscription-status-card {
-  background: rgba(16, 185, 129, 0.06);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+/* ── MODAL EXECUTIVO DE PERFIL & ASSINATURA (RESPONSIVIDADE TOTAL) ── */
+.profile-executive-modal-card {
+  max-width: 720px !important;
+  width: 95% !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px !important;
+  background: #0f172a !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8) !important;
+}
+
+.profile-executive-modal-card .modal-header {
+  flex-shrink: 0 !important;
+  padding: 1.25rem 1.5rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.profile-executive-modal-card .modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  padding: 1.25rem 1.5rem 2rem 1.5rem !important;
+}
+
+/* CRITICAL: IMPEDIR QUE OS ELEMENTOS FILHOS DO MODAL SEJAM ESMAGADOS PELO FLEXBOX */
+.profile-executive-modal-card .modal-body > * {
+  flex-shrink: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.profile-executive-modal-card .modal-footer {
+  flex-shrink: 0 !important;
+  padding: 1rem 1.5rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+}
+
+.subscription-status-card,
+.profile-governance-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.05) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+  min-height: fit-content !important;
+}
+
+.profile-governance-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #06b6d4, #fbbf24);
+  border-radius: 14px 14px 0 0;
 }
 
 .sub-status-header {
@@ -757,19 +826,145 @@ textarea {
 }
 
 .sub-plan-badge {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 900;
   color: #34d399;
   letter-spacing: 0.4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .sub-status-pill {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 800;
   background: rgba(16, 185, 129, 0.2);
   color: #10b981;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.sub-status-pill.pill-warning {
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.sub-status-pill.pill-danger {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.profile-governance-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.profile-lifecycle-pill {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  color: #bae6fd;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.profile-pay-card {
+  transition: all 0.2s ease;
+}
+
+.profile-pay-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.profile-upgrade-callout {
+  animation: pulse-border 3s infinite alternate;
+}
+
+@keyframes pulse-border {
+  0% { border-color: rgba(251, 191, 36, 0.35); box-shadow: 0 0 10px rgba(251, 191, 36, 0.05); }
+  100% { border-color: rgba(251, 191, 36, 0.65); box-shadow: 0 0 16px rgba(251, 191, 36, 0.15); }
+}
+
+.cancel-sub-option-box {
+  transition: all 0.2s ease;
+}
+
+.cancel-sub-option-box:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── RESPONSIVIDADE MOBILE DO MODAL DE PERFIL (< 640px) ── */
+@media (max-width: 640px) {
+  .profile-executive-modal-card {
+    width: 98% !important;
+    max-height: 94vh !important;
+    border-radius: 14px !important;
+  }
+
+  .profile-executive-modal-card .modal-header {
+    padding: 1rem !important;
+  }
+
+  .profile-executive-modal-card .modal-body {
+    padding: 1rem 1rem 1.75rem 1rem !important;
+    gap: 1rem !important;
+  }
+
+  .profile-card-header-box {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .profile-lifecycle-pill {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 0.74rem !important;
+    padding: 6px 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .profile-payment-methods-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .profile-governance-metrics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .profile-upgrade-callout {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    text-align: center !important;
+    gap: 10px !important;
+  }
+
+  .profile-upgrade-callout button {
+    width: 100% !important;
+  }
+}
+
+#profileInvoicesContainer {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  width: 100% !important;
+}
+
+#profileInvoicesContainer table {
+  min-width: 440px !important;
 }
 
 .sub-benefits-list {
@@ -1327,9 +1522,9 @@ textarea {
   font-weight: 800;
   color: #f8fafc;
   letter-spacing: -0.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
   transition: color 0.15s ease;
 }
 
@@ -1342,11 +1537,15 @@ textarea {
   color: #34d399;
   border: 1px solid rgba(16, 185, 129, 0.3);
   font-weight: 800;
-  font-size: 0.74rem;
-  padding: 0.15rem 0.5rem;
+  font-size: 0.76rem;
+  padding: 0.18rem 0.55rem;
   border-radius: 6px;
   font-family: var(--font-mono);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
 }
 
 .badge-nokey {
@@ -2818,66 +3017,112 @@ textarea {
 
 .prompter-header {
   width: 100% !important;
-  min-height: 68px !important;
-  background-color: rgba(14, 14, 20, 0.96) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-  padding: 0.75rem 1.5rem !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 1.5rem !important;
-  flex-shrink: 0 !important;
-  box-sizing: border-box !important;
-}
-
-.prompter-title-area {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 1rem !important;
-  flex-wrap: wrap !important;
-}
-
-.song-metadata-header {
+  min-height: auto !important;
+  background-color: rgba(10, 15, 26, 0.98) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 8px 16px 6px 16px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.15rem !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* BARRA 1: TÍTULO, IDENTIDADE E CONTROLES DE REPERTÓRIO */
+.prompter-title-area {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.prompter-title-area #btnClosePrompter {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  justify-self: start !important;
+  height: 36px !important;
+  padding: 4px 12px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.prompter-title-center {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  min-width: 0 !important;
+  padding: 0 8px !important;
 }
 
 #prompterSongTitle {
-  font-size: 1.25rem !important;
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem) !important;
   font-weight: 900 !important;
   color: #ffffff !important;
   margin: 0 !important;
-  letter-spacing: -0.3px !important;
+  letter-spacing: -0.01em !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: 100% !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
 }
 
 .prompter-song-submeta {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 0.6rem !important;
+  justify-content: center !important;
+  gap: 12px !important;
   flex-wrap: wrap !important;
-  margin-top: 0.2rem !important;
+  margin-top: 2px !important;
 }
 
-.badge-submeta {
-  font-size: 0.78rem !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-  font-weight: 700 !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  padding: 0.15rem 0.5rem !important;
-  border-radius: 6px !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+.prompter-song-submeta .badge-submeta {
+  font-size: 0.8rem !important;
+  color: #94a3b8 !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  letter-spacing: 0.01em !important;
 }
 
+.song-badges {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  flex-wrap: nowrap !important;
+}
+
+/* BARRA 2: CONTROLES DE ROLAGEM E FONTE NO PALCO */
 .prompter-controls {
+  width: 100% !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 0.85rem !important;
-  flex-wrap: wrap !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding-top: 6px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  flex-wrap: nowrap !important;
 }
 
 .control-group {
@@ -3314,78 +3559,43 @@ textarea {
   }
 
   .prompter-header {
-    padding: 6px 10px !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
+    padding: 6px 12px 6px 12px !important;
     gap: 6px !important;
-    min-height: auto !important;
-    background: rgba(11, 15, 25, 0.96) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-  }
-
-  /* LINHA 1: NAVEGAÇÃO, TÍTULO DA MÚSICA & TOM */
-  .prompter-title-area {
-    width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 6px !important;
-    flex-wrap: nowrap !important;
   }
 
   .prompter-title-area #btnClosePrompter {
-    padding: 4px 8px !important;
-    font-size: 0.78rem !important;
+    padding: 4px 10px !important;
+    font-size: 0.82rem !important;
     font-weight: 700 !important;
-    height: 32px !important;
-    min-width: 62px !important;
+    height: 34px !important;
+    min-width: 60px !important;
     border-radius: 8px !important;
-    flex-shrink: 0 !important;
-  }
-
-  .song-metadata-header {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 6px !important;
-  }
-
-  #prompterSongTitle {
-    display: block !important;
-    font-size: 0.95rem !important;
-    font-weight: 800 !important;
-    color: #ffffff !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 140px !important;
-    margin: 0 !important;
-    flex: 1 1 auto !important;
-    text-align: center !important;
   }
 
   .song-badges {
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     flex-shrink: 0 !important;
     flex-wrap: nowrap !important;
   }
 
+  /* O TOM TODO 100% VISÍVEL (SEM MAX-WIDTH ARTIFICIAL QUE CORTA TEXTO) */
   .key-selector-dropdown {
-    padding: 2px 4px !important;
-    font-size: 0.78rem !important;
+    padding: 4px 8px !important;
+    font-size: 0.84rem !important;
     font-weight: 800 !important;
-    height: 32px !important;
-    max-width: 72px !important;
+    height: 34px !important;
+    min-width: 88px !important;
+    width: auto !important;
+    max-width: none !important;
     border-radius: 8px !important;
     background-color: rgba(0, 230, 118, 0.15) !important;
     color: #00e676 !important;
     border: 1px solid rgba(0, 230, 118, 0.4) !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
   }
 
   .prompter-nav-group {
@@ -3395,12 +3605,13 @@ textarea {
     background: rgba(255, 255, 255, 0.06) !important;
     border-radius: 8px !important;
     padding: 2px !important;
-    height: 32px !important;
+    height: 34px !important;
+    flex-shrink: 0 !important;
   }
 
   .prompter-nav-btn {
-    padding: 0 6px !important;
-    height: 28px !important;
+    padding: 0 7px !important;
+    height: 30px !important;
     font-size: 0.85rem !important;
     font-weight: 800 !important;
     min-width: 24px !important;
@@ -3408,15 +3619,23 @@ textarea {
   }
 
   .prompter-pos-badge {
-    font-size: 0.72rem !important;
+    font-size: 0.74rem !important;
     font-weight: 800 !important;
-    padding: 0 4px !important;
+    padding: 0 5px !important;
     color: #94a3b8 !important;
     white-space: nowrap !important;
   }
 
-  .prompter-song-submeta {
-    display: none !important;
+  #btnPrompterEdit {
+    height: 34px !important;
+    padding: 0 8px !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 
   /* LINHA 2: CONTROLES UNIFICADOS EM LINHA ÚNICA */
@@ -3427,6 +3646,58 @@ textarea {
     justify-content: space-between !important;
     gap: 4px !important;
     flex-wrap: nowrap !important;
+    padding-top: 5px !important;
+  }
+
+  .prompter-song-submeta .badge-submeta {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    color: #94a3b8 !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .prompter-title-area {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 4px 8px !important;
+    align-items: center !important;
+  }
+
+  .prompter-title-area #btnClosePrompter {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: start !important;
+    padding: 2px 8px !important;
+    font-size: 0.8rem !important;
+    height: 32px !important;
+  }
+
+  .song-badges {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+  }
+
+  .prompter-title-center {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    text-align: center !important;
+    padding: 2px 0 0 0 !important;
+  }
+
+  #prompterSongTitle {
+    font-size: clamp(1.05rem, 3.6vw, 1.35rem) !important;
+  }
+
+  .prompter-song-submeta {
+    gap: 6px !important;
+    margin-top: 1px !important;
   }
 
   .control-group {
@@ -3533,8 +3804,17 @@ textarea {
 
 @media (max-width: 480px) {
   #prompterSongTitle {
-    max-width: 120px !important;
-    font-size: 0.9rem !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    font-size: clamp(1.02rem, 4.4vw, 1.28rem) !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .btn-edit-text {
+    display: none !important;
   }
 
   .btn-scroll-play {
@@ -3581,13 +3861,18 @@ textarea {
   color: var(--accent-color) !important;
   border: 1px solid rgba(0, 230, 118, 0.4) !important;
   font-weight: 900 !important;
-  font-size: 0.85rem !important;
-  padding: 0.25rem 0.6rem !important;
-  border-radius: 6px !important;
+  font-size: 0.88rem !important;
+  padding: 0.3rem 0.75rem !important;
+  border-radius: 8px !important;
   font-family: var(--font-mono) !important;
   cursor: pointer !important;
   outline: none !important;
   transition: all 0.15s ease !important;
+  min-width: 96px !important;
+  width: auto !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 .key-selector-dropdown:hover {
   background-color: rgba(0, 230, 118, 0.25) !important;
@@ -4283,27 +4568,14 @@ html.canta-auth-active #tabRepertoire {
   }
 
   .prompter-header {
-    padding: 0.65rem 1.25rem !important;
-    flex-wrap: wrap !important;
-    gap: 0.85rem !important;
-  }
-
-  .prompter-title-area {
-    gap: 0.85rem !important;
-    flex: 1 1 auto !important;
-  }
-
-  #prompterSongTitle {
-    font-size: 1.35rem !important;
-    max-width: 260px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    padding: 8px 16px 6px 16px !important;
+    gap: 6px !important;
   }
 
   .prompter-controls {
-    flex-wrap: wrap !important;
-    gap: 0.65rem !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
   }
 
   .btn-circle {
@@ -4478,3 +4750,38 @@ body.light-mode {
   --tom-B-minor: #CE5057;
   --tom-B-soft: #FFE1E0;
 }
+
+/* ── CHECKOUT DINÂMICO MERCADO PAGO COM CONFIRMAÇÃO BANCÁRIA ── */
+.pulse-dot {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+#checkoutDynamicQrImg {
+  transition: transform 0.2s ease;
+}
+
+#checkoutDynamicQrImg:hover {
+  transform: scale(1.02);
+}
+
+@media (max-width: 640px) {
+  #checkoutDynamicQrImg {
+    width: 180px !important;
+    height: 180px !important;
+  }
+  #checkoutPixPendingArea {
+    padding: 0;
+  }
+}
+

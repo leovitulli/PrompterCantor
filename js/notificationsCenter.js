@@ -48,6 +48,17 @@
           var u = JSON.parse(raw);
           if (u && u.access_token) token = u.access_token;
         }
+        if (token === anon) {
+          for (var k in localStorage) {
+            if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1) {
+              var sbAuth = JSON.parse(localStorage.getItem(k));
+              if (sbAuth && sbAuth.access_token) {
+                token = sbAuth.access_token;
+                break;
+              }
+            }
+          }
+        }
       } catch (e) {}
       return {
         'apikey': anon,
@@ -382,6 +393,17 @@
     },
 
     // Sincroniza um ticket criado ou atualizado diretamente na tabela 'tickets'
+    generateUUID: function () {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        try { return window.crypto.randomUUID(); } catch (e) {}
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (Math.random() * 16) | 0;
+        var v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    },
+
     syncTicketToCloud: function (ticket) {
       if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) return;
 
@@ -402,43 +424,44 @@
         updated_at: new Date().toISOString()
       };
 
-      var isNumericOrCustomId = String(ticket.id).startsWith('tkt-');
+      var isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(ticket.id || ''));
 
-      if (!isNumericOrCustomId) {
-        // PATCH no ticket existente
+      if (isUUID) {
         fetch(baseUrl + '/tickets?id=eq.' + encodeURIComponent(ticket.id), {
           method: 'PATCH',
-          headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+          headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
           body: JSON.stringify(payload)
+        }).then(function (r) {
+          return r.ok ? r.json() : [];
+        }).then(function (updatedRows) {
+          if (!updatedRows || updatedRows.length === 0) {
+            payload.id = ticket.id;
+            fetch(baseUrl + '/tickets', {
+              method: 'POST',
+              headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+              body: JSON.stringify([payload])
+            }).catch(function () {});
+          }
         }).catch(function () {});
       } else {
-        // Tenta buscar se já foi inserido por ID ou cria
-        payload.id = ticket.id;
+        var newId = this.generateUUID();
+        var oldId = ticket.id;
+        ticket.id = newId;
+        payload.id = newId;
+
+        var raw = localStorage.getItem('canta_ai_support_tickets');
+        var list = raw ? JSON.parse(raw) : [];
+        var idx = list.findIndex(function (x) { return x.id === oldId; });
+        if (idx >= 0) {
+          list[idx].id = newId;
+          localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
+        }
+
         fetch(baseUrl + '/tickets', {
           method: 'POST',
           headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
           body: JSON.stringify([payload])
-        }).catch(function () {
-          var payloadNoId = Object.assign({}, payload);
-          delete payloadNoId.id;
-          fetch(baseUrl + '/tickets', {
-            method: 'POST',
-            headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
-            body: JSON.stringify([payloadNoId])
-          }).then(function(r) { return r.ok ? r.json() : []; })
-            .then(function(createdRows) {
-              if (createdRows && createdRows[0] && createdRows[0].id) {
-                ticket.id = createdRows[0].id;
-                var raw = localStorage.getItem('canta_ai_support_tickets');
-                var list = raw ? JSON.parse(raw) : [];
-                var idx = list.findIndex(function(x) { return x.title === ticket.title && x.created_at === ticket.created_at; });
-                if (idx >= 0) {
-                  list[idx].id = createdRows[0].id;
-                  localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
-                }
-              }
-            }).catch(function () {});
-        });
+        }).catch(function () {});
       }
     },
 
@@ -1598,7 +1621,7 @@
           }
 
           var ctx = self.getCurrentUserContext();
-          var ticketId = 'tkt-' + Date.now();
+          var ticketId = self.generateUUID();
           var nowIso = new Date().toISOString();
 
           var newTicket = {

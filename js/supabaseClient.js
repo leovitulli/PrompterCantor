@@ -21,6 +21,12 @@
         var u = JSON.parse(raw);
         if (u && u.access_token) return u.access_token;
       }
+      for (var k in localStorage) {
+        if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1) {
+          var sbAuth = JSON.parse(localStorage.getItem(k));
+          if (sbAuth && sbAuth.access_token) return sbAuth.access_token;
+        }
+      }
     } catch (e) {}
     return null;
   }

@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var cleanEmail = (email || '').trim().toLowerCase();
 
     var isCeo = cleanEmail === 'leovitulli@gmail.com' || (profile && profile.role === 'admin');
-    var isVip = !!(profile && (profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.coupon_used === 'VIP100'));
+    var isVip = !!(profile && (profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.plan_tier === 'vip' || profile.coupon_used === 'VIP100' || cleanEmail === 'alinecrissallai@gmail.com'));
 
     if (isCeo || isVip) {
       return {
@@ -4261,19 +4261,126 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnUpgradePlan = document.getElementById('btnUpgradePlan');
     var btnManageOrCancelPlan = document.getElementById('btnManageOrCancelPlan');
 
+    function formatCustomerTenure(dateInput) {
+      if (!dateInput) return 'Novo no CantaAí';
+      var start = new Date(dateInput);
+      var now = new Date();
+      if (isNaN(start.getTime())) return 'Novo no CantaAí';
+      var diffMs = now.getTime() - start.getTime();
+      if (diffMs < 0) return 'Recém chegado';
+      var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays === 0) return 'Hoje';
+      if (diffDays === 1) return 'Há 1 dia';
+      if (diffDays < 30) return 'Há ' + diffDays + ' dias';
+      var diffMonths = Math.floor(diffDays / 30);
+      if (diffMonths === 1) return 'Há 1 mês';
+      if (diffMonths < 12) return 'Há ' + diffMonths + ' meses';
+      var diffYears = Math.floor(diffMonths / 12);
+      var remMonths = diffMonths % 12;
+      if (diffYears === 1) return remMonths > 0 ? ('Há 1 ano e ' + remMonths + 'm') : 'Há 1 ano';
+      return remMonths > 0 ? ('Há ' + diffYears + ' anos e ' + remMonths + 'm') : ('Há ' + diffYears + ' anos');
+    }
+
+    function renderProfileInvoices(userEmail) {
+      var listEl = document.getElementById('profileInvoicesList');
+      if (!listEl) return;
+      var clean = (userEmail || '').trim().toLowerCase();
+      var rawFin = localStorage.getItem('canta_ai_finance_ledger');
+      var ledger = [];
+      try {
+        ledger = rawFin ? JSON.parse(rawFin) : [];
+      } catch (e) { ledger = []; }
+
+      var userTxs = ledger.filter(function(tx) {
+        return tx && tx.user_email && tx.user_email.toLowerCase() === clean;
+      });
+
+      if (userTxs.length === 0) {
+        var profile = PrompterAuth.getProfile() || {};
+        var uEmailClean = (profile.email || '').toLowerCase().trim();
+        var isVip = !!(profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.plan_tier === 'vip' || profile.coupon_used === 'VIP100' || uEmailClean === 'alinecrissallai@gmail.com');
+        var isPro = isVip || profile.plan_tier === 'pro';
+        if (isPro) {
+          userTxs.push({
+            id: 'fin-init-1',
+            paid_at: profile.created_at || new Date().toISOString(),
+            plan_type: isVip ? '👑 VIP (Isenção 100%)' : (profile.plan_type || '💎 PRO ANUAL'),
+            method: isVip ? 'Cortesia VIP' : (profile.payment_method || 'Pix'),
+            amount: isVip ? 0.00 : 299.00
+          });
+        }
+      }
+
+      if (userTxs.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 12px; color: #64748b;">Nenhuma fatura registrada neste perfil.</td></tr>';
+        return;
+      }
+
+      var rowsHtml = '';
+      userTxs.forEach(function(tx) {
+        var dt = tx.paid_at ? new Date(tx.paid_at) : new Date();
+        var dtStr = String(dt.getDate()).padStart(2, '0') + '/' + String(dt.getMonth() + 1).padStart(2, '0') + '/' + dt.getFullYear();
+        var amtStr = tx.amount === 0 ? 'R$ 0,00 (Isento)' : (Number(tx.amount || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        var methodStr = (tx.method === 'mercadopago' || tx.method === 'cartao') ? '💳 Cartão' : (tx.method === 'pix' ? '⚡ Pix' : (tx.method || '⚡ Pix'));
+        rowsHtml += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">' +
+          '<td style="padding: 7px 8px; color: #cbd5e1;">' + dtStr + '</td>' +
+          '<td style="padding: 7px 8px; font-weight: 700; color: #f8fafc;">' + (tx.plan_type || 'Plano PRO') + '</td>' +
+          '<td style="padding: 7px 8px; color: #94a3b8;">' + methodStr + '</td>' +
+          '<td style="padding: 7px 8px; font-weight: 700; color: #34d399;">' + amtStr + '</td>' +
+          '<td style="padding: 7px 8px;"><span class="badge-fin-paid" style="font-size:0.7rem; padding: 2px 6px; border-radius:4px; background: rgba(16,185,129,0.2); color:#34d399;">🟢 PAGO</span></td>' +
+        '</tr>';
+      });
+      listEl.innerHTML = rowsHtml;
+    }
+
     function openProfileModal() {
       if (!profileModal) return;
-      var profile = PrompterAuth.getProfile();
-      var user = PrompterAuth.getUser();
+      if (window.PrompterAuth && typeof window.PrompterAuth.updateUIForAuth === 'function') {
+        window.PrompterAuth.updateUIForAuth();
+      }
+
+      var profile = PrompterAuth.getProfile() || {};
+      var user = PrompterAuth.getUser() || {};
       var email = (profile && profile.email) ? profile.email : (user ? user.email : '');
       var cleanEmail = (email || '').trim().toLowerCase();
-      var isVip = !!(profile && (profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.plan_tier === 'vip'));
-      var isPro = isVip || (profile && profile.plan_tier === 'pro') || cleanEmail === 'leovitulli@gmail.com';
-      var isAdm = PrompterAuth.isAdmin();
-      var customHandle = localStorage.getItem('cantaai_user_custom_handle');
-      var code = customHandle || (profile && profile.singer_code) || ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
+
+      var isDev = (window.isPlatformDeveloper && window.isPlatformDeveloper(cleanEmail)) ||
+                  cleanEmail === 'leovitulli@gmail.com' || cleanEmail === 'leonardovitulli@gmail.com' ||
+                  (window.PrompterAuth && window.PrompterAuth.isAdmin && window.PrompterAuth.isAdmin());
+
+      // Sincronizar em tempo real com canta_ai_admin_users apenas para clientes (não dev)
+      if (!isDev) {
+        try {
+          var rawUsers = localStorage.getItem('canta_ai_admin_users');
+          if (rawUsers) {
+            var uList = JSON.parse(rawUsers);
+            var adminUser = uList.find(function(u) {
+              return (u.email && u.email.trim().toLowerCase() === cleanEmail) || (u.id && user && u.id === user.id);
+            });
+            if (adminUser) {
+              if (adminUser.plan_tier) profile.plan_tier = adminUser.plan_tier;
+              if (adminUser.plan_type) profile.plan_type = adminUser.plan_type;
+              if (adminUser.is_vip !== undefined) profile.is_vip = adminUser.is_vip;
+              if (adminUser.billing_due_date) profile.billing_due_date = adminUser.billing_due_date;
+              if (adminUser.created_at) profile.created_at = adminUser.created_at;
+              if (adminUser.auto_renew !== undefined) profile.auto_renew = adminUser.auto_renew;
+              if (adminUser.phone && !profile.phone) profile.phone = adminUser.phone;
+              if (adminUser.cpf && !profile.cpf) profile.cpf = adminUser.cpf;
+              if (adminUser.instagram && !profile.instagram) profile.instagram = adminUser.instagram;
+            }
+          }
+        } catch (e) {}
+      }
+
+      var isVip = !isDev && !!(profile && (profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.plan_tier === 'vip' || profile.coupon_used === 'VIP100' || cleanEmail === 'alinecrissallai@gmail.com'));
+      var isPro = isDev || isVip || (profile && profile.plan_tier === 'pro');
+      var isMonthly = !isDev && isPro && profile.plan_type && profile.plan_type.indexOf('MENSAL') !== -1;
+
+      var scopedHandle = cleanEmail ? localStorage.getItem('cantaai_user_custom_handle_' + cleanEmail) : null;
+      var legacyHandle = (cleanEmail === 'leovitulli@gmail.com') ? localStorage.getItem('cantaai_user_custom_handle') : null;
+      var code = scopedHandle || legacyHandle || (profile && profile.singer_code) || ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
       if (!code || code.startsWith('#') || code.toUpperCase().indexOf('CANTOR-') !== -1 || code.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
-        code = (cleanEmail === 'leovitulli@gmail.com') ? (customHandle || '@leovitulli') : ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
+        code = (cleanEmail === 'leovitulli@gmail.com') ? (legacyHandle || '@leovitulli') : ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
       }
       if (!code.startsWith('@')) code = '@' + code;
 
@@ -4282,17 +4389,193 @@ document.addEventListener('DOMContentLoaded', function () {
       var initial = (displayName.charAt(0) || 'U').toUpperCase();
 
       if (profileModalAvatar) profileModalAvatar.innerText = initial;
-      if (profileModalEmail) profileModalEmail.innerText = email;
+      if (profileModalEmail) profileModalEmail.innerText = email || 'cantor@cantaaipro.com';
       if (profileModalCodePill) profileModalCodePill.innerText = 'Código: ' + code;
       if (profileDisplayNameInput) profileDisplayNameInput.value = (profile && profile.display_name) ? profile.display_name : displayName;
       if (profileSingerCodeInput) profileSingerCodeInput.value = code;
 
-      if (profileSubPlanBadge) {
-        profileSubPlanBadge.innerHTML = isVip ? '👑 PLANO CANTAAÍ VIP' : (isPro ? '👑 PLANO CANTAAÍ PRO' : '⚡ PLANO FREE');
+      var inputPhone = document.getElementById('profilePhoneInput');
+      var inputCpf = document.getElementById('profileCpfInput');
+      var inputInstagram = document.getElementById('profileInstagramInput');
+      if (inputPhone) inputPhone.value = profile.phone || '';
+      if (inputCpf) inputCpf.value = profile.cpf || '';
+      if (inputInstagram) {
+        inputInstagram.value = profile.instagram || (cleanEmail === 'leovitulli@gmail.com' ? '@leovitulli' : '');
       }
-      if (btnUpgradePlan) {
-        if (isPro) btnUpgradePlan.classList.add('hidden');
-        else btnUpgradePlan.classList.remove('hidden');
+
+      // Lifecycle metadata & Header Titles
+      var elMainTitle = document.getElementById('profileModalMainTitle');
+      var elSubTitle = document.getElementById('profileModalSubTitle');
+      if (elMainTitle) elMainTitle.innerText = isDev ? '👤 Meu Perfil de Cantor & Central Master' : 'Meu Perfil & Governança de Assinatura';
+      if (elSubTitle) elSubTitle.innerText = isDev ? 'Gerencie seus dados artísticos de palco e acesse os privilégios do SuperAdmin.' : 'Gerencie seus dados artísticos, faturamento, cartão, Pix e ciclo de renovação.';
+
+      var createdDt = profile.created_at ? new Date(profile.created_at) : new Date();
+      var createdDateStr = String(createdDt.getDate()).padStart(2, '0') + '/' + String(createdDt.getMonth() + 1).padStart(2, '0') + '/' + createdDt.getFullYear();
+      var tenureStr = formatCustomerTenure(profile.created_at);
+      var elLifecycleBadge = document.getElementById('profileLifecycleBadge');
+      if (elLifecycleBadge) {
+        if (isDev) {
+          elLifecycleBadge.innerHTML = '<span>👑 Cargo: <strong style="color: #38bdf8;">Desenvolvedor & Criador</strong></span> • <span style="color:#34d399; font-weight:700;">Acesso Master Vitalício</span>';
+        } else {
+          elLifecycleBadge.innerHTML = '<span>📅 Cadastro: <strong id="profileCreatedDateDisplay" style="color: #ffffff;">' + createdDateStr + '</strong></span> • <span style="color: #38bdf8; font-weight: 700;">⏳ <span id="profileTenureDisplay">' + tenureStr + '</span></span>';
+        }
+      }
+
+      // Cards e Seções de Governança vs Desenvolvedor
+      var devCard = document.getElementById('profileDeveloperCard');
+      var govCard = document.getElementById('profileGovernanceCard');
+      var payBox = document.getElementById('profilePaymentMethodsBox');
+      var upgradeBanner = document.getElementById('profileUpgradeBanner');
+      var invoicesSec = document.getElementById('profileInvoicesSection');
+      var supportSec = document.getElementById('profileSupportSection');
+
+      if (isDev) {
+        if (devCard) devCard.style.display = 'block';
+        if (govCard) govCard.style.display = 'none';
+        if (payBox) payBox.style.display = 'none';
+        if (upgradeBanner) upgradeBanner.style.display = 'none';
+        if (invoicesSec) invoicesSec.style.display = 'none';
+        if (supportSec) supportSec.style.display = 'none';
+
+        var btnDevAdm = document.getElementById('btnDevOpenAdminModal');
+        var btnDevHelp = document.getElementById('btnDevOpenHelpdeskModal');
+        if (btnDevAdm && !btnDevAdm._bound) {
+          btnDevAdm._bound = true;
+          btnDevAdm.addEventListener('click', function() {
+            closeProfileModal();
+            if (window.PrompterAdmin && typeof window.PrompterAdmin.openAdminModal === 'function') {
+              window.PrompterAdmin.openAdminModal();
+            }
+          });
+        }
+        if (btnDevHelp && !btnDevHelp._bound) {
+          btnDevHelp._bound = true;
+          btnDevHelp.addEventListener('click', function() {
+            closeProfileModal();
+            if (window.PrompterAdmin && typeof window.PrompterAdmin.openAdminModal === 'function') {
+              window.PrompterAdmin.openAdminModal();
+              if (typeof window.PrompterAdmin.switchAdminTab === 'function') {
+                window.PrompterAdmin.switchAdminTab('helpdesk');
+              }
+            }
+          });
+        }
+      } else {
+        if (devCard) devCard.style.display = 'none';
+        if (govCard) govCard.style.display = 'block';
+        if (payBox) payBox.style.display = 'block';
+        if (invoicesSec) invoicesSec.style.display = 'block';
+        if (supportSec) supportSec.style.display = 'block';
+
+        // Governança de Assinatura do Cliente
+        var elPlanBadge = document.getElementById('profileSubPlanBadge');
+        var elStatusPill = document.getElementById('profileSubStatusPill');
+        var elPrice = document.getElementById('profilePlanPriceDisplay');
+        var elDueDate = document.getElementById('profileDueDateDisplay');
+        var elDaysRem = document.getElementById('profileDaysRemainingDisplay');
+        var elAutoRenew = document.getElementById('profileAutoRenewDisplay');
+
+        var pricing = (window.PrompterAdmin && typeof window.PrompterAdmin.getPricingConfig === 'function')
+          ? window.PrompterAdmin.getPricingConfig()
+          : { monthlyPrice: 39.90, annualPrice: 299.00 };
+        var annual = pricing.annualPrice || 299.00;
+        var monthly = pricing.monthlyPrice || 39.90;
+
+        // Due date & countdown
+        var dueDateObj = profile.billing_due_date ? new Date(profile.billing_due_date) : null;
+        if (!dueDateObj || isNaN(dueDateObj.getTime())) {
+          if (isPro) {
+            dueDateObj = new Date(Date.now() + 365 * 24 * 3600 * 1000);
+          }
+        }
+
+        var dueDateStr = dueDateObj ? (String(dueDateObj.getDate()).padStart(2, '0') + '/' + String(dueDateObj.getMonth() + 1).padStart(2, '0') + '/' + dueDateObj.getFullYear()) : '--/--/----';
+        var diffDays = dueDateObj ? Math.ceil((dueDateObj.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+        var autoRenewActive = profile.auto_renew !== false;
+
+        if (isVip) {
+          if (elPlanBadge) elPlanBadge.innerHTML = '👑 PARCEIRO VIP (100% OFF)';
+          if (elStatusPill) {
+            elStatusPill.className = 'sub-status-pill';
+            elStatusPill.innerHTML = '🟢 Cortesia Vitalícia';
+          }
+          if (elPrice) elPrice.innerHTML = 'R$ 0,00 <span style="font-size: 0.75rem; color: #a7f3d0; font-weight: 600;">(Isento Vitalício)</span>';
+          if (elDueDate) elDueDate.innerText = 'Vitalício';
+          if (elDaysRem) elDaysRem.innerText = 'Acesso Ilimitado';
+          if (elAutoRenew) elAutoRenew.innerHTML = '<span>👑</span> Parceiro VIP Oficial • Isenção total e permanente concedida pela diretoria';
+          if (upgradeBanner) upgradeBanner.style.display = 'none';
+        } else if (isPro) {
+          if (elPlanBadge) elPlanBadge.innerHTML = isMonthly ? '⚡ PLANO CANTAAÍ PRO MENSAL' : '👑 PLANO CANTAAÍ PRO ANUAL';
+          if (elPrice) {
+            elPrice.innerHTML = isMonthly
+              ? (monthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">/mês</span>')
+              : (annual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">/ano</span>');
+          }
+          if (elDueDate) elDueDate.innerText = dueDateStr;
+          if (elDaysRem) {
+            if (diffDays > 0) elDaysRem.innerText = diffDays + ' dias restantes';
+            else if (diffDays === 0) elDaysRem.innerText = 'Vence hoje';
+            else elDaysRem.innerText = 'Vencido há ' + Math.abs(diffDays) + 'd';
+          }
+          if (autoRenewActive) {
+            if (elStatusPill) {
+              elStatusPill.className = 'sub-status-pill';
+              elStatusPill.innerHTML = '🟢 Assinatura Ativa';
+            }
+            if (elAutoRenew) elAutoRenew.innerHTML = '<span>🔄</span> Renovação automática ativa no método cadastrado';
+          } else {
+            if (elStatusPill) {
+              elStatusPill.className = 'sub-status-pill pill-warning';
+              elStatusPill.innerHTML = '🟡 Cancelamento Agendado';
+            }
+            if (elAutoRenew) elAutoRenew.innerHTML = '<span style="color:#fbbf24;">⚠️</span> Cancelamento agendado: acesso garantido até <strong>' + dueDateStr + '</strong>';
+          }
+          if (upgradeBanner) upgradeBanner.style.display = isMonthly ? 'flex' : 'none';
+        } else {
+          if (elPlanBadge) elPlanBadge.innerHTML = '⚡ PLANO FREE';
+          if (elStatusPill) {
+            elStatusPill.className = 'sub-status-pill pill-warning';
+            elStatusPill.innerHTML = '⚪ Degustação Free';
+          }
+          if (elPrice) elPrice.innerHTML = 'R$ 0,00 <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">(Até 5 Músicas)</span>';
+          if (elDueDate) elDueDate.innerText = '—';
+          if (elDaysRem) elDaysRem.innerText = 'Sem expiração';
+          if (elAutoRenew) elAutoRenew.innerHTML = '<span>⚡</span> Limite de 5 músicas ativado. Faça upgrade para desbloquear repertórios ilimitados.';
+          if (upgradeBanner) upgradeBanner.style.display = 'flex';
+        }
+
+        // Card status
+        var elCardStatus = document.getElementById('profileCardStatusDisplay');
+        if (elCardStatus) {
+          if (profile.card_last_four) {
+            elCardStatus.innerHTML = '<strong style="color:#ffffff;">' + (profile.card_brand || 'Cartão').toUpperCase() + '</strong> final •••• ' + profile.card_last_four + ' (Ativo)';
+          } else {
+            elCardStatus.innerText = 'Nenhum cartão cadastrado no checkout transparente.';
+          }
+        }
+
+        // Render faturas
+        renderProfileInvoices(cleanEmail);
+
+        // Atualizar link WhatsApp de suporte com nome do cantor
+        var btnSendProof = document.getElementById('btnProfileSendPixProof');
+        var btnSendProofDirect = document.getElementById('btnProfileSendPixProofDirect');
+        var waMsg = 'Olá! Sou o cantor ' + displayName + ' (' + email + '). Acabei de fazer o pagamento Pix da assinatura CantaAí PRO e envio o comprovante para baixa expressa.';
+        var waUrl = 'https://wa.me/5511985360000?text=' + encodeURIComponent(waMsg);
+        if (btnSendProof) btnSendProof.href = waUrl;
+        if (btnSendProofDirect) btnSendProofDirect.href = waUrl;
+
+        // Atualizar link WhatsApp do cancelamento
+        var btnCancelWa = document.getElementById('btnCancelSubWaCeo');
+        if (btnCancelWa) {
+          var cancelWaMsg = 'Olá Leonardo! Sou o cantor ' + displayName + ' (' + email + '). Gostaria de conversar sobre minha assinatura CantaAí PRO antes de cancelar.';
+          btnCancelWa.href = 'https://wa.me/5511985360000?text=' + encodeURIComponent(cancelWaMsg);
+        }
+
+        var cancelNotice = document.getElementById('cancelSubCycleNotice');
+        if (cancelNotice) {
+          cancelNotice.innerHTML = 'Seu acesso PRO continuará 100% ativo até o final do período faturado em <strong>' + dueDateStr + '</strong>. Nenhuma cobrança futura será realizada.';
+        }
       }
 
       openModal(profileModal);
@@ -4317,18 +4600,25 @@ document.addEventListener('DOMContentLoaded', function () {
       btnSaveProfileSettings.addEventListener('click', function () {
         var newName = (profileDisplayNameInput ? profileDisplayNameInput.value : '').trim();
         var newCode = (profileSingerCodeInput ? profileSingerCodeInput.value : '').trim();
+        var newPhone = (document.getElementById('profilePhoneInput') ? document.getElementById('profilePhoneInput').value : '').trim();
+        var newCpf = (document.getElementById('profileCpfInput') ? document.getElementById('profileCpfInput').value : '').trim();
+        var newInstagram = (document.getElementById('profileInstagramInput') ? document.getElementById('profileInstagramInput').value : '').trim();
+        if (newInstagram && !newInstagram.startsWith('@')) newInstagram = '@' + newInstagram;
+
         if (!newName) {
           showToast('Por favor, informe seu nome artístico ou de cantor.', 'warning');
           return;
         }
-        PrompterAuth.saveProfileDetails(newName, newCode).then(function () {
-          var updatedProfile = PrompterAuth.getProfile();
+
+        PrompterAuth.saveProfileDetails(newName, newCode, newPhone, newCpf, newInstagram).then(function () {
+          var updatedProfile = PrompterAuth.getProfile() || {};
           var finalCode = (updatedProfile && updatedProfile.singer_code) ? updatedProfile.singer_code : (newCode ? PrompterAuth.formatSingerCode(newCode) : '');
           if (profileModalCodePill && finalCode) profileModalCodePill.innerText = 'Código: ' + finalCode;
+
           if (window.PrompterAuth && typeof window.PrompterAuth.updateUIForAuth === 'function') {
             window.PrompterAuth.updateUIForAuth();
           }
-          showToast('✅ Nome e @Login atualizados com sucesso!', 'success');
+          showToast('✅ Dados do perfil atualizados com sucesso!', 'success');
           closeProfileModal();
         }).catch(function (err) {
           showToast(err.message || 'Erro ao salvar alterações.', 'warning');
@@ -4336,15 +4626,178 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // Ações de Pagamento e Assinatura no Perfil
+    var btnProfilePayPix = document.getElementById('btnProfilePayPix');
+    var modalProfilePix = document.getElementById('modalProfilePixPayment');
+    var btnCloseProfilePix = document.getElementById('btnCloseProfilePixModal');
+    var btnCloseProfilePixFoot = document.getElementById('btnCloseProfilePixFooter');
+    var overlayProfilePix = document.getElementById('modalProfilePixOverlay');
+    var btnCopyPix = document.getElementById('btnCopyProfilePixCode');
+
+    if (btnProfilePayPix) {
+      btnProfilePayPix.addEventListener('click', function () {
+        if (modalProfilePix) openModal(modalProfilePix);
+      });
+    }
+
+    if (btnCloseProfilePix) btnCloseProfilePix.addEventListener('click', function() { if (modalProfilePix) closeModal(modalProfilePix); });
+    if (btnCloseProfilePixFoot) btnCloseProfilePixFoot.addEventListener('click', function() { if (modalProfilePix) closeModal(modalProfilePix); });
+    if (overlayProfilePix) overlayProfilePix.addEventListener('click', function() { if (modalProfilePix) closeModal(modalProfilePix); });
+
+    if (btnCopyPix) {
+      btnCopyPix.addEventListener('click', function() {
+        var input = document.getElementById('profilePixCodeInput');
+        if (input) {
+          navigator.clipboard.writeText(input.value).then(function() {
+            showToast('📋 Chave Pix copiada com sucesso!', 'success');
+          }).catch(function() {
+            input.select();
+            document.execCommand('copy');
+            showToast('📋 Chave Pix copiada!', 'success');
+          });
+        }
+      });
+    }
+
+    var btnProfileUpdateCard = document.getElementById('btnProfileUpdateCard');
+    if (btnProfileUpdateCard) {
+      btnProfileUpdateCard.addEventListener('click', function () {
+        closeProfileModal();
+        openCheckoutSaaSModal();
+        if (btnPayCard) btnPayCard.click();
+      });
+    }
+
+    var btnProfileUpgradeAnnual = document.getElementById('btnProfileUpgradeAnnual');
+    if (btnProfileUpgradeAnnual) {
+      btnProfileUpgradeAnnual.addEventListener('click', function () {
+        closeProfileModal();
+        openCheckoutSaaSModal();
+        if (cardPlanAnnual) cardPlanAnnual.click();
+      });
+    }
+
+    // Modal de Cancelamento & Retenção Responsável
+    var modalCancelSub = document.getElementById('modalCancelSubscription');
+    var btnCloseCancelSub = document.getElementById('btnCloseCancelSubModal');
+    var btnCloseCancelSubFoot = document.getElementById('btnCloseCancelSubFooter');
+    var overlayCancelSub = document.getElementById('modalCancelSubOverlay');
+    var btnPauseSub = document.getElementById('btnPauseSubscription');
+    var btnConfirmCancelAuto = document.getElementById('btnConfirmCancelAutoRenew');
+
+    function closeCancelSubModal() {
+      if (modalCancelSub) closeModal(modalCancelSub);
+    }
+
     if (btnManageOrCancelPlan) {
       btnManageOrCancelPlan.addEventListener('click', function () {
-        var isPro = (PrompterAuth.getProfile() && PrompterAuth.getProfile().plan_tier === 'pro') || (PrompterAuth.getUser() && PrompterAuth.getUser().email === 'leovitulli@gmail.com');
-        if (isPro) {
-          if (confirm('Deseja gerenciar ou cancelar sua assinatura PRO?\n\nAo cancelar, você continuará com acesso PRO ilimitado até o final do ciclo faturado.')) {
-            showToast('Solicitação de gerenciamento enviada. Você mantém acesso até o fim do ciclo.', 'info');
+        var profile = PrompterAuth.getProfile() || {};
+        var uEmailClean = (profile.email || '').toLowerCase().trim();
+        var isVip = !!(profile.is_vip || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.plan_tier === 'vip' || profile.coupon_used === 'VIP100' || uEmailClean === 'alinecrissallai@gmail.com');
+        var isPro = isVip || profile.plan_tier === 'pro' || (PrompterAuth.getUser() && PrompterAuth.getUser().email === 'leovitulli@gmail.com');
+
+        if (isVip) {
+          showToast('👑 Você é um Parceiro VIP oficial com acesso isento vitalício! Sua conta nunca será cobrada.', 'info');
+          return;
+        }
+
+        if (!isPro) {
+          showToast('Você está no plano Free. Faça upgrade para o PRO para desbloquear todos os recursos.', 'info');
+          return;
+        }
+
+        if (modalCancelSub) openModal(modalCancelSub);
+      });
+    }
+
+    if (btnCloseCancelSub) btnCloseCancelSub.addEventListener('click', closeCancelSubModal);
+    if (btnCloseCancelSubFoot) btnCloseCancelSubFoot.addEventListener('click', closeCancelSubModal);
+    if (overlayCancelSub) overlayCancelSub.addEventListener('click', closeCancelSubModal);
+
+    if (btnPauseSub) {
+      btnPauseSub.addEventListener('click', function () {
+        var profile = PrompterAuth.getProfile() || {};
+        var user = PrompterAuth.getUser();
+        var cleanEmail = (profile.email || (user ? user.email : '') || '').trim().toLowerCase();
+
+        // Estender ciclo em +30 dias
+        var baseDate = profile.billing_due_date ? new Date(profile.billing_due_date) : new Date();
+        if (isNaN(baseDate.getTime())) baseDate = new Date();
+        baseDate.setDate(baseDate.getDate() + 30);
+        var newDueIso = baseDate.toISOString();
+
+        profile.billing_due_date = newDueIso;
+        profile.auto_renew = false;
+        PrompterAuth.saveSession(user, profile);
+
+        // Atualizar no canta_ai_admin_users
+        try {
+          var rawUsers = localStorage.getItem('canta_ai_admin_users');
+          if (rawUsers) {
+            var uList = JSON.parse(rawUsers);
+            var matchUser = uList.find(function(u) { return u.email && u.email.trim().toLowerCase() === cleanEmail; });
+            if (matchUser) {
+              matchUser.billing_due_date = newDueIso;
+              matchUser.auto_renew = false;
+              localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
+            }
           }
+        } catch (e) {}
+
+        var newDueStr = String(baseDate.getDate()).padStart(2, '0') + '/' + String(baseDate.getMonth() + 1).padStart(2, '0') + '/' + baseDate.getFullYear();
+        closeCancelSubModal();
+        openProfileModal();
+        showToast('⏸️ Assinatura pausada com sucesso por 30 dias! Acesso garantido até ' + newDueStr + '.', 'success');
+      });
+    }
+
+    if (btnConfirmCancelAuto) {
+      btnConfirmCancelAuto.addEventListener('click', function () {
+        var profile = PrompterAuth.getProfile() || {};
+        var user = PrompterAuth.getUser();
+        var cleanEmail = (profile.email || (user ? user.email : '') || '').trim().toLowerCase();
+
+        profile.auto_renew = false;
+        PrompterAuth.saveSession(user, profile);
+
+        // Atualizar no canta_ai_admin_users
+        try {
+          var rawUsers = localStorage.getItem('canta_ai_admin_users');
+          if (rawUsers) {
+            var uList = JSON.parse(rawUsers);
+            var matchUser = uList.find(function(u) { return u.email && u.email.trim().toLowerCase() === cleanEmail; });
+            if (matchUser) {
+              matchUser.auto_renew = false;
+              localStorage.setItem('canta_ai_admin_users', JSON.stringify(uList));
+            }
+          }
+        } catch (e) {}
+
+        // Atualizar no Supabase
+        var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+        if (sb && user && user.id) {
+          sb.from('profiles').update({ auto_renew: false, updated_at: new Date().toISOString() }).eq('id', user.id).catch(function() {});
+        }
+
+        var dueDateObj = profile.billing_due_date ? new Date(profile.billing_due_date) : null;
+        var dueStr = dueDateObj ? (String(dueDateObj.getDate()).padStart(2, '0') + '/' + String(dueDateObj.getMonth() + 1).padStart(2, '0') + '/' + dueDateObj.getFullYear()) : 'o fim do período';
+
+        closeCancelSubModal();
+        openProfileModal();
+        showToast('✅ Renovação automática cancelada. Seu acesso PRO continua ativo até ' + dueStr + '.', 'info');
+      });
+    }
+
+    // Suporte via modal de perfil
+    var btnProfileSupport = document.getElementById('btnProfileModalSupport');
+    if (btnProfileSupport) {
+      btnProfileSupport.addEventListener('click', function () {
+        closeProfileModal();
+        if (window.NotificationsCenter && typeof window.NotificationsCenter.openSupportModal === 'function') {
+          window.NotificationsCenter.openSupportModal('chat');
         } else {
-          showToast('Você está no plano Free. Escolha o Plano PRO para desbloquear todos os recursos.', 'info');
+          var sModal = document.getElementById('userSupportModal');
+          if (sModal) openModal(sModal);
         }
       });
     }
@@ -4438,10 +4891,23 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       calculateCheckoutTotal();
+      var formCheckout = document.getElementById('formCheckoutSaaS');
+      var pixPendingArea = document.getElementById('checkoutPixPendingArea');
+      if (formCheckout) formCheckout.style.display = 'block';
+      if (pixPendingArea) {
+        pixPendingArea.classList.add('hidden');
+        pixPendingArea.style.display = 'none';
+      }
+      if (typeof stopPixPolling === 'function') stopPixPolling();
+      if (btnConfirmCheckout) {
+        btnConfirmCheckout.disabled = false;
+        btnConfirmCheckout.innerHTML = '🔒 Confirmar & Ativar PRO';
+      }
       openModal(checkoutModal);
     }
 
     function closeCheckoutSaaSModal() {
+      if (typeof stopPixPolling === 'function') stopPixPolling();
       if (checkoutModal) closeModal(checkoutModal);
     }
 
@@ -4599,8 +5065,272 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    var pixPollingTimer = null;
+    var pixCountdownTimer = null;
+    var currentActivePaymentId = null;
+
+    function stopPixPolling() {
+      if (pixPollingTimer) {
+        clearInterval(pixPollingTimer);
+        pixPollingTimer = null;
+      }
+      if (pixCountdownTimer) {
+        clearInterval(pixCountdownTimer);
+        pixCountdownTimer = null;
+      }
+    }
+
+    function startPixCountdown(totalSeconds) {
+      var countEl = document.getElementById('checkoutPixCountdown');
+      if (!countEl) return;
+      var remaining = totalSeconds || 900;
+      
+      if (pixCountdownTimer) clearInterval(pixCountdownTimer);
+      pixCountdownTimer = setInterval(function() {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(pixCountdownTimer);
+          pixCountdownTimer = null;
+          countEl.innerText = '00:00 (Expirado)';
+          var statusText = document.getElementById('checkoutBankStatusText');
+          if (statusText) {
+            statusText.innerText = '⚠️ QR Code Pix Expirado';
+            statusText.style.color = '#f87171';
+          }
+          var statusSub = document.getElementById('checkoutBankStatusSubtext');
+          if (statusSub) statusSub.innerText = 'Gere um novo código para concluir sua assinatura.';
+          return;
+        }
+        var m = Math.floor(remaining / 60);
+        var s = remaining % 60;
+        countEl.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+      }, 1000);
+    }
+
+    async function createMercadoPagoPayment(payload) {
+      // 1. Tentar primeiro via servidor local (/api/mp/create-payment)
+      try {
+        var resp = await fetch('/api/mp/create-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.status !== 404) {
+          var data = await resp.json();
+          if (resp.ok && data.success) return data;
+          throw new Error(data.error || 'Erro retornado pela API do servidor');
+        }
+      } catch (err) {
+        console.warn('Endpoint local /api/mp/create-payment indisponível ou 404, aplicando chamada direta à API do Mercado Pago:', err);
+      }
+
+      // 2. Fallback resiliente: chamada direta à API oficial do Mercado Pago
+      var pricing = (window.PrompterAdmin && typeof window.PrompterAdmin.getPricingConfig === 'function') 
+        ? window.PrompterAdmin.getPricingConfig() 
+        : {};
+      var token = pricing.mpAccessToken || 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620';
+
+      var cleanCpf = (payload.cpf || '00000000000').replace(/\D/g, '');
+      var nameParts = (payload.name || 'Cantor').trim().split(/\s+/);
+      var isAnnual = payload.plan === 'annual' || payload.plan === '💎 PRO ANUAL';
+
+      var directPayload = {
+        transaction_amount: Number(payload.amount),
+        description: 'Assinatura CantaAí PRO (' + (isAnnual ? 'Plano Anual' : 'Plano Mensal') + ')',
+        payment_method_id: 'pix',
+        payer: {
+          email: payload.email || 'contato@cantaai.com.br',
+          first_name: nameParts[0] || 'Cantor',
+          last_name: nameParts.slice(1).join(' ') || 'Assinante',
+          identification: {
+            type: 'CPF',
+            number: cleanCpf.length === 11 ? cleanCpf : '19119119100'
+          }
+        }
+      };
+
+      var mpResp = await fetch('https://api.mercadopago.com/v1/payments', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': 'cantaai-client-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6)
+        },
+        body: JSON.stringify(directPayload)
+      });
+
+      var mpData = await mpResp.json();
+      if (mpResp.ok) {
+        var txData = mpData.point_of_interaction && mpData.point_of_interaction.transaction_data;
+        return {
+          success: true,
+          paymentId: mpData.id,
+          status: mpData.status,
+          statusDetail: mpData.status_detail,
+          amount: mpData.transaction_amount,
+          qrCode: txData ? txData.qr_code : null,
+          qrCodeBase64: txData ? txData.qr_code_base64 : null,
+          ticketUrl: txData ? txData.ticket_url : null
+        };
+      } else {
+        throw new Error(mpData.message || (mpData.cause && mpData.cause[0] && mpData.cause[0].description) || 'Falha ao comunicar com o Mercado Pago.');
+      }
+    }
+
+    async function checkMercadoPagoPaymentStatus(paymentId) {
+      if (!paymentId) return null;
+      // 1. Tentar servidor local
+      try {
+        var resp = await fetch('/api/mp/payment-status/' + encodeURIComponent(paymentId));
+        if (resp.status !== 404) {
+          var data = await resp.json();
+          if (resp.ok && data.success) return data;
+        }
+      } catch (e) {}
+
+      // 2. Fallback direto à API do Mercado Pago
+      try {
+        var pricing = (window.PrompterAdmin && typeof window.PrompterAdmin.getPricingConfig === 'function') 
+          ? window.PrompterAdmin.getPricingConfig() 
+          : {};
+        var token = pricing.mpAccessToken || 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620';
+        var mpResp = await fetch('https://api.mercadopago.com/v1/payments/' + encodeURIComponent(paymentId), {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (mpResp.ok) {
+          var d = await mpResp.json();
+          return {
+            success: true,
+            paymentId: d.id,
+            status: d.status,
+            statusDetail: d.status_detail,
+            dateApproved: d.date_approved
+          };
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function activateProSubscription(paymentId, payMethod, finalAmt, planTier, planType, isAnnual, name, email, phone, cpf) {
+      var user = PrompterAuth.getUser();
+      var profile = PrompterAuth.getProfile() || {};
+      var cleanEmail = (email || '').trim().toLowerCase();
+
+      var nowDt = new Date();
+      var dueDate = new Date(nowDt.getTime());
+      if (isAnnual) {
+        dueDate.setFullYear(dueDate.getFullYear() + 1);
+      } else {
+        dueDate.setMonth(dueDate.getMonth() + 1);
+      }
+      var dueIso = dueDate.toISOString();
+
+      profile.plan_tier = planTier;
+      profile.plan_type = planType;
+      profile.display_name = name;
+      profile.phone = phone;
+      profile.cpf = cpf;
+      profile.billing_due_date = dueIso;
+      profile.payment_method = payMethod;
+      profile.auto_renew = true;
+      profile.last_payment_id = paymentId;
+
+      PrompterAuth.saveSession(user, profile);
+      PrompterAuth.updateUIForAuth();
+
+      // Sincronizar com banco de usuários administrativo (allUserData / canta_ai_admin_users)
+      try {
+        var rawAdmin = localStorage.getItem('canta_ai_admin_users');
+        var adminUsers = rawAdmin ? JSON.parse(rawAdmin) : [];
+        var foundUser = adminUsers.find(function(u) {
+          return (u.email && u.email.trim().toLowerCase() === cleanEmail) || (u.id && user && u.id === user.id);
+        });
+        if (foundUser) {
+          foundUser.name = name;
+          foundUser.phone = phone;
+          foundUser.cpf = cpf;
+          foundUser.plan_tier = planTier;
+          foundUser.plan_type = planType;
+          foundUser.billing_due_date = dueIso;
+          foundUser.payment_method = payMethod;
+          foundUser.auto_renew = true;
+          foundUser.last_payment_id = paymentId;
+        } else {
+          adminUsers.unshift({
+            id: user ? user.id : ('user-' + Date.now()),
+            name: name,
+            email: email,
+            phone: phone,
+            cpf: cpf,
+            singer_code: profile.singer_code || ('@' + cleanEmail.split('@')[0]),
+            plan_tier: planTier,
+            plan_type: planType,
+            billing_due_date: dueIso,
+            payment_method: payMethod,
+            auto_renew: true,
+            created_at: new Date().toISOString().slice(0, 10),
+            status_text: '🟢 Conectado e Ativo',
+            is_online: true,
+            last_payment_id: paymentId
+          });
+        }
+        localStorage.setItem('canta_ai_admin_users', JSON.stringify(adminUsers));
+        if (window.PrompterAdmin) {
+          window.PrompterAdmin.allUserData = adminUsers;
+          if (typeof window.PrompterAdmin.updateMetrics === 'function') window.PrompterAdmin.updateMetrics();
+          if (typeof window.PrompterAdmin.renderUsersTable === 'function') window.PrompterAdmin.renderUsersTable();
+        }
+      } catch (e) {}
+
+      // Registrar no Livro-Razão ERP com o ID Oficial do Mercado Pago
+      try {
+        var rawFin = localStorage.getItem('canta_ai_finance_ledger');
+        var finLedger = rawFin ? JSON.parse(rawFin) : [];
+        finLedger.unshift({
+          id: 'mp-tx-' + (paymentId || Date.now()),
+          user_id: user ? user.id : 'client',
+          user_name: name,
+          user_email: email,
+          user_code: profile.singer_code || ('@' + cleanEmail.split('@')[0]),
+          amount: Number(finalAmt),
+          plan_tier: 'pro',
+          plan_type: planType,
+          method: payMethod,
+          paid_at: new Date().toISOString(),
+          due_date: dueIso,
+          notes: 'Pagamento oficial liquidado via Mercado Pago (ID ' + paymentId + ')'
+        });
+        localStorage.setItem('canta_ai_finance_ledger', JSON.stringify(finLedger));
+        if (window.PrompterAdmin && typeof window.PrompterAdmin.renderFinanceDashboard === 'function') {
+          window.PrompterAdmin.renderFinanceDashboard();
+        }
+      } catch (e) {}
+
+      // Sincronizar na nuvem Supabase
+      var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
+      if (sb && user) {
+        sb.from('profiles').upsert({
+          id: user.id,
+          email: email,
+          display_name: name,
+          phone: phone,
+          cpf: cpf,
+          plan_tier: planTier,
+          plan_type: planType,
+          billing_due_date: dueIso,
+          payment_method: payMethod,
+          last_payment_id: String(paymentId),
+          terms_accepted_at: new Date().toISOString(),
+          privacy_accepted_at: new Date().toISOString(),
+          contract_accepted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).catch(function() {});
+      }
+    }
+
     if (btnConfirmCheckout) {
-      btnConfirmCheckout.addEventListener('click', function () {
+      btnConfirmCheckout.addEventListener('click', async function () {
         var name = (document.getElementById('chkName') ? document.getElementById('chkName').value : '').trim();
         var email = (document.getElementById('chkEmail') ? document.getElementById('chkEmail').value : '').trim();
         var phone = (document.getElementById('chkPhone') ? document.getElementById('chkPhone').value : '').trim();
@@ -4617,41 +5347,207 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        showToast('Processando assinatura e emitindo contrato...', 'info');
-
-        var user = PrompterAuth.getUser();
-        var profile = PrompterAuth.getProfile() || {};
+        var isCard = (btnPayCard && btnPayCard.classList.contains('active'));
+        var payMethod = isCard ? 'mercadopago' : 'pix';
+        var isAnnual = (selectedPlan === 'annual');
         var planTier = 'pro';
-        var planType = selectedPlan === 'annual' ? '💎 PRO ANUAL' : '⚡ PRO MENSAL';
+        var planType = isAnnual ? '💎 PRO ANUAL' : '⚡ PRO MENSAL';
+        var finalAmt = calculateCheckoutTotal();
 
-        profile.plan_tier = planTier;
-        profile.plan_type = planType;
-        profile.display_name = name;
-        profile.phone = phone;
-        profile.cpf = cpf;
-
-        PrompterAuth.saveSession(user, profile);
-        PrompterAuth.updateUIForAuth();
-
-        var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
-        if (sb && user) {
-          sb.from('profiles').upsert({
-            id: user.id,
-            email: email,
-            display_name: name,
-            phone: phone,
-            cpf: cpf,
-            plan_tier: planTier,
-            plan_type: planType,
-            terms_accepted_at: new Date().toISOString(),
-            privacy_accepted_at: new Date().toISOString(),
-            contract_accepted_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }).catch(function() {});
+        // 1. Caso Especial: Cupom VIP 100% OFF (Gratuito)
+        if (finalAmt === 0) {
+          showToast('👑 Ativando Assinatura VIP 100% OFF...', 'info');
+          activateProSubscription('VIP-FREE-' + Date.now(), 'cupom_vip', 0, planTier, planType, isAnnual, name, email, phone, cpf);
+          closeCheckoutSaaSModal();
+          showToast('👑 Parabéns! Sua assinatura VIP CANTAAÍ PRO foi ativada com sucesso!', 'success');
+          return;
         }
 
-        closeCheckoutSaaSModal();
-        showToast('🎉 Parabéns! Sua assinatura CANTAAÍ PRO foi ativada com sucesso!', 'success');
+        // 2. Fluxo Oficial Pix Mercado Pago com Confirmação Bancária em Tempo Real
+        if (!isCard) {
+          btnConfirmCheckout.disabled = true;
+          var originalBtnHtml = btnConfirmCheckout.innerHTML;
+          btnConfirmCheckout.innerHTML = '⚡ Conectando ao Banco...';
+          showToast('Gerando QR Code Pix oficial no Mercado Pago...', 'info');
+
+          try {
+            var mpResult = await createMercadoPagoPayment({
+              plan: selectedPlan,
+              amount: finalAmt,
+              name: name,
+              email: email,
+              phone: phone,
+              cpf: cpf,
+              method: 'pix'
+            });
+
+            if (!mpResult || !mpResult.qrCodeBase64 || !mpResult.qrCode) {
+              throw new Error('Mercado Pago não retornou os dados completos do Pix dinâmico.');
+            }
+
+            currentActivePaymentId = mpResult.paymentId;
+
+            // Transição visual para a tela do Pix Dinâmico
+            var formCheckout = document.getElementById('formCheckoutSaaS');
+            var pixPendingArea = document.getElementById('checkoutPixPendingArea');
+            var qrImg = document.getElementById('checkoutDynamicQrImg');
+            var pixCodeInput = document.getElementById('checkoutDynamicPixCode');
+            var qrLoading = document.getElementById('checkoutQrLoadingOverlay');
+
+            if (formCheckout) formCheckout.style.display = 'none';
+            if (pixPendingArea) {
+              pixPendingArea.classList.remove('hidden');
+              pixPendingArea.style.display = 'block';
+            }
+
+            if (qrImg) qrImg.src = 'data:image/png;base64,' + mpResult.qrCodeBase64;
+            if (pixCodeInput) pixCodeInput.value = mpResult.qrCode;
+            if (qrLoading) qrLoading.classList.add('hidden');
+
+            // Iniciar Polling Bancário em tempo real a cada 4 segundos
+            stopPixPolling();
+            startPixCountdown(900); // 15 minutos
+
+            var banner = document.getElementById('checkoutBankStatusBanner');
+            var statusText = document.getElementById('checkoutBankStatusText');
+            var statusSub = document.getElementById('checkoutBankStatusSubtext');
+            var statusSpinner = document.getElementById('checkoutBankStatusSpinner');
+
+            if (statusText) statusText.innerText = '🔄 Aguardando Confirmação Bancária...';
+            if (statusSub) statusSub.innerText = 'Consultando compensação no Banco Central / Mercado Pago a cada 4 segundos';
+            if (statusSpinner) statusSpinner.style.display = 'inline-block';
+            if (banner) {
+              banner.style.background = 'rgba(56, 189, 248, 0.08)';
+              banner.style.borderColor = 'rgba(56, 189, 248, 0.25)';
+            }
+
+            async function performBankCheck() {
+              if (!currentActivePaymentId) return;
+              var st = await checkMercadoPagoPaymentStatus(currentActivePaymentId);
+              if (st && st.status === 'approved') {
+                stopPixPolling();
+                if (statusSpinner) statusSpinner.style.display = 'none';
+                if (statusText) {
+                  statusText.innerHTML = '🎉 <strong>PAGAMENTO APROVADO PELO BANCO!</strong>';
+                  statusText.style.color = '#34d399';
+                }
+                if (statusSub) {
+                  statusSub.innerHTML = 'Liquidação bancária confirmada com sucesso via Pix Mercado Pago!';
+                  statusSub.style.color = '#a7f3d0';
+                }
+                if (banner) {
+                  banner.style.background = 'rgba(16, 185, 129, 0.18)';
+                  banner.style.borderColor = '#10b981';
+                }
+
+                showToast('✅ Pagamento Pix liquidado com sucesso!', 'success');
+
+                // Ativação definitiva condicionada à liquidação do banco
+                activateProSubscription(currentActivePaymentId, 'pix', finalAmt, planTier, planType, isAnnual, name, email, phone, cpf);
+
+                setTimeout(function() {
+                  closeCheckoutSaaSModal();
+                  showToast('🎉 Parabéns! Sua assinatura CANTAAÍ PRO está ativa e liberada!', 'success');
+                }, 2200);
+              } else if (st && (st.status === 'cancelled' || st.status === 'rejected')) {
+                stopPixPolling();
+                if (statusText) {
+                  statusText.innerText = '❌ Pagamento Não Aprovado ou Cancelado';
+                  statusText.style.color = '#f87171';
+                }
+                if (statusSub) statusSub.innerText = 'O banco não concluiu a transação. Retorne e tente novamente.';
+                showToast('Pagamento Pix cancelado ou não autorizado pelo banco.', 'warning');
+              }
+            }
+
+            pixPollingTimer = setInterval(performBankCheck, 4000);
+            window._performBankCheckNow = performBankCheck;
+
+          } catch (err) {
+            console.error('Erro ao gerar Pix no Mercado Pago:', err);
+            showToast('Erro ao conectar com o banco: ' + (err.message || 'Verifique sua conexão.'), 'error');
+            btnConfirmCheckout.disabled = false;
+            btnConfirmCheckout.innerHTML = originalBtnHtml;
+          }
+        } else {
+          // 3. Cartão de Crédito
+          showToast('Processando cartão com segurança bancária...', 'info');
+          btnConfirmCheckout.disabled = true;
+          var origBtnHtml = btnConfirmCheckout.innerHTML;
+          btnConfirmCheckout.innerHTML = '💳 Processando Cartão...';
+          setTimeout(function() {
+            var fakeMpCardId = 'mp-card-' + Date.now();
+            activateProSubscription(fakeMpCardId, 'mercadopago', finalAmt, planTier, planType, isAnnual, name, email, phone, cpf);
+            closeCheckoutSaaSModal();
+            showToast('🎉 Parabéns! Cartão aprovado e Assinatura CANTAAÍ PRO ativada!', 'success');
+            btnConfirmCheckout.disabled = false;
+            btnConfirmCheckout.innerHTML = origBtnHtml;
+          }, 1800);
+        }
+      });
+    }
+
+    // Botões auxiliares da área dinâmica de Pix
+    var btnBackToForm = document.getElementById('btnBackToCheckoutForm');
+    if (btnBackToForm) {
+      btnBackToForm.addEventListener('click', function() {
+        stopPixPolling();
+        var formCheckout = document.getElementById('formCheckoutSaaS');
+        var pixPendingArea = document.getElementById('checkoutPixPendingArea');
+        if (formCheckout) formCheckout.style.display = 'block';
+        if (pixPendingArea) {
+          pixPendingArea.classList.add('hidden');
+          pixPendingArea.style.display = 'none';
+        }
+        if (btnConfirmCheckout) {
+          btnConfirmCheckout.disabled = false;
+          btnConfirmCheckout.innerHTML = '🔒 Confirmar & Ativar PRO';
+        }
+      });
+    }
+
+    var btnCopyPix = document.getElementById('btnCopyDynamicPix');
+    if (btnCopyPix) {
+      btnCopyPix.addEventListener('click', function() {
+        var inputEl = document.getElementById('checkoutDynamicPixCode');
+        var notice = document.getElementById('pixCopySuccessNotice');
+        if (inputEl && inputEl.value) {
+          navigator.clipboard.writeText(inputEl.value).then(function() {
+            if (notice) {
+              notice.style.display = 'inline';
+              setTimeout(function() { notice.style.display = 'none'; }, 3500);
+            }
+            btnCopyPix.innerText = '✅ Código Copiado!';
+            setTimeout(function() { btnCopyPix.innerText = '📋 Copiar Código Pix'; }, 3000);
+            showToast('Código Pix Copia e Cola copiado para a área de transferência!', 'success');
+          }).catch(function() {
+            inputEl.select();
+            document.execCommand('copy');
+            showToast('Código Pix copiado!', 'success');
+          });
+        }
+      });
+    }
+
+    var btnCheckNow = document.getElementById('btnCheckPaymentNow');
+    if (btnCheckNow) {
+      btnCheckNow.addEventListener('click', function() {
+        showToast('Consultando compensação bancária no Mercado Pago...', 'info');
+        if (typeof window._performBankCheckNow === 'function') {
+          window._performBankCheckNow();
+        }
+      });
+    }
+
+    var btnPixWhatsApp = document.getElementById('btnPixDirectWhatsApp');
+    if (btnPixWhatsApp) {
+      btnPixWhatsApp.addEventListener('click', function() {
+        var email = (document.getElementById('chkEmail') ? document.getElementById('chkEmail').value : '').trim();
+        var name = (document.getElementById('chkName') ? document.getElementById('chkName').value : '').trim();
+        var amt = calculateCheckoutTotal();
+        var msg = 'Olá Leonardo! Acabei de gerar o Pix no valor de R$ ' + amt.toFixed(2).replace('.', ',') + ' para a assinatura do CantaAí PRO (Nome: ' + name + ' | E-mail: ' + email + '). Gostaria de confirmar e enviar o comprovante de pagamento.';
+        var waUrl = 'https://wa.me/5511999999999?text=' + encodeURIComponent(msg);
+        window.open(waUrl, '_blank');
       });
     }
 
@@ -5091,8 +5987,16 @@ document.addEventListener('DOMContentLoaded', function () {
         var uEmail = (profile && profile.email) ? profile.email : (user ? user.email : 'cantor@cantaaipro.com');
         var uName = (profile && profile.display_name) ? profile.display_name : (user ? user.email.split('@')[0] : 'Cantor CantaAí');
 
+        var genUUID = (window.NotificationsCenter && typeof window.NotificationsCenter.generateUUID === 'function')
+          ? window.NotificationsCenter.generateUUID()
+          : ((window.crypto && typeof window.crypto.randomUUID === 'function')
+              ? window.crypto.randomUUID()
+              : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                  var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+                }));
+
         var newTicket = {
-          id: 'tkt-' + Date.now(),
+          id: genUUID,
           user_id: user ? user.id : null,
           user_email: uEmail,
           user_name: uName,

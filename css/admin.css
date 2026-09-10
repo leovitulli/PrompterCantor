@@ -1096,3 +1096,901 @@
   background: rgba(30, 41, 59, 0.85);
   border-color: rgba(56, 189, 248, 0.25);
 }
+
+/* ══════════════════════════════════════════════════════════
+   1. DASHBOARD DE GROWTH & MÉTRICAS VENDÁVEIS (CEO DE MARKETING)
+   ══════════════════════════════════════════════════════════ */
+.growth-dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.growth-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 12px;
+}
+
+.growth-section-badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.growth-social-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.growth-stat-card {
+  background: radial-gradient(circle at top left, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.growth-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.1);
+}
+
+.growth-stat-card.is-gold {
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.growth-stat-card.is-gold:hover {
+  border-color: rgba(251, 191, 36, 0.6);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 20px rgba(251, 191, 36, 0.15);
+}
+
+.growth-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.growth-stat-icon {
+  font-size: 1.5rem;
+}
+
+.growth-stat-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.tag-cyan { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.tag-gold { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.tag-emerald { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+.tag-rose { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+
+.growth-stat-value {
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #f8fafc;
+  line-height: 1.1;
+  font-family: 'Bricolage Grotesque', sans-serif;
+}
+
+.growth-stat-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.growth-stat-pitch {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.growth-funnel-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .growth-funnel-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.growth-box-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.funnel-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.funnel-bar-container {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.funnel-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #34d399);
+}
+
+/* Atalhos Interativos: Cards de Growth & Prova Social */
+.growth-stat-card.is-clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.growth-stat-card.is-clickable:hover {
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.5), 0 0 18px rgba(56, 189, 248, 0.18);
+}
+
+.growth-stat-card.is-clickable.is-gold:hover {
+  border-color: rgba(251, 191, 36, 0.65);
+  box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.5), 0 0 22px rgba(251, 191, 36, 0.22);
+}
+
+.growth-stat-card.is-clickable:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.growth-card-action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin-top: 4px;
+  align-self: flex-start;
+  transition: all 0.2s ease;
+}
+
+.growth-stat-card.is-clickable:hover .growth-card-action-badge {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateX(2px);
+}
+
+/* Atalhos Interativos: Funil de Conversão Comercial */
+.funnel-step.is-clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease,
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+.funnel-step.is-clickable:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(56, 189, 248, 0.45);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.funnel-step.is-clickable.is-pro-step:hover {
+  background: rgba(56, 189, 248, 0.18) !important;
+  border-color: rgba(56, 189, 248, 0.65) !important;
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.25) !important;
+}
+
+.funnel-step.is-clickable:active {
+  transform: translateX(2px) scale(0.99);
+}
+
+.funnel-arrow {
+  color: #64748b;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.funnel-step.is-clickable:hover .funnel-arrow {
+  color: #38bdf8;
+  transform: translateX(3px);
+}
+
+/* Seletor de Períodos: Top Cantores / Power Users */
+.growth-period-selector {
+  display: flex;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 12px;
+}
+
+.growth-period-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.growth-period-btn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.growth-period-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+/* Efeito Spotlight para focar no Palco Ao Vivo */
+@keyframes growthSpotlightPulse {
+  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6); border-color: rgba(52, 211, 153, 0.8); }
+  50% { box-shadow: 0 0 25px 5px rgba(52, 211, 153, 0.4); border-color: rgba(52, 211, 153, 1); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); border-color: rgba(255, 255, 255, 0.08); }
+}
+
+.growth-box-card.is-spotlighted {
+  animation: growthSpotlightPulse 1.8s ease-out;
+}
+
+.power-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.15s ease;
+}
+
+.power-user-row:last-child {
+  border-bottom: none;
+}
+
+.power-user-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ══════════════════════════════════════════════════════════
+   2. CENTRAL DE ATENDIMENTO & HELPDESK (INBOX DO CEO 2-COLUNAS)
+   ══════════════════════════════════════════════════════════ */
+.admin-helpdesk-container {
+  display: flex;
+  height: 620px;
+  background: rgba(11, 16, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 820px) {
+  .admin-helpdesk-container {
+    flex-direction: column;
+    height: 700px;
+  }
+}
+
+.adm-hd-sidebar {
+  width: 320px;
+  min-width: 290px;
+  background: rgba(15, 23, 42, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 820px) {
+  .adm-hd-sidebar {
+    width: 100%;
+    height: 250px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+.adm-hd-sidebar-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adm-hd-search-input {
+  width: 100%;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: #f8fafc;
+  font-size: 0.8rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.adm-hd-search-input:focus {
+  border-color: #38bdf8;
+}
+
+.adm-hd-filters {
+  display: flex;
+  gap: 5px;
+}
+
+.adm-hd-filter-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.adm-hd-filter-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.adm-hd-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adm-hd-item {
+  padding: 10px 12px;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adm-hd-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.adm-hd-item.is-active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+}
+
+.adm-hd-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.adm-hd-singer-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.adm-hd-time {
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.adm-hd-snippet {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adm-hd-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(7, 10, 18, 0.75);
+}
+
+.adm-hd-thread-header {
+  padding: 14px 20px;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.adm-hd-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adm-hd-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adm-hd-bubble.is-user {
+  align-self: flex-start;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  border-bottom-left-radius: 3px;
+}
+
+.adm-hd-bubble.is-admin {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.8), rgba(3, 105, 161, 0.9));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #ffffff;
+  border-bottom-right-radius: 3px;
+}
+
+.adm-hd-bubble-meta {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.adm-hd-composer {
+  padding: 14px 20px;
+  background: rgba(15, 23, 42, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.adm-hd-composer-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.adm-hd-textarea {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #f8fafc;
+  font-size: 0.85rem;
+  resize: none;
+  height: 52px;
+  outline: none;
+  font-family: inherit;
+}
+
+.adm-hd-textarea:focus {
+  border-color: #38bdf8;
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. BOTÕES DE ABORDAGEM COMERCIAL 1-CLIQUE (WHATSAPP)
+   ══════════════════════════════════════════════════════════ */
+.btn-crm-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-crm-wa:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #34d399;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-crm-chat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-crm-chat:hover {
+  background: rgba(56, 189, 248, 0.28);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   4. MÓDULO FINANCEIRO, BALANCETE ERP & DRE DO SAAS
+   ══════════════════════════════════════════════════════════ */
+.fin-dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.fin-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
+.fin-month-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 14, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.fin-month-btn {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.fin-month-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #ffffff;
+}
+
+.fin-month-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #f8fafc;
+  min-width: 130px;
+  text-align: center;
+}
+
+.fin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.fin-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.fin-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.fin-card.is-realized {
+  border-color: rgba(52, 211, 153, 0.35);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.8));
+}
+
+.fin-card.is-due {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(15, 23, 42, 0.8));
+}
+
+.fin-card.is-overdue {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(15, 23, 42, 0.8));
+}
+
+.fin-card.is-vip {
+  border-color: rgba(168, 85, 247, 0.35);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(15, 23, 42, 0.8));
+}
+
+.fin-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fin-card-icon {
+  font-size: 1.25rem;
+}
+
+.fin-card-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.tag-fin-green { background: rgba(52, 211, 153, 0.2); color: #34d399; }
+.tag-fin-yellow { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+.tag-fin-red { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+.tag-fin-purple { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+
+.fin-card-val {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: #f8fafc;
+  letter-spacing: -0.5px;
+  margin-top: 4px;
+}
+
+.fin-card-label {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.fin-card-sub {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* DRE Compacto & Balancete */
+.fin-dre-box {
+  background: rgba(10, 14, 23, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.fin-dre-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding-right: 12px;
+}
+
+.fin-dre-item:last-child {
+  border-right: none;
+}
+
+.fin-dre-item-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.fin-dre-item-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+/* Badges de Adimplência */
+.badge-fin-paid {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #34d399;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badge-fin-due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badge-fin-overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badge-fin-vip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* Botões de Ação do CFO */
+.btn-fin-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-fin-wa:hover {
+  background: rgba(16, 185, 129, 0.3);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-fin-pay {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-fin-pay:hover {
+  background: rgba(56, 189, 248, 0.3);
+  color: #ffffff;
+}
+
+.btn-fin-renew {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-fin-renew:hover {
+  background: rgba(251, 191, 36, 0.3);
+  color: #ffffff;
+}
+
+
