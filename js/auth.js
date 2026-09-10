@@ -154,12 +154,12 @@
       if (clean.startsWith('#') || clean.toUpperCase().indexOf('CANTOR-') !== -1 || clean.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
         if (email) {
           var prefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '');
-          return '@' + (prefix || 'cantor');
+          return prefix || 'cantor';
         }
-        return '@cantor';
+        return 'cantor';
       }
-      clean = clean.replace(/^[#@]+/, '');
-      return clean ? ('@' + clean) : '';
+      clean = clean.replace(/^[#@]+/, '').replace(/[^a-z0-9._-]/g, '');
+      return clean || '';
     },
 
     checkSingerCodeAvailability: function (code, currentUserId, currentUserEmail) {
@@ -1028,6 +1028,16 @@
           }
         }
 
+        // Ocultar "Notificações & Atendimento" para Administrador/Dev, pois já possui a Central de Governança
+        var btnProfNotif = document.getElementById('btnProfileNotifications');
+        if (btnProfNotif) {
+          if (isDev || isAdm) {
+            btnProfNotif.classList.add('hidden');
+          } else {
+            btnProfNotif.classList.remove('hidden');
+          }
+        }
+
         if (window.updateSaaSPlanBanner && typeof window.updateSaaSPlanBanner === 'function') {
           window.updateSaaSPlanBanner();
         }
@@ -1048,11 +1058,12 @@
       
       var cleanCode = this.formatSingerCode(singerCode || '');
       if (cleanCode.startsWith('#') || cleanCode.toUpperCase().indexOf('CANTOR-') !== -1 || cleanCode.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
-        cleanCode = '@' + cleanCode.replace(/^[#@]+/, '');
+        cleanCode = cleanCode.replace(/^[#@]+/, '');
       }
       if (!cleanCode && currentUser && currentUser.email) {
-        cleanCode = '@' + currentUser.email.split('@')[0];
+        cleanCode = currentUser.email.split('@')[0];
       }
+      cleanCode = cleanCode.replace(/^@+/, '').trim().toLowerCase();
       
       var cleanEmail = (currentUser.email || '').trim().toLowerCase();
       var isDev = (window.isPlatformDeveloper && window.isPlatformDeveloper(cleanEmail)) ||

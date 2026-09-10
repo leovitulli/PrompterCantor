@@ -1976,13 +1976,19 @@ document.addEventListener('DOMContentLoaded', function () {
       if (theme === 'light') {
         document.body.classList.add('light-mode');
         document.body.classList.remove('dark-mode');
-        if (btnToggleTheme) btnToggleTheme.innerText = '☀️';
-        if (upmThemeIcon) upmThemeIcon.innerText = '☀️';
+        if (btnToggleTheme) {
+          btnToggleTheme.innerText = '🌙';
+          btnToggleTheme.setAttribute('title', 'Alternar para Modo Escuro');
+        }
+        if (upmThemeIcon) upmThemeIcon.innerText = '🌙';
       } else {
         document.body.classList.remove('light-mode');
         document.body.classList.add('dark-mode');
-        if (btnToggleTheme) btnToggleTheme.innerText = '🌙';
-        if (upmThemeIcon) upmThemeIcon.innerText = '🌙';
+        if (btnToggleTheme) {
+          btnToggleTheme.innerText = '☀️';
+          btnToggleTheme.setAttribute('title', 'Alternar para Modo Claro');
+        }
+        if (upmThemeIcon) upmThemeIcon.innerText = '☀️';
       }
     }
 

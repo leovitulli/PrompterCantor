@@ -78,25 +78,23 @@
   function normalizeSingerCode(code, email) {
     var cleanEmail = (email || '').trim().toLowerCase();
     if (cleanEmail === 'leovitulli@gmail.com') {
-      var customH = localStorage.getItem('cantaai_user_custom_handle');
-      if (customH) {
-        return customH.startsWith('@') ? customH : ('@' + customH);
+      var customH = localStorage.getItem('cantaai_user_custom_handle_leovitulli@gmail.com');
+      if (customH && customH.toLowerCase() !== 'testeleo' && customH.toLowerCase() !== '@testeleo') {
+        return customH.replace(/^@+/, '').trim().toLowerCase();
       }
+      return 'leovitulli';
     }
 
     var c = String(code || '').trim();
     // Se for hash legado gerado por SQL (ex: #CANTOR-3DEB6 ou qualquer #) ou vazio
     if (!c || c.startsWith('#') || c.toUpperCase().indexOf('CANTOR-') !== -1 || c.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
       if (cleanEmail === 'leovitulli@gmail.com') {
-        var savedH = localStorage.getItem('cantaai_user_custom_handle');
-        return savedH || '@leovitulli';
+        return 'leovitulli';
       }
-      return '@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor');
+      return (cleanEmail ? cleanEmail.split('@')[0] : 'cantor').toLowerCase().replace(/\s+/g, '_');
     }
 
-    if (!c.startsWith('@')) {
-      c = '@' + c;
-    }
+    c = c.replace(/^@+/, '').trim();
     return c.toLowerCase().replace(/\s+/g, '_');
   }
 
@@ -202,9 +200,11 @@
             if (isPlatformDeveloper(uEmail)) return false;
             var uId = (u.id || '').toLowerCase();
             var uCode = (u.singer_code || '').toLowerCase();
+            var uName = (u.name || '').toLowerCase();
             if (uId && (uId === 'admin-leovitulli-id' || deletedSingers.indexOf(uId) !== -1)) return false;
             if (deletedSingers.indexOf(uEmail) !== -1) return false;
-            if (uCode && (uCode === '@leovitulli' || deletedSingers.indexOf(uCode) !== -1)) return false;
+            if (uCode && (uCode === '@leovitulli' || uCode === 'leovitulli' || deletedSingers.indexOf(uCode) !== -1)) return false;
+            if (uEmail.indexOf('test_singer') !== -1 || uId.indexOf('test_singer') !== -1 || uCode.indexOf('test_singer') !== -1 || uName.indexOf('test_singer') !== -1) return false;
             return true;
           });
 
@@ -534,12 +534,12 @@
                     '</div>' +
 
                     '<div class="growth-box-card" id="growthTopSingersBox">' +
-                      '<div class="growth-section-title">🌟 Top Cantores Mais Ativos <span class="growth-section-badge">Engajamento no Palco</span></div>' +
-                      '<p style="color:#94a3b8; font-size:0.75rem; margin:0 0 10px 0;">Músicos que mais utilizam o aplicativo ao vivo em seus shows e repertórios.</p>' +
+                      '<div class="growth-section-title">🌟 Top Cantores Mais Ativos</div>' +
+                      '<p style="color:#94a3b8; font-size:0.75rem; margin:0 0 10px 0;">Toque em qualquer cantor para abrir o relacionamento direto.</p>' +
                       '<div class="growth-period-selector" id="growthPeriodSelector">' +
-                        '<button type="button" class="growth-period-btn active" data-period="week">⚡ Semanal (Shows)</button>' +
+                        '<button type="button" class="growth-period-btn active" data-period="week">⚡ Semanal</button>' +
                         '<button type="button" class="growth-period-btn" data-period="month">🗓️ Mensal</button>' +
-                        '<button type="button" class="growth-period-btn" data-period="all">🏆 Geral (Anual)</button>' +
+                        '<button type="button" class="growth-period-btn" data-period="all">🏆 Geral</button>' +
                       '</div>' +
                       '<div id="growthTopSingersList" style="display:flex; flex-direction:column; gap:6px;">' +
                         '<div style="color:#64748b; font-size:0.8rem; text-align:center; padding:12px;">Carregando ranking...</div>' +
@@ -961,8 +961,8 @@
                     '<input type="text" id="editSingerName" class="form-control" required placeholder="Ex: Jorge Aragão">' +
                   '</div>' +
                   '<div class="form-group">' +
-                    '<label>@Login do Cantor (Nome de Usuário Único):</label>' +
-                    '<input type="text" id="editSingerCode" class="form-control" placeholder="@cantor_oficial" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">' +
+                    '<label>Login do Cantor (Nome de Usuário Único):</label>' +
+                    '<input type="text" id="editSingerCode" class="form-control" placeholder="cantor_oficial" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">' +
                     '<div id="editSingerCodeFeedback" style="font-size: 0.78rem; margin-top: 4px; display: none;"></div>' +
                   '</div>' +
                   '<div class="form-group">' +
@@ -5029,7 +5029,15 @@
         });
 
         var customerSingers = allUserData.filter(function(u) {
-          return u && !isPlatformDeveloper(u.email);
+          if (!u) return false;
+          if (isPlatformDeveloper(u.email)) return false;
+          var n = (u.name || '').toLowerCase();
+          var e = (u.email || '').toLowerCase();
+          var id = (u.id || '').toLowerCase();
+          var c = (u.singer_code || '').toLowerCase();
+          if (n.indexOf('test_singer') !== -1 || e.indexOf('test_singer') !== -1 || id.indexOf('test_singer') !== -1 || c.indexOf('test_singer') !== -1) return false;
+          if (e.indexOf('@cantaaipro.com') !== -1 && (n.indexOf('test') !== -1 || e.indexOf('test') !== -1)) return false;
+          return true;
         });
 
         if (customerSingers.length === 0) {
@@ -5094,76 +5102,48 @@
         top5.forEach(function (singer, idx) {
           var sName = escapeHtml(singer.name || (singer.email ? singer.email.split('@')[0] : 'Cantor'));
           var initial = (sName ? sName.charAt(0) : '🎤').toUpperCase();
-          var sCode = escapeHtml(normalizeSingerCode(singer.singer_code, singer.email));
           var planInfo = PrompterAdmin.getSingerPlanInfo(singer);
           var planTag = planInfo.badgeCompactHtml;
 
-          var periodBadge = '';
-          if (period === 'week') {
-            if (singer.is_online) {
-              periodBadge = '<span style="color:#34d399; font-size:0.68rem; font-weight:700; background:rgba(52,211,153,0.12); padding:1px 6px; border-radius:4px; border:1px solid rgba(52,211,153,0.3);">🟢 No Palco Agora</span>';
-            } else {
-              periodBadge = '<span style="color:#38bdf8; font-size:0.68rem; font-weight:700; background:rgba(56,189,248,0.12); padding:1px 6px; border-radius:4px; border:1px solid rgba(56,189,248,0.3);">⚡ Ativo na Semana</span>';
-            }
-          } else if (period === 'month') {
-            periodBadge = '<span style="color:#a78bfa; font-size:0.68rem; font-weight:700; background:rgba(167,139,250,0.12); padding:1px 6px; border-radius:4px; border:1px solid rgba(167,139,250,0.3);">🗓️ Top do Mês</span>';
-          } else {
-            periodBadge = '<span style="color:#fbbf24; font-size:0.68rem; font-weight:700; background:rgba(251,191,36,0.12); padding:1px 6px; border-radius:4px; border:1px solid rgba(251,191,36,0.3);">🏆 Geral Acumulado</span>';
-          }
+          // Indicador limpo apenas se estiver ativo no palco agora
+          var onlineBadge = singer.is_online
+            ? '<span style="color:#34d399; font-size:0.68rem; font-weight:700; background:rgba(52,211,153,0.12); padding:1px 6px; border-radius:4px; border:1px solid rgba(52,211,153,0.3);">🟢 No Palco</span>'
+            : '';
 
           var songsNum = getSingerSongCount(singer);
           var repsNum = getSingerRepCount(singer);
 
-          var cleanPhone = (singer.phone || '').replace(/\D/g, '');
-          if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = '55' + cleanPhone;
-
-          var actionHtml = '';
-          if (cleanPhone) {
-            var msgText = '';
-            var btnText = '';
-            if (planInfo.isVip) {
-              msgText = 'Olá ' + sName + '! Aqui é o Leonardo, CEO do CantaAí PRO 🎤. Vi que você tá mandando super bem no palco com o app! Como nossa parceira VIP oficial, queria te ouvir: o que você mais tem curtido nos seus shows e toparia gravar um mini depoimento em vídeo sobre a sua experiência?';
-              btnText = '💬 WhatsApp (Depoimento)';
-            } else if (planInfo.isPro) {
-              msgText = 'Olá ' + sName + '! Aqui é o Leonardo do CantaAí PRO 🎤. Vi que você é um dos nossos cantores mais ativos no palco! O que está achando da sua assinatura PRO? Se puder me dar um feedback rápido dos seus shows, agradeço demais!';
-              btnText = '💬 WhatsApp (Feedback)';
-            } else {
-              msgText = 'Fala ' + sName + '! Aqui é o Leonardo, criador do CantaAí PRO 🎤. Vi que você tá usando bastante o app no palco! Queria te presentear com uma condição especial de Parceiro VIP oficial com acesso total. Bora bater um papo rápido?';
-              btnText = '💬 WhatsApp (Convidar VIP)';
-            }
-            var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(msgText);
-            actionHtml = '<a href="' + waUrl + '" target="_blank" class="btn-crm-wa" title="Conversar no WhatsApp">' + btnText + '</a>';
-          } else {
-            actionHtml = '<button type="button" class="btn-crm-chat btn-attend-top-singer" data-user-id="' + singer.id + '">💬 Atender no App</button>';
-          }
-
           html +=
-            '<div class="power-user-row">' +
-              '<div style="display:flex; align-items:center; gap:10px;">' +
-                '<span style="font-size:1.1rem; font-weight:900; width:26px; text-align:center;">' + medals[idx] + '</span>' +
-                '<div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-weight:800; color:#38bdf8; font-size:0.85rem;">' + initial + '</div>' +
-                '<div>' +
+            '<div class="power-user-row" data-singer-id="' + escapeHtml(singer.id) + '" title="Clique para abrir relacionamento direto com ' + sName + '">' +
+              '<div style="display:flex; align-items:center; gap:10px; min-width:0;">' +
+                '<span style="font-size:1.1rem; font-weight:900; width:24px; text-align:center; flex-shrink:0;">' + medals[idx] + '</span>' +
+                '<div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-weight:800; color:#38bdf8; font-size:0.85rem; flex-shrink:0;">' + initial + '</div>' +
+                '<div style="min-width:0;">' +
                   '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
-                    '<strong style="color:#f8fafc; font-size:0.85rem;">' + sName + '</strong>' +
+                    '<strong style="color:#f8fafc; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + sName + '</strong>' +
                     planTag +
-                    periodBadge +
+                    onlineBadge +
                   '</div>' +
-                  '<div style="font-size:0.72rem; color:#94a3b8;">' +
-                    '<code style="color:#38bdf8;">' + sCode + '</code> &bull; ' + songsNum + ' cifras &bull; ' + repsNum + ' repertórios' +
+                  '<div style="font-size:0.72rem; color:#94a3b8; margin-top:1px;">' +
+                    songsNum + ' cifras &bull; ' + repsNum + ' repertórios' +
                   '</div>' +
                 '</div>' +
               '</div>' +
-              '<div>' + actionHtml + '</div>' +
+              '<div class="power-user-arrow" style="display:flex; align-items:center; gap:4px; color:#38bdf8; font-size:0.75rem; font-weight:700; flex-shrink:0;">' +
+                '<span>Ver</span><span style="font-size:0.95rem;">➔</span>' +
+              '</div>' +
             '</div>';
         });
 
         listEl.innerHTML = html;
 
-        listEl.querySelectorAll('.btn-attend-top-singer').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var uid = this.getAttribute('data-user-id');
+        listEl.querySelectorAll('.power-user-row').forEach(function (row) {
+          row.addEventListener('click', function () {
+            var uid = this.getAttribute('data-singer-id');
             var s = allUserData.find(function (x) { return x.id === uid; });
-            if (s) PrompterAdmin.openHelpdeskWithSinger(s);
+            if (s) {
+              PrompterAdmin.openSingerModal(s);
+            }
           });
         });
       }

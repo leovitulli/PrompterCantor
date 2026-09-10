@@ -1439,9 +1439,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  transition: background 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .power-user-row:last-child {
@@ -1449,7 +1452,20 @@
 }
 
 .power-user-row:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(56, 189, 248, 0.09);
+  border-color: rgba(56, 189, 248, 0.22);
+  transform: translateX(4px);
+}
+
+.power-user-row .power-user-arrow {
+  opacity: 0.8;
+  transition: all 0.18s ease;
+}
+
+.power-user-row:hover .power-user-arrow {
+  opacity: 1;
+  color: #38bdf8;
+  transform: translateX(3px);
 }
 
 /* ══════════════════════════════════════════════════════════
