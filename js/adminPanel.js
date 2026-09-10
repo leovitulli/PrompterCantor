@@ -276,11 +276,14 @@
             allUserData.push(defaultSeedSingers[1]);
           }
 
-          // Higienização crucial: Expurgar desenvolvedor/SuperAdmin do cadastro de clientes CRM
+          // Higienização crucial: Expurgar desenvolvedor/SuperAdmin e contas temporárias dummy do CRM
           allUserData = allUserData.filter(function(u) {
             if (!u) return false;
             var uEmail = (u.email || '').toLowerCase().trim();
-            return !isPlatformDeveloper(uEmail) && u.id !== 'admin-leovitulli-id' && u.singer_code !== '@leovitulli';
+            var uName = (u.name || '').toLowerCase();
+            if (isPlatformDeveloper(uEmail) || isPlatformDeveloper(u.id) || u.id === 'admin-leovitulli-id' || u.singer_code === '@leovitulli') return false;
+            if (uEmail.indexOf('@cantaai.com') !== -1 || uEmail.indexOf('novo_cantor_') !== -1 || uEmail.indexOf('cantor_') === 0 || uName.indexOf('novo cadastro') !== -1) return false;
+            return true;
           });
 
           localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
@@ -2574,11 +2577,6 @@
           singer_code: cleanCode,
           plan_tier: planTier,
           plan_type: planType,
-          coupon_used: couponVal || '',
-          is_vip: isVipActive,
-          is_trial: isTrial,
-          billing_due_date: dueIso,
-          auto_renew: singerPayload.auto_renew,
           updated_at: new Date().toISOString()
         };
 
@@ -2589,7 +2587,7 @@
         safeQuery(sb.from('profiles').upsert(profPayload));
         safeQuery(sb.from('profiles').update(profPayload).eq('email', cleanEmail));
 
-        // Persistir no System Registry (sempre acessível na nuvem)
+        // Persistir no System Registry (100% acessível e confiável na nuvem)
         var songRow = {
           repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
           title: name,
@@ -2626,7 +2624,11 @@
                     'Content-Type': 'application/json',
                     'Prefer': 'return=minimal'
                   },
-                  body: JSON.stringify(songRow)
+                  body: JSON.stringify({
+                    title: songRow.title,
+                    composer: songRow.composer,
+                    content: songRow.content
+                  })
                 }).catch(function() {});
               } else {
                 fetch(songsRestUrl, {
@@ -2637,7 +2639,7 @@
                     'Content-Type': 'application/json',
                     'Prefer': 'return=minimal'
                   },
-                  body: JSON.stringify(songRow)
+                  body: JSON.stringify([songRow])
                 }).catch(function() {});
               }
             }).catch(function() {});
@@ -2721,6 +2723,17 @@
         var changed = false;
         rows.forEach(function(row) {
           try {
+            if (!row || !row.artist) return;
+            // Ignorar chamados de suporte, comunicados e configurações do CRM de cantores
+            if (row.artist === 'USER_SUPPORT_TICKET' || row.artist === 'SYSTEM_ANNOUNCEMENT' ||
+                row.artist === 'SYSTEM_CONFIG_PRICING' || row.artist === 'SUPPORT_REPLY' ||
+                (row.composer && row.composer.indexOf('TICKET:') === 0)) {
+              return;
+            }
+            if (row.artist.indexOf('@cantaai.com') !== -1 || row.artist.indexOf('novo_cantor_') !== -1 || row.artist.indexOf('cantor_') === 0) {
+              return;
+            }
+
             var sObj = null;
             if (row.content) {
               sObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
@@ -2915,13 +2928,11 @@
               }
 
               // Auto-cura do Supabase caso o banco remoto estivesse com status free desatualizado
-              if (isVipSinger && (p.plan_tier !== 'vip' || !p.is_vip)) {
+              if (isVipSinger && p.plan_tier !== 'vip') {
                 safeQuery(sb.from('profiles').update({
                   plan_tier: 'vip',
                   plan_type: resolvedPlanType,
-                  is_vip: true,
-                  coupon_used: resolvedCoupon || 'VIP100',
-                  billing_due_date: '2099-12-31T23:59:59.000Z'
+                  updated_at: new Date().toISOString()
                 }).eq('id', p.id));
               }
             });

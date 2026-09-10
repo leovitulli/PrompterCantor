@@ -249,6 +249,9 @@
       return copy;
     },
 
+    // ── CONSTANTES DO SISTEMA NUVEM ──
+    SYSTEM_REGISTRY_REPERTOIRE_ID: '3e42c00c-f10c-4b05-96b6-b782403d1d17',
+
     // ── SINCRONIZAÇÃO BIDIRECIONAL NA NUVEM (SUPABASE REST) ──
     fetchFromCloud: function (callback) {
       if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) {
@@ -266,14 +269,23 @@
 
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
       var headers = self.getAuthHeaders();
+      var sysRepId = self.SYSTEM_REGISTRY_REPERTOIRE_ID;
 
-      // 1. Busca Comunicados Oficiais na tabela dedicada 'announcements'
+      // 1. Busca Comunicados Oficiais na tabela dedicada 'announcements' E no System Registry
       var pAnnouncements = fetch(baseUrl + '/announcements?select=*&is_active=neq.false&order=created_at.desc', { headers: headers })
         .then(function (r) { return r.ok ? r.json() : []; })
         .catch(function () { return []; });
 
-      // 2. Busca Chamados / Tickets de Atendimento na tabela dedicada 'tickets'
+      var pRegistryAnnouncements = fetch(baseUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.SYSTEM_ANNOUNCEMENT&select=id,title,artist,composer,content,created_at&order=created_at.desc', { headers: headers })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .catch(function () { return []; });
+
+      // 2. Busca Chamados / Tickets de Atendimento na tabela dedicada 'tickets' E no System Registry
       var pTickets = fetch(baseUrl + '/tickets?select=*&order=updated_at.desc,created_at.desc', { headers: headers })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .catch(function () { return []; });
+
+      var pRegistryTickets = fetch(baseUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.USER_SUPPORT_TICKET&select=id,title,artist,composer,content,created_at&order=created_at.desc', { headers: headers })
         .then(function (r) { return r.ok ? r.json() : []; })
         .catch(function () { return []; });
 
@@ -285,21 +297,36 @@
             .catch(function () { return []; })
         : Promise.resolve([]);
 
-      Promise.all([pAnnouncements, pTickets, pProfiles]).then(function (results) {
+      Promise.all([pAnnouncements, pRegistryAnnouncements, pTickets, pRegistryTickets, pProfiles]).then(function (results) {
         var cloudAnnouncements = results[0] || [];
-        var cloudTickets = results[1] || [];
-        var cloudProfiles = results[2] || [];
+        var registryAnnouncements = results[1] || [];
+        var cloudTickets = results[2] || [];
+        var registryTickets = results[3] || [];
+        var cloudProfiles = results[4] || [];
 
         if (Array.isArray(cloudProfiles) && cloudProfiles.length > 0) {
           self.state.profilesCache = cloudProfiles;
         }
 
-        // ── PROCESSA COMUNICADOS ──
+        // ── PROCESSA COMUNICADOS (UNIFICA TABELA + REGISTRY) ──
         var rawAnnLocal = localStorage.getItem('canta_ai_admin_announcements');
         var localAnn = rawAnnLocal ? JSON.parse(rawAnnLocal) : [];
         if (!Array.isArray(localAnn)) localAnn = [];
 
         var mergedAnn = [].concat(localAnn);
+
+        // Desempacotar comunicados do System Registry
+        registryAnnouncements.forEach(function (ra) {
+          try {
+            var aObj = ra.content ? (typeof ra.content === 'string' ? JSON.parse(ra.content) : ra.content) : null;
+            if (aObj && aObj.title) {
+              if (!aObj.id) aObj.id = ra.id;
+              if (!aObj.created_at) aObj.created_at = ra.created_at;
+              cloudAnnouncements.push(aObj);
+            }
+          } catch (e) {}
+        });
+
         cloudAnnouncements.forEach(function (ca) {
           if (!ca || !ca.id) return;
           var idx = mergedAnn.findIndex(function (x) { return x.id === ca.id; });
@@ -315,10 +342,26 @@
         });
         localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(mergedAnn));
 
-        // ── PROCESSA ATENDIMENTOS / TICKETS ──
+        // ── PROCESSA ATENDIMENTOS / TICKETS (UNIFICA TABELA + REGISTRY) ──
         var rawTkLocal = localStorage.getItem('canta_ai_support_tickets');
         var localTickets = rawTkLocal ? JSON.parse(rawTkLocal) : [];
         if (!Array.isArray(localTickets)) localTickets = [];
+
+        // Desempacotar tickets do System Registry (que contém todo o histórico JSON de mensagens)
+        registryTickets.forEach(function (rt) {
+          try {
+            var tObj = rt.content ? (typeof rt.content === 'string' ? JSON.parse(rt.content) : rt.content) : null;
+            if (tObj) {
+              if (!tObj.id) {
+                tObj.id = (rt.composer && rt.composer.indexOf('TICKET:') === 0)
+                  ? rt.composer.replace('TICKET:', '')
+                  : rt.id;
+              }
+              if (!tObj.created_at) tObj.created_at = rt.created_at;
+              cloudTickets.push(tObj);
+            }
+          } catch (e) {}
+        });
 
         cloudTickets.forEach(function (cTicket) {
           var normCloud = self.normalizeTicket(cTicket);
@@ -392,7 +435,7 @@
       });
     },
 
-    // Sincroniza um ticket criado ou atualizado diretamente na tabela 'tickets'
+    // Sincroniza um ticket criado ou atualizado diretamente na nuvem (System Registry + Tabela tickets)
     generateUUID: function () {
       if (window.crypto && typeof window.crypto.randomUUID === 'function') {
         try { return window.crypto.randomUUID(); } catch (e) {}
@@ -408,10 +451,64 @@
       if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) return;
 
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
+      var anonKey = window.SUPABASE_CONFIG.key;
       var headers = this.getAuthHeaders();
       var ctx = this.getCurrentUserContext();
+      var sysRepId = this.SYSTEM_REGISTRY_REPERTOIRE_ID;
 
-      var payload = {
+      if (!ticket.id) ticket.id = this.generateUUID();
+
+      // Salva localmente primeiro
+      var raw = localStorage.getItem('canta_ai_support_tickets');
+      var list = raw ? JSON.parse(raw) : [];
+      var idx = list.findIndex(function (x) { return x.id === ticket.id; });
+      if (idx >= 0) {
+        list[idx] = ticket;
+      } else {
+        list.unshift(ticket);
+      }
+      localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
+
+      // 1. GRAVAÇÃO PRIMÁRIA E CONFIÁVEL: System Registry em 'songs'
+      var ticketComposerKey = 'TICKET:' + ticket.id;
+      var songRow = {
+        repertoire_id: sysRepId,
+        title: '💬 SUPORTE CHAT: ' + (ticket.title || ticket.category || 'Atendimento'),
+        artist: 'USER_SUPPORT_TICKET',
+        composer: ticketComposerKey,
+        content: JSON.stringify(ticket)
+      };
+
+      // Verificar se o ticket já existe em 'songs'
+      fetch(baseUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&composer=eq.' + encodeURIComponent(ticketComposerKey) + '&select=id', {
+        headers: headers
+      }).then(function (r) { return r.ok ? r.json() : []; }).then(function (existingRows) {
+        if (Array.isArray(existingRows) && existingRows.length > 0) {
+          var rowId = existingRows[0].id;
+          fetch(baseUrl + '/songs?id=eq.' + encodeURIComponent(rowId), {
+            method: 'PATCH',
+            headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify({
+              title: songRow.title,
+              content: songRow.content
+            })
+          }).catch(function () {});
+        } else {
+          fetch(baseUrl + '/songs', {
+            method: 'POST',
+            headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify([songRow])
+          }).catch(function () {});
+        }
+      }).catch(function () {});
+
+      // 2. GRAVAÇÃO SECUNDÁRIA: Espelhamento na tabela dedicada 'tickets' (APENAS colunas válidas existentes no schema)
+      var latestSupportMsg = (ticket.messages && Array.isArray(ticket.messages))
+        ? ticket.messages.filter(function (m) { return m.sender === 'support'; }).pop()
+        : null;
+      var adminResp = (latestSupportMsg && latestSupportMsg.text) ? latestSupportMsg.text : (ticket.admin_response || ticket.reply || '');
+
+      var ticketDbPayload = {
         user_id: ticket.user_id || (ctx.user ? ctx.user.id : null),
         user_email: ticket.user_email || ctx.email || 'cantor@cantaaipro.com',
         user_name: ticket.user_name || ctx.name || 'Cantor',
@@ -420,47 +517,16 @@
         description: ticket.description || '',
         image_url: ticket.image_url || '',
         status: ticket.status || 'open',
-        messages: JSON.stringify(ticket.messages || []),
+        admin_response: adminResp,
         updated_at: new Date().toISOString()
       };
 
       var isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(ticket.id || ''));
-
       if (isUUID) {
         fetch(baseUrl + '/tickets?id=eq.' + encodeURIComponent(ticket.id), {
           method: 'PATCH',
-          headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
-          body: JSON.stringify(payload)
-        }).then(function (r) {
-          return r.ok ? r.json() : [];
-        }).then(function (updatedRows) {
-          if (!updatedRows || updatedRows.length === 0) {
-            payload.id = ticket.id;
-            fetch(baseUrl + '/tickets', {
-              method: 'POST',
-              headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
-              body: JSON.stringify([payload])
-            }).catch(function () {});
-          }
-        }).catch(function () {});
-      } else {
-        var newId = this.generateUUID();
-        var oldId = ticket.id;
-        ticket.id = newId;
-        payload.id = newId;
-
-        var raw = localStorage.getItem('canta_ai_support_tickets');
-        var list = raw ? JSON.parse(raw) : [];
-        var idx = list.findIndex(function (x) { return x.id === oldId; });
-        if (idx >= 0) {
-          list[idx].id = newId;
-          localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
-        }
-
-        fetch(baseUrl + '/tickets', {
-          method: 'POST',
           headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
-          body: JSON.stringify([payload])
+          body: JSON.stringify(ticketDbPayload)
         }).catch(function () {});
       }
     },
@@ -475,7 +541,23 @@
       if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
         var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
         var headers = this.getAuthHeaders();
-        
+        var sysRepId = this.SYSTEM_REGISTRY_REPERTOIRE_ID;
+
+        // 1. Grava no System Registry em 'songs'
+        var songAnn = {
+          repertoire_id: sysRepId,
+          title: '📢 COMUNICADO: ' + (announcement.title || 'Informativo'),
+          artist: 'SYSTEM_ANNOUNCEMENT',
+          composer: announcement.target || 'all',
+          content: JSON.stringify(announcement)
+        };
+        fetch(baseUrl + '/songs', {
+          method: 'POST',
+          headers: Object.assign({}, headers, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify([songAnn])
+        }).catch(function () {});
+
+        // 2. Espelha na tabela 'announcements'
         var payload = {
           type: announcement.type || 'update',
           title: announcement.title || 'Comunicado',
@@ -526,6 +608,12 @@
         }).catch(function() {
           if (callback) callback();
         });
+
+        // Também remove do System Registry se for id de song
+        fetch(baseUrl + '/songs?id=eq.' + encodeURIComponent(annId), {
+          method: 'DELETE',
+          headers: headers
+        }).catch(function() {});
       } else {
         if (callback) callback();
       }
@@ -1837,13 +1925,12 @@
       // Atualização inicial de badges
       self.updateBadges();
 
-      // Auto-polling em segundo plano a cada 20 segundos
+      // Auto-polling em segundo plano a cada 12 segundos para garantir sincronismo contínuo entre navegadores
       self._pollInterval = setInterval(function () {
-        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url &&
-            window.PrompterAuth && window.PrompterAuth.getUser()) {
+        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
           self.fetchFromCloud();
         }
-      }, 20000);
+      }, 12000);
     }
   };
 

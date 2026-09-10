@@ -506,15 +506,45 @@
           var cloudUpdate = {
             plan_tier: resolvedTier,
             plan_type: resolvedPlanType,
-            is_vip: isVip,
-            coupon_used: resolvedCoupon,
-            billing_due_date: resolvedDueDate
+            updated_at: new Date().toISOString()
           };
           if (profile.id) {
             safeQuery(sb.from('profiles').update(cloudUpdate).eq('id', profile.id));
           } else {
             safeQuery(sb.from('profiles').update(cloudUpdate).eq('email', cleanEmail));
           }
+        }
+
+        // Persistir também no System Registry da Nuvem (100% acessível cross-browser)
+        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key && cleanEmail) {
+          var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+          var supUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
+          var sRow = {
+            repertoire_id: sysRepId,
+            title: singerItem.name,
+            artist: cleanEmail,
+            composer: singerItem.singer_code,
+            content: JSON.stringify(singerItem)
+          };
+          fetch(supUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.' + encodeURIComponent(cleanEmail), {
+            headers: {
+              'apikey': window.SUPABASE_CONFIG.key,
+              'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key
+            }
+          }).then(function(r) { return r.ok ? r.json() : []; }).then(function(sRows) {
+            if (sRows && sRows.length > 0) {
+              fetch(supUrl + '/songs?id=eq.' + encodeURIComponent(sRows[0].id), {
+                method: 'PATCH',
+                headers: {
+                  'apikey': window.SUPABASE_CONFIG.key,
+                  'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({ title: sRow.title, composer: sRow.composer, content: sRow.content })
+              }).catch(function() {});
+            }
+          }).catch(function() {});
         }
 
         if (window.PrompterAdmin && Array.isArray(window.PrompterAdmin.allUserData)) {
@@ -904,59 +934,76 @@
               found.instagram = '@leovitulli';
             }
 
-            // Preservação de status VIP/PRO contra leitura padrão de 'free' da nuvem
-            var knownAdminUser = adminUserPre;
-            if (!knownAdminUser) {
-              try {
-                var rawAdmins = localStorage.getItem('canta_ai_admin_users');
-                if (rawAdmins) {
-                  var aList = JSON.parse(rawAdmins);
-                  knownAdminUser = aList.find(function(u) {
-                    return (u.email && u.email.trim().toLowerCase() === fEmail) || (found.id && u.id === found.id);
-                  });
+            // Sincronização direta com a Nuvem (System Registry) para garantir status VIP/PRO cross-browser
+            var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+            var fetchCloudRegistry = function() {
+              if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && fEmail) {
+                var regUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.' + encodeURIComponent(fEmail) + '&select=content';
+                return fetch(regUrl, {
+                  headers: {
+                    'apikey': window.SUPABASE_CONFIG.key,
+                    'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key
+                  }
+                }).then(function(r) { return r.ok ? r.json() : []; }).then(function(rows) {
+                  if (rows && rows.length > 0 && rows[0].content) {
+                    return typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
+                  }
+                  return null;
+                }).catch(function() { return null; });
+              }
+              return Promise.resolve(null);
+            };
+
+            return fetchCloudRegistry().then(function(cloudUser) {
+              var knownAdminUser = cloudUser || adminUserPre;
+              if (!knownAdminUser) {
+                try {
+                  var rawAdmins = localStorage.getItem('canta_ai_admin_users');
+                  if (rawAdmins) {
+                    var aList = JSON.parse(rawAdmins);
+                    knownAdminUser = aList.find(function(u) {
+                      return (u.email && u.email.trim().toLowerCase() === fEmail) || (found.id && u.id === found.id);
+                    });
+                  }
+                } catch(e) {}
+              }
+
+              var isVipFound = !!(
+                fEmail === 'alinecrissallai@gmail.com' ||
+                found.plan_tier === 'vip' ||
+                (found.plan_type && found.plan_type.indexOf('VIP') !== -1) ||
+                (knownAdminUser && (knownAdminUser.is_vip || knownAdminUser.plan_tier === 'vip' || (knownAdminUser.plan_type && knownAdminUser.plan_type.indexOf('VIP') !== -1) || knownAdminUser.coupon_used === 'VIP100'))
+              );
+
+              var isProFound = isVipFound || fEmail === 'leovitulli@gmail.com' || found.plan_tier === 'pro' || (knownAdminUser && knownAdminUser.plan_tier === 'pro');
+
+              if (isVipFound) {
+                found.is_vip = true;
+                found.plan_tier = 'vip';
+                found.plan_type = (knownAdminUser && knownAdminUser.plan_type) || '👑 VIP Parceiro (100% OFF)';
+                found.coupon_used = (knownAdminUser && knownAdminUser.coupon_used) || 'VIP100';
+                found.billing_due_date = '2099-12-31T23:59:59.000Z';
+                // Curar nuvem caso esteja defasada (usando apenas colunas válidas no profiles)
+                if (sb && found.id && found.plan_tier !== 'vip') {
+                  safeQuery(sb.from('profiles').update({
+                    plan_tier: 'vip',
+                    plan_type: found.plan_type,
+                    updated_at: new Date().toISOString()
+                  }).eq('id', found.id));
                 }
-              } catch(e) {}
-            }
-
-            var isVipFound = !!(
-              fEmail === 'alinecrissallai@gmail.com' ||
-              found.is_vip ||
-              found.plan_tier === 'vip' ||
-              (found.plan_type && found.plan_type.indexOf('VIP') !== -1) ||
-              found.coupon_used === 'VIP100' ||
-              (knownAdminUser && (knownAdminUser.is_vip || knownAdminUser.plan_tier === 'vip' || (knownAdminUser.plan_type && knownAdminUser.plan_type.indexOf('VIP') !== -1) || knownAdminUser.coupon_used === 'VIP100'))
-            );
-
-            var isProFound = isVipFound || fEmail === 'leovitulli@gmail.com' || found.plan_tier === 'pro' || (knownAdminUser && knownAdminUser.plan_tier === 'pro');
-
-            if (isVipFound) {
-              found.is_vip = true;
-              found.plan_tier = 'vip';
-              found.plan_type = '👑 VIP 100% OFF';
-              found.coupon_used = found.coupon_used || (knownAdminUser && knownAdminUser.coupon_used) || 'VIP100';
-              found.billing_due_date = '2099-12-31T23:59:59.000Z';
-              // Curar nuvem caso esteja defasada
-              if (sb && found.id && (!found.is_vip || found.plan_tier !== 'vip')) {
-                safeQuery(sb.from('profiles').update({
-                  is_vip: true,
-                  plan_tier: 'vip',
-                  plan_type: '👑 VIP 100% OFF',
-                  coupon_used: found.coupon_used,
-                  billing_due_date: found.billing_due_date
-                }).eq('id', found.id));
+              } else if (isProFound && found.plan_tier !== 'vip') {
+                found.plan_tier = 'pro';
+                if (!found.plan_type || found.plan_type.indexOf('FREE') !== -1) {
+                  found.plan_type = (knownAdminUser && knownAdminUser.plan_type) || '💎 PRO ANUAL';
+                }
               }
-            } else if (isProFound && found.plan_tier !== 'vip') {
-              found.plan_tier = 'pro';
-              if (!found.plan_type || found.plan_type.indexOf('FREE') !== -1) {
-                found.plan_type = (knownAdminUser && knownAdminUser.plan_type) || '💎 PRO ANUAL';
-              }
-            }
 
-            // Sincronizar com o banco Supabase para reparar o hash legado na nuvem
-            if (sb && found.id && hadLegacyHash) {
-              safeQuery(sb.from('profiles').update({ singer_code: found.singer_code }).eq('id', found.id));
-            }
-            return found;
+              // Sincronizar com o banco Supabase para reparar o hash legado na nuvem
+              if (sb && found.id && hadLegacyHash) {
+                safeQuery(sb.from('profiles').update({ singer_code: found.singer_code, updated_at: new Date().toISOString() }).eq('id', found.id));
+              }
+              return found;
+            });
           }
         }
         // Se não estava na tabela profiles mas logou, registrar profile imediatamente

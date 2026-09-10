@@ -5878,11 +5878,16 @@ document.addEventListener('DOMContentLoaded', function () {
       var profile = PrompterAuth.getProfile();
       var uEmail = ((user && user.email) || (profile && profile.email) || '').trim().toLowerCase();
 
-      var raw = localStorage.getItem('canta_ai_support_tickets');
-      var allTickets = raw ? JSON.parse(raw) : [];
-      var myTickets = allTickets.filter(function (t) {
-        return !uEmail || (t.user_email && t.user_email.toLowerCase() === uEmail);
-      });
+      var myTickets = [];
+      if (window.NotificationsCenter && typeof window.NotificationsCenter.getTickets === 'function') {
+        myTickets = window.NotificationsCenter.getTickets();
+      } else {
+        var raw = localStorage.getItem('canta_ai_support_tickets');
+        var allTickets = raw ? JSON.parse(raw) : [];
+        myTickets = allTickets.filter(function (t) {
+          return !uEmail || (t.user_email && t.user_email.toLowerCase() === uEmail);
+        });
+      }
 
       if (!myTickets || myTickets.length === 0) {
         container.innerHTML =
@@ -6134,6 +6139,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
                 }));
 
+        var nowIso = new Date().toISOString();
         var newTicket = {
           id: genUUID,
           user_id: user ? user.id : null,
@@ -6144,35 +6150,49 @@ document.addEventListener('DOMContentLoaded', function () {
           description: desc,
           image_url: currentTicketImageBase64 || '',
           status: 'open',
-          created_at: new Date().toISOString()
+          created_at: nowIso,
+          updated_at: nowIso,
+          messages: [
+            {
+              id: genUUID + '-m0',
+              sender: 'user',
+              sender_name: uName,
+              text: desc,
+              image_url: currentTicketImageBase64 || '',
+              created_at: nowIso
+            }
+          ]
         };
 
-        // Salvar localmente
-        var raw = localStorage.getItem('canta_ai_support_tickets');
-        var list = raw ? JSON.parse(raw) : [];
-        list.unshift(newTicket);
-        localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
+        // Salvar via NotificationsCenter (System Registry + nuvem)
+        if (window.NotificationsCenter && typeof window.NotificationsCenter.syncTicketToCloud === 'function') {
+          window.NotificationsCenter.syncTicketToCloud(newTicket);
+        } else {
+          var raw = localStorage.getItem('canta_ai_support_tickets');
+          var list = raw ? JSON.parse(raw) : [];
+          list.unshift(newTicket);
+          localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
 
-        // Salvar no Supabase (System Registry / Songs fallback se tabela tickets não existir)
-        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
-          var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
-          var ticketRow = {
-            repertoire_id: sysRepId,
-            title: '📩 SUPORTE: ' + title,
-            artist: 'USER_SUPPORT_TICKET',
-            composer: uEmail,
-            content: JSON.stringify(newTicket)
-          };
-          fetch(window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs', {
-            method: 'POST',
-            headers: {
-              'apikey': window.SUPABASE_CONFIG.key,
-              'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify([ticketRow])
-          }).catch(function() {});
+          if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+            var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
+            var ticketRow = {
+              repertoire_id: sysRepId,
+              title: '💬 SUPORTE CHAT: ' + title,
+              artist: 'USER_SUPPORT_TICKET',
+              composer: 'TICKET:' + genUUID,
+              content: JSON.stringify(newTicket)
+            };
+            fetch(window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1/songs', {
+              method: 'POST',
+              headers: {
+                'apikey': window.SUPABASE_CONFIG.key,
+                'Authorization': 'Bearer ' + window.SUPABASE_CONFIG.key,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+              },
+              body: JSON.stringify([ticketRow])
+            }).catch(function() {});
+          }
         }
 
         closeUserSupportModal();
