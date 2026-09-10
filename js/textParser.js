@@ -332,9 +332,8 @@ var TextParser = {
       }
     }
 
-    // PADRÃO 1: Se o documento tiver numeração sequencial (ex: 01., 02., 03. ou 1 -, 2 -)
-    // Uma música começa exatamente no número e só termina quando o próximo número for encontrado.
-    if (numberedLines.length >= 1) {
+    // PADRÃO 1: Se o documento tiver numeração sequencial clara (mínimo de 2 faixas)
+    if (numberedLines.length >= 2) {
       for (var n = 0; n < numberedLines.length; n++) {
         var startIdx = numberedLines[n].index;
         var endIdx = (n + 1 < numberedLines.length) ? numberedLines[n + 1].index : lines.length;
@@ -370,40 +369,21 @@ var TextParser = {
       }
     }
 
-    // PADRÃO 3: Múltiplas quebras de linha (3 ou mais \n)
-    var rawBlocks = text.split(/\n\s*\n\s*\n+/);
-    if (rawBlocks.length > 1) {
-      var validRaw = rawBlocks.map(function(b) { return b.trim(); }).filter(Boolean);
-      if (validRaw.length > 1) {
-        return validRaw.map(function(bText, idx) {
-          var meta = self.extractMetadata(bText, filename);
-          if (meta.trackNumber === null) meta.trackNumber = idx + 1;
-          return meta;
-        });
-      }
-    }
-
-    // PADRÃO 4: Quebras duplas (\n\n) com heurística refinada de títulos
-    var altBlocks = text.split(/\n\s*\n/);
+    // PADRÃO 3: RECONSTRUÇÃO INTELIGENTE POR TÍTULOS E ESTROFES
+    // Divide os blocos por quebras de linha duplas ou múltiplas (\n\n+)
+    // e agrupa as estrofes sob o título da música correspondente, garantindo
+    // que versos e refrões nunca sejam fragmentados indevidamente em músicas separadas.
+    var rawBlocks = text.split(/\n\s*\n+/).map(function(b) { return b.trim(); }).filter(Boolean);
     var reconstructed = [];
     var currentSong = [];
 
-    for (var j = 0; j < altBlocks.length; j++) {
-      var b = altBlocks[j].trim();
-      if (!b) continue;
-
+    for (var j = 0; j < rawBlocks.length; j++) {
+      var b = rawBlocks[j];
       var bLines = b.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
       var firstLine = bLines[0] || '';
+      var secondLine = bLines[1] || '';
 
-      var isTitle = !this.isChordLine(firstLine) &&
-                    !this.isRepetitionMarker(firstLine) &&
-                    firstLine.length <= 60 &&
-                    !/[,;.…]$/.test(firstLine) &&
-                    (
-                      /^(?:[A-ZÀ-Ú0-9\s.\-_']+)$/.test(firstLine) ||
-                      /\(([A-G][#b]?m?)\)$/i.test(firstLine) ||
-                      /^(?:Tom|Key|Tonalidade|Toque|Ritmo|Autor|Compositor):/i.test(bLines[1] || '')
-                    );
+      var isTitle = self.isLikelySongTitle(firstLine, secondLine);
 
       if (currentSong.length > 0 && isTitle) {
         reconstructed.push(currentSong.join('\n\n'));
@@ -413,7 +393,9 @@ var TextParser = {
       }
     }
 
-    if (currentSong.length > 0) reconstructed.push(currentSong.join('\n\n'));
+    if (currentSong.length > 0) {
+      reconstructed.push(currentSong.join('\n\n'));
+    }
 
     if (reconstructed.length > 1) {
       return reconstructed.map(function(bText, idx) {
@@ -428,15 +410,22 @@ var TextParser = {
     return [singleMeta];
   },
 
-  isLikelySongTitle: function(line) {
-    if (!line || line.length > 80) return false;
-    if (this.isChordLine(line)) return false;
+  isLikelySongTitle: function(line, nextLine) {
+    if (!line) return false;
+    var trimmed = line.trim();
+    if (trimmed.length > 80 || trimmed.length < 2) return false;
+    if (this.isChordLine(trimmed)) return false;
+    if (this.isRepetitionMarker(trimmed)) return false;
+    if (/[,;.…]$/.test(trimmed)) return false;
 
-    var hasTrackNumber = /^(?:[0-9]{1,3}[\s.\-\)]+|(?:faixa|track|m[úu]sica|nº?)\s*[0-9]{1,3})/i.test(line);
-    var isAllCaps = (line === line.toUpperCase()) && /[A-ZÀ-Ú]/.test(line) && line.length >= 3;
-    var hasKeyParenthesis = /\(([A-G][#b]?m?)\)$/i.test(line);
+    var hasTrackNumber = this.extractTrackNumber(trimmed) !== null;
+    var isAllCaps = (trimmed === trimmed.toUpperCase()) && /[A-ZÀ-Ú]/.test(trimmed) && trimmed.length >= 3;
+    var hasKeyParenthesis = /\(([A-G][#b]?m?)\)$/i.test(trimmed) || /\[([A-G][#b]?m?)\]$/i.test(trimmed);
+    var hasMetaSecond = nextLine && /^(?:Tom|Key|Tonalidade|Toque|Ritmo|Autor|Compositor|Int[ée]rprete|Artista):/i.test(nextLine.trim());
+    var hasTitleAuthorSep = /^[A-ZÀ-Ú\s0-9]{3,}\s*[-–/]\s*[A-ZÀ-Úa-zà-ú]/i.test(trimmed);
+    var hasGluedAuthor = /^([A-ZÀ-Ú0-9\s]{2,}[A-ZÀ-Ú0-9])\s*[-–/]?\s*([A-Z][a-zà-ú].*)$/.test(trimmed);
 
-    return hasTrackNumber || isAllCaps || hasKeyParenthesis;
+    return hasTrackNumber || isAllCaps || hasKeyParenthesis || hasMetaSecond || hasTitleAuthorSep || hasGluedAuthor;
   },
 
   extractMetadata: function(text, filename) {
@@ -515,6 +504,17 @@ var TextParser = {
       }
 
       title = this.cleanTitle(rawTitleLine);
+
+      // Separar autor / compositor se vier grudado ou seguido no título em ALL CAPS (ex: "RESIGNAÇÃODona Ivone Lara / Hélio dos Santos")
+      var gluedMatch = title.match(/^([A-ZÀ-Ú0-9\s]{2,}[A-ZÀ-Ú0-9])\s*[-–/]?\s*([A-Z][a-zà-ú].*)$/);
+      if (gluedMatch && gluedMatch[1].trim().length >= 3 && gluedMatch[2].trim().length >= 3) {
+        var potentialTitle = gluedMatch[1].trim();
+        var potentialAuthor = gluedMatch[2].trim();
+        if (!composer && !artist) {
+          composer = potentialAuthor;
+          title = potentialTitle;
+        }
+      }
 
       // 4. Se a linha do título continuou com texto gigante e sem quebra de linha:
       if (title.length > 55 && !contentLines.length) {
