@@ -581,6 +581,11 @@
 .auth-modal-card {
   max-width: 440px;
   width: 90%;
+  max-height: calc(100dvh - 24px);
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
   background: #0f172a;
   border: 1px solid rgba(56, 189, 248, 0.25);
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 30px rgba(16, 185, 129, 0.15);
@@ -590,6 +595,7 @@
   z-index: 10000001;
   animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 
 @keyframes modalPop {
   from { opacity: 0; transform: scale(0.95) translateY(10px); }

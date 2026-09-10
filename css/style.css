@@ -2219,13 +2219,17 @@ textarea {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   z-index: 10000000 !important;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .modal-overlay {
@@ -2952,9 +2956,14 @@ textarea {
 
   .modal-card:not(.admin-modal-card) {
     width: 95vw !important;
-    max-width: 95vw !important;
-    max-height: 92vh !important;
+    max-width: 480px !important;
+    max-height: calc(100dvh - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
     border-radius: 18px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: max(96px, calc(env(safe-area-inset-bottom, 24px) + 80px)) !important;
+    box-sizing: border-box !important;
   }
 
   .editor-modal-card {
@@ -4609,8 +4618,9 @@ html.canta-auth-active #tabRepertoire {
   }
 
   .modal-card {
-    max-width: 85vw !important;
-    max-height: 90vh !important;
+    max-width: 95vw !important;
+    max-height: calc(100dvh - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
   }
 }
 

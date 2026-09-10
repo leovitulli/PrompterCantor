@@ -10,6 +10,18 @@
   var currentUser = null;
   var currentProfile = null;
 
+  function safeQuery(q) {
+    try {
+      if (!q) return Promise.resolve(null);
+      if (typeof q.then === 'function') {
+        return q.then(function() {}, function() {});
+      }
+      return Promise.resolve(null);
+    } catch (e) {
+      return Promise.resolve(null);
+    }
+  }
+
   var PrompterAuth = {
     // ═══════════════════════════════════════
     //  INICIALIZAÇÃO & VERIFICAÇÃO DE SESSÃO
@@ -318,7 +330,7 @@
           };
           PrompterAuth.syncNewUserToAdmin(existingProfileData);
           if (sb) {
-            sb.from('profiles').upsert(existingProfileData).catch(function () {});
+            safeQuery(sb.from('profiles').upsert(existingProfileData));
           }
 
           // Conectar diretamente com a senha informada para poupar o usuário de fricção
@@ -386,7 +398,7 @@
         PrompterAuth.syncNewUserToAdmin(profileData);
 
         if (sb) {
-          sb.from('profiles').upsert(profileData).catch(function () {});
+          safeQuery(sb.from('profiles').upsert(profileData));
         }
 
         currentProfile = profileData;
@@ -499,9 +511,9 @@
             billing_due_date: resolvedDueDate
           };
           if (profile.id) {
-            sb.from('profiles').update(cloudUpdate).eq('id', profile.id).catch(function() {});
+            safeQuery(sb.from('profiles').update(cloudUpdate).eq('id', profile.id));
           } else {
-            sb.from('profiles').update(cloudUpdate).eq('email', cleanEmail).catch(function() {});
+            safeQuery(sb.from('profiles').update(cloudUpdate).eq('email', cleanEmail));
           }
         }
 
@@ -547,12 +559,12 @@
             .then(function(res) {
               if (res.data && res.data.length > 0) {
                 var existingRowId = res.data[0].id;
-                sb.from('songs').update(songRow).eq('id', existingRowId).then(function() {}).catch(function() {});
+                safeQuery(sb.from('songs').update(songRow).eq('id', existingRowId));
               } else {
-                sb.from('songs').insert(songRow).then(function() {}).catch(function() {});
+                safeQuery(sb.from('songs').insert(songRow));
               }
-            }).catch(function() {
-              sb.from('songs').insert(songRow).then(function() {}).catch(function() {});
+            }, function() {
+              safeQuery(sb.from('songs').insert(songRow));
             });
         }
       } catch (e) {
@@ -739,7 +751,7 @@
       }
 
       if (sb && sb.auth && typeof sb.auth.signOut === 'function') {
-        sb.auth.signOut().catch(function () {});
+        safeQuery(sb.auth.signOut());
       }
 
       this.updateUIForAuth();
@@ -880,13 +892,13 @@
               found.billing_due_date = '2099-12-31T23:59:59.000Z';
               // Curar nuvem caso esteja defasada
               if (sb && found.id && (!found.is_vip || found.plan_tier !== 'vip')) {
-                sb.from('profiles').update({
+                safeQuery(sb.from('profiles').update({
                   is_vip: true,
                   plan_tier: 'vip',
                   plan_type: '👑 VIP 100% OFF',
                   coupon_used: found.coupon_used,
                   billing_due_date: found.billing_due_date
-                }).eq('id', found.id).catch(function() {});
+                }).eq('id', found.id));
               }
             } else if (isProFound && found.plan_tier !== 'vip') {
               found.plan_tier = 'pro';
@@ -897,20 +909,20 @@
 
             // Sincronizar com o banco Supabase para reparar o hash legado na nuvem
             if (sb && found.id && hadLegacyHash) {
-              sb.from('profiles').update({ singer_code: found.singer_code }).eq('id', found.id).catch(function() {});
+              safeQuery(sb.from('profiles').update({ singer_code: found.singer_code }).eq('id', found.id));
             }
             return found;
           }
         }
         // Se não estava na tabela profiles mas logou, registrar profile imediatamente
         if (userEmail && sb) {
-          sb.from('profiles').upsert(defaultProfile).catch(function() {});
+          safeQuery(sb.from('profiles').upsert(defaultProfile));
           PrompterAuth.syncNewUserToAdmin(defaultProfile);
         }
         return defaultProfile;
-      }).catch(function () {
+      }, function () {
         if (userEmail && sb) {
-          sb.from('profiles').upsert(defaultProfile).catch(function() {});
+          safeQuery(sb.from('profiles').upsert(defaultProfile));
           PrompterAuth.syncNewUserToAdmin(defaultProfile);
         }
         return defaultProfile;
@@ -1265,13 +1277,8 @@
         }
 
         // Atualizar tanto por ID quanto por email no profiles
-        sb.from('profiles').update(payload).eq('id', currentUser.id).then(function(res) {
-          if (res && res.error) {
-            sb.from('profiles').update(payload).eq('email', currentUser.email).catch(function() {});
-          }
-        }).catch(function() {
-          sb.from('profiles').update(payload).eq('email', currentUser.email).catch(function() {});
-        });
+        safeQuery(sb.from('profiles').update(payload).eq('id', currentUser.id));
+        safeQuery(sb.from('profiles').update(payload).eq('email', currentUser.email));
 
         // Atualizar no System Registry em songs
         var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
@@ -1283,7 +1290,7 @@
             if (!obj) obj = {};
             obj.name = name;
             if (cleanCode) obj.singer_code = cleanCode;
-            sb.from('songs').update({ title: name, content: JSON.stringify(obj) }).eq('id', row.id).catch(function() {});
+            safeQuery(sb.from('songs').update({ title: name, content: JSON.stringify(obj) }).eq('id', row.id));
           } else {
             var isRegVip = !!(currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.coupon_used === 'VIP100'));
             var newRegObj = {
@@ -1300,14 +1307,14 @@
               status_text: '🟢 Conectado e Ativo',
               last_seen: 'Hoje'
             };
-            sb.from('songs').insert({
+            safeQuery(sb.from('songs').insert({
               repertoire_id: regId,
               title: name,
               artist: currentUser.email,
               content: JSON.stringify(newRegObj)
-            }).catch(function() {});
+            }));
           }
-        }).catch(function() {});
+        }, function() {});
       }
       return Promise.resolve(true);
     },
