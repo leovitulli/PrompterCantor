@@ -767,6 +767,7 @@
       var userEmail = currentUser ? currentUser.email : '';
       if (!userId && !userEmail) return Promise.resolve(null);
 
+      var meta = (currentUser && (currentUser.user_metadata || currentUser.raw_user_meta_data || currentUser.app_metadata)) || {};
       var userCustomHandle = localStorage.getItem('cantaai_user_custom_handle');
       var defaultCode = userCustomHandle || ((userEmail === 'leovitulli@gmail.com') ? '@leovitulli' : ('@' + (userEmail ? userEmail.split('@')[0] : ('cantor_' + Math.floor(1000 + Math.random() * 9000)))));
 
@@ -786,7 +787,7 @@
         userEmail === 'alinecrissallai@gmail.com' ||
         (adminUserPre && (adminUserPre.is_vip || adminUserPre.plan_tier === 'vip' || (adminUserPre.plan_type && adminUserPre.plan_type.indexOf('VIP') !== -1) || adminUserPre.coupon_used === 'VIP100'))
       );
-      var isKnownProPre = isKnownVipPre || userEmail === 'leovitulli@gmail.com' || (adminUserPre && adminUserPre.plan_tier === 'pro') || (meta && meta.plan_tier === 'pro');
+      var isKnownProPre = isKnownVipPre || userEmail === 'leovitulli@gmail.com' || userEmail === 'leoogum23@gmail.com' || (adminUserPre && adminUserPre.plan_tier === 'pro') || (meta && meta.plan_tier === 'pro');
 
       var defaultProfile = {
         id: userId || (currentUser ? currentUser.id : 'local_user'),
