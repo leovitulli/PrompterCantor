@@ -2761,11 +2761,19 @@ document.addEventListener('DOMContentLoaded', function () {
           var song = annotatedSongs[k];
           var numTag = song.trackNumber ? (song.trackNumber < 10 ? '0' + song.trackNumber : song.trackNumber) + '. ' : '';
           var itemStyle = song.isDuplicate ? 'style="border-left: 3px solid #eab308; background: rgba(234,179,8,0.04);"' : '';
+          var authorTag = '';
+          if (song.artist && song.composer && song.artist !== song.composer) {
+            authorTag = ' <span class="import-preview-author" style="color:var(--text-muted);font-size:0.82rem;font-weight:400;margin-left:0.35rem;">• ' + escapeHtml(song.artist) + ' <span style="opacity:0.8;">(' + escapeHtml(song.composer) + ')</span></span>';
+          } else if (song.artist) {
+            authorTag = ' <span class="import-preview-author" style="color:var(--text-muted);font-size:0.82rem;font-weight:400;margin-left:0.35rem;">• ' + escapeHtml(song.artist) + '</span>';
+          } else if (song.composer) {
+            authorTag = ' <span class="import-preview-author" style="color:var(--text-muted);font-size:0.82rem;font-weight:400;margin-left:0.35rem;">• ' + escapeHtml(song.composer) + '</span>';
+          }
           html +=
             '<div class="import-preview-item" ' + itemStyle + '>' +
               '<span class="import-preview-icon">' + (song.isDuplicate ? '⚠️' : '🎵') + '</span>' +
               '<div class="import-preview-info">' +
-                '<b>' + numTag + escapeHtml(song.title || 'Sem Título') + '</b>' +
+                '<b>' + numTag + escapeHtml(song.title || 'Sem Título') + '</b>' + authorTag +
                 (song.key ? ' <span class="badge badge-key">' + escapeHtml(song.key) + '</span>' : '') +
                 (song.rhythm ? ' <span class="badge" style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:0.75rem;padding:2px 6px;border-radius:5px;">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
                 (song.youtubeUrl ? ' <span class="badge" style="background:rgba(239,68,68,0.15);color:#f87171;font-size:0.75rem;padding:2px 6px;border-radius:5px;">▶ Vídeo</span>' : '') +

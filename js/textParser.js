@@ -160,6 +160,35 @@ var TextParser = {
     return /^\s*\(?\s*(?:[0-9]\s*x|bis|coro|refr[ãa]o|estribilho|repete|final|intro|solo|2\s*vezes)\s*\)?\s*$/i.test(line);
   },
 
+  isAuthorLine: function(line) {
+    if (!line) return false;
+    var trimmed = line.trim();
+    if (this.isChordLine(trimmed)) return false;
+    if (this.isRepetitionMarker(trimmed)) return false;
+
+    // 1. Múltiplos compositores / autores separados por barra (ex: Pixinguinha / Gastão Viana, Arlindo Cruz / Jorge Carioca / Marquinhos PQD)
+    if (/^[A-ZÀ-Úa-zà-ú\s.]+\s*\/\s*[A-ZÀ-Úa-zà-ú\s.]+(\s*\/\s*[A-ZÀ-Úa-zà-ú\s.]+)*$/.test(trimmed)) {
+      return true;
+    }
+
+    // 2. Grupo/Banda/Cantor - Compositores (ex: Grupo Pirraça – Adilson Bispo / Zé Roberto, Grupo Raça – Geraldão / Delcio Luiz / Acyr Marques)
+    if (/^(?:Grupo|Banda|Trio|Dupla|Cantor|Cantora|Orquestra)\s+[A-ZÀ-Úa-zà-ú\s0-9]+[-–—]\s*[A-ZÀ-Úa-zà-ú\s0-9/.]+$/i.test(trimmed)) {
+      return true;
+    }
+
+    // 3. "Nome e Nome" ou "Nome & Nome" com nomes próprios
+    if (/^[A-ZÀ-Ú][a-zà-ú]+(\s+[A-ZÀ-Ú][a-zà-ú]+)*\s+(?:&|e|E)\s+[A-ZÀ-Ú][a-zà-ú]+(\s+[A-ZÀ-Ú][a-zà-ú]+)*$/i.test(trimmed) && trimmed.length < 60) {
+      return true;
+    }
+
+    // 4. Marcadores explícitos de autoria
+    if (/^(?:Composição|Compositores?|Autoria|Autores?|Int[ée]rpretes?|Gravado por|Cantor[a]?)\s*[:=-]/i.test(trimmed)) {
+      return true;
+    }
+
+    return false;
+  },
+
   normalizeRawInputText: function(str) {
     if (!str) return '';
 
@@ -383,9 +412,12 @@ var TextParser = {
       var firstLine = bLines[0] || '';
       var secondLine = bLines[1] || '';
 
-      var isTitle = self.isLikelySongTitle(firstLine, secondLine);
+      var isAuthor = bLines.length <= 2 && self.isAuthorLine(firstLine);
+      var isTitle = !isAuthor && self.isLikelySongTitle(firstLine, secondLine);
 
-      if (currentSong.length > 0 && isTitle) {
+      if (currentSong.length > 0 && isAuthor) {
+        currentSong.push(b);
+      } else if (currentSong.length > 0 && isTitle) {
         reconstructed.push(currentSong.join('\n\n'));
         currentSong = [b];
       } else {
@@ -416,6 +448,7 @@ var TextParser = {
     if (trimmed.length > 80 || trimmed.length < 2) return false;
     if (this.isChordLine(trimmed)) return false;
     if (this.isRepetitionMarker(trimmed)) return false;
+    if (this.isAuthorLine(trimmed)) return false;
     if (/[,;.…]$/.test(trimmed)) return false;
 
     var hasTrackNumber = this.extractTrackNumber(trimmed) !== null;
@@ -571,11 +604,12 @@ var TextParser = {
       } else if (composerMatch) {
         composer = composerMatch[1].trim();
         lineIndex++;
-      } else if (!composer && (headerLine.indexOf('/') !== -1 || headerLine.indexOf(' - ') !== -1 || headerLine.indexOf(' e ') !== -1) && headerLine.length < 60) {
-        if (headerLine.indexOf(' - ') !== -1) {
-          var parts = headerLine.split(' - ');
+      } else if (!composer && (headerLine.indexOf('/') !== -1 || headerLine.indexOf(' - ') !== -1 || headerLine.indexOf(' – ') !== -1 || headerLine.indexOf(' — ') !== -1 || headerLine.indexOf(' e ') !== -1) && headerLine.length < 90) {
+        var sep = headerLine.indexOf(' – ') !== -1 ? ' – ' : (headerLine.indexOf(' — ') !== -1 ? ' — ' : (headerLine.indexOf(' - ') !== -1 ? ' - ' : null));
+        if (sep) {
+          var parts = headerLine.split(sep);
           artist = parts[0].trim();
-          composer = parts.slice(1).join(' - ').trim();
+          composer = parts.slice(1).join(sep).trim();
         } else {
           composer = headerLine.trim();
         }

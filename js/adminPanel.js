@@ -51,10 +51,13 @@
     }
   }
 
-  function isPlatformDeveloper(email) {
-    if (!email) return false;
-    var em = String(email).toLowerCase().trim();
-    return em === 'leovitulli@gmail.com' || em === 'leonardovitulli@gmail.com';
+  function isPlatformDeveloper(emailOrId) {
+    if (!emailOrId) return false;
+    var em = String(emailOrId).toLowerCase().trim();
+    return em === 'leovitulli@gmail.com' ||
+           em === 'leonardovitulli@gmail.com' ||
+           em === 'a597be32-b59a-4a79-94ed-34dfd5f939ef' ||
+           em === 'admin-leovitulli-id';
   }
   window.isPlatformDeveloper = isPlatformDeveloper;
 
@@ -209,16 +212,20 @@
             if (!u) return false;
             var uEmail = (u.email || '').toLowerCase().trim();
             if (!uEmail || uEmail.indexOf('@') === -1 || uEmail.length < 5) return false;
-            if (isPlatformDeveloper(uEmail)) return false;
             var uId = (u.id || '').toLowerCase();
+            if (isPlatformDeveloper(uEmail) || isPlatformDeveloper(uId)) return false;
             var uCode = (u.singer_code || '').toLowerCase();
             var uName = (u.name || '').toLowerCase();
-            if (uId && (uId === 'admin-leovitulli-id' || deletedSingers.indexOf(uId) !== -1)) return false;
+            if (uId && (uId === 'admin-leovitulli-id' || uId === 'a597be32-b59a-4a79-94ed-34dfd5f939ef' || deletedSingers.indexOf(uId) !== -1)) return false;
             if (deletedSingers.indexOf(uEmail) !== -1) return false;
             if (uCode && (uCode === '@leovitulli' || uCode === 'leovitulli' || deletedSingers.indexOf(uCode) !== -1)) return false;
             if (uEmail.indexOf('test_singer') !== -1 || uId.indexOf('test_singer') !== -1 || uCode.indexOf('test_singer') !== -1 || uName.indexOf('test_singer') !== -1) return false;
+            // Purga contas fictícias temporárias
+            if (uEmail.indexOf('@cantaai.com') !== -1 || uEmail.indexOf('novo_cantor_') !== -1 || uEmail.indexOf('cantor_') === 0) return false;
+            if (uName.indexOf('cantor (samba)') !== -1 || uName.indexOf('cantor (novo cadastro') !== -1) return false;
             return true;
           });
+          localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
 
           // Normalizar código de todos os usuários
           allUserData.forEach(function (u) {
@@ -2818,60 +2825,6 @@
         }).catch(function() {
           notifyComplete();
         });
-        // 2b. Auto-descoberta de cantores por repertórios criados na nuvem (garantia contra perda de cadastros)
-        var repUrl = supUrl.replace(/\/$/, '') + '/rest/v1/repertoires?select=id,user_id,name,created_at&id=neq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&order=created_at.desc&limit=100';
-        fetch(repUrl, {
-          method: 'GET',
-          headers: {
-            'apikey': anonKey,
-            'Authorization': 'Bearer ' + anonKey,
-            'Content-Type': 'application/json'
-          }
-        }).then(function(r) { return r.json(); }).then(function(repRows) {
-          if (Array.isArray(repRows) && repRows.length > 0) {
-            var discChanged = false;
-            repRows.forEach(function(rep) {
-              if (!rep.user_id) return;
-              var uId = String(rep.user_id).trim().toLowerCase();
-              var exists = allUserData.some(function(u) {
-                return (u.id && String(u.id).toLowerCase() === uId);
-              });
-              if (!exists && isValidUUID(uId)) {
-                var dName = rep.name ? ('Cantor (' + rep.name + ')') : 'Cantor Cadastrado';
-                var dEmail = 'cantor_' + uId.slice(0, 8) + '@cantaai.com';
-                var newDiscovered = {
-                  id: rep.user_id,
-                  name: dName,
-                  email: dEmail,
-                  singer_code: '@cantor_' + uId.slice(0, 6),
-                  phone: '',
-                  cpf: '',
-                  instagram: '',
-                  plan_tier: 'free',
-                  plan_type: '⚡ PLANO FREE',
-                  is_vip: false,
-                  coupon_used: '',
-                  is_online: true,
-                  status_text: '🟢 Conectado e Ativo',
-                  reps_count: 1,
-                  songs_count: 0,
-                  last_seen: 'Hoje',
-                  created_at: rep.created_at || new Date().toISOString()
-                };
-                allUserData.unshift(newDiscovered);
-                discChanged = true;
-              }
-            });
-            if (discChanged) {
-              PrompterAdmin.saveStoredUsers();
-              PrompterAdmin.updateMetrics();
-              PrompterAdmin.renderUsersTable();
-              if (typeof PrompterAdmin.updateSignupsBadge === 'function') {
-                PrompterAdmin.updateSignupsBadge();
-              }
-            }
-          }
-        }).catch(function() {});
       } else {
         notifyComplete();
       }
