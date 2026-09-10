@@ -4417,7 +4417,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!code || code.startsWith('#') || code.toUpperCase().indexOf('CANTOR-') !== -1 || code.toUpperCase().indexOf('DEV-ADMIN') !== -1) {
         code = (cleanEmail === 'leovitulli@gmail.com') ? (legacyHandle || '@leovitulli') : ('@' + (cleanEmail ? cleanEmail.split('@')[0] : 'cantor'));
       }
-      if (!code.startsWith('@')) code = '@' + code;
+      code = code.replace(/^@+/, '').trim();
 
       var displayName = (profile && profile.display_name) ? profile.display_name : (cleanEmail.split('@')[0] || 'Cantor');
       displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
@@ -4425,7 +4425,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (profileModalAvatar) profileModalAvatar.innerText = initial;
       if (profileModalEmail) profileModalEmail.innerText = email || 'cantor@cantaaipro.com';
-      if (profileModalCodePill) profileModalCodePill.innerText = 'Código: ' + code;
+      if (profileModalCodePill) profileModalCodePill.innerText = 'Login: ' + code;
       if (profileDisplayNameInput) profileDisplayNameInput.value = (profile && profile.display_name) ? profile.display_name : displayName;
       if (profileSingerCodeInput) profileSingerCodeInput.value = code;
 
@@ -4441,8 +4441,8 @@ document.addEventListener('DOMContentLoaded', function () {
       // Lifecycle metadata & Header Titles
       var elMainTitle = document.getElementById('profileModalMainTitle');
       var elSubTitle = document.getElementById('profileModalSubTitle');
-      if (elMainTitle) elMainTitle.innerText = isDev ? '👤 Meu Perfil de Cantor & Central Master' : 'Meu Perfil & Governança de Assinatura';
-      if (elSubTitle) elSubTitle.innerText = isDev ? 'Gerencie seus dados artísticos de palco e acesse os privilégios do SuperAdmin.' : 'Gerencie seus dados artísticos, faturamento, cartão, Pix e ciclo de renovação.';
+      if (elMainTitle) elMainTitle.innerText = isDev ? '👤 Meu Perfil de Cantor & Dados Pessoais' : 'Meu Perfil & Governança de Assinatura';
+      if (elSubTitle) elSubTitle.innerText = isDev ? 'Gerencie seus dados artísticos, login e informações de contato.' : 'Gerencie seus dados artísticos, faturamento, cartão, Pix e ciclo de renovação.';
 
       var createdDt = profile.created_at ? new Date(profile.created_at) : new Date();
       var createdDateStr = String(createdDt.getDate()).padStart(2, '0') + '/' + String(createdDt.getMonth() + 1).padStart(2, '0') + '/' + createdDt.getFullYear();
@@ -4465,36 +4465,12 @@ document.addEventListener('DOMContentLoaded', function () {
       var supportSec = document.getElementById('profileSupportSection');
 
       if (isDev) {
-        if (devCard) devCard.style.display = 'block';
+        if (devCard) devCard.style.display = 'none';
         if (govCard) govCard.style.display = 'none';
         if (payBox) payBox.style.display = 'none';
         if (upgradeBanner) upgradeBanner.style.display = 'none';
         if (invoicesSec) invoicesSec.style.display = 'none';
         if (supportSec) supportSec.style.display = 'none';
-
-        var btnDevAdm = document.getElementById('btnDevOpenAdminModal');
-        var btnDevHelp = document.getElementById('btnDevOpenHelpdeskModal');
-        if (btnDevAdm && !btnDevAdm._bound) {
-          btnDevAdm._bound = true;
-          btnDevAdm.addEventListener('click', function() {
-            closeProfileModal();
-            if (window.PrompterAdmin && typeof window.PrompterAdmin.openAdminModal === 'function') {
-              window.PrompterAdmin.openAdminModal();
-            }
-          });
-        }
-        if (btnDevHelp && !btnDevHelp._bound) {
-          btnDevHelp._bound = true;
-          btnDevHelp.addEventListener('click', function() {
-            closeProfileModal();
-            if (window.PrompterAdmin && typeof window.PrompterAdmin.openAdminModal === 'function') {
-              window.PrompterAdmin.openAdminModal();
-              if (typeof window.PrompterAdmin.switchAdminTab === 'function') {
-                window.PrompterAdmin.switchAdminTab('helpdesk');
-              }
-            }
-          });
-        }
       } else {
         if (devCard) devCard.style.display = 'none';
         if (govCard) govCard.style.display = 'block';
@@ -4631,24 +4607,119 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnCancelProfileModal) btnCancelProfileModal.addEventListener('click', closeProfileModal);
     if (profileModalOverlay) profileModalOverlay.addEventListener('click', closeProfileModal);
 
+    // ── MÁSCARAS E VALIDAÇÕES DE FORMULÁRIO (PERFIL E CADASTRO) ──
+    function formatPhoneInputMask(val) {
+      var digits = (val || '').replace(/\D/g, '').slice(0, 11);
+      if (!digits) return '';
+      if (digits.length <= 2) return '(' + digits;
+      if (digits.length <= 6) return '(' + digits.slice(0, 2) + ') ' + digits.slice(2);
+      if (digits.length <= 10) return '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 6) + '-' + digits.slice(6);
+      return '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 7) + '-' + digits.slice(7);
+    }
+
+    function formatCpfInputMask(val) {
+      var digits = (val || '').replace(/\D/g, '').slice(0, 11);
+      if (!digits) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return digits.slice(0, 3) + '.' + digits.slice(3);
+      if (digits.length <= 9) return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6);
+      return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6, 9) + '-' + digits.slice(9);
+    }
+
+    function cleanLoginCodeMask(val) {
+      return (val || '').replace(/^[#@]+/, '').replace(/\s+/g, '_').toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    }
+
+    function validateCpfNumber(cpf) {
+      var clean = (cpf || '').replace(/\D/g, '');
+      if (clean.length !== 11) return false;
+      if (/^(\d)\1{10}$/.test(clean)) return false;
+      var sum = 0, rest;
+      for (var i = 1; i <= 9; i++) sum += parseInt(clean.substring(i - 1, i)) * (11 - i);
+      rest = (sum * 10) % 11;
+      if (rest === 10 || rest === 11) rest = 0;
+      if (rest !== parseInt(clean.substring(9, 10))) return false;
+      sum = 0;
+      for (var j = 1; j <= 10; j++) sum += parseInt(clean.substring(j - 1, j)) * (12 - j);
+      rest = (sum * 10) % 11;
+      if (rest === 10 || rest === 11) rest = 0;
+      return rest === parseInt(clean.substring(10, 11));
+    }
+    window.formatPhoneInputMask = formatPhoneInputMask;
+    window.formatCpfInputMask = formatCpfInputMask;
+    window.cleanLoginCodeMask = cleanLoginCodeMask;
+    window.validateCpfNumber = validateCpfNumber;
+
+    var inProfilePhone = document.getElementById('profilePhoneInput');
+    if (inProfilePhone) {
+      inProfilePhone.addEventListener('input', function () {
+        this.value = formatPhoneInputMask(this.value);
+      });
+    }
+
+    var inProfileCpf = document.getElementById('profileCpfInput');
+    if (inProfileCpf) {
+      inProfileCpf.addEventListener('input', function () {
+        this.value = formatCpfInputMask(this.value);
+      });
+    }
+
+    if (profileSingerCodeInput) {
+      profileSingerCodeInput.addEventListener('input', function () {
+        this.value = cleanLoginCodeMask(this.value);
+      });
+    }
+
     if (btnSaveProfileSettings) {
       btnSaveProfileSettings.addEventListener('click', function () {
         var newName = (profileDisplayNameInput ? profileDisplayNameInput.value : '').trim();
-        var newCode = (profileSingerCodeInput ? profileSingerCodeInput.value : '').trim();
-        var newPhone = (document.getElementById('profilePhoneInput') ? document.getElementById('profilePhoneInput').value : '').trim();
-        var newCpf = (document.getElementById('profileCpfInput') ? document.getElementById('profileCpfInput').value : '').trim();
-        var newInstagram = (document.getElementById('profileInstagramInput') ? document.getElementById('profileInstagramInput').value : '').trim();
-        if (newInstagram && !newInstagram.startsWith('@')) newInstagram = '@' + newInstagram;
+        var rawCode = (profileSingerCodeInput ? profileSingerCodeInput.value : '').trim();
+        var newCode = cleanLoginCodeMask(rawCode);
+        var inPhoneEl = document.getElementById('profilePhoneInput');
+        var inCpfEl = document.getElementById('profileCpfInput');
+        var inInstaEl = document.getElementById('profileInstagramInput');
+        var newPhone = inPhoneEl ? inPhoneEl.value.trim() : '';
+        var newCpf = inCpfEl ? inCpfEl.value.trim() : '';
+        var newInstagram = inInstaEl ? inInstaEl.value.trim() : '';
+        if (newInstagram) {
+          newInstagram = '@' + newInstagram.replace(/^@+/, '').replace(/\s+/g, '_');
+        }
 
-        if (!newName) {
-          showToast('Por favor, informe seu nome artístico ou de cantor.', 'warning');
+        // 1. Validação do Nome Artístico
+        if (!newName || newName.length < 2) {
+          showToast('Por favor, informe seu nome artístico ou de cantor (mínimo 2 letras).', 'warning');
+          if (profileDisplayNameInput) profileDisplayNameInput.focus();
+          return;
+        }
+
+        // 2. Validação do Login Único
+        if (newCode && newCode.length < 3) {
+          showToast('O Login deve ter pelo menos 3 caracteres (sem o @).', 'warning');
+          if (profileSingerCodeInput) profileSingerCodeInput.focus();
+          return;
+        }
+
+        // 3. Validação do WhatsApp
+        var cleanPhone = newPhone.replace(/\D/g, '');
+        if (cleanPhone.length > 0 && cleanPhone.length < 10) {
+          showToast('Informe um WhatsApp válido com DDD (ex: (11) 99999-9999).', 'warning');
+          if (inPhoneEl) inPhoneEl.focus();
+          return;
+        }
+
+        // 4. Validação de CPF
+        var cleanCpf = newCpf.replace(/\D/g, '');
+        if (cleanCpf.length > 0 && !validateCpfNumber(newCpf)) {
+          showToast('O CPF informado é inválido. Por favor, verifique os números.', 'warning');
+          if (inCpfEl) inCpfEl.focus();
           return;
         }
 
         PrompterAuth.saveProfileDetails(newName, newCode, newPhone, newCpf, newInstagram).then(function () {
           var updatedProfile = PrompterAuth.getProfile() || {};
           var finalCode = (updatedProfile && updatedProfile.singer_code) ? updatedProfile.singer_code : (newCode ? PrompterAuth.formatSingerCode(newCode) : '');
-          if (profileModalCodePill && finalCode) profileModalCodePill.innerText = 'Código: ' + finalCode;
+          finalCode = finalCode.replace(/^@+/, '');
+          if (profileModalCodePill && finalCode) profileModalCodePill.innerText = 'Login: ' + finalCode;
 
           if (window.PrompterAuth && typeof window.PrompterAuth.updateUIForAuth === 'function') {
             window.PrompterAuth.updateUIForAuth();

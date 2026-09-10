@@ -218,7 +218,7 @@
             </button>
 
             <button id="btnProfileAccountDetails" class="upm-item">
-              <span class="upm-item-icon">👤</span> Meus Dados & @Login
+              <span class="upm-item-icon">👤</span> Meus Dados & Login
             </button>
 
             <button id="btnProfileNotifications" class="upm-item" style="color: #38bdf8;">
@@ -228,10 +228,6 @@
 
             <button id="btnProfileInteractiveTour" class="upm-item" style="color: #38bdf8;">
               <span class="upm-item-icon">📖</span> Tour Interativo do App
-            </button>
-
-            <button id="btnProfileThemeToggle" class="upm-item">
-              <span class="upm-item-icon" id="upmThemeIcon">🌙</span> Modo Claro / Escuro
             </button>
 
             <div class="upm-divider"></div>
@@ -1120,7 +1116,7 @@
             <div class="profile-avatar-big" id="profileModalAvatar">🎤</div>
             <div class="profile-header-info">
               <div class="profile-email-title" id="profileModalEmail">cantor@cantaaipro.com</div>
-              <div class="profile-code-pill" id="profileModalCodePill">Código: @cantor</div>
+              <div class="profile-code-pill" id="profileModalCodePill">Login: cantor</div>
             </div>
           </div>
           <div class="profile-lifecycle-pill" id="profileLifecycleBadge">
@@ -1131,15 +1127,15 @@
         </div>
 
         <!-- 2. FORMULÁRIO DE DADOS CADASTRAIS -->
-        <form id="formProfileSettings" onsubmit="return false;" style="background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 1rem 1.25rem;">
+        <form id="formProfileSettings" onsubmit="return false;" style="background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1rem;">
           <div class="form-grid-2cols">
             <div class="form-group" style="margin-bottom: 0.75rem;">
               <label for="profileDisplayNameInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">Nome Artístico / Cantor:</label>
-              <input type="text" id="profileDisplayNameInput" class="form-control" placeholder="Ex: Jorge Aragão">
+              <input type="text" id="profileDisplayNameInput" class="form-control" placeholder="Ex: Jorge Aragão" required>
             </div>
             <div class="form-group" style="margin-bottom: 0.75rem;">
-              <label for="profileSingerCodeInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">@Login Único (Repertórios & Busca):</label>
-              <input type="text" id="profileSingerCodeInput" class="form-control" placeholder="@cantor_show" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">
+              <label for="profileSingerCodeInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">Login Único (Nome de Usuário):</label>
+              <input type="text" id="profileSingerCodeInput" class="form-control" placeholder="cantor_show" style="font-family: var(--font-mono); font-weight: 700; color: #38bdf8;">
             </div>
           </div>
           <div class="form-grid-2cols">
@@ -1148,7 +1144,7 @@
               <input type="tel" id="profilePhoneInput" class="form-control" placeholder="(11) 99999-9999">
             </div>
             <div class="form-group" style="margin-bottom: 0.75rem;">
-              <label for="profileInstagramInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">Instagram (@nomedeusuario):</label>
+              <label for="profileInstagramInput" style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1;">Instagram (Opcional):</label>
               <input type="text" id="profileInstagramInput" class="form-control" placeholder="@meu_perfil_show">
             </div>
           </div>
@@ -1162,56 +1158,6 @@
             </button>
           </div>
         </form>
-
-        <!-- 3. CONTA DESENVOLVEDOR & SUPERADMIN MASTER (EXCLUSIVO CEO / DEV) -->
-        <div id="profileDeveloperCard" style="display: none; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%); border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 1.35rem; margin-bottom: 1rem;">
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 0.9rem;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.6rem;">🛠️</span>
-              <div>
-                <div style="font-size: 1.05rem; font-weight: 900; color: #38bdf8; font-family: 'Bricolage Grotesque', sans-serif; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
-                  Conta Desenvolvedor &amp; SuperAdmin
-                  <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.5); color: #38bdf8; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">👑 MASTER KEY</span>
-                </div>
-                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Proprietário da Plataforma • Acesso Nativo Global Vitalício</div>
-              </div>
-            </div>
-            <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 20px;">🟢 Privilégios Máximos</span>
-          </div>
-
-          <p style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; margin: 0 0 1rem 0; background: rgba(0, 0, 0, 0.25); padding: 10px 14px; border-radius: 10px; border-left: 3px solid #38bdf8;">
-            Sua conta possui <strong>privilégios ilimitados de Engenharia</strong>: transposição em tempo real nos shows, repertórios e cifras ilimitadas, sem restrições de planos, faturamento ou mensalidades.
-          </p>
-
-          <!-- Grade de Privilégios Master -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1.1rem;">
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px;">
-              <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Nível de Acesso</div>
-              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; margin-top: 2px;">👑 SuperAdmin Master</div>
-              <div style="font-size: 0.72rem; color: #38bdf8;">Acesso Irrestrito</div>
-            </div>
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px;">
-              <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Músicas &amp; Palco</div>
-              <div style="font-size: 0.95rem; font-weight: 800; color: #34d399; margin-top: 2px;">⚡ Ilimitado Vitalício</div>
-              <div style="font-size: 0.72rem; color: #94a3b8;">Transposição &amp; Cifras PRO</div>
-            </div>
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px;">
-              <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Cobrança / Faturas</div>
-              <div style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-top: 2px;">🛡️ Isento Permanente</div>
-              <div style="font-size: 0.72rem; color: #94a3b8;">Sem faturas ou renovações</div>
-            </div>
-          </div>
-
-          <!-- Ações Rápidas de SuperAdmin -->
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button type="button" id="btnDevOpenAdminModal" class="btn btn-primary btn-sm" style="flex: 1; min-width: 200px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid rgba(56, 189, 248, 0.5); padding: 9px 14px;">
-              🚀 Abrir Painel Administrativo / CRM
-            </button>
-            <button type="button" id="btnDevOpenHelpdeskModal" class="btn btn-outline btn-sm" style="flex: 1; min-width: 200px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; padding: 9px 14px;">
-              💬 Central de Atendimento &amp; Mensagens
-            </button>
-          </div>
-        </div>
 
         <!-- 4. GOVERNANÇA DE ASSINATURA & PLANO VIGENTE (CLIENTES) -->
         <div id="profileGovernanceCard" class="profile-governance-card">

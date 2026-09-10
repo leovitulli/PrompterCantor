@@ -2059,6 +2059,29 @@
         selCoupon.innerHTML = sOpts;
       }
 
+      // Máscaras de entrada em tempo real no modal administrativo
+      var inAdmPhone = document.getElementById('editSingerPhone');
+      if (inAdmPhone && !inAdmPhone._hasMask) {
+        inAdmPhone._hasMask = true;
+        inAdmPhone.addEventListener('input', function () {
+          if (window.formatPhoneInputMask) this.value = window.formatPhoneInputMask(this.value);
+        });
+      }
+      var inAdmCpf = document.getElementById('editSingerCpf');
+      if (inAdmCpf && !inAdmCpf._hasMask) {
+        inAdmCpf._hasMask = true;
+        inAdmCpf.addEventListener('input', function () {
+          if (window.formatCpfInputMask) this.value = window.formatCpfInputMask(this.value);
+        });
+      }
+      var inAdmCode = document.getElementById('editSingerCode');
+      if (inAdmCode && !inAdmCode._hasMask) {
+        inAdmCode._hasMask = true;
+        inAdmCode.addEventListener('input', function () {
+          if (window.cleanLoginCodeMask) this.value = window.cleanLoginCodeMask(this.value);
+        });
+      }
+
       if (user) {
         title.innerText = '✏️ Gerenciar Cantor: ' + (user.name || user.email);
         document.getElementById('editSingerId').value = user.id;
@@ -2239,9 +2262,37 @@
       var isVip = chkVip ? chkVip.checked : (planVal === 'vip');
       var dueDateVal = document.getElementById('editSingerDueDate') ? document.getElementById('editSingerDueDate').value : '';
 
-      if (!name || !email) {
+      if (!name || name.length < 2) {
         self._isSavingSinger = false;
-        if (window.showToast) window.showToast('Preencha o nome e e-mail do cantor.', 'warning');
+        if (window.showToast) window.showToast('Preencha o nome do cantor (mínimo 2 letras).', 'warning');
+        var fName = document.getElementById('editSingerName');
+        if (fName) fName.focus();
+        return;
+      }
+
+      if (!email || email.indexOf('@') === -1 || email.length < 5) {
+        self._isSavingSinger = false;
+        if (window.showToast) window.showToast('Informe um e-mail válido para o cantor.', 'warning');
+        var fEmail = document.getElementById('editSingerEmail');
+        if (fEmail) fEmail.focus();
+        return;
+      }
+
+      var cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.length > 0 && cleanPhone.length < 10) {
+        self._isSavingSinger = false;
+        if (window.showToast) window.showToast('Informe um WhatsApp válido com DDD (10 ou 11 dígitos).', 'warning');
+        var fPhone = document.getElementById('editSingerPhone');
+        if (fPhone) fPhone.focus();
+        return;
+      }
+
+      var cleanCpf = cpf.replace(/\D/g, '');
+      if (cleanCpf.length > 0 && window.validateCpfNumber && !window.validateCpfNumber(cpf)) {
+        self._isSavingSinger = false;
+        if (window.showToast) window.showToast('O CPF informado é inválido. Por favor, confira os números.', 'warning');
+        var fCpf = document.getElementById('editSingerCpf');
+        if (fCpf) fCpf.focus();
         return;
       }
 

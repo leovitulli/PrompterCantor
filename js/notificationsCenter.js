@@ -567,13 +567,20 @@
         }
       });
 
-      var total = ctx.isAdmin ? unreadRepliesCount : (unreadAnn.length + unreadRepliesCount);
+      var unreadSignupsCount = 0;
+      if (ctx.isAdmin && window.PrompterAdmin && typeof window.PrompterAdmin.getUnreadSignups === 'function') {
+        var unreadSignups = window.PrompterAdmin.getUnreadSignups() || [];
+        unreadSignupsCount = unreadSignups.length;
+      }
+
+      var total = ctx.isAdmin ? (unreadRepliesCount + unreadSignupsCount) : (unreadAnn.length + unreadRepliesCount);
 
       return {
         total: total,
         unreadAnnouncements: unreadAnn,
         unreadRepliesCount: unreadRepliesCount,
-        unreadReplyTickets: unreadReplyTickets
+        unreadReplyTickets: unreadReplyTickets,
+        unreadSignupsCount: unreadSignupsCount
       };
     },
 
@@ -730,6 +737,29 @@
         });
       }
 
+      // 3. Novos Cadastros na Plataforma (Exclusivo Administrador / CEO)
+      if (ctx.isAdmin && filter !== 'chat') {
+        var unreadSignups = [];
+        if (window.PrompterAdmin && typeof window.PrompterAdmin.getUnreadSignups === 'function') {
+          unreadSignups = window.PrompterAdmin.getUnreadSignups() || [];
+        }
+        unreadSignups.forEach(function (s) {
+          var sName = s.name || (s.email ? s.email.split('@')[0] : 'Cantor');
+          var sCode = (s.singer_code || '').replace(/^@+/, '');
+          var subDesc = (s.plan_type || 'PLANO FREE') + ' • Toque para ver no CRM ou chamar no WhatsApp';
+          feedItems.push({
+            type: 'signup',
+            id: s.id,
+            title: '🎉 Novo Cadastro: ' + sName + (sCode ? ' (' + sCode + ')' : ''),
+            snippet: subDesc,
+            date: s.created_at || new Date().toISOString(),
+            isRead: false,
+            icon: '🎉',
+            iconClass: 'icon-update'
+          });
+        });
+      }
+
       feedItems.sort(function (a, b) {
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       });
@@ -768,7 +798,22 @@
 
           self.closePopover();
 
-          if (type === 'ticket') {
+          if (type === 'signup') {
+            if (window.PrompterAdmin) {
+              if (typeof window.PrompterAdmin.markUserAsSeen === 'function') {
+                window.PrompterAdmin.markUserAsSeen(id);
+              }
+              var allUsers = window.PrompterAdmin.getAllUserData ? window.PrompterAdmin.getAllUserData() : [];
+              var s = allUsers.find(function (x) { return x.id === id || x.email === id; });
+              if (s && typeof window.PrompterAdmin.openSingerModal === 'function') {
+                window.PrompterAdmin.openSingerModal(s);
+              } else if (typeof window.PrompterAdmin.openAdminModal === 'function') {
+                window.PrompterAdmin.openAdminModal();
+              }
+            }
+            self.updateBadges();
+            self.renderPopover();
+          } else if (type === 'ticket') {
             self.openModal('chat', id);
           } else {
             self.markAnnouncementRead(id);
@@ -800,6 +845,10 @@
         }
       });
       localStorage.setItem('cantaai_read_support_messages', JSON.stringify(readMsgIds));
+
+      if (window.PrompterAdmin && typeof window.PrompterAdmin.markAllSignupsAsSeen === 'function') {
+        window.PrompterAdmin.markAllSignupsAsSeen();
+      }
 
       this.updateBadges();
       this.renderPopover();
