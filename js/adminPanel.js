@@ -238,8 +238,9 @@
           });
 
           var hasLeoOgum = allUserData.some(function(u) {
+            var uCodeClean = (u.singer_code || '').toLowerCase().replace(/^@+/, '');
             return (u.email && u.email.toLowerCase() === 'leoogum23@gmail.com') ||
-                   (u.singer_code && u.singer_code.toLowerCase() === '@leoogum23') ||
+                   uCodeClean === 'leoogum23' ||
                    u.id === 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0';
           });
           if (!hasLeoOgum) {
@@ -247,8 +248,9 @@
           }
 
           var hasAline = allUserData.some(function(u) {
+            var uCodeClean = (u.singer_code || '').toLowerCase().replace(/^@+/, '');
             return (u.email && u.email.toLowerCase() === 'alinecrissallai@gmail.com') ||
-                   (u.singer_code && u.singer_code.toLowerCase() === '@alinecrissallai') ||
+                   uCodeClean === 'alinecrissallai' ||
                    u.id === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908';
           });
           if (!hasAline) {

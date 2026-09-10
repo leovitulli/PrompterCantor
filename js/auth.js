@@ -164,11 +164,12 @@
 
     checkSingerCodeAvailability: function (code, currentUserId, currentUserEmail) {
       var formatted = this.formatSingerCode(code);
-      if (!formatted || formatted.length < 3) {
+      if (!formatted || formatted.length < 2) {
         return Promise.resolve({ available: false, message: 'O código deve ter pelo menos 2 letras.' });
       }
 
       var cleanEmail = (currentUserEmail || '').toLowerCase().trim();
+      var formattedClean = formatted.toLowerCase().replace(/^@+/, '');
 
       // 1. Verificar no cache local de usuários admin
       try {
@@ -176,10 +177,10 @@
         if (raw) {
           var list = JSON.parse(raw);
           var exists = list.some(function(u) {
-            var uCode = (u.singer_code || '').toLowerCase();
+            var uCode = (u.singer_code || '').toLowerCase().replace(/^@+/, '');
             var isSameUser = (currentUserId && String(u.id) === String(currentUserId)) ||
                              (cleanEmail && u.email && u.email.toLowerCase().trim() === cleanEmail);
-            return uCode === formatted.toLowerCase() && !isSameUser;
+            return uCode === formattedClean && !isSameUser;
           });
           if (exists) {
             return Promise.resolve({ available: false, code: formatted, message: formatted + ' já está em uso por outro cantor.' });
@@ -190,7 +191,7 @@
       // 2. Verificar no Supabase profiles
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
-        return sb.from('profiles').select('id, email, singer_code').eq('singer_code', formatted).then(function(res) {
+        return sb.from('profiles').select('id, email, singer_code').or('singer_code.eq.' + formattedClean + ',singer_code.eq.@' + formattedClean).then(function(res) {
           if (res.data && res.data.length > 0) {
             var isOther = res.data.some(function(p) {
               var isSame = (currentUserId && String(p.id) === String(currentUserId)) ||
@@ -563,53 +564,111 @@
       var resolveEmailPromise = isEmail
         ? Promise.resolve(cleanId)
         : (function () {
+            var rawNoAt = cleanId.replace(/^@+/, '').trim();
+            var rawNoSpaces = rawNoAt.replace(/[\s_\.-]+/g, '');
+            var rawUnderscore = rawNoAt.replace(/[\s\.-]+/g, '_');
             var formattedCode = PrompterAuth.formatSingerCode(cleanId);
-            
-            // Verificação imediata no login customizado do dispositivo
+            var formattedNoAt = (formattedCode || '').replace(/^@+/, '').trim();
+
+            // 0. Reconhecimento instantâneo das contas oficiais / fundadoras
+            if (rawNoSpaces === 'leoogum' || rawNoSpaces === 'leoogum23' || rawNoAt === 'leo ogum' || rawUnderscore === 'leo_ogum') {
+              return Promise.resolve('leoogum23@gmail.com');
+            }
+            if (rawNoSpaces === 'aline' || rawNoSpaces === 'alinecriss' || rawNoSpaces === 'alinecrissallai' || rawNoAt.indexOf('aline criss') === 0) {
+              return Promise.resolve('alinecrissallai@gmail.com');
+            }
+            if (rawNoSpaces === 'leovitulli' || rawNoSpaces === 'vitulli' || rawNoAt === 'leonardo vitulli' || rawNoSpaces === 'cantor') {
+              return Promise.resolve('leovitulli@gmail.com');
+            }
+
+            // Função auxiliar de busca em lista de usuários por código, nome ou prefixo
+            function findEmailInUserList(uList) {
+              if (!Array.isArray(uList)) return null;
+              for (var i = 0; i < uList.length; i++) {
+                var u = uList[i];
+                if (!u) continue;
+                var uEmail = (u.email || '').toLowerCase().trim();
+                var uCode = (u.singer_code || '').toLowerCase().trim().replace(/^@+/, '');
+                var uCodeNoSpaces = uCode.replace(/[\s_\.-]+/g, '');
+                var uName = (u.name || u.display_name || '').toLowerCase().trim();
+                var uNameNoSpaces = uName.replace(/[\s_\.-]+/g, '');
+                var emailPrefix = uEmail.split('@')[0].replace(/[\s_\.-]+/g, '');
+
+                if (uCode && (uCode === rawNoAt || uCode === formattedNoAt || uCodeNoSpaces === rawNoSpaces)) {
+                  return uEmail;
+                }
+                if (uName && (uName === rawNoAt || uNameNoSpaces === rawNoSpaces || (rawNoSpaces.length >= 4 && uNameNoSpaces.indexOf(rawNoSpaces) === 0))) {
+                  return uEmail;
+                }
+                if (emailPrefix && emailPrefix === rawNoSpaces) {
+                  return uEmail;
+                }
+              }
+              return null;
+            }
+
+            // 1. Verificar cache local de usuários administrativos (canta_ai_admin_users)
+            try {
+              var rawAdm = localStorage.getItem('canta_ai_admin_users');
+              if (rawAdm) {
+                var matchAdm = findEmailInUserList(JSON.parse(rawAdm));
+                if (matchAdm) return Promise.resolve(matchAdm);
+              }
+            } catch(e) {}
+
+            // 2. Verificar lista ativa de usuários no PrompterAdmin se disponível
+            if (window.PrompterAdmin && Array.isArray(window.PrompterAdmin.allUserData)) {
+              var matchAdminActive = findEmailInUserList(window.PrompterAdmin.allUserData);
+              if (matchAdminActive) return Promise.resolve(matchAdminActive);
+            }
+
+            // 3. Verificação de login customizado do dispositivo
             var customH = localStorage.getItem('cantaai_user_custom_handle');
-            if (customH && customH.toLowerCase() === formattedCode.toLowerCase()) {
-              var rU = localStorage.getItem('prompter_auth_user');
-              if (rU) {
-                try {
-                  var pU = JSON.parse(rU);
-                  if (pU && pU.email) return Promise.resolve(pU.email);
-                } catch(e) {}
+            if (customH) {
+              var chClean = customH.toLowerCase().replace(/^@+/, '');
+              if (chClean === rawNoAt || chClean === rawNoSpaces || chClean === formattedNoAt) {
+                var rU = localStorage.getItem('prompter_auth_user');
+                if (rU) {
+                  try {
+                    var pU = JSON.parse(rU);
+                    if (pU && pU.email) return Promise.resolve(pU.email);
+                  } catch(e) {}
+                }
               }
             }
 
-            return sb.from('profiles').select('email').eq('singer_code', formattedCode).single().then(function (res) {
-              if (res.data && res.data.email) return res.data.email;
-              throw new Error('Nenhum cantor encontrado com o login "' + formattedCode + '".');
-            }).catch(function () {
-              return sb.from('profiles').select('email').ilike('singer_code', '%' + cleanId.replace('@', '')).limit(1).then(function (res2) {
-                if (res2.data && res2.data[0] && res2.data[0].email) return res2.data[0].email;
-                throw new Error('Não encontramos nenhum cantor com o login "' + cleanId + '".');
-              });
-            }).catch(function() {
-              // Fallback resiliente: verificar no registro central (sem restrição RLS)
-              return sb.from('songs').select('artist, content').eq('repertoire_id', '3e42c00c-f10c-4b05-96b6-b782403d1d17').then(function(sRes) {
-                if (sRes.data && sRes.data.length > 0) {
-                  for (var i = 0; i < sRes.data.length; i++) {
-                    try {
-                      var c = typeof sRes.data[i].content === 'string' ? JSON.parse(sRes.data[i].content) : sRes.data[i].content;
-                      if (c && c.singer_code && c.singer_code.toLowerCase() === formattedCode.toLowerCase()) {
-                        return c.email || sRes.data[i].artist;
-                      }
-                    } catch(e) {}
-                  }
-                }
-                // Fallback local caso offline
-                try {
-                  var raw = localStorage.getItem('canta_ai_admin_users');
-                  var uList = raw ? JSON.parse(raw) : [];
-                  var match = uList.find(function(u) {
-                    return u.singer_code && u.singer_code.toLowerCase() === formattedCode.toLowerCase();
+            // 4. Consulta ao Supabase profiles (suportando com @ e sem @, e ilike em display_name)
+            return sb.from('profiles').select('email, singer_code, display_name')
+              .or('singer_code.eq.' + formattedNoAt + ',singer_code.eq.@' + formattedNoAt + ',singer_code.eq.' + rawNoAt + ',singer_code.eq.@' + rawNoAt + ',display_name.ilike.' + rawNoAt)
+              .limit(5).then(function (res) {
+                if (res.data && res.data.length > 0) {
+                  var exact = res.data.find(function(p) {
+                    var pCode = (p.singer_code || '').toLowerCase().replace(/^@+/, '');
+                    var pName = (p.display_name || '').toLowerCase().replace(/[\s_\.-]+/g, '');
+                    return pCode === rawNoAt || pCode === formattedNoAt || pName === rawNoSpaces;
                   });
-                  if (match && match.email) return match.email;
-                } catch(e) {}
-                throw new Error('Não encontramos nenhum cantor com o login "' + cleanId + '".');
+                  return (exact || res.data[0]).email;
+                }
+                throw new Error('NotFound');
+              }).catch(function () {
+                // 5. Fallback resiliente: verificar no registro central de músicas (songs)
+                return sb.from('songs').select('artist, content').eq('repertoire_id', '3e42c00c-f10c-4b05-96b6-b782403d1d17').then(function(sRes) {
+                  if (sRes.data && sRes.data.length > 0) {
+                    for (var i = 0; i < sRes.data.length; i++) {
+                      try {
+                        var c = typeof sRes.data[i].content === 'string' ? JSON.parse(sRes.data[i].content) : sRes.data[i].content;
+                        if (!c) continue;
+                        var cCode = (c.singer_code || '').toLowerCase().replace(/^@+/, '');
+                        var cName = (c.name || c.display_name || '').toLowerCase().replace(/[\s_\.-]+/g, '');
+                        if (cCode === rawNoAt || cCode === formattedNoAt || cName === rawNoSpaces) {
+                          return c.email || sRes.data[i].artist;
+                        }
+                      } catch(e) {}
+                    }
+                  }
+                  throw new Error('Não encontramos nenhum cantor com o login "' + cleanId + '".');
+                });
               });
-            });
           })();
 
       return resolveEmailPromise.then(function (resolvedEmail) {
