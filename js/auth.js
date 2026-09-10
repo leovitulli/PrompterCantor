@@ -278,41 +278,28 @@
           }
         }
       }).then(function (res) {
+        var isAlreadyRegistered = false;
+        var existingUserId = null;
+
         if (res.error) {
           var errStr = String(res.error.message || res.error.msg || res.error.error_description || res.error || '');
-          if (errStr.indexOf('User already registered') !== -1 || errStr.indexOf('already exists') !== -1) {
-            var existingProfileData = {
-              email: cleanEmail,
-              display_name: name || (existingAdminUser ? existingAdminUser.name : cleanEmail.split('@')[0]),
-              phone: phone || (existingAdminUser ? existingAdminUser.phone : ''),
-              cpf: cpf || (existingAdminUser ? existingAdminUser.cpf : ''),
-              instagram: instagram || (existingAdminUser ? existingAdminUser.instagram : ''),
-              singer_code: singerCode,
-              role: cleanEmail === 'leovitulli@gmail.com' ? 'admin' : 'user',
-              plan_tier: planTier,
-              plan_type: planType,
-              coupon_used: effectiveCoupon,
-              is_vip: isVip,
-              billing_due_date: effectiveDueDate,
-              is_online: false,
-              status_text: '⚪ Registrado',
-              created_at: (existingAdminUser && existingAdminUser.created_at) || new Date().toISOString()
-            };
-            PrompterAuth.syncNewUserToAdmin(existingProfileData);
-            if (sb) {
-              sb.from('profiles').upsert(existingProfileData).catch(function () {});
-            }
-            throw new Error('Este e-mail já está cadastrado. Seus dados foram sincronizados no painel. Por favor, acesse pela aba "Entrar" com sua senha.');
-          }
-          if (errStr.indexOf('at least 6 characters') !== -1 || errStr.indexOf('least 6') !== -1) {
+          if (errStr.indexOf('User already registered') !== -1 || errStr.indexOf('already exists') !== -1 || errStr.indexOf('user_already_exists') !== -1) {
+            isAlreadyRegistered = true;
+          } else if (errStr.indexOf('at least 6 characters') !== -1 || errStr.indexOf('least 6') !== -1) {
             throw new Error('A senha deve ter no mínimo 6 caracteres.');
+          } else {
+            throw new Error(errStr || 'Erro ao realizar cadastro.');
           }
-          throw new Error(errStr || 'Erro ao realizar cadastro.');
         }
 
         if (res.data && res.data.user && res.data.user.identities && res.data.user.identities.length === 0) {
-          var existingProfileData2 = {
-            id: res.data.user.id,
+          isAlreadyRegistered = true;
+          existingUserId = res.data.user.id;
+        }
+
+        if (isAlreadyRegistered) {
+          var existingProfileData = {
+            id: existingUserId || (existingAdminUser ? existingAdminUser.id : ('usr_' + Date.now())),
             email: cleanEmail,
             display_name: name || (existingAdminUser ? existingAdminUser.name : cleanEmail.split('@')[0]),
             phone: phone || (existingAdminUser ? existingAdminUser.phone : ''),
@@ -325,15 +312,47 @@
             coupon_used: effectiveCoupon,
             is_vip: isVip,
             billing_due_date: effectiveDueDate,
-            is_online: false,
-            status_text: '⚪ Registrado',
+            is_online: true,
+            status_text: '🟢 Conectado e Ativo',
             created_at: (existingAdminUser && existingAdminUser.created_at) || new Date().toISOString()
           };
-          PrompterAuth.syncNewUserToAdmin(existingProfileData2);
+          PrompterAuth.syncNewUserToAdmin(existingProfileData);
           if (sb) {
-            sb.from('profiles').upsert(existingProfileData2).catch(function () {});
+            sb.from('profiles').upsert(existingProfileData).catch(function () {});
           }
-          throw new Error('Este e-mail já está cadastrado. Seus dados foram sincronizados no painel. Por favor, acesse pela aba "Entrar" com sua senha.');
+
+          // Conectar diretamente com a senha informada para poupar o usuário de fricção
+          return sb.auth.signInWithPassword({
+            email: cleanEmail,
+            password: password
+          }).then(function (signInRes) {
+            if (signInRes.error) {
+              var sErr = String(signInRes.error.message || signInRes.error.msg || '');
+              if (sErr.indexOf('Invalid login credentials') !== -1 || sErr.indexOf('invalid_grant') !== -1) {
+                throw new Error('Este e-mail já possui cadastro no CantaAí. A senha digitada está incorreta para esta conta. Acesse pela aba "Entrar" com sua senha ou clique em "Esqueci minha senha" para redefini-la.');
+              }
+              throw new Error('Este e-mail já está cadastrado. Por favor, acesse pela aba "Entrar" com sua senha.');
+            }
+
+            var sUser = signInRes.data ? signInRes.data.user : null;
+            if (!sUser) throw new Error('Usuário não retornado pelo servidor.');
+            if (signInRes.data.session && signInRes.data.session.access_token) {
+              sUser.access_token = signInRes.data.session.access_token;
+            }
+
+            currentUser = sUser;
+            return PrompterAuth.fetchProfile(sUser.id).then(function (profile) {
+              currentProfile = profile;
+              PrompterAuth.saveSession(sUser, profile);
+              PrompterAuth.updateUIForAuth();
+              PrompterAuth.heartbeatLastSeen();
+              if (profile) PrompterAuth.syncNewUserToAdmin(profile);
+              if (typeof window.loadRepertoires === 'function') {
+                window.loadRepertoires();
+              }
+              return { user: sUser, profile: profile, alreadyExisted: true };
+            });
+          });
         }
 
         var user = res.data ? res.data.user : null;

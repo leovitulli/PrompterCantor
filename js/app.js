@@ -3660,7 +3660,8 @@ document.addEventListener('DOMContentLoaded', function () {
         authSingerCodeFeedback.innerText = '🔍 Verificando disponibilidade...';
 
         singerCodeDebounce = setTimeout(function () {
-          PrompterAuth.checkSingerCodeAvailability(val, null).then(function (res) {
+          var currentEmail = (document.getElementById('authEmail') ? document.getElementById('authEmail').value : '').trim();
+          PrompterAuth.checkSingerCodeAvailability(val, null, currentEmail).then(function (res) {
             if (res.available) {
               authSingerCodeFeedback.style.display = 'block';
               authSingerCodeFeedback.style.color = '#34d399';
@@ -4089,7 +4090,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Iniciar Verificação do @Login com feedback visual no botão
         setAuthButtonState(true, 'Verificando @login...');
-        PrompterAuth.checkSingerCodeAvailability(singerCode, null).then(function (checkRes) {
+        PrompterAuth.checkSingerCodeAvailability(singerCode, null, email).then(function (checkRes) {
           if (!checkRes.available) {
             setAuthButtonState(false);
             showAuthError(checkRes.message || 'Este @Login já está em uso por outro cantor.', singerCodeEl);
@@ -4108,33 +4109,41 @@ document.addEventListener('DOMContentLoaded', function () {
             email: email,
             password: pass
           }).then(function (res) {
-            setAuthButtonState(true, 'Conta criada! Entrando...');
+            var isExisting = !!(res && res.alreadyExisted);
+            setAuthButtonState(true, isExisting ? 'Conectado com sucesso!' : 'Conta criada! Entrando...');
             setTimeout(function () {
               setAuthButtonState(false);
               closeAuthModal();
               showApp();
-              showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
-              openWelcomeOnboardingModal({
-                name: name,
-                singerCode: singerCode,
-                planType: (res && res.profile && res.profile.plan_type) ? res.profile.plan_type : '⚡ PLANO FREE'
-              });
+              if (isExisting) {
+                showToast('🎉 Bem-vindo de volta! Identificamos sua conta e você foi conectado com sucesso.', 'success');
+              } else {
+                showToast('🎉 Conta criada com sucesso! Bem-vindo ao CantaAí PRO!', 'success');
+                openWelcomeOnboardingModal({
+                  name: name,
+                  singerCode: singerCode,
+                  planType: (res && res.profile && res.profile.plan_type) ? res.profile.plan_type : '⚡ PLANO FREE'
+                });
+              }
             }, 600);
           });
         }).catch(function (err) {
           setAuthButtonState(false);
           var msg = (err && err.message) ? err.message : 'Erro ao criar conta. Verifique os dados e tente novamente.';
           showAuthError(msg, null);
-          if (msg.indexOf('já está cadastrado') !== -1) {
+          if (msg.indexOf('já possui cadastro') !== -1 || msg.indexOf('já está cadastrado') !== -1) {
             setTimeout(function () {
               var tabSignIn = document.getElementById('tabAuthSignIn');
               if (tabSignIn) tabSignIn.click();
               var emailIn = document.getElementById('authEmail');
               if (emailIn && email) emailIn.value = email;
               var passIn = document.getElementById('authPassword');
-              if (passIn && pass) passIn.value = pass;
-              showAuthError('Este e-mail já está cadastrado. Seus dados foram sincronizados no painel! Clique abaixo em "Entrar na Minha Conta".', null);
-            }, 1400);
+              if (passIn) {
+                passIn.value = '';
+                passIn.focus();
+              }
+              showAuthError('Este e-mail já possui cadastro. Por favor, digite sua senha na aba "Entrar" ou use "Esqueci minha senha".', passIn);
+            }, 2000);
           }
         });
 
