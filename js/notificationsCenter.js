@@ -420,8 +420,26 @@
           self.renderPopover();
         }
         if (self.state.isModalOpen) {
-          if (self.state.activeTab === 'chat') self.renderChatLayout();
-          else self.renderAnnouncements();
+          if (self.state.activeTab === 'chat') {
+            var activeFeed = document.getElementById('scChatMessagesFeed');
+            var inputEl = document.getElementById('scChatInputText');
+            var isUserTyping = inputEl && (inputEl.value.trim().length > 0 || document.activeElement === inputEl);
+
+            if (activeFeed && self.state.activeTicketId) {
+              var currentTk = localTickets.find(function (x) { return x.id === self.state.activeTicketId; });
+              if (currentTk && Array.isArray(currentTk.messages)) {
+                currentTk.messages.forEach(function (m) {
+                  if (m.id && !activeFeed.querySelector('[data-msg-id="' + m.id + '"]')) {
+                    self.appendLiveMessage(m, currentTk);
+                  }
+                });
+              }
+            } else if (!isUserTyping) {
+              self.renderChatLayout();
+            }
+          } else {
+            self.renderAnnouncements();
+          }
         }
 
         if (callback) callback(null, localTickets);
@@ -537,6 +555,10 @@
       var list = raw ? JSON.parse(raw) : [];
       list.unshift(announcement);
       localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+
+      if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+        window.PrompterCloud.broadcastEvent('new_announcement', announcement);
+      }
 
       if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
         var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
@@ -977,6 +999,17 @@
       }
     },
 
+    setAdaptivePolling: function (fast) {
+      var self = this;
+      if (self._pollInterval) clearInterval(self._pollInterval);
+      var intervalMs = fast ? 2500 : 15000;
+      self._pollInterval = setInterval(function () {
+        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
+          self.fetchFromCloud();
+        }
+      }, intervalMs);
+    },
+
     // ── CENTRAL DE COMUNICAÇÃO & ATENDIMENTO (MODAL PRINCIPAL) ──
     openModal: function (tabName, ticketId) {
       var modal = document.getElementById('userSupportModal');
@@ -994,6 +1027,7 @@
         this.state.isNewConversationMode = false;
       }
 
+      this.setAdaptivePolling(true);
       this.switchTab(tabName || 'announcements');
       this.fetchFromCloud();
     },
@@ -1002,6 +1036,7 @@
       var modal = document.getElementById('userSupportModal');
       if (modal) modal.classList.add('hidden');
       this.state.isModalOpen = false;
+      this.setAdaptivePolling(false);
       this.updateBadges();
     },
 
@@ -1407,6 +1442,170 @@
       this.renderChatLayout();
     },
 
+    // ── GERAÇÃO DE BOLHA DE CHAT REUTILIZÁVEL ──
+    buildChatBubbleHtml: function (msg, ticket, ctx) {
+      if (!msg) return '';
+      ctx = ctx || this.getCurrentUserContext();
+      ticket = ticket || {};
+
+      var isSenderUser = msg.sender === 'user';
+      var isOwnMessage = ctx.isAdmin ? !isSenderUser : isSenderUser;
+
+      var senderName = msg.sender_name || (isSenderUser ? (ticket.user_name || 'Cantor') : 'Leonardo Vitulli (Desenvolvedor)');
+      var avatarInitial = isSenderUser ? (senderName ? senderName.charAt(0).toUpperCase() : '🎤') : '👨‍💻';
+      var timeStr = this.formatRelativeTime(msg.created_at);
+
+      var photoHtml = '';
+      if (msg.image_url) {
+        photoHtml =
+          '<div class="chat-bubble-attachment" style="margin-top: 8px;">' +
+            '<img src="' + msg.image_url + '" class="chat-attachment-img ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Anexo do chamado" title="Clique para ampliar em tela cheia" style="max-height: 180px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); display: block; object-fit: cover;">' +
+          '</div>';
+      }
+
+      var msgId = msg.id || ('msg-' + (msg.created_at ? new Date(msg.created_at).getTime() : Date.now()));
+
+      return (
+        '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '" data-msg-id="' + msgId + '" style="animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;">' +
+          '<div class="chat-bubble-avatar ' + (isSenderUser ? 'avatar-user' : 'avatar-support') + '">' + avatarInitial + '</div>' +
+          '<div class="chat-bubble-body">' +
+            '<div class="chat-bubble-meta">' +
+              '<span class="chat-bubble-sender">' + this.escapeHtml(senderName) + '</span>' +
+              (!isSenderUser ? '<span class="chat-bubble-badge-staff" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Desenvolvedor</span>' : '') +
+              '<span>• ' + timeStr + '</span>' +
+            '</div>' +
+            '<div class="chat-bubble-box" style="white-space: pre-wrap; line-height: 1.45;">' +
+              this.escapeHtml(msg.text || '') +
+              photoHtml +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    },
+
+    appendLiveMessage: function (msg, ticket) {
+      var feed = document.getElementById('scChatMessagesFeed');
+      if (!feed || !msg) return;
+
+      var msgId = msg.id || ('msg-' + (msg.created_at ? new Date(msg.created_at).getTime() : Date.now()));
+      if (feed.querySelector('[data-msg-id="' + msgId + '"]')) {
+        return; // Mensagem já exibida
+      }
+
+      var ctx = this.getCurrentUserContext();
+      var temp = document.createElement('div');
+      temp.innerHTML = this.buildChatBubbleHtml(msg, ticket, ctx);
+      var bubbleEl = temp.firstElementChild;
+      if (bubbleEl) {
+        feed.appendChild(bubbleEl);
+        bubbleEl.querySelectorAll('.ticket-thumb-clickable').forEach(function (imgEl) {
+          imgEl.addEventListener('click', function () {
+            var src = this.getAttribute('data-src');
+            var modalZoom = document.getElementById('imagePreviewModal');
+            var fullImg = document.getElementById('imagePreviewFull');
+            if (modalZoom && fullImg && src) {
+              fullImg.src = src;
+              modalZoom.classList.remove('hidden');
+            }
+          });
+        });
+
+        setTimeout(function () {
+          feed.scrollTop = feed.scrollHeight;
+        }, 20);
+      }
+    },
+
+    handleIncomingChatMessage: function (payload) {
+      if (!payload || !payload.ticketId || !payload.message) return;
+      var self = this;
+      var ticketId = payload.ticketId;
+      var msg = payload.message;
+
+      // 1. Atualiza cache local
+      var raw = localStorage.getItem('canta_ai_support_tickets');
+      var list = raw ? JSON.parse(raw) : [];
+      var ticket = list.find(function (x) { return x.id === ticketId; });
+      if (ticket) {
+        if (!ticket.messages) ticket.messages = [];
+        var exists = ticket.messages.some(function (m) {
+          return (m.id && msg.id && m.id === msg.id) ||
+                 (m.text === msg.text && m.created_at === msg.created_at);
+        });
+        if (!exists) {
+          ticket.messages.push(msg);
+          ticket.updated_at = msg.created_at || new Date().toISOString();
+          if (msg.sender === 'support') {
+            ticket.admin_response = msg.text;
+          }
+          localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
+        }
+      }
+
+      // 2. Se a conversa aberta no momento for essa, anexa ao feed dinamicamente
+      if (self.state.isModalOpen && self.state.activeTab === 'chat' && self.state.activeTicketId === ticketId) {
+        self.appendLiveMessage(msg, ticket || payload.ticket);
+        if (window.PrompterCloud && typeof window.PrompterCloud.playLiveChime === 'function') {
+          window.PrompterCloud.playLiveChime('message');
+        }
+      } else {
+        self.updateBadges();
+        var ctx = self.getCurrentUserContext();
+        var isForMe = ctx.isAdmin ? (msg.sender === 'user') : (msg.sender === 'support');
+        if (isForMe) {
+          if (window.PrompterCloud && typeof window.PrompterCloud.playLiveChime === 'function') {
+            window.PrompterCloud.playLiveChime('message');
+          }
+          if (window.showToast) {
+            window.showToast('💬 ' + (msg.sender_name || 'Nova mensagem') + ': ' + (msg.text ? msg.text.slice(0, 60) : 'Anexo recebido'), 'info');
+          }
+        }
+      }
+    },
+
+    handleIncomingTicketStatusChange: function (payload) {
+      if (!payload || !payload.ticketId) return;
+      var self = this;
+      var raw = localStorage.getItem('canta_ai_support_tickets');
+      var list = raw ? JSON.parse(raw) : [];
+      var t = list.find(function (x) { return x.id === payload.ticketId; });
+      if (t) {
+        t.status = payload.status;
+        t.updated_at = payload.updated_at || new Date().toISOString();
+        localStorage.setItem('canta_ai_support_tickets', JSON.stringify(list));
+      }
+      if (self.state.isModalOpen && self.state.activeTab === 'chat' && self.state.activeTicketId === payload.ticketId) {
+        var statusPill = document.querySelector('.sc-ticket-status-pill');
+        if (statusPill) {
+          var isRes = (payload.status === 'resolved');
+          statusPill.className = 'sc-ticket-status-pill ' + (isRes ? 'status-resolved' : 'status-open');
+          statusPill.innerHTML = isRes ? '🟢 Resolvido' : '🟡 Em Aberto';
+        }
+      }
+      self.updateBadges();
+    },
+
+    handleIncomingAnnouncement: function (payload) {
+      if (!payload) return;
+      var self = this;
+      var raw = localStorage.getItem('canta_ai_admin_announcements');
+      var list = raw ? JSON.parse(raw) : [];
+      if (!list.some(function (a) { return a.id === payload.id; })) {
+        list.unshift(payload);
+        localStorage.setItem('canta_ai_admin_announcements', JSON.stringify(list));
+      }
+      self.updateBadges();
+      if (window.PrompterCloud && typeof window.PrompterCloud.playLiveChime === 'function') {
+        window.PrompterCloud.playLiveChime('alert');
+      }
+      if (window.showToast) {
+        window.showToast('📢 Novidade no ar: ' + (payload.title || 'Novo Comunicado Oficial'), 'info');
+      }
+      if (self.state.isModalOpen && self.state.activeTab === 'announcements') {
+        self.renderAnnouncements();
+      }
+    },
+
     // ── THREAD DE MENSAGENS INTERATIVA ──
     renderThreadView: function (container, ticket) {
       var self = this;
@@ -1452,37 +1651,8 @@
 
       // Feed de Mensagens
       var messagesFeedHtml = '<div class="sc-thread-messages-feed" id="scChatMessagesFeed">';
-      ticket.messages.forEach(function (msg) {
-        var isSenderUser = msg.sender === 'user';
-        var isOwnMessage = ctx.isAdmin ? !isSenderUser : isSenderUser;
-
-        var senderName = msg.sender_name || (isSenderUser ? (ticket.user_name || 'Cantor') : 'Leonardo Vitulli (Desenvolvedor)');
-        var avatarInitial = isSenderUser ? (senderName ? senderName.charAt(0).toUpperCase() : '🎤') : '👨‍💻';
-        var timeStr = self.formatRelativeTime(msg.created_at);
-
-        var photoHtml = '';
-        if (msg.image_url) {
-          photoHtml =
-            '<div class="chat-bubble-attachment" style="margin-top: 8px;">' +
-              '<img src="' + msg.image_url + '" class="chat-attachment-img ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Anexo do chamado" title="Clique para ampliar em tela cheia" style="max-height: 180px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15);">' +
-            '</div>';
-        }
-
-        messagesFeedHtml +=
-          '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '">' +
-            '<div class="chat-bubble-avatar ' + (isSenderUser ? 'avatar-user' : 'avatar-support') + '">' + avatarInitial + '</div>' +
-            '<div class="chat-bubble-body">' +
-              '<div class="chat-bubble-meta">' +
-                '<span class="chat-bubble-sender">' + self.escapeHtml(senderName) + '</span>' +
-                (!isSenderUser ? '<span class="chat-bubble-badge-staff" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Desenvolvedor</span>' : '') +
-                '<span>• ' + timeStr + '</span>' +
-              '</div>' +
-              '<div class="chat-bubble-box" style="white-space: pre-wrap; line-height: 1.45;">' +
-                self.escapeHtml(msg.text || '') +
-                photoHtml +
-              '</div>' +
-            '</div>' +
-          '</div>';
+      (ticket.messages || []).forEach(function (msg) {
+        messagesFeedHtml += self.buildChatBubbleHtml(msg, ticket, ctx);
       });
       messagesFeedHtml += '</div>';
 
@@ -1527,6 +1697,13 @@
           ticket.updated_at = new Date().toISOString();
           self.saveAllTickets([ticket]);
           self.syncTicketToCloud(ticket);
+          if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+            window.PrompterCloud.broadcastEvent('ticket_status_changed', {
+              ticketId: ticket.id,
+              status: 'resolved',
+              updated_at: ticket.updated_at
+            });
+          }
           self.renderChatLayout();
           if (window.showToast) window.showToast('Atendimento marcado como resolvido!', 'success');
         });
@@ -1539,6 +1716,13 @@
           ticket.updated_at = new Date().toISOString();
           self.saveAllTickets([ticket]);
           self.syncTicketToCloud(ticket);
+          if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+            window.PrompterCloud.broadcastEvent('ticket_status_changed', {
+              ticketId: ticket.id,
+              status: 'open',
+              updated_at: ticket.updated_at
+            });
+          }
           self.renderChatLayout();
           if (window.showToast) window.showToast('Atendimento reaberto com sucesso.', 'info');
         });
@@ -1604,6 +1788,7 @@
           created_at: nowIso
         };
 
+        if (!ticket.messages) ticket.messages = [];
         ticket.messages.push(newMsg);
         if (isSenderStaff) {
           ticket.admin_response = text;
@@ -1616,12 +1801,23 @@
         self.saveAllTickets([ticket]);
         self.syncTicketToCloud(ticket);
 
+        // Dispara evento em tempo real no Barramento Global (Supabase + BroadcastChannel)
+        if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+          window.PrompterCloud.broadcastEvent('chat_message', {
+            ticketId: ticket.id,
+            message: newMsg,
+            ticket: ticket
+          });
+        }
+
         self.state.draftImageBase64 = '';
         if (inputText) inputText.value = '';
         if (previewRow) previewRow.classList.add('hidden');
         if (fileInput) fileInput.value = '';
 
-        self.renderChatLayout();
+        // Anexação cirúrgica sem destruição de layout
+        self.appendLiveMessage(newMsg, ticket);
+        self.updateBadges();
 
         if (window.showToast) {
           window.showToast(isSenderStaff ? 'Resposta enviada com sucesso para o cantor!' : 'Mensagem enviada com sucesso para o desenvolvedor!', 'success');
@@ -1788,6 +1984,18 @@
           self.saveAllTickets([newTicket]);
           self.syncTicketToCloud(newTicket);
 
+          // Transmite novo chamado em tempo real para o painel Admin
+          if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+            window.PrompterCloud.broadcastEvent('new_support_ticket', newTicket);
+            if (newTicket.messages && newTicket.messages[0]) {
+              window.PrompterCloud.broadcastEvent('chat_message', {
+                ticketId: newTicket.id,
+                message: newTicket.messages[0],
+                ticket: newTicket
+              });
+            }
+          }
+
           self.state.activeTicketId = newTicket.id;
           self.state.isNewConversationMode = false;
           self.renderChatLayout();
@@ -1925,12 +2133,21 @@
       // Atualização inicial de badges
       self.updateBadges();
 
-      // Auto-polling em segundo plano a cada 12 segundos para garantir sincronismo contínuo entre navegadores
-      self._pollInterval = setInterval(function () {
-        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
-          self.fetchFromCloud();
-        }
-      }, 12000);
+      // Registro de escuta no Barramento Realtime Global (WebSockets Broadcast + HTML5)
+      if (window.PrompterCloud && typeof window.PrompterCloud.onLiveEvent === 'function') {
+        window.PrompterCloud.onLiveEvent('chat_message', function (payload) {
+          self.handleIncomingChatMessage(payload);
+        });
+        window.PrompterCloud.onLiveEvent('ticket_status_changed', function (payload) {
+          self.handleIncomingTicketStatusChange(payload);
+        });
+        window.PrompterCloud.onLiveEvent('new_announcement', function (payload) {
+          self.handleIncomingAnnouncement(payload);
+        });
+      }
+
+      // Auto-polling adaptativo em segundo plano (15s quando ocioso, 2.5s quando modal aberto)
+      self.setAdaptivePolling(false);
     }
   };
 

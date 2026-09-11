@@ -424,6 +424,170 @@
       } catch (err) {
         console.warn('Realtime listener não pôde ser ativado:', err);
       }
+    },
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  BARRAMENTO REALTIME GLOBAL (ZERO REFRESH / ZERO MANUAL SYNC)
+    // ══════════════════════════════════════════════════════════════════════════
+    _liveChannel: null,
+    _localBroadcastChannel: null,
+    _liveHandlers: {},
+
+    playLiveChime: function (type) {
+      try {
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        var ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(function () {});
+        }
+
+        var now = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'success') {
+          // Triplo acorde de celebração (ex: ativação VIP)
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+          osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.18, now + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+          osc.start(now);
+          osc.stop(now + 0.52);
+        } else if (type === 'alert') {
+          // Notificação de chamado ou aviso urgente
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(784, now);
+          osc.frequency.setValueAtTime(659, now + 0.12);
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.15, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.36);
+        } else {
+          // 'message': Suave e amigável (estilo WhatsApp/Telegram)
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          osc.frequency.setValueAtTime(880.00, now + 0.09); // A5
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.15, now + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+          osc.start(now);
+          osc.stop(now + 0.34);
+        }
+      } catch (e) {
+        // Silencioso se áudio não for suportado ou bloqueado por política de autoplay
+      }
+    },
+
+    getLiveChannel: function () {
+      if (this._liveChannel) return this._liveChannel;
+      var self = this;
+
+      // Inicializa canal HTML5 BroadcastChannel local (1ms entre abas do mesmo navegador)
+      if (!this._localBroadcastChannel && typeof window.BroadcastChannel === 'function') {
+        try {
+          this._localBroadcastChannel = new window.BroadcastChannel('canta_ai_live_bus');
+          this._localBroadcastChannel.onmessage = function (e) {
+            if (e && e.data && e.data.event) {
+              self._triggerLiveEvent(e.data.event, e.data.payload);
+            }
+          };
+        } catch (e) {}
+      }
+
+      var sb = this.getClient();
+      if (sb && typeof sb.channel === 'function') {
+        try {
+          this._liveChannel = sb.channel('canta_ai_live_bus', {
+            config: {
+              broadcast: { ack: false, self: false },
+              presence: { key: '' }
+            }
+          });
+
+          // Registra ouvinte global de broadcast
+          this._liveChannel.on('broadcast', { event: '*' }, function (msg) {
+            if (msg && msg.event) {
+              var payload = (msg.payload !== undefined) ? msg.payload : msg;
+              self._triggerLiveEvent(msg.event, payload);
+            }
+          });
+
+          this._liveChannel.subscribe(function (status) {
+            console.log('⚡ Supabase Live Bus Conectado:', status);
+          });
+        } catch (err) {
+          console.warn('⚠️ Falha ao registrar Live Bus Supabase:', err);
+        }
+      }
+
+      return this._liveChannel;
+    },
+
+    _triggerLiveEvent: function (eventName, payload) {
+      var handlers = this._liveHandlers[eventName] || [];
+      for (var i = 0; i < handlers.length; i++) {
+        try {
+          handlers[i](payload);
+        } catch (e) {
+          console.error('Erro no handler do evento em tempo real (' + eventName + '):', e);
+        }
+      }
+      // Notifica ouvintes genéricos de '*'
+      var wildcards = this._liveHandlers['*'] || [];
+      for (var j = 0; j < wildcards.length; j++) {
+        try {
+          wildcards[j](eventName, payload);
+        } catch (e) {}
+      }
+    },
+
+    broadcastEvent: function (eventName, payload) {
+      if (!eventName) return;
+      var self = this;
+
+      // 1. WebSocket Broadcast pelo Supabase (entre dispositivos / navegadores distintos: Chrome <-> Safari <-> Mobile)
+      var ch = this.getLiveChannel();
+      if (ch && typeof ch.send === 'function') {
+        try {
+          ch.send({
+            type: 'broadcast',
+            event: eventName,
+            payload: payload
+          });
+        } catch (err) {
+          console.warn('Erro ao transmitir broadcast Supabase:', err);
+        }
+      }
+
+      // 2. BroadcastChannel HTML5 (entre abas locais na mesma máquina / navegador em ~1ms)
+      if (this._localBroadcastChannel) {
+        try {
+          this._localBroadcastChannel.postMessage({
+            event: eventName,
+            payload: payload,
+            timestamp: Date.now()
+          });
+        } catch (e) {}
+      }
+    },
+
+    onLiveEvent: function (eventName, handler) {
+      if (!eventName || typeof handler !== 'function') return;
+      if (!this._liveHandlers[eventName]) {
+        this._liveHandlers[eventName] = [];
+      }
+      this._liveHandlers[eventName].push(handler);
+
+      // Garante canal ativo
+      this.getLiveChannel();
     }
   };
 

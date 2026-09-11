@@ -2043,6 +2043,7 @@
         this.updateMetrics();
         this.updateSignupsBadge();
         this.updateHelpdeskBadge();
+        this.initRealtimeBus();
       }
     },
 
@@ -5546,7 +5547,7 @@
           : '';
 
         feedHtml +=
-          '<div class="adm-hd-bubble ' + (isSupport ? 'is-support' : 'is-user') + '">' +
+          '<div class="adm-hd-bubble ' + (isSupport ? 'is-support' : 'is-user') + '" data-msg-id="' + escapeHtml(m.id || '') + '">' +
             '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; font-size:0.72rem;">' +
               '<strong style="color:' + (isSupport ? '#38bdf8' : '#e2e8f0') + ';">' + sName + '</strong>' +
               '<span style="color:#64748b;">' + timeStr + '</span>' +
@@ -5630,8 +5631,19 @@
         window.NotificationsCenter.syncTicketToCloud(ticket);
       }
 
+      // Broadcast em tempo real para o cantor ver a resposta imediatamente (sem refresh)
+      if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+        window.PrompterCloud.broadcastEvent('chat_message', {
+          ticketId: ticket.id,
+          message: newMsg,
+          ticket: ticket
+        });
+      }
+
+      // Injeção cirúrgica: adiciona a bolha ao feed sem re-renderizar a thread toda
+      PrompterAdmin.appendAdminBubble(newMsg, ticket);
+      // Atualiza apenas a barra lateral e o badge (thread permanece intacta)
       PrompterAdmin.renderHelpdeskList();
-      PrompterAdmin.renderHelpdeskThread(ticket);
       PrompterAdmin.updateHelpdeskBadge();
       if (window.showToast) window.showToast('💬 Resposta enviada com sucesso para ' + (ticket.user_name || 'o cantor') + '!', 'success');
     },
@@ -5755,6 +5767,124 @@
 
     renderTicketsList: function () {
       this.renderHelpdeskList();
+    },
+
+    // ── INJEÇÃO CIRÚRGICA DE BOLHA (Admin Panel) ──
+    appendAdminBubble: function (msg, ticket) {
+      var feed = document.getElementById('admHdMessagesFeed');
+      if (!feed || !msg) return;
+
+      var msgId = msg.id || ('msg-' + Date.now());
+      if (msgId && feed.querySelector('[data-msg-id="' + msgId + '"]')) return;
+
+      var isSupport = (msg.sender === 'support');
+      var sName = isSupport
+        ? 'Equipe CantaAí (Você)'
+        : escapeHtml(msg.sender_name || (ticket && ticket.user_name) || 'Cantor');
+      var timeStr = msg.created_at
+        ? new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        : '';
+
+      var imgHtml = msg.image_url
+        ? '<div style="margin-top:8px;"><img src="' + msg.image_url + '" class="ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Print" style="max-height:140px; max-width:240px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); cursor:pointer; object-fit:cover; display:block;"></div>'
+        : '';
+
+      var el = document.createElement('div');
+      el.className = 'adm-hd-bubble ' + (isSupport ? 'is-support' : 'is-user');
+      el.setAttribute('data-msg-id', msgId);
+      el.style.animation = 'nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+      el.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; font-size:0.72rem;">' +
+          '<strong style="color:' + (isSupport ? '#38bdf8' : '#e2e8f0') + ';">' + sName + '</strong>' +
+          '<span style="color:#64748b;">' + timeStr + '</span>' +
+        '</div>' +
+        '<div style="white-space:pre-wrap; line-height:1.45; font-size:0.85rem;">' + escapeHtml(msg.text || '') + '</div>' +
+        imgHtml;
+
+      el.querySelectorAll('.ticket-thumb-clickable').forEach(function (img) {
+        img.addEventListener('click', function () {
+          var src = this.getAttribute('data-src');
+          var modal = document.getElementById('imagePreviewModal');
+          var fullImg = document.getElementById('imagePreviewFull');
+          if (modal && fullImg && src) { fullImg.src = src; modal.classList.remove('hidden'); }
+        });
+      });
+
+      feed.appendChild(el);
+      setTimeout(function () { feed.scrollTop = feed.scrollHeight; }, 20);
+    },
+
+    // ── BARRAMENTO REAL-TIME (Admin Panel) ──
+    initRealtimeBus: function () {
+      if (this._rtBusInited) return;
+      this._rtBusInited = true;
+
+      if (!window.PrompterCloud || typeof window.PrompterCloud.onLiveEvent !== 'function') return;
+
+      // Escuta mensagens de cantores chegando
+      window.PrompterCloud.onLiveEvent('chat_message', function (payload) {
+        if (!payload || !payload.ticketId || !payload.message) return;
+        var msg = payload.message;
+        var ticketId = payload.ticketId;
+
+        // Eco de mensagens do suporte (enviadas pelo próprio admin) — ignorar
+        if (msg.sender === 'support') return;
+
+        // Atualiza cache local
+        var idx = currentHelpdeskTickets.findIndex(function (x) { return x.id === ticketId; });
+        if (idx !== -1) {
+          var ticket = currentHelpdeskTickets[idx];
+          if (!ticket.messages) ticket.messages = [];
+          var exists = ticket.messages.some(function (m) {
+            return (m.id && msg.id && m.id === msg.id) ||
+                   (m.text === msg.text && m.created_at === msg.created_at);
+          });
+          if (!exists) {
+            ticket.messages.push(msg);
+            ticket.status = 'open';
+            ticket.updated_at = msg.created_at || new Date().toISOString();
+            PrompterAdmin.saveStoredTickets();
+          }
+          if (activeHelpdeskTicketId === ticketId) {
+            // Thread aberta: injeção cirúrgica ao vivo
+            PrompterAdmin.appendAdminBubble(msg, ticket);
+            if (window.PrompterCloud && typeof window.PrompterCloud.playLiveChime === 'function') {
+              window.PrompterCloud.playLiveChime('message');
+            }
+          } else {
+            // Thread fechada: atualiza badge + lista + toast
+            PrompterAdmin.updateHelpdeskBadge();
+            PrompterAdmin.renderHelpdeskList();
+            if (window.showToast) {
+              window.showToast('💬 ' + (msg.sender_name || ticket.user_name || 'Cantor') + ': ' + ((msg.text || 'Anexo').slice(0, 60)), 'info');
+            }
+            if (window.PrompterCloud && typeof window.PrompterCloud.playLiveChime === 'function') {
+              window.PrompterCloud.playLiveChime('message');
+            }
+          }
+        } else if (payload.ticket) {
+          // Novo ticket de cantor
+          currentHelpdeskTickets.unshift(payload.ticket);
+          PrompterAdmin.saveStoredTickets();
+          PrompterAdmin.renderHelpdeskList();
+          PrompterAdmin.updateHelpdeskBadge();
+          if (window.showToast) {
+            window.showToast('🎤 Novo atendimento: ' + (payload.ticket.user_name || 'Cantor') + '!', 'info');
+          }
+          if (window.PrompterCloud && typeof window.PrompterCloud.playLiveChime === 'function') {
+            window.PrompterCloud.playLiveChime('alert');
+          }
+        }
+      });
+
+      // Escuta novos cadastros de cantores
+      window.PrompterCloud.onLiveEvent('singer_registered', function (payload) {
+        if (!payload) return;
+        if (window.showToast) {
+          window.showToast('🎤 Novo cantor: ' + (payload.name || payload.email || 'novo usuário') + '!', 'success');
+        }
+        if (typeof PrompterAdmin.loadDashboardData === 'function') PrompterAdmin.loadDashboardData();
+      });
     },
 
     exportCSV: function () {
