@@ -5377,13 +5377,14 @@
         return;
       }
 
-      // Se nenhum ticket ativo foi selecionado ainda, seleciona o primeiro
-      if (!activeHelpdeskTicketId && filtered.length > 0) {
+      // Se nenhum ticket ativo foi selecionado ainda, seleciona o primeiro (apenas em telas desktop >= 861px)
+      var isMobileScreen = (window.innerWidth <= 860);
+      if (!activeHelpdeskTicketId && filtered.length > 0 && !isMobileScreen) {
         activeHelpdeskTicketId = filtered[0].id;
       }
 
-      var activeTicket = currentHelpdeskTickets.find(function (t) { return t.id === activeHelpdeskTicketId; });
-      PrompterAdmin.renderHelpdeskThread(activeTicket || filtered[0]);
+      var activeTicket = activeHelpdeskTicketId ? currentHelpdeskTickets.find(function (t) { return t.id === activeHelpdeskTicketId; }) : null;
+      PrompterAdmin.renderHelpdeskThread(activeTicket);
 
       var html = '';
       filtered.forEach(function (t) {
@@ -5442,15 +5443,18 @@
       var container = document.getElementById('admHdThreadContainer');
       var header = document.getElementById('admHdThreadHeader');
       var feed = document.getElementById('admHdMessagesFeed');
+      var hdLayout = document.querySelector('.admin-helpdesk-container');
 
       if (!ticket) {
         if (placeholder) placeholder.style.display = 'flex';
         if (container) container.style.display = 'none';
+        if (hdLayout) hdLayout.classList.remove('thread-open');
         return;
       }
 
       if (placeholder) placeholder.style.display = 'none';
       if (container) container.style.display = 'flex';
+      if (hdLayout) hdLayout.classList.add('thread-open');
 
       var isResolved = (ticket.status === 'resolved');
       var uName = escapeHtml(ticket.user_name || (ticket.user_email ? ticket.user_email.split('@')[0] : 'Cantor'));
@@ -5460,32 +5464,42 @@
       var cleanPhone = (uPhone || '').replace(/\D/g, '');
       if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = '55' + cleanPhone;
       var waDirectHtml = cleanPhone
-        ? '<a href="https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent('Olá ' + uName + '! Leonardo do CantaAí PRO por aqui. Vi seu chamado sobre "' + (ticket.title || 'o app') + '".') + '" target="_blank" class="btn-crm-wa" title="Chamar no WhatsApp direto">📲 WhatsApp Direto</a>'
+        ? '<a href="https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent('Olá ' + uName + '! Leonardo do CantaAí PRO por aqui. Vi seu chamado sobre "' + (ticket.title || 'o app') + '".') + '" target="_blank" class="btn-crm-wa" title="Chamar no WhatsApp direto">📲 WhatsApp</a>'
         : '';
 
       var statusToggleBtn = isResolved
-        ? '<button type="button" class="btn btn-sm btn-outline" id="btnToggleStatusHd" style="color:#fbbf24; border-color:rgba(251,191,36,0.4); font-size:0.75rem;">🔄 Reabrir Chamado</button>'
+        ? '<button type="button" class="btn btn-sm btn-outline" id="btnToggleStatusHd" style="color:#fbbf24; border-color:rgba(251,191,36,0.4); font-size:0.75rem;">🔄 Reabrir</button>'
         : '<button type="button" class="btn btn-sm btn-primary" id="btnToggleStatusHd" style="font-size:0.75rem;">✅ Marcar Resolvido</button>';
 
       header.className = 'sc-thread-header adm-hd-thread-header';
       header.innerHTML =
-        '<div class="sc-thread-title-area" style="min-width:0;">' +
-          '<div style="display:flex; align-items:center; gap:8px;">' +
-            '<h4 class="sc-thread-title" style="margin:0; font-size:1.05rem; font-weight:800; color:#f8fafc;">' + uName + '</h4>' +
+        '<div class="sc-thread-title-area" style="min-width:0; flex:1;">' +
+          '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+            '<button type="button" class="sc-btn-back-sidebar" id="btnBackToHdTickets" title="Voltar à lista de atendimentos">← Voltar</button>' +
+            '<h4 class="sc-thread-title" style="margin:0; font-size:1.05rem; font-weight:800; color:#f8fafc; word-break:break-word;">' + uName + '</h4>' +
             '<span class="sc-ticket-status-pill ' + (isResolved ? 'status-resolved' : 'status-open') + '">' +
               (isResolved ? '🟢 Resolvido' : '🟡 Em Aberto') +
             '</span>' +
           '</div>' +
-          '<div style="font-size:0.75rem; color:#94a3b8; margin-top:3px;">' +
-            uEmail + (uPhone ? (' • ' + escapeHtml(uPhone)) : '') + ' • Assunto: <strong style="color:#cbd5e1;">' + escapeHtml(ticket.title || 'Geral') + '</strong> • Chamado #' + escapeHtml(String(ticket.id).slice(-6)) +
+          '<div style="font-size:0.75rem; color:#94a3b8; margin-top:3px; word-break:break-word;">' +
+            uEmail + (uPhone ? (' • ' + escapeHtml(uPhone)) : '') + ' • Assunto: <strong style="color:#cbd5e1;">' + escapeHtml(ticket.title || 'Geral') + '</strong> • #' + escapeHtml(String(ticket.id).slice(-6)) +
           '</div>' +
         '</div>' +
-        '<div class="sc-thread-actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+        '<div class="sc-thread-actions" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
           waDirectHtml +
           statusToggleBtn +
           '<button type="button" class="btn btn-outline btn-xs" id="btnViewSingerInCrm" style="color:#38bdf8; border-color:rgba(56,189,248,0.4); font-size:0.76rem; border-radius:6px; padding:5px 10px;" title="Abrir perfil no CRM">👤 Perfil</button>' +
           '<button type="button" class="btn btn-outline btn-xs" id="btnDeleteHdTicket" style="color:#f87171; border-color:rgba(239,68,68,0.4); font-size:0.76rem; border-radius:6px; padding:5px 8px;" title="Excluir Chamado">🗑️</button>' +
         '</div>';
+
+      var btnBack = document.getElementById('btnBackToHdTickets');
+      if (btnBack) {
+        btnBack.addEventListener('click', function () {
+          if (hdLayout) hdLayout.classList.remove('thread-open');
+          activeHelpdeskTicketId = null;
+          PrompterAdmin.renderHelpdeskList();
+        });
+      }
 
       var btnStatus = document.getElementById('btnToggleStatusHd');
       if (btnStatus) {
@@ -5676,6 +5690,8 @@
       if (existing) {
         activeHelpdeskTicketId = existing.id;
         currentHelpdeskFilter = 'all';
+        var hdContainer = document.querySelector('.admin-helpdesk-container');
+        if (hdContainer) hdContainer.classList.add('thread-open');
         PrompterAdmin.renderHelpdeskList();
         PrompterAdmin.renderHelpdeskThread(existing);
       } else {
@@ -5713,6 +5729,8 @@
         currentHelpdeskTickets.unshift(newTicket);
         activeHelpdeskTicketId = newTicket.id;
         currentHelpdeskFilter = 'all';
+        var hdContainerNew = document.querySelector('.admin-helpdesk-container');
+        if (hdContainerNew) hdContainerNew.classList.add('thread-open');
         PrompterAdmin.saveStoredTickets();
         if (window.NotificationsCenter && typeof window.NotificationsCenter.syncTicketToCloud === 'function') {
           window.NotificationsCenter.syncTicketToCloud(newTicket);
@@ -5787,15 +5805,15 @@
         : '';
 
       return (
-        '<div class="chat-bubble-row adm-hd-bubble ' + (isOwnMessage ? 'is-user is-admin' : 'is-support') + '" data-msg-id="' + escapeHtml(msgId) + '" style="animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;">' +
+        '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user is-admin is-own' : 'is-support is-other is-singer') + '" data-msg-id="' + escapeHtml(msgId) + '">' +
           '<div class="chat-bubble-avatar ' + (isSupport ? 'avatar-support' : 'avatar-user') + '">' + avatarInitial + '</div>' +
           '<div class="chat-bubble-body">' +
             '<div class="chat-bubble-meta">' +
               '<span class="chat-bubble-sender">' + sName + '</span>' +
-              (isSupport ? '<span class="chat-bubble-badge-staff" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Desenvolvedor</span>' : '') +
+              (isSupport ? '<span class="chat-bubble-badge-staff">Desenvolvedor</span>' : '') +
               '<span>• ' + timeStr + '</span>' +
             '</div>' +
-            '<div class="chat-bubble-box" style="white-space: pre-wrap; line-height: 1.45;">' +
+            '<div class="chat-bubble-box">' +
               escapeHtml(msg.text || '') +
               photoHtml +
             '</div>' +

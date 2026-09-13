@@ -1366,9 +1366,18 @@ body.light-mode #singerAnnouncementModal .modal-content > div:last-child {
 
   .support-center-modal-card {
     width: 100% !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
     border-radius: 0 !important;
+  }
+
+  .sc-composer-textarea,
+  .sc-chat-search-input {
+    font-size: 16px !important;
+  }
+
+  .sc-chat-composer {
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
   }
 
   .sc-chat-sidebar {
