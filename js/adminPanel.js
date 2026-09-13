@@ -5514,13 +5514,17 @@
       if (btnDel) {
         btnDel.addEventListener('click', function () {
           if (confirm('Deseja excluir este atendimento de ' + uName + '?')) {
-            var idx = currentHelpdeskTickets.findIndex(function (x) { return x.id === ticket.id; });
+            var ticketIdToDelete = ticket.id;
+            var idx = currentHelpdeskTickets.findIndex(function (x) { return x.id === ticketIdToDelete; });
             if (idx >= 0) {
               currentHelpdeskTickets.splice(idx, 1);
               activeHelpdeskTicketId = null;
               PrompterAdmin.saveStoredTickets();
               PrompterAdmin.loadHelpdeskInbox();
-              if (window.showToast) window.showToast('Atendimento excluído.', 'info');
+              if (window.showToast) window.showToast('Atendimento excluído com sucesso.', 'info');
+            }
+            if (window.NotificationsCenter && typeof window.NotificationsCenter.deleteTicketFromCloud === 'function') {
+              window.NotificationsCenter.deleteTicketFromCloud(ticketIdToDelete);
             }
           }
         });
@@ -5643,6 +5647,13 @@
       PrompterAdmin.saveStoredTickets();
       if (window.NotificationsCenter && typeof window.NotificationsCenter.syncTicketToCloud === 'function') {
         window.NotificationsCenter.syncTicketToCloud(ticket);
+      }
+      if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+        window.PrompterCloud.broadcastEvent('ticket_status_changed', {
+          ticketId: ticket.id,
+          status: newStatus,
+          updated_at: ticket.updated_at
+        });
       }
       PrompterAdmin.renderHelpdeskList();
       PrompterAdmin.renderHelpdeskThread(ticket);
@@ -5776,7 +5787,7 @@
         : '';
 
       return (
-        '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '" data-msg-id="' + escapeHtml(msgId) + '" style="animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;">' +
+        '<div class="chat-bubble-row adm-hd-bubble ' + (isOwnMessage ? 'is-user is-admin' : 'is-support') + '" data-msg-id="' + escapeHtml(msgId) + '" style="animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;">' +
           '<div class="chat-bubble-avatar ' + (isSupport ? 'avatar-support' : 'avatar-user') + '">' + avatarInitial + '</div>' +
           '<div class="chat-bubble-body">' +
             '<div class="chat-bubble-meta">' +
@@ -5889,6 +5900,39 @@
           window.showToast('🎤 Novo cantor: ' + (payload.name || payload.email || 'novo usuário') + '!', 'success');
         }
         if (typeof PrompterAdmin.loadDashboardData === 'function') PrompterAdmin.loadDashboardData();
+      });
+
+      // Escuta alteração de status de atendimentos
+      window.PrompterCloud.onLiveEvent('ticket_status_changed', function (payload) {
+        if (!payload || !payload.ticketId) return;
+        var t = currentHelpdeskTickets.find(function (x) { return x.id === payload.ticketId; });
+        if (t) {
+          t.status = payload.status;
+          t.updated_at = payload.updated_at || new Date().toISOString();
+          PrompterAdmin.saveStoredTickets();
+          PrompterAdmin.renderHelpdeskList();
+          PrompterAdmin.updateHelpdeskBadge();
+          if (activeHelpdeskTicketId === payload.ticketId) {
+            PrompterAdmin.renderHelpdeskThread(t);
+          }
+        }
+      });
+
+      // Escuta exclusão de atendimentos
+      window.PrompterCloud.onLiveEvent('ticket_deleted', function (payload) {
+        if (!payload || !payload.ticketId) return;
+        var idx = currentHelpdeskTickets.findIndex(function (x) { return x.id === payload.ticketId; });
+        if (idx >= 0) {
+          currentHelpdeskTickets.splice(idx, 1);
+          PrompterAdmin.saveStoredTickets();
+          if (activeHelpdeskTicketId === payload.ticketId) {
+            activeHelpdeskTicketId = null;
+            PrompterAdmin.loadHelpdeskInbox();
+          } else {
+            PrompterAdmin.renderHelpdeskList();
+            PrompterAdmin.updateHelpdeskBadge();
+          }
+        }
       });
     },
 

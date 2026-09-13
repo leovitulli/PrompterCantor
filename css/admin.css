@@ -1602,6 +1602,162 @@
   scroll-behavior: smooth;
 }
 
+/* ── SUPORTE ROBUSTO PARA BALÕES DE CHAT (Compatível com formato novo e legado) ── */
+.adm-hd-bubble,
+.chat-bubble-row {
+  display: flex;
+  gap: 10px;
+  max-width: 82%;
+  position: relative;
+  animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Bolha da Equipe / Admin (Você) — Alinhada à DIREITA */
+.adm-hd-bubble.is-support,
+.adm-hd-bubble.is-admin,
+.chat-bubble-row.is-user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+  margin-left: auto;
+}
+
+.adm-hd-bubble.is-support .chat-bubble-box,
+.adm-hd-bubble.is-admin .chat-bubble-box,
+.chat-bubble-row.is-user .chat-bubble-box,
+.adm-hd-bubble.is-support > div:nth-child(2),
+.adm-hd-bubble.is-admin > div:nth-child(2) {
+  background: #1e3a8a;
+  color: #ffffff;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px 14px 4px 14px;
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.3);
+}
+
+/* Bolha do Cantor (Recebida) — Alinhada à ESQUERDA */
+.adm-hd-bubble.is-user,
+.chat-bubble-row.is-support {
+  align-self: flex-start;
+  flex-direction: row;
+  margin-right: auto;
+}
+
+.adm-hd-bubble.is-user .chat-bubble-box,
+.chat-bubble-row.is-support .chat-bubble-box,
+.adm-hd-bubble.is-user > div:nth-child(2) {
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px 14px 14px 4px;
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Fallback para estrutura flat antiga de adm-hd-bubble (div com estilo direto) */
+.adm-hd-bubble:not(:has(.chat-bubble-box)):not(:has(.chat-bubble-body)) {
+  flex-direction: column;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.adm-hd-bubble.is-support:not(:has(.chat-bubble-box)):not(:has(.chat-bubble-body)),
+.adm-hd-bubble.is-admin:not(:has(.chat-bubble-box)):not(:has(.chat-bubble-body)) {
+  background: #1e3a8a;
+  color: #ffffff;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-bottom-right-radius: 4px;
+  align-self: flex-end;
+}
+.adm-hd-bubble.is-user:not(:has(.chat-bubble-box)):not(:has(.chat-bubble-body)) {
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+}
+
+/* Avatares Circulares */
+.chat-bubble-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.chat-bubble-avatar.avatar-user {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff;
+}
+.chat-bubble-avatar.avatar-support {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  color: #0f172a;
+}
+
+/* Metadados */
+.chat-bubble-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.chat-bubble-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+.chat-bubble-row.is-user .chat-bubble-meta,
+.adm-hd-bubble.is-support .chat-bubble-meta,
+.adm-hd-bubble.is-admin .chat-bubble-meta {
+  justify-content: flex-end;
+}
+.chat-bubble-sender {
+  font-weight: 700;
+  color: #cbd5e1;
+}
+.chat-bubble-badge-staff {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Itens da Barra Lateral (suporta tanto .adm-hd-item quanto .sc-chat-ticket-item) */
+.adm-hd-item,
+.sc-chat-ticket-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  background: transparent;
+}
+.adm-hd-item:hover,
+.sc-chat-ticket-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.adm-hd-item.active,
+.adm-hd-item.is-active,
+.sc-chat-ticket-item.active {
+  background: rgba(56, 189, 248, 0.12);
+  border-left: 3px solid #38bdf8;
+}
+
 .adm-hd-composer {
   padding: 12px 18px;
   background: rgba(15, 23, 42, 0.95);

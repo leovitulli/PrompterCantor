@@ -549,6 +549,53 @@
       }
     },
 
+    deleteTicketFromCloud: function (ticketId, callback) {
+      if (!ticketId) {
+        if (typeof callback === 'function') callback(false);
+        return;
+      }
+
+      // 1. Remove localmente
+      var raw = localStorage.getItem('canta_ai_support_tickets');
+      var list = raw ? JSON.parse(raw) : [];
+      var filtered = list.filter(function (x) { return x.id !== ticketId; });
+      localStorage.setItem('canta_ai_support_tickets', JSON.stringify(filtered));
+
+      // 2. Broadcast realtime de deleção
+      if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+        window.PrompterCloud.broadcastEvent('ticket_deleted', { ticketId: ticketId });
+      }
+
+      if (!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.key) {
+        if (typeof callback === 'function') callback(true);
+        return;
+      }
+
+      var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
+      var headers = this.getAuthHeaders();
+      var sysRepId = this.SYSTEM_REGISTRY_REPERTOIRE_ID;
+      var ticketComposerKey = 'TICKET:' + ticketId;
+
+      // 3. Exclusão no System Registry ('songs')
+      var delSongPromise = fetch(baseUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&composer=eq.' + encodeURIComponent(ticketComposerKey), {
+        method: 'DELETE',
+        headers: headers
+      }).catch(function () {});
+
+      // 4. Exclusão na tabela 'tickets' (se ID for UUID)
+      var isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(ticketId || ''));
+      var delTicketPromise = isUUID ? fetch(baseUrl + '/tickets?id=eq.' + encodeURIComponent(ticketId), {
+        method: 'DELETE',
+        headers: headers
+      }).catch(function () {}) : Promise.resolve();
+
+      Promise.all([delSongPromise, delTicketPromise]).then(function () {
+        if (typeof callback === 'function') callback(true);
+      }).catch(function () {
+        if (typeof callback === 'function') callback(false);
+      });
+    },
+
     // Publica um novo comunicado oficial na nuvem
     publishAnnouncementToCloud: function (announcement, callback) {
       var raw = localStorage.getItem('canta_ai_admin_announcements');
@@ -1585,6 +1632,23 @@
       self.updateBadges();
     },
 
+    handleIncomingTicketDeleted: function (payload) {
+      if (!payload || !payload.ticketId) return;
+      var self = this;
+      var raw = localStorage.getItem('canta_ai_support_tickets');
+      var list = raw ? JSON.parse(raw) : [];
+      var filtered = list.filter(function (x) { return x.id !== payload.ticketId; });
+      localStorage.setItem('canta_ai_support_tickets', JSON.stringify(filtered));
+
+      if (self.state.activeTicketId === payload.ticketId) {
+        self.state.activeTicketId = null;
+        if (self.state.isModalOpen && self.state.activeTab === 'chat') {
+          self.renderChatTab();
+        }
+      }
+      self.updateBadges();
+    },
+
     handleIncomingAnnouncement: function (payload) {
       if (!payload) return;
       var self = this;
@@ -2140,6 +2204,9 @@
         });
         window.PrompterCloud.onLiveEvent('ticket_status_changed', function (payload) {
           self.handleIncomingTicketStatusChange(payload);
+        });
+        window.PrompterCloud.onLiveEvent('ticket_deleted', function (payload) {
+          self.handleIncomingTicketDeleted(payload);
         });
         window.PrompterCloud.onLiveEvent('new_announcement', function (payload) {
           self.handleIncomingAnnouncement(payload);
