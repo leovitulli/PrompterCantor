@@ -5383,12 +5383,14 @@
         activeHelpdeskTicketId = filtered[0].id;
       }
 
-      var activeTicket = activeHelpdeskTicketId ? currentHelpdeskTickets.find(function (t) { return t.id === activeHelpdeskTicketId; }) : null;
+      var activeTicket = activeHelpdeskTicketId
+        ? (currentHelpdeskTickets.find(function (t) { return String(t.id) === String(activeHelpdeskTicketId); }) || filtered[0])
+        : (!isMobileScreen ? filtered[0] : null);
       PrompterAdmin.renderHelpdeskThread(activeTicket);
 
       var html = '';
       filtered.forEach(function (t) {
-        var isActive = (t.id === activeHelpdeskTicketId);
+        var isActive = activeTicket && (String(t.id) === String(activeTicket.id));
         var isResolved = (t.status === 'resolved');
         var uName = escapeHtml(t.user_name || (t.user_email ? t.user_email.split('@')[0] : 'Cantor'));
         var dateStr = t.updated_at || t.created_at;
@@ -5408,7 +5410,7 @@
         var statusText = isResolved ? '🟢 Resolvido' : '🟡 Aberto';
 
         html +=
-          '<div class="sc-chat-ticket-item ' + (isActive ? 'active' : '') + '" data-ticket-id="' + t.id + '">' +
+          '<div class="sc-chat-ticket-item adm-hd-item ' + (isActive ? 'active' : '') + '" data-ticket-id="' + escapeHtml(String(t.id)) + '" role="button" tabindex="0" style="cursor: pointer;">' +
             '<div class="sc-ticket-item-top">' +
               '<span class="sc-ticket-status-pill ' + statusClass + '">' + statusText + '</span>' +
               '<span class="sc-ticket-item-time">' + timeAgo + '</span>' +
@@ -5429,9 +5431,10 @@
 
       listContainer.innerHTML = html;
 
-      listContainer.querySelectorAll('.adm-hd-item').forEach(function (item) {
+      listContainer.querySelectorAll('.adm-hd-item, .sc-chat-ticket-item').forEach(function (item) {
         item.addEventListener('click', function () {
           var tid = this.getAttribute('data-ticket-id');
+          if (!tid) return;
           activeHelpdeskTicketId = tid;
           PrompterAdmin.renderHelpdeskList();
         });
