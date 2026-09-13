@@ -766,8 +766,8 @@
 
       var popBadge = document.getElementById('notifPopBadge');
       if (popBadge) {
-        popBadge.innerText = counts.total > 0 ? counts.total + ' pendente' + (counts.total !== 1 ? 's' : '') : 'Tudo lido';
-        popBadge.style.display = counts.total > 0 ? 'inline-block' : 'none';
+        popBadge.innerText = counts.total > 0 ? counts.total + ' nova' + (counts.total !== 1 ? 's' : '') : '';
+        popBadge.style.display = counts.total > 0 ? 'inline-flex' : 'none';
       }
 
       var tabAnnBadge = document.getElementById('scTabAnnBadge');
@@ -793,10 +793,12 @@
 
     // ── POPOVER RÁPIDO DO CABEÇALHO (SINO) ──
     togglePopover: function () {
-      if (this.state.isPopoverOpen) {
-        this.closePopover();
-      } else {
+      var pop = document.getElementById('notificationsQuickPopover');
+      var isHidden = !pop || pop.classList.contains('hidden');
+      if (isHidden) {
         this.openPopover();
+      } else {
+        this.closePopover();
       }
     },
 
@@ -806,6 +808,9 @@
 
       var userProfileMenu = document.getElementById('userProfileMenu');
       if (userProfileMenu) userProfileMenu.classList.add('hidden');
+
+      var addMenu = document.getElementById('dropdownAddMenu');
+      if (addMenu) addMenu.classList.add('hidden');
 
       this.state.isPopoverOpen = true;
       pop.classList.remove('hidden');
@@ -831,33 +836,47 @@
 
       var feedItems = [];
 
-      // 1. Comunicados
+      // 1. Comunicados Oficiais
       if (filter !== 'chat') {
         var annList = this.getAnnouncements();
         annList.forEach(function (a) {
           var isRead = readAnnIds.indexOf(a.id) !== -1;
           if (filter === 'unread' && isRead) return;
 
-          var iconType = '📢';
-          var iconClass = '';
-          if (a.type === 'alert') { iconType = '⚠️'; iconClass = 'icon-alert'; }
-          else if (a.type === 'update') { iconType = '🚀'; iconClass = 'icon-update'; }
-          else if (a.type === 'feature' || a.type === 'promo') { iconType = '🎉'; iconClass = 'icon-update'; }
+          var tagText = 'Aviso';
+          var tagClass = 'tag-notice';
+          var avatarBg = 'grad-announcement';
+          var avatarIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
+
+          if (a.type === 'alert') {
+            tagText = 'Importante';
+            tagClass = 'tag-alert';
+            avatarBg = 'grad-alert';
+            avatarIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+          } else if (a.type === 'update') {
+            tagText = 'Novidade';
+            tagClass = 'tag-update';
+            avatarBg = 'grad-update';
+            avatarIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>';
+          }
 
           feedItems.push({
             type: 'announcement',
             id: a.id,
-            title: (ctx.isAdmin ? '📢 [Comunicado Enviado] ' : '📢 ') + (a.title || 'Comunicado Oficial'),
+            authorName: ctx.isAdmin ? 'Comunicado Enviado' : 'Equipe CantaAí',
+            title: a.title || 'Comunicado Oficial',
+            tag: tagText,
+            tagClass: tagClass,
             snippet: a.message || '',
             date: a.created_at || new Date().toISOString(),
             isRead: isRead,
-            icon: iconType,
-            iconClass: iconClass
+            avatarContent: avatarIcon,
+            avatarClass: avatarBg
           });
         });
       }
 
-      // 2. Chamados & Mensagens
+      // 2. Chamados & Mensagens Interativas
       if (filter !== 'announcements') {
         var tickets = this.getTickets();
         tickets.forEach(function (t) {
@@ -876,20 +895,26 @@
           var isRead = !hasUnread;
           if (filter === 'unread' && isRead) return;
 
-          var titlePrefix = hasUnread ? '💬 Nova Mensagem: ' : '📩 Atendimento: ';
-          if (ctx.isAdmin && t.user_name) {
-            titlePrefix = (hasUnread ? '🔵 ' : '👤 ') + '[' + t.user_name + '] ';
+          var author = '';
+          if (ctx.isAdmin) {
+            author = t.user_name || (t.user_email ? t.user_email.split('@')[0] : 'Cantor');
+          } else {
+            author = 'Suporte CantaAí';
           }
+          var initial = author ? author.trim().charAt(0).toUpperCase() : 'C';
 
           feedItems.push({
             type: 'ticket',
             id: t.id,
-            title: titlePrefix + (t.title || 'Chamado de Suporte'),
+            authorName: author,
+            title: t.title || 'Chamado de Atendimento',
+            tag: hasUnread ? 'Nova Mensagem' : 'Atendimento',
+            tagClass: hasUnread ? 'tag-unread-chat' : 'tag-chat',
             snippet: lastMsg ? lastMsg.text : (t.description || ''),
             date: (lastMsg && lastMsg.created_at) ? lastMsg.created_at : (t.created_at || new Date().toISOString()),
             isRead: isRead,
-            icon: hasUnread ? '💬' : '📩',
-            iconClass: hasUnread ? 'icon-reply' : ''
+            avatarContent: '<span>' + self.escapeHtml(initial) + '</span>',
+            avatarClass: ctx.isAdmin ? 'grad-singer' : 'grad-support'
           });
         });
       }
@@ -903,16 +928,21 @@
         unreadSignups.forEach(function (s) {
           var sName = s.name || (s.email ? s.email.split('@')[0] : 'Cantor');
           var sCode = (s.singer_code || '').replace(/^@+/, '');
-          var subDesc = (s.plan_type || 'PLANO FREE') + ' • Toque para ver no CRM ou chamar no WhatsApp';
+          var initial = sName ? sName.trim().charAt(0).toUpperCase() : 'C';
+          var subDesc = (s.plan_type || 'PLANO FREE') + ' • Toque para ver no CRM';
+
           feedItems.push({
             type: 'signup',
             id: s.id,
-            title: '🎉 Novo Cadastro: ' + sName + (sCode ? ' (' + sCode + ')' : ''),
+            authorName: sName + (sCode ? ' (@' + sCode + ')' : ''),
+            title: 'Novo Cadastro de Cantor',
+            tag: 'Cadastro',
+            tagClass: 'tag-signup',
             snippet: subDesc,
             date: s.created_at || new Date().toISOString(),
             isRead: false,
-            icon: '🎉',
-            iconClass: 'icon-update'
+            avatarContent: '<span>' + self.escapeHtml(initial) + '</span>',
+            avatarClass: 'grad-signup'
           });
         });
       }
@@ -924,9 +954,14 @@
       if (feedItems.length === 0) {
         container.innerHTML =
           '<div class="notif-pop-empty">' +
-            '<span class="notif-pop-empty-icon">🔔</span>' +
-            '<span class="notif-pop-empty-text">Nenhuma notificação no momento</span>' +
-            '<span class="notif-pop-empty-sub">Você está em dia com todas as novidades!</span>' +
+            '<div class="notif-pop-empty-icon-box">' +
+              '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>' +
+                '<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>' +
+              '</svg>' +
+            '</div>' +
+            '<span class="notif-pop-empty-text">Tudo limpo por aqui</span>' +
+            '<span class="notif-pop-empty-sub">Nenhuma notificação pendente no momento.</span>' +
           '</div>';
         return;
       }
@@ -935,14 +970,17 @@
       feedItems.forEach(function (item) {
         html +=
           '<div class="notif-pop-item ' + (!item.isRead ? 'is-unread' : '') + '" data-type="' + item.type + '" data-id="' + self.escapeHtml(item.id) + '">' +
-            '<div class="notif-pop-icon-box ' + item.iconClass + '">' + item.icon + '</div>' +
-            '<div class="notif-pop-content">' +
-              '<div class="notif-pop-top">' +
-                '<span class="notif-pop-item-title">' + self.escapeHtml(item.title) + '</span>' +
-                '<span class="notif-pop-item-time">' + self.formatRelativeTime(item.date) + '</span>' +
+            '<div class="notif-pop-avatar ' + item.avatarClass + '">' + item.avatarContent + '</div>' +
+            '<div class="notif-pop-body">' +
+              '<div class="notif-pop-row-top">' +
+                '<span class="notif-pop-author">' + self.escapeHtml(item.authorName) + '</span>' +
+                '<span class="notif-pop-pill ' + item.tagClass + '">' + self.escapeHtml(item.tag) + '</span>' +
+                '<span class="notif-pop-time">' + self.formatRelativeTime(item.date) + '</span>' +
               '</div>' +
-              '<div class="notif-pop-item-snippet">' + self.escapeHtml(item.snippet) + '</div>' +
+              '<div class="notif-pop-subject">' + self.escapeHtml(item.title) + '</div>' +
+              '<div class="notif-pop-snippet">' + self.escapeHtml(item.snippet) + '</div>' +
             '</div>' +
+            (!item.isRead ? '<span class="notif-unread-glow-dot" title="Não lida"></span>' : '') +
           '</div>';
       });
 

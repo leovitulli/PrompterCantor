@@ -1806,6 +1806,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (upm && !upm.classList.contains('hidden')) {
           upm.classList.add('hidden');
         }
+        // Fechar popover de notificações se estiver aberto
+        if (window.NotificationsCenter && typeof window.NotificationsCenter.closePopover === 'function') {
+          window.NotificationsCenter.closePopover();
+        } else {
+          var notifPop = document.getElementById('notificationsQuickPopover');
+          if (notifPop) notifPop.classList.add('hidden');
+        }
         dropdownAddMenu.classList.toggle('hidden');
       };
 
@@ -2178,9 +2185,21 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // Tecla ESC para fechar modais abertos
+    // Tecla ESC para fechar modais e dropdowns abertos
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' || e.keyCode === 27) {
+        // Fechar menus e popovers do cabeçalho
+        var dAdd = document.getElementById('dropdownAddMenu');
+        if (dAdd && !dAdd.classList.contains('hidden')) dAdd.classList.add('hidden');
+        var uMenu = document.getElementById('userProfileMenu');
+        if (uMenu && !uMenu.classList.contains('hidden')) uMenu.classList.add('hidden');
+        if (window.NotificationsCenter && typeof window.NotificationsCenter.closePopover === 'function') {
+          window.NotificationsCenter.closePopover();
+        } else {
+          var nPop = document.getElementById('notificationsQuickPopover');
+          if (nPop) nPop.classList.add('hidden');
+        }
+
         var openModals = document.querySelectorAll('.modal:not(.hidden)');
         if (openModals.length > 0) {
           closeModal(openModals[openModals.length - 1]);
@@ -4273,6 +4292,13 @@ document.addEventListener('DOMContentLoaded', function () {
         var addMenu = document.getElementById('dropdownAddMenu');
         if (addMenu && !addMenu.classList.contains('hidden')) {
           addMenu.classList.add('hidden');
+        }
+        // Fechar popover de notificações se estiver aberto
+        if (window.NotificationsCenter && typeof window.NotificationsCenter.closePopover === 'function') {
+          window.NotificationsCenter.closePopover();
+        } else {
+          var notifPop = document.getElementById('notificationsQuickPopover');
+          if (notifPop) notifPop.classList.add('hidden');
         }
         userProfileMenu.classList.toggle('hidden');
       };
