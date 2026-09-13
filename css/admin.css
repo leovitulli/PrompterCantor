@@ -1470,15 +1470,17 @@
 
 /* ══════════════════════════════════════════════════════════
    2. CENTRAL DE ATENDIMENTO & HELPDESK (INBOX DO CEO 2-COLUNAS)
+   Harmonizado 100% com o Design System da Central de Notificações
    ══════════════════════════════════════════════════════════ */
 .admin-helpdesk-container {
   display: flex;
   height: 620px;
-  background: rgba(11, 16, 28, 0.85);
+  max-height: calc(85vh - 120px);
+  background: rgba(11, 17, 32, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 820px) {
@@ -1491,7 +1493,7 @@
 .adm-hd-sidebar {
   width: 320px;
   min-width: 290px;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(11, 17, 32, 0.95);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
@@ -1516,38 +1518,45 @@
 
 .adm-hd-search-input {
   width: 100%;
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(7, 10, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  padding: 7px 12px;
+  padding: 8px 12px;
   color: #f8fafc;
   font-size: 0.8rem;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .adm-hd-search-input:focus {
   border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
 .adm-hd-filters {
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
 
 .adm-hd-filter-btn {
   flex: 1;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   padding: 5px 8px;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #94a3b8;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
   text-align: center;
+}
+
+.adm-hd-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
 }
 
 .adm-hd-filter-btn.active {
@@ -1559,191 +1568,48 @@
 .adm-hd-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-/* ── Item da lista de conversas ── */
-.adm-hd-item {
-  padding: 10px 12px;
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-}
-
-.adm-hd-item:hover {
-  background: rgba(56, 189, 248, 0.08);
-  border-color: rgba(56, 189, 248, 0.25);
-}
-
-.adm-hd-item.is-active {
-  background: rgba(56, 189, 248, 0.15);
-  border-color: #38bdf8;
-}
-
-.adm-hd-item-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.adm-hd-singer-name {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #f8fafc;
-}
-
-.adm-hd-time {
-  font-size: 0.68rem;
-  color: #64748b;
-}
-
-.adm-hd-snippet {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .adm-hd-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(7, 10, 18, 0.75);
+  background: rgba(15, 23, 42, 0.6);
+  position: relative;
+  overflow: hidden;
 }
 
 .adm-hd-thread-header {
-  padding: 14px 20px;
-  background: rgba(15, 23, 42, 0.85);
+  padding: 12px 18px;
+  background: rgba(15, 23, 42, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .adm-hd-feed {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 40px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   scroll-behavior: smooth;
-  background-image: radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.03) 0%, transparent 50%);
-}
-
-.adm-hd-bubble {
-  max-width: 70%;
-  padding: 10px 14px;
-  border-radius: 16px;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  position: relative;
-  animation: nc-bubble-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Bolha do CANTOR — esquerda */
-.adm-hd-bubble.is-user {
-  align-self: flex-start;
-  background: rgba(30, 41, 59, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
-  border-bottom-left-radius: 4px;
-  margin-left: 30px;
-}
-
-.adm-hd-bubble.is-user::before {
-  content: '🎤';
-  position: absolute;
-  left: -28px;
-  bottom: 4px;
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-/* Bolha do ADMIN — direita (is-admin + is-support como alias) */
-.adm-hd-bubble.is-admin,
-.adm-hd-bubble.is-support {
-  align-self: flex-end;
-  background: linear-gradient(135deg, rgba(14, 116, 144, 0.92), rgba(3, 105, 161, 0.97));
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  color: #ffffff;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 2px 14px rgba(14, 116, 144, 0.35);
-  margin-right: 30px;
-}
-
-.adm-hd-bubble.is-admin::after,
-.adm-hd-bubble.is-support::after {
-  content: '👨‍💻';
-  position: absolute;
-  right: -28px;
-  bottom: 4px;
-  font-size: 0.9rem;
-  opacity: 0.85;
-}
-
-.adm-hd-bubble-meta {
-  font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.5);
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.adm-hd-bubble.is-user .adm-hd-bubble-meta {
-  color: rgba(148, 163, 184, 0.8);
 }
 
 .adm-hd-composer {
-  padding: 12px 20px;
-  background: rgba(15, 23, 42, 0.92);
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 12px 18px;
+  background: rgba(15, 23, 42, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  backdrop-filter: blur(8px);
-}
-
-.adm-hd-composer-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-}
-
-.adm-hd-textarea {
-  flex: 1;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 10px 14px;
-  color: #f8fafc;
-  font-size: 0.85rem;
-  resize: none;
-  height: 52px;
-  outline: none;
-  font-family: inherit;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.adm-hd-textarea:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+  flex-shrink: 0;
 }
 
 /* ══════════════════════════════════════════════════════════

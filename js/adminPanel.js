@@ -743,13 +743,13 @@
 
               '<!-- ABA 3: CENTRAL DE ATENDIMENTO & HELPDESK (INBOX UNIFICADA DO CEO) -->' +
               '<div id="adminTabHelpdesk" class="admin-tab-content hidden">' +
-                '<div class="admin-helpdesk-container">' +
+                '<div class="admin-helpdesk-container sc-chat-layout">' +
                   '<!-- SIDEBAR DA INBOX -->' +
-                  '<div class="adm-hd-sidebar">' +
-                    '<div class="adm-hd-sidebar-header">' +
+                  '<div class="sc-chat-sidebar adm-hd-sidebar">' +
+                    '<div class="sc-chat-sidebar-header adm-hd-sidebar-header">' +
                       '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-                        '<strong style="color:#f8fafc; font-size:0.88rem;">💬 Conversas</strong>' +
-                        '<button type="button" id="btnHdStartNew" class="btn btn-outline btn-xs" style="color:#38bdf8; border-color:rgba(56,189,248,0.4); font-size:0.72rem; padding:3px 8px;">➕ Novo</button>' +
+                        '<strong style="color:#f8fafc; font-size:0.85rem;">💬 Atendimentos & Suporte</strong>' +
+                        '<button type="button" id="btnHdStartNew" class="btn btn-outline btn-xs" style="color:#38bdf8; border-color:rgba(56,189,248,0.4); font-size:0.72rem; padding:3px 8px; border-radius:6px;">➕ Novo</button>' +
                       '</div>' +
                       '<input type="text" id="admHdSearchInput" class="adm-hd-search-input" placeholder="🔍 Buscar por cantor ou email...">' +
                       '<div class="adm-hd-filters">' +
@@ -758,36 +758,36 @@
                         '<button type="button" class="adm-hd-filter-btn" data-filter="resolved" id="btnHdFilterResolved" style="color:#34d399;">🟢 Resolvidos</button>' +
                       '</div>' +
                     '</div>' +
-                    '<div id="admHdTicketsList" class="adm-hd-list">' +
+                    '<div id="admHdTicketsList" class="sc-chat-tickets-list adm-hd-list">' +
                       '<div style="color:#94a3b8; font-size:0.8rem; text-align:center; padding:24px;">Carregando atendimentos...</div>' +
                     '</div>' +
                   '</div>' +
 
                   '<!-- PAINEL DA THREAD -->' +
-                  '<div class="adm-hd-main" id="admHdMainPanel">' +
+                  '<div class="sc-chat-main-area adm-hd-main" id="admHdMainPanel">' +
                     '<div id="admHdThreadPlaceholder" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; padding:30px; text-align:center;">' +
                       '<span style="font-size:3rem; margin-bottom:12px;">💬</span>' +
                       '<strong style="color:#f8fafc; font-size:1.1rem; margin-bottom:6px;">Selecione um cantor na lista</strong>' +
                       '<p style="font-size:0.82rem; max-width:320px; line-height:1.4; margin:0;">Visualize o histórico, responda dúvidas em tempo real ou marque como resolvido.</p>' +
                     '</div>' +
                     '<div id="admHdThreadContainer" style="display:none; flex:1; flex-direction:column; height:100%;">' +
-                      '<div class="adm-hd-thread-header" id="admHdThreadHeader">' +
+                      '<div class="sc-thread-header adm-hd-thread-header" id="admHdThreadHeader">' +
                         '<!-- Renderizado dinamicamente -->' +
                       '</div>' +
-                      '<div class="adm-hd-feed" id="admHdMessagesFeed">' +
+                      '<div class="sc-thread-messages-feed adm-hd-feed" id="admHdMessagesFeed">' +
                         '<!-- Feed de mensagens -->' +
                       '</div>' +
-                      '<div class="adm-hd-composer" id="admHdComposer">' +
-                        '<div id="admHdPreviewRow" class="hidden" style="display:flex; align-items:center; gap:8px; margin-bottom:6px; background:rgba(30,41,59,0.8); padding:6px 10px; border-radius:8px;">' +
-                          '<img id="admHdPreviewImg" src="" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">' +
-                          '<span style="font-size:0.75rem; color:#cbd5e1; flex:1;">Print anexo pronto para envio</span>' +
-                          '<button type="button" id="btnHdRemoveImg" style="background:transparent; border:none; color:#f87171; cursor:pointer;">✕</button>' +
+                      '<div class="sc-chat-composer adm-hd-composer" id="admHdComposer">' +
+                        '<div id="admHdPreviewRow" class="sc-composer-attachment-preview hidden" style="padding: 6px 12px; background: rgba(56, 189, 248, 0.08); border-top: 1px solid rgba(56, 189, 248, 0.2); display: flex; align-items: center; gap: 8px;">' +
+                          '<img id="admHdPreviewImg" class="sc-composer-attachment-img" src="" style="height: 36px; border-radius: 4px; object-fit: cover;">' +
+                          '<span style="font-size:0.75rem; color:#38bdf8; font-weight: 600; flex:1;">Print anexo pronto para envio</span>' +
+                          '<button type="button" id="btnHdRemoveImg" style="background:transparent; border:none; color:#ef4444; font-weight: bold; cursor:pointer; padding: 2px 6px;">✕ Remover</button>' +
                         '</div>' +
-                        '<div class="adm-hd-composer-row">' +
-                          '<textarea id="admHdInputText" class="adm-hd-textarea" placeholder="Digite sua resposta para o cantor... (Pressione Enter para enviar)"></textarea>' +
+                        '<div class="sc-composer-input-row">' +
                           '<input type="file" id="admHdFileInput" accept="image/*" style="display:none;">' +
-                          '<button type="button" id="btnHdAttachImg" class="btn btn-outline btn-sm" title="Anexar print ou foto" style="height:42px; padding:0 12px; color:#38bdf8; border-color:rgba(56,189,248,0.3);">📷</button>' +
-                          '<button type="button" id="btnHdSendMsg" class="btn btn-primary btn-sm" style="height:42px; padding:0 18px; font-weight:800;">Enviar</button>' +
+                          '<button type="button" id="btnHdAttachImg" class="sc-composer-btn-attach" title="Anexar print ou foto">📎</button>' +
+                          '<textarea id="admHdInputText" class="sc-composer-textarea" rows="1" placeholder="Digite sua resposta para o cantor... (Pressione Enter para enviar)"></textarea>' +
+                          '<button type="button" id="btnHdSendMsg" class="sc-composer-btn-send" title="Enviar Resposta">➤</button>' +
                         '</div>' +
                       '</div>' +
                     '</div>' +
@@ -5392,6 +5392,7 @@
         var uName = escapeHtml(t.user_name || (t.user_email ? t.user_email.split('@')[0] : 'Cantor'));
         var dateStr = t.updated_at || t.created_at;
         var timeAgo = dateStr ? new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+        var avatarInitial = uName ? uName.charAt(0).toUpperCase() : '🎤';
 
         var lastMsg = '';
         if (t.messages && Array.isArray(t.messages) && t.messages.length > 0) {
@@ -5402,22 +5403,25 @@
           lastMsg = t.description || t.title || 'Chamado aberto';
         }
 
-        var statusDot = isResolved
-          ? '<span style="color:#34d399; font-size:0.68rem; font-weight:700;">🟢 Resolvido</span>'
-          : '<span style="color:#fbbf24; font-size:0.68rem; font-weight:700;">🟡 Aberto</span>';
+        var statusClass = isResolved ? 'status-resolved' : 'status-open';
+        var statusText = isResolved ? '🟢 Resolvido' : '🟡 Aberto';
 
         html +=
-          '<div class="adm-hd-item ' + (isActive ? 'active' : '') + '" data-ticket-id="' + t.id + '">' +
-            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-              '<strong style="font-size:0.85rem; color:#f8fafc; font-weight:700;">' + uName + '</strong>' +
-              '<span style="font-size:0.68rem; color:#64748b;">' + timeAgo + '</span>' +
+          '<div class="sc-chat-ticket-item ' + (isActive ? 'active' : '') + '" data-ticket-id="' + t.id + '">' +
+            '<div class="sc-ticket-item-top">' +
+              '<span class="sc-ticket-status-pill ' + statusClass + '">' + statusText + '</span>' +
+              '<span class="sc-ticket-item-time">' + timeAgo + '</span>' +
             '</div>' +
-            '<div style="font-size:0.75rem; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:6px;">' +
+            '<div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">' +
+              '<div class="chat-bubble-avatar avatar-user" style="width: 22px; height: 22px; font-size: 0.65rem; flex-shrink: 0;">' + avatarInitial + '</div>' +
+              '<strong class="sc-ticket-item-title" style="margin: 0; font-size: 0.84rem; color: #f8fafc;">' + uName + '</strong>' +
+            '</div>' +
+            '<div class="sc-ticket-item-preview" style="color: #94a3b8; font-size: 0.74rem; margin-top: 2px;">' +
               escapeHtml(lastMsg) +
             '</div>' +
-            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-              statusDot +
-              '<span style="font-size:0.68rem; color:#64748b;">' + escapeHtml(t.user_email || '') + '</span>' +
+            '<div style="font-size: 0.68rem; color: #64748b; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">' +
+              '<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;">' + escapeHtml(t.user_email || '') + '</span>' +
+              '<span style="color: #38bdf8; font-weight: 600; font-size: 0.68rem;">' + escapeHtml(t.title || 'Geral') + '</span>' +
             '</div>' +
           '</div>';
       });
@@ -5463,25 +5467,24 @@
         ? '<button type="button" class="btn btn-sm btn-outline" id="btnToggleStatusHd" style="color:#fbbf24; border-color:rgba(251,191,36,0.4); font-size:0.75rem;">🔄 Reabrir Chamado</button>'
         : '<button type="button" class="btn btn-sm btn-primary" id="btnToggleStatusHd" style="font-size:0.75rem;">✅ Marcar Resolvido</button>';
 
+      header.className = 'sc-thread-header adm-hd-thread-header';
       header.innerHTML =
-        '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; width:100%;">' +
-          '<div>' +
-            '<div style="display:flex; align-items:center; gap:8px;">' +
-              '<strong style="font-size:1.05rem; color:#f8fafc;">' + uName + '</strong>' +
-              (isResolved
-                ? '<span style="font-size:0.72rem; padding:2px 8px; border-radius:999px; background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3); font-weight:700;">🟢 Resolvido</span>'
-                : '<span style="font-size:0.72rem; padding:2px 8px; border-radius:999px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); font-weight:700;">🟡 Em Aberto</span>') +
-            '</div>' +
-            '<div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">' +
-              uEmail + (uPhone ? (' &bull; ' + escapeHtml(uPhone)) : '') + ' &bull; Assunto: <strong style="color:#cbd5e1;">' + escapeHtml(ticket.title || 'Geral') + '</strong>' +
-            '</div>' +
+        '<div class="sc-thread-title-area" style="min-width:0;">' +
+          '<div style="display:flex; align-items:center; gap:8px;">' +
+            '<h4 class="sc-thread-title" style="margin:0; font-size:1.05rem; font-weight:800; color:#f8fafc;">' + uName + '</h4>' +
+            '<span class="sc-ticket-status-pill ' + (isResolved ? 'status-resolved' : 'status-open') + '">' +
+              (isResolved ? '🟢 Resolvido' : '🟡 Em Aberto') +
+            '</span>' +
           '</div>' +
-          '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
-            waDirectHtml +
-            statusToggleBtn +
-            '<button type="button" class="btn btn-sm btn-outline" id="btnViewSingerInCrm" style="color:#38bdf8; border-color:rgba(56,189,248,0.3); font-size:0.75rem;" title="Abrir perfil no CRM">👤 Perfil</button>' +
-            '<button type="button" class="btn btn-sm btn-outline" id="btnDeleteHdTicket" style="color:#f87171; border-color:rgba(239,68,68,0.3); font-size:0.75rem;" title="Excluir Chamado">🗑️</button>' +
+          '<div style="font-size:0.75rem; color:#94a3b8; margin-top:3px;">' +
+            uEmail + (uPhone ? (' • ' + escapeHtml(uPhone)) : '') + ' • Assunto: <strong style="color:#cbd5e1;">' + escapeHtml(ticket.title || 'Geral') + '</strong> • Chamado #' + escapeHtml(String(ticket.id).slice(-6)) +
           '</div>' +
+        '</div>' +
+        '<div class="sc-thread-actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+          waDirectHtml +
+          statusToggleBtn +
+          '<button type="button" class="btn btn-outline btn-xs" id="btnViewSingerInCrm" style="color:#38bdf8; border-color:rgba(56,189,248,0.4); font-size:0.76rem; border-radius:6px; padding:5px 10px;" title="Abrir perfil no CRM">👤 Perfil</button>' +
+          '<button type="button" class="btn btn-outline btn-xs" id="btnDeleteHdTicket" style="color:#f87171; border-color:rgba(239,68,68,0.4); font-size:0.76rem; border-radius:6px; padding:5px 8px;" title="Excluir Chamado">🗑️</button>' +
         '</div>';
 
       var btnStatus = document.getElementById('btnToggleStatusHd');
@@ -5538,23 +5541,7 @@
 
       var feedHtml = '';
       msgs.forEach(function (m) {
-        var isSupport = (m.sender === 'support');
-        var sName = isSupport ? 'Equipe CantaAí (Você)' : escapeHtml(m.sender_name || ticket.user_name || 'Cantor');
-        var timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-
-        var imgHtml = m.image_url
-          ? '<div style="margin-top:8px;"><img src="' + m.image_url + '" class="ticket-thumb-clickable" data-src="' + m.image_url + '" alt="Print Anexo" style="max-height:140px; max-width:240px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); cursor:pointer; object-fit:cover; display:block;"></div>'
-          : '';
-
-        feedHtml +=
-          '<div class="adm-hd-bubble ' + (isSupport ? 'is-support' : 'is-user') + '" data-msg-id="' + escapeHtml(m.id || '') + '">' +
-            '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; font-size:0.72rem;">' +
-              '<strong style="color:' + (isSupport ? '#38bdf8' : '#e2e8f0') + ';">' + sName + '</strong>' +
-              '<span style="color:#64748b;">' + timeStr + '</span>' +
-            '</div>' +
-            '<div style="white-space:pre-wrap; line-height:1.45; font-size:0.85rem;">' + escapeHtml(m.text || '') + '</div>' +
-            imgHtml +
-          '</div>';
+        feedHtml += PrompterAdmin.buildHelpdeskBubbleHtml(m, ticket);
       });
 
       feed.innerHTML = feedHtml;
@@ -5769,6 +5756,43 @@
       this.renderHelpdeskList();
     },
 
+    // ── GERAÇÃO DE BOLHA UNIFICADA COM O APPWEB (Admin Panel) ──
+    buildHelpdeskBubbleHtml: function (msg, ticket) {
+      if (!msg) return '';
+      var isSupport = (msg.sender === 'support');
+      // No painel do Admin: Suporte é "Você" (enviado à direita em azul)
+      // Mensagens do Cantor são recebidas (à esquerda em slate)
+      var isOwnMessage = isSupport;
+
+      var sName = isSupport ? 'Equipe CantaAí (Você)' : escapeHtml(msg.sender_name || (ticket && ticket.user_name) || 'Cantor');
+      var avatarInitial = isSupport ? '👨‍💻' : (sName ? sName.charAt(0).toUpperCase() : '🎤');
+      var timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+      var msgId = msg.id || ('msg-' + Date.now());
+
+      var photoHtml = msg.image_url
+        ? '<div class="chat-bubble-attachment" style="margin-top: 8px;">' +
+            '<img src="' + msg.image_url + '" class="chat-attachment-img ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Print Anexo" style="max-height: 180px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); display: block; object-fit: cover;">' +
+          '</div>'
+        : '';
+
+      return (
+        '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '" data-msg-id="' + escapeHtml(msgId) + '" style="animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;">' +
+          '<div class="chat-bubble-avatar ' + (isSupport ? 'avatar-support' : 'avatar-user') + '">' + avatarInitial + '</div>' +
+          '<div class="chat-bubble-body">' +
+            '<div class="chat-bubble-meta">' +
+              '<span class="chat-bubble-sender">' + sName + '</span>' +
+              (isSupport ? '<span class="chat-bubble-badge-staff" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Desenvolvedor</span>' : '') +
+              '<span>• ' + timeStr + '</span>' +
+            '</div>' +
+            '<div class="chat-bubble-box" style="white-space: pre-wrap; line-height: 1.45;">' +
+              escapeHtml(msg.text || '') +
+              photoHtml +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    },
+
     // ── INJEÇÃO CIRÚRGICA DE BOLHA (Admin Panel) ──
     appendAdminBubble: function (msg, ticket) {
       var feed = document.getElementById('admHdMessagesFeed');
@@ -5777,29 +5801,10 @@
       var msgId = msg.id || ('msg-' + Date.now());
       if (msgId && feed.querySelector('[data-msg-id="' + msgId + '"]')) return;
 
-      var isSupport = (msg.sender === 'support');
-      var sName = isSupport
-        ? 'Equipe CantaAí (Você)'
-        : escapeHtml(msg.sender_name || (ticket && ticket.user_name) || 'Cantor');
-      var timeStr = msg.created_at
-        ? new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        : '';
-
-      var imgHtml = msg.image_url
-        ? '<div style="margin-top:8px;"><img src="' + msg.image_url + '" class="ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Print" style="max-height:140px; max-width:240px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); cursor:pointer; object-fit:cover; display:block;"></div>'
-        : '';
-
-      var el = document.createElement('div');
-      el.className = 'adm-hd-bubble ' + (isSupport ? 'is-support' : 'is-user');
-      el.setAttribute('data-msg-id', msgId);
-      el.style.animation = 'nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards';
-      el.innerHTML =
-        '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; font-size:0.72rem;">' +
-          '<strong style="color:' + (isSupport ? '#38bdf8' : '#e2e8f0') + ';">' + sName + '</strong>' +
-          '<span style="color:#64748b;">' + timeStr + '</span>' +
-        '</div>' +
-        '<div style="white-space:pre-wrap; line-height:1.45; font-size:0.85rem;">' + escapeHtml(msg.text || '') + '</div>' +
-        imgHtml;
+      var temp = document.createElement('div');
+      temp.innerHTML = this.buildHelpdeskBubbleHtml(msg, ticket);
+      var el = temp.firstElementChild;
+      if (!el) return;
 
       el.querySelectorAll('.ticket-thumb-clickable').forEach(function (img) {
         img.addEventListener('click', function () {

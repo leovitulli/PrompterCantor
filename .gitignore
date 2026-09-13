@@ -8,3 +8,5 @@ scratch/
 .chrome_temp/
 *.bak*
 Claude outputs/
+.vercel
+.env*
