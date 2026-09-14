@@ -257,40 +257,23 @@
             }
           });
 
-          var hasLeoOgum = allUserData.some(function(u) {
-            var uCodeClean = (u.singer_code || '').toLowerCase().replace(/^@+/, '');
-            return uCodeClean === 'leoogum' || (u.email && u.email.toLowerCase() === 'leoogum@gmail.com');
-          });
-          if (!hasLeoOgum) {
-            allUserData.unshift({
-              id: 'user-leoogum-seed-id',
-              name: 'Leo Ogum',
-              email: 'leoogum@gmail.com',
-              phone: '(21) 99887-7665',
-              cpf: '',
-              instagram: '@leoogum',
-              singer_code: '@leoogum',
-              plan_tier: 'pro',
-              plan_type: '💎 PRO ANUAL',
-              coupon_used: 'SAMBA30',
-              is_vip: false,
-              billing_due_date: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
-              is_online: true,
-              status_text: '🟢 Conectado (Desktop)',
-              reps_count: 5,
-              songs_count: 84,
-              last_seen: 'Hoje',
-              created_at: '2026-09-08'
-            });
-          }
-
-          // Higienização crucial: Expurgar desenvolvedor/SuperAdmin e contas temporárias dummy do CRM
+          // Higienização crucial: Expurgar desenvolvedor/SuperAdmin, duplicatas e cadastros temporários
+          var seenUserEmails = {};
+          var seenUserIds = {};
           allUserData = allUserData.filter(function(u) {
             if (!u) return false;
             var uEmail = (u.email || '').toLowerCase().trim();
+            var uId = (u.id || '').toLowerCase().trim();
             var uName = (u.name || '').toLowerCase();
-            if (isPlatformDeveloper(uEmail) || isPlatformDeveloper(u.id) || u.id === 'admin-leovitulli-id' || u.singer_code === '@leovitulli') return false;
+            // Purga específica da duplicata acidental do Leo Ogum
+            if (uId === 'user-leoogum-seed-id' || uEmail === 'leoogum@gmail.com') return false;
+            if (isPlatformDeveloper(uEmail) || isPlatformDeveloper(uId) || uId === 'admin-leovitulli-id' || u.singer_code === '@leovitulli') return false;
             if (uEmail.indexOf('@cantaai.com') !== -1 || uEmail.indexOf('novo_cantor_') !== -1 || uEmail.indexOf('cantor_') === 0 || uName.indexOf('novo cadastro') !== -1) return false;
+            // Deduplicação estrita por e-mail e ID
+            if (uEmail && seenUserEmails[uEmail]) return false;
+            if (uId && seenUserIds[uId]) return false;
+            if (uEmail) seenUserEmails[uEmail] = true;
+            if (uId) seenUserIds[uId] = true;
             return true;
           });
 
@@ -2866,9 +2849,10 @@
             if (sObj && (sObj.email || sObj.id)) {
               if (sObj && sObj.email && sObj.email.indexOf('@') !== -1) {
                 var sEmail = (sObj.email || '').trim().toLowerCase();
+                var sId = (sObj.id || '').toLowerCase();
+                if (sId === 'user-leoogum-seed-id' || sEmail === 'leoogum@gmail.com') return;
                 if (isPlatformDeveloper(sEmail)) return;
                 var sCode = (sObj.singer_code || '').trim().toLowerCase();
-                var sId = (sObj.id || '').toLowerCase();
                 var deletedSingers = getDeletedSingers();
 
                 if (deletedSingers.indexOf(sEmail) !== -1 || deletedSingers.indexOf(sCode) !== -1 || (sId && deletedSingers.indexOf(sId) !== -1)) {
@@ -2970,10 +2954,11 @@
           if (res && res.data && res.data.length > 0) {
             res.data.forEach(function(p) {
               var pEmail = (p.email || '').trim().toLowerCase();
+              var pId = (p.id || '').toLowerCase();
+              if (pId === 'user-leoogum-seed-id' || pEmail === 'leoogum@gmail.com') return;
               if (!pEmail || pEmail.indexOf('@') === -1 || isPlatformDeveloper(pEmail)) return;
 
               var pCode = (p.singer_code || '').trim().toLowerCase();
-              var pId = (p.id || '').toLowerCase();
               var deletedSingers = getDeletedSingers();
 
               if (deletedSingers.indexOf(pEmail) !== -1 || deletedSingers.indexOf(pCode) !== -1 || (pId && deletedSingers.indexOf(pId) !== -1)) {
