@@ -3798,12 +3798,25 @@
         // Informação de Plano & Valor
         var planInfoHtml = '';
         if (pInfo.isVip) {
-          planInfoHtml = '<strong style="color:#fbbf24; font-size:0.82rem;">👑 Plano VIP</strong><div style="font-size:0.72rem; color:#f59e0b;">Isenção 100% OFF</div>';
+          planInfoHtml =
+            '<div class="fin-plan-cell">' +
+              '<span class="badge-plan-executive badge-plan-vip">👑 VIP Parceiro</span>' +
+              '<div class="fin-plan-price-tag isento">R$ 0,00 <span class="fin-plan-discount">100% OFF</span></div>' +
+            '</div>';
         } else if (pInfo.isPro) {
-          var pValStr = PrompterAdmin.formatBRL(st.amount) + (st.isAnnual ? '/ano' : '/mês');
-          planInfoHtml = '<strong style="color:#38bdf8; font-size:0.82rem;">' + escapeHtml(pInfo.badgeText) + '</strong><div style="font-size:0.75rem; color:#f8fafc; font-weight:700;">' + pValStr + '</div>';
+          var pValStr = PrompterAdmin.formatBRL(st.amount);
+          var pPeriodStr = st.isAnnual ? '/ano' : '/mês';
+          planInfoHtml =
+            '<div class="fin-plan-cell">' +
+              '<span class="badge-plan-executive badge-plan-pro">' + escapeHtml(pInfo.badgeText) + '</span>' +
+              '<div class="fin-plan-price-tag">' + pValStr + ' <span class="fin-plan-period">' + pPeriodStr + '</span></div>' +
+            '</div>';
         } else {
-          planInfoHtml = '<strong style="color:#94a3b8; font-size:0.82rem;">Plano Gratuito</strong><div style="font-size:0.72rem; color:#64748b;">R$ 0,00</div>';
+          planInfoHtml =
+            '<div class="fin-plan-cell">' +
+              '<span class="badge-plan-executive badge-plan-free">⚡ FREE</span>' +
+              '<div class="fin-plan-price-tag free" style="color:#64748b; font-size:0.75rem;">R$ 0,00</div>' +
+            '</div>';
         }
 
         // Vencimento
