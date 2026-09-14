@@ -3795,27 +3795,28 @@
           statusBadgeHtml = '<span class="badge-plan-executive badge-plan-free">⚡ FREE</span>';
         }
 
-        // Informação de Plano & Valor
+        // Informação de Plano & Valor (Sóbrio, executivo, sem carnaval de badges)
         var planInfoHtml = '';
         if (pInfo.isVip) {
           planInfoHtml =
             '<div class="fin-plan-cell">' +
-              '<span class="badge-plan-executive badge-plan-vip">👑 VIP Parceiro</span>' +
-              '<div class="fin-plan-price-tag isento">R$ 0,00 <span class="fin-plan-discount">100% OFF</span></div>' +
+              '<div class="fin-plan-name">👑 VIP Parceiro</div>' +
+              '<div class="fin-plan-val">R$ 0,00 • Isenção</div>' +
             '</div>';
         } else if (pInfo.isPro) {
           var pValStr = PrompterAdmin.formatBRL(st.amount);
           var pPeriodStr = st.isAnnual ? '/ano' : '/mês';
+          var proTitle = st.isAnnual ? '💎 PRO Anual' : '⚡ PRO Mensal';
           planInfoHtml =
             '<div class="fin-plan-cell">' +
-              '<span class="badge-plan-executive badge-plan-pro">' + escapeHtml(pInfo.badgeText) + '</span>' +
-              '<div class="fin-plan-price-tag">' + pValStr + ' <span class="fin-plan-period">' + pPeriodStr + '</span></div>' +
+              '<div class="fin-plan-name">' + proTitle + '</div>' +
+              '<div class="fin-plan-val">' + pValStr + pPeriodStr + '</div>' +
             '</div>';
         } else {
           planInfoHtml =
             '<div class="fin-plan-cell">' +
-              '<span class="badge-plan-executive badge-plan-free">⚡ FREE</span>' +
-              '<div class="fin-plan-price-tag free" style="color:#64748b; font-size:0.75rem;">R$ 0,00</div>' +
+              '<div class="fin-plan-name" style="color:#cbd5e1;">Plano Free</div>' +
+              '<div class="fin-plan-val">R$ 0,00</div>' +
             '</div>';
         }
 

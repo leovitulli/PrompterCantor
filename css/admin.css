@@ -583,40 +583,21 @@
 }
 
 .fin-plan-cell {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  gap: 2px;
+  line-height: 1.35;
 }
 
-.fin-plan-price-tag {
-  font-size: 0.8rem;
+.fin-plan-name {
   font-weight: 700;
-  color: #f8fafc;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  font-size: 0.84rem;
+  color: #f1f5f9;
 }
 
-.fin-plan-price-tag.isento {
-  color: #34d399;
+.fin-plan-val {
   font-size: 0.76rem;
-}
-
-.fin-plan-discount {
-  font-size: 0.68rem;
-  color: #fbbf24;
-  font-weight: 700;
-  background: rgba(251, 191, 36, 0.14);
-  padding: 1px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(251, 191, 36, 0.3);
-}
-
-.fin-plan-period {
-  font-size: 0.72rem;
   color: #94a3b8;
-  font-weight: 500;
 }
 
 .admin-reps-stat {
