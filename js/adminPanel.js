@@ -512,24 +512,24 @@
               '<div class="admin-title-group">' +
                 '<div class="admin-avatar-crown">👑</div>' +
                 '<div>' +
-                  '<div class="admin-suite-title">CantaAí PRO <span class="badge-ceo">CEO & FOUNDER SUITE</span></div>' +
-                  '<div class="admin-suite-subtitle">Painel de Governança Executiva & Telemetria SaaS em Tempo Real</div>' +
+                  '<div class="admin-suite-title">CantaAí PRO <span class="badge-ceo">PAINEL DO FUNDADOR</span></div>' +
+                  '<div class="admin-suite-subtitle">Painel de Controle e Métricas em Tempo Real</div>' +
                 '</div>' +
               '</div>' +
               '<div class="admin-header-actions-right">' +
-                '<span class="live-telemetry-badge"><span class="pulse-green-dot"></span> TELEMETRIA AO VIVO</span>' +
+                '<span class="live-telemetry-badge"><span class="pulse-green-dot"></span> AO VIVO</span>' +
                 '<button class="modal-close btn-close-admin">✕</button>' +
               '</div>' +
             '</div>' +
 
-            '<!-- ABAS DE NAVEGAÇÃO EXECUTIVA (CEO ADMINISTRATIVO + MARKETING + FINANCEIRO) -->' +
+            '<!-- ABAS DE NAVEGAÇÃO PRINCIPAL -->' +
             '<div class="admin-nav-tabs">' +
-              '<button class="admin-tab-btn active" data-tab="growth">📊 Growth & Prova Social</button>' +
-              '<button class="admin-tab-btn" data-tab="clients">👥 CRM 360° Cantores</button>' +
-              '<button class="admin-tab-btn" data-tab="finance">💰 Financeiro & Balancete ERP</button>' +
-              '<button class="admin-tab-btn" data-tab="helpdesk">💬 Atendimento & Helpdesk <span id="admHelpdeskBadge" class="sc-tab-badge" style="display:none; background:#ef4444; color:#fff; padding:1px 6px; border-radius:10px; font-size:0.68rem; margin-left:4px;">0</span></button>' +
-              '<button class="admin-tab-btn" data-tab="campaigns">🎟️ Campanhas & Mercado Pago</button>' +
-              '<button class="admin-tab-btn" data-tab="announcements">📢 Comunicados Oficiais</button>' +
+              '<button class="admin-tab-btn active" data-tab="growth">📊 Visão Geral</button>' +
+              '<button class="admin-tab-btn" data-tab="clients">👥 Cantores</button>' +
+              '<button class="admin-tab-btn" data-tab="finance">💰 Financeiro</button>' +
+              '<button class="admin-tab-btn" data-tab="helpdesk">💬 Suporte <span id="admHelpdeskBadge" class="sc-tab-badge" style="display:none; background:#ef4444; color:#fff; padding:1px 6px; border-radius:10px; font-size:0.68rem; margin-left:4px;">0</span></button>' +
+              '<button class="admin-tab-btn" data-tab="campaigns">🎟️ Cupons</button>' +
+              '<button class="admin-tab-btn" data-tab="announcements">📢 Avisos</button>' +
             '</div>' +
 
             '<div class="modal-body admin-modal-body">' +
@@ -677,8 +677,8 @@
                       '<button type="button" class="btn btn-outline btn-xs" id="btnFinNextMonth" title="Próximo Mês">▶</button>' +
                     '</div>' +
                     '<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">' +
-                      '<button type="button" class="btn btn-outline btn-sm" id="btnFinExportCSV" title="Exportar Balancete Mensal em CSV">📊 Exportar Balancete CSV</button>' +
-                      '<button type="button" class="btn btn-primary btn-sm" id="btnFinOpenManualBaixa" title="Dar baixa manual em pagamento Pix/Dinheiro">➕ Baixa Manual ERP</button>' +
+                      '<button type="button" class="btn btn-outline btn-sm" id="btnFinExportCSV" title="Exportar dados em CSV">📊 Exportar CSV</button>' +
+                      '<button type="button" class="btn btn-primary btn-sm" id="btnFinOpenManualBaixa" title="Registrar pagamento manual">➕ Registrar Pagamento</button>' +
                     '</div>' +
                   '</div>' +
 
