@@ -24,7 +24,10 @@
       for (var k in localStorage) {
         if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1) {
           var sbAuth = JSON.parse(localStorage.getItem(k));
-          if (sbAuth && sbAuth.access_token) return sbAuth.access_token;
+          if (sbAuth) {
+            var tok = sbAuth.access_token || (sbAuth.session && sbAuth.session.access_token) || (sbAuth.currentSession && sbAuth.currentSession.access_token);
+            if (tok) return tok;
+          }
         }
       }
     } catch (e) {}

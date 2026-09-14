@@ -1693,9 +1693,9 @@
   scroll-behavior: smooth;
 }
 
-/* ── BALÕES DE CHAT UNIFICADOS (Single-Box Architecture) ── */
-.chat-bubble-row,
-.adm-hd-bubble {
+/* ── BALÕES DE CHAT UNIFICADOS (Single-Box Architecture & Blindagem Resiliente) ── */
+/* Container de Linha Moderna (Avatar + Corpo + Bolha) */
+.chat-bubble-row {
   display: flex !important;
   gap: 10px !important;
   max-width: 76% !important;
@@ -1712,6 +1712,64 @@
   .adm-hd-bubble {
     max-width: 88% !important;
   }
+}
+
+/* RETRO-COMPATIBILIDADE TOTAL: Se qualquer mensagem legada carregar como .adm-hd-bubble sem .chat-bubble-box, ela NUNCA fica transparente! */
+.adm-hd-bubble {
+  display: flex !important;
+  flex-direction: column !important;
+  max-width: 76% !important;
+  position: relative !important;
+  padding: 10px 15px !important;
+  border-radius: 14px !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  box-sizing: border-box !important;
+}
+
+/* Bolha Legado Enviada (Suporte / Admin no Painel) */
+.adm-hd-bubble.is-support,
+.adm-hd-bubble.is-admin,
+.adm-hd-bubble.is-own {
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(96, 165, 250, 0.35) !important;
+  border-bottom-right-radius: 4px !important;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.35) !important;
+}
+
+/* Bolha Legado Recebida (Cantor no Painel) */
+.adm-hd-bubble.is-user,
+.adm-hd-bubble.is-singer,
+.adm-hd-bubble.is-other {
+  align-self: flex-start !important;
+  margin-right: auto !important;
+  margin-left: 0 !important;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom-left-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Se for linha moderna (contiver caixa interna), reseta o wrapper exterior para transparente */
+.chat-bubble-row,
+.adm-hd-bubble:has(.chat-bubble-box),
+.adm-hd-bubble:has(.adm-hd-bubble-box),
+.adm-hd-bubble.is-modern-row {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  flex-direction: row !important;
+  gap: 10px !important;
 }
 
 /* Bolha Enviada (Equipe/Admin no Painel) — Alinhada à DIREITA */

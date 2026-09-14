@@ -52,9 +52,12 @@
           for (var k in localStorage) {
             if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1) {
               var sbAuth = JSON.parse(localStorage.getItem(k));
-              if (sbAuth && sbAuth.access_token) {
-                token = sbAuth.access_token;
-                break;
+              if (sbAuth) {
+                var tok = sbAuth.access_token || (sbAuth.session && sbAuth.session.access_token) || (sbAuth.currentSession && sbAuth.currentSession.access_token);
+                if (tok) {
+                  token = tok;
+                  break;
+                }
               }
             }
           }
@@ -1550,8 +1553,12 @@
 
       var msgId = msg.id || ('msg-' + (msg.created_at ? new Date(msg.created_at).getTime() : Date.now()));
 
+      var boxStyle = isOwnMessage
+        ? 'background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); color: #ffffff; border: 1px solid rgba(96, 165, 250, 0.35); border-radius: 14px; border-bottom-right-radius: 4px; padding: 10px 15px; font-size: 0.88rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; box-shadow: 0 4px 14px rgba(30, 58, 138, 0.35);'
+        : 'background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #f1f5f9; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px; border-bottom-left-radius: 4px; padding: 10px 15px; font-size: 0.88rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);';
+
       return (
-        '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '" data-msg-id="' + msgId + '" style="animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;">' +
+        '<div class="chat-bubble-row is-modern-row ' + (isOwnMessage ? 'is-user' : 'is-support') + '" data-msg-id="' + msgId + '" style="animation: nc-bubble-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;">' +
           '<div class="chat-bubble-avatar ' + (isSenderUser ? 'avatar-user' : 'avatar-support') + '">' + avatarInitial + '</div>' +
           '<div class="chat-bubble-body">' +
             '<div class="chat-bubble-meta">' +
@@ -1559,7 +1566,7 @@
               (!isSenderUser ? '<span class="chat-bubble-badge-staff" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Desenvolvedor</span>' : '') +
               '<span>• ' + timeStr + '</span>' +
             '</div>' +
-            '<div class="chat-bubble-box" style="white-space: pre-wrap; line-height: 1.45;">' +
+            '<div class="chat-bubble-box" style="' + boxStyle + '">' +
               this.escapeHtml(msg.text || '') +
               photoHtml +
             '</div>' +

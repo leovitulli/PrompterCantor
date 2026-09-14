@@ -2047,6 +2047,38 @@
       }
     },
 
+    // ── HEADERS DE AUTENTICAÇÃO SUPABASE COM JWT REAL ──
+    getAuthHeaders: function () {
+      if (window.NotificationsCenter && typeof window.NotificationsCenter.getAuthHeaders === 'function') {
+        return window.NotificationsCenter.getAuthHeaders();
+      }
+      var anon = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) ? window.SUPABASE_CONFIG.key : '';
+      var token = anon;
+      try {
+        var raw = localStorage.getItem('prompter_auth_user');
+        if (raw) {
+          var u = JSON.parse(raw);
+          if (u && u.access_token) token = u.access_token;
+        }
+        if (token === anon) {
+          for (var k in localStorage) {
+            if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1) {
+              var sbAuth = JSON.parse(localStorage.getItem(k));
+              if (sbAuth) {
+                var tok = sbAuth.access_token || (sbAuth.session && sbAuth.session.access_token) || (sbAuth.currentSession && sbAuth.currentSession.access_token);
+                if (tok) { token = tok; break; }
+              }
+            }
+          }
+        }
+      } catch (e) {}
+      return {
+        'apikey': anon,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      };
+    },
+
     closeModal: function () {
       if (adminModal) adminModal.classList.add('hidden');
     },
@@ -2600,31 +2632,22 @@
           songRow.id = singerId;
         }
 
-        // 1. Gravação direta via REST fetch com apikey (100% garantida)
-        var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
+        // 1. Gravação direta via REST fetch com JWT real autenticado (100% garantida)
         var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
-        if (supUrl && anonKey && email) {
+        var authHeaders = PrompterAdmin.getAuthHeaders();
+        if (supUrl && email) {
           try {
             var checkUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&artist=eq.' + encodeURIComponent(email) + '&select=id';
             fetch(checkUrl, {
               method: 'GET',
-              headers: {
-                'apikey': anonKey,
-                'Authorization': 'Bearer ' + anonKey,
-                'Content-Type': 'application/json'
-              }
-            }).then(function(r) { return r.json(); }).then(function(existingRows) {
+              headers: authHeaders
+            }).then(function(r) { return r.ok ? r.json() : []; }).then(function(existingRows) {
               var songsRestUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs';
               if (Array.isArray(existingRows) && existingRows.length > 0) {
                 var rowId = existingRows[0].id;
                 fetch(songsRestUrl + '?id=eq.' + encodeURIComponent(rowId), {
                   method: 'PATCH',
-                  headers: {
-                    'apikey': anonKey,
-                    'Authorization': 'Bearer ' + anonKey,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                  },
+                  headers: Object.assign({}, authHeaders, { 'Prefer': 'return=minimal' }),
                   body: JSON.stringify({
                     title: songRow.title,
                     composer: songRow.composer,
@@ -2634,16 +2657,30 @@
               } else {
                 fetch(songsRestUrl, {
                   method: 'POST',
-                  headers: {
-                    'apikey': anonKey,
-                    'Authorization': 'Bearer ' + anonKey,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                  },
+                  headers: Object.assign({}, authHeaders, { 'Prefer': 'return=minimal' }),
                   body: JSON.stringify([songRow])
                 }).catch(function() {});
               }
             }).catch(function() {});
+
+            // Espelha também na tabela 'profiles' para sincronização de plano
+            if (singerId) {
+              var isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(singerId));
+              if (isUUID) {
+                var profPayload = { updated_at: new Date().toISOString() };
+                if (fieldName === 'plan_tier' || fieldName === 'plan_type') {
+                  profPayload.plan_tier = (fieldValue && fieldValue.indexOf('PRO') !== -1) ? 'pro' : 'free';
+                  profPayload.plan_type = fieldValue;
+                } else if (fieldName) {
+                  profPayload[fieldName] = fieldValue;
+                }
+                fetch(supUrl.replace(/\/$/, '') + '/rest/v1/profiles?id=eq.' + encodeURIComponent(singerId), {
+                  method: 'PATCH',
+                  headers: Object.assign({}, authHeaders, { 'Prefer': 'return=minimal' }),
+                  body: JSON.stringify(profPayload)
+                }).catch(function() {});
+              }
+            }
           } catch(e) {}
         }
 
@@ -2820,18 +2857,14 @@
         }
       }, 3200);
 
-      var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
       var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
-      if (supUrl && anonKey) {
+      var authHeaders = PrompterAdmin.getAuthHeaders();
+      if (supUrl && window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) {
         var restUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&select=*';
         fetch(restUrl, {
           method: 'GET',
-          headers: {
-            'apikey': anonKey,
-            'Authorization': 'Bearer ' + anonKey,
-            'Content-Type': 'application/json'
-          }
-        }).then(function(r) { return r.json(); }).then(function(rows) {
+          headers: authHeaders
+        }).then(function(r) { return r.ok ? r.json() : []; }).then(function(rows) {
           if (Array.isArray(rows) && rows.length > 0) {
             processRegistrySongs(rows);
           }
@@ -5650,6 +5683,23 @@
 
       // Injeção cirúrgica: adiciona a bolha ao feed sem re-renderizar a thread toda
       PrompterAdmin.appendAdminBubble(newMsg, ticket);
+
+      // Atualiza o cabeçalho da thread para 'Resolvido' sem recarregar a conversa
+      var headerEl = document.getElementById('admHdThreadHeader');
+      if (headerEl) {
+        var statusPill = headerEl.querySelector('.sc-ticket-status-pill');
+        if (statusPill) {
+          statusPill.className = 'sc-ticket-status-pill status-resolved';
+          statusPill.textContent = '🟢 Resolvido';
+        }
+        var btnToggle = document.getElementById('btnToggleStatusHd');
+        if (btnToggle) {
+          btnToggle.className = 'btn btn-sm btn-outline';
+          btnToggle.style.cssText = 'color:#fbbf24; border-color:rgba(251,191,36,0.4); font-size:0.75rem;';
+          btnToggle.innerHTML = '🔄 Reabrir';
+        }
+      }
+
       // Atualiza apenas a barra lateral e o badge (thread permanece intacta)
       PrompterAdmin.renderHelpdeskList();
       PrompterAdmin.updateHelpdeskBadge();
@@ -5807,8 +5857,12 @@
           '</div>'
         : '';
 
+      var boxStyle = isOwnMessage
+        ? 'background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); color: #ffffff; border: 1px solid rgba(96, 165, 250, 0.35); border-radius: 14px; border-bottom-right-radius: 4px; padding: 10px 15px; font-size: 0.88rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; box-shadow: 0 4px 14px rgba(30, 58, 138, 0.35);'
+        : 'background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #f1f5f9; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px; border-bottom-left-radius: 4px; padding: 10px 15px; font-size: 0.88rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);';
+
       return (
-        '<div class="chat-bubble-row ' + (isOwnMessage ? 'is-user is-admin is-own' : 'is-support is-other is-singer') + '" data-msg-id="' + escapeHtml(msgId) + '">' +
+        '<div class="chat-bubble-row is-modern-row ' + (isOwnMessage ? 'is-user is-admin is-own' : 'is-support is-other is-singer') + '" data-msg-id="' + escapeHtml(msgId) + '">' +
           '<div class="chat-bubble-avatar ' + (isSupport ? 'avatar-support' : 'avatar-user') + '">' + avatarInitial + '</div>' +
           '<div class="chat-bubble-body">' +
             '<div class="chat-bubble-meta">' +
@@ -5816,7 +5870,7 @@
               (isSupport ? '<span class="chat-bubble-badge-staff">Desenvolvedor</span>' : '') +
               '<span>• ' + timeStr + '</span>' +
             '</div>' +
-            '<div class="chat-bubble-box">' +
+            '<div class="chat-bubble-box" style="' + boxStyle + '">' +
               escapeHtml(msg.text || '') +
               photoHtml +
             '</div>' +
