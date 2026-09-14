@@ -75,18 +75,50 @@
                str !== 'leoogum23@gmail.com' &&
                str !== '@leoogum23' &&
                str !== 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0' &&
+               str !== 'givitulli@gmail.com' &&
+               str !== '@gio_sangalo' &&
+               str !== 'gio_sangalo' &&
+               str !== 'alinecrissallai@gmail.com' &&
+               str !== '@alinecrissallai' &&
+               str !== 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908' &&
                str !== '';
       });
-      // Se ainda não tiver registrado o cantor teste como excluído, incluir por padrão para atender pedido do usuário
-      if (list.indexOf('test_singer@cantaaipro.com') === -1) {
-        list.push('test_singer@cantaaipro.com');
-        list.push('@test_singer');
-        list.push('a7af2dd9-76f8-4b18-aa3f-3a7535baeb00');
+
+      // Contas de teste excluídas permanentemente pelo usuário
+      var permanentDeletions = [
+        'testeleo@gmail.com',
+        '@testeleo',
+        'testeleo',
+        'test_singer_12345@cantaaipro.com',
+        '@test_singer_12345',
+        'test_singer_12345',
+        'test_singer@cantaaipro.com',
+        '@test_singer',
+        'a7af2dd9-76f8-4b18-aa3f-3a7535baeb00'
+      ];
+      var hasNew = false;
+      permanentDeletions.forEach(function(d) {
+        if (list.indexOf(d) === -1) {
+          list.push(d);
+          hasNew = true;
+        }
+      });
+      if (hasNew) {
         try { localStorage.setItem(STORAGE_DELETED_KEY, JSON.stringify(list)); } catch(e) {}
       }
       return list;
     } catch (e) {
-      return ['test_singer@cantaaipro.com', '@test_singer', 'a7af2dd9-76f8-4b18-aa3f-3a7535baeb00'];
+      return [
+        'testeleo@gmail.com',
+        '@testeleo',
+        'testeleo',
+        'test_singer_12345@cantaaipro.com',
+        '@test_singer_12345',
+        'test_singer_12345',
+        'test_singer@cantaaipro.com',
+        '@test_singer',
+        'a7af2dd9-76f8-4b18-aa3f-3a7535baeb00'
+      ];
     }
   }
 
@@ -220,6 +252,7 @@
             if (deletedSingers.indexOf(uEmail) !== -1) return false;
             if (uCode && (uCode === '@leovitulli' || uCode === 'leovitulli' || deletedSingers.indexOf(uCode) !== -1)) return false;
             if (uEmail.indexOf('test_singer') !== -1 || uId.indexOf('test_singer') !== -1 || uCode.indexOf('test_singer') !== -1 || uName.indexOf('test_singer') !== -1) return false;
+            if (uEmail.indexOf('testeleo') !== -1 || uCode.indexOf('testeleo') !== -1 || uName.indexOf('teste léo') !== -1 || uName.indexOf('teste leo') !== -1) return false;
             // Purga contas fictícias temporárias
             if (uEmail.indexOf('@cantaai.com') !== -1 || uEmail.indexOf('novo_cantor_') !== -1 || uEmail.indexOf('cantor_') === 0) return false;
             if (uName.indexOf('cantor (samba)') !== -1 || uName.indexOf('cantor (novo cadastro') !== -1) return false;
@@ -265,8 +298,11 @@
             var uEmail = (u.email || '').toLowerCase().trim();
             var uId = (u.id || '').toLowerCase().trim();
             var uName = (u.name || '').toLowerCase();
-            // Purga específica da duplicata acidental do Leo Ogum
+            // Purga específica da duplicata acidental do Leo Ogum e contas testes antigas
             if (uId === 'user-leoogum-seed-id' || uEmail === 'leoogum@gmail.com') return false;
+            if (uEmail.indexOf('testeleo') !== -1 || (u.singer_code && u.singer_code.toLowerCase().indexOf('testeleo') !== -1) || uName.indexOf('teste léo') !== -1 || uName.indexOf('teste leo') !== -1) return false;
+            if (uEmail.indexOf('test_singer') !== -1 || uId.indexOf('test_singer') !== -1 || (u.singer_code && u.singer_code.toLowerCase().indexOf('test_singer') !== -1) || uName.indexOf('test_singer') !== -1) return false;
+            if (deletedSingers.indexOf(uEmail) !== -1 || (u.singer_code && deletedSingers.indexOf(u.singer_code.toLowerCase()) !== -1) || (uId && deletedSingers.indexOf(uId) !== -1)) return false;
             if (isPlatformDeveloper(uEmail) || isPlatformDeveloper(uId) || uId === 'admin-leovitulli-id' || u.singer_code === '@leovitulli') return false;
             if (uEmail.indexOf('@cantaai.com') !== -1 || uEmail.indexOf('novo_cantor_') !== -1 || uEmail.indexOf('cantor_') === 0 || uName.indexOf('novo cadastro') !== -1) return false;
             // Deduplicação estrita por e-mail e ID
@@ -2850,9 +2886,12 @@
               if (sObj && sObj.email && sObj.email.indexOf('@') !== -1) {
                 var sEmail = (sObj.email || '').trim().toLowerCase();
                 var sId = (sObj.id || '').toLowerCase();
-                if (sId === 'user-leoogum-seed-id' || sEmail === 'leoogum@gmail.com') return;
-                if (isPlatformDeveloper(sEmail)) return;
                 var sCode = (sObj.singer_code || '').trim().toLowerCase();
+                var sName = (sObj.name || '').toLowerCase();
+                if (sId === 'user-leoogum-seed-id' || sEmail === 'leoogum@gmail.com') return;
+                if (sEmail.indexOf('testeleo') !== -1 || sCode.indexOf('testeleo') !== -1 || sName.indexOf('teste léo') !== -1 || sName.indexOf('teste leo') !== -1) return;
+                if (sEmail.indexOf('test_singer') !== -1 || sId.indexOf('test_singer') !== -1 || sCode.indexOf('test_singer') !== -1 || sName.indexOf('test_singer') !== -1) return;
+                if (isPlatformDeveloper(sEmail)) return;
                 var deletedSingers = getDeletedSingers();
 
                 if (deletedSingers.indexOf(sEmail) !== -1 || deletedSingers.indexOf(sCode) !== -1 || (sId && deletedSingers.indexOf(sId) !== -1)) {
@@ -2955,10 +2994,13 @@
             res.data.forEach(function(p) {
               var pEmail = (p.email || '').trim().toLowerCase();
               var pId = (p.id || '').toLowerCase();
+              var pCode = (p.singer_code || '').trim().toLowerCase();
+              var pName = (p.display_name || '').toLowerCase();
               if (pId === 'user-leoogum-seed-id' || pEmail === 'leoogum@gmail.com') return;
+              if (pEmail.indexOf('testeleo') !== -1 || pCode.indexOf('testeleo') !== -1 || pName.indexOf('teste léo') !== -1 || pName.indexOf('teste leo') !== -1) return;
+              if (pEmail.indexOf('test_singer') !== -1 || pId.indexOf('test_singer') !== -1 || pCode.indexOf('test_singer') !== -1 || pName.indexOf('test_singer') !== -1) return;
               if (!pEmail || pEmail.indexOf('@') === -1 || isPlatformDeveloper(pEmail)) return;
 
-              var pCode = (p.singer_code || '').trim().toLowerCase();
               var deletedSingers = getDeletedSingers();
 
               if (deletedSingers.indexOf(pEmail) !== -1 || deletedSingers.indexOf(pCode) !== -1 || (pId && deletedSingers.indexOf(pId) !== -1)) {
