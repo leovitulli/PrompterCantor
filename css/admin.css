@@ -2295,4 +2295,28 @@
   color: #ffffff;
 }
 
+/* ── DESTAQUE EM TEMPO REAL DE ATUALIZAÇÃO NO CRM (In-Place Row Highlight) ── */
+@keyframes row-save-pulse {
+  0% {
+    background-color: rgba(16, 185, 129, 0.35) !important;
+    box-shadow: inset 0 0 16px rgba(16, 185, 129, 0.4), 0 0 14px rgba(56, 189, 248, 0.35) !important;
+    transform: scale(1.008);
+  }
+  50% {
+    background-color: rgba(56, 189, 248, 0.22) !important;
+    box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.3) !important;
+  }
+  100% {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    transform: scale(1);
+  }
+}
+
+.row-updated-highlight {
+  animation: row-save-pulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
 

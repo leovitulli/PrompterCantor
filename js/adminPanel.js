@@ -245,35 +245,43 @@
               u.is_vip ||
               u.plan_tier === 'vip' ||
               (u.plan_type && u.plan_type.indexOf('VIP') !== -1) ||
+              (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(u.coupon_used)) ||
               u.coupon_used === 'VIP100'
             );
             if (isVip) {
               u.plan_tier = 'vip';
               u.plan_type = '👑 VIP 100% OFF';
               u.is_vip = true;
-              u.coupon_used = u.coupon_used || 'VIP100';
+              u.coupon_used = u.coupon_used || ((window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100');
               if (!u.billing_due_date) u.billing_due_date = '2099-12-31T23:59:59.000Z';
             }
           });
 
           var hasLeoOgum = allUserData.some(function(u) {
             var uCodeClean = (u.singer_code || '').toLowerCase().replace(/^@+/, '');
-            return (u.email && u.email.toLowerCase() === 'leoogum23@gmail.com') ||
-                   uCodeClean === 'leoogum23' ||
-                   u.id === 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0';
+            return uCodeClean === 'leoogum' || (u.email && u.email.toLowerCase() === 'leoogum@gmail.com');
           });
           if (!hasLeoOgum) {
-            allUserData.push(defaultSeedSingers[0]);
-          }
-
-          var hasAline = allUserData.some(function(u) {
-            var uCodeClean = (u.singer_code || '').toLowerCase().replace(/^@+/, '');
-            return (u.email && u.email.toLowerCase() === 'alinecrissallai@gmail.com') ||
-                   uCodeClean === 'alinecrissallai' ||
-                   u.id === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908';
-          });
-          if (!hasAline) {
-            allUserData.push(defaultSeedSingers[1]);
+            allUserData.unshift({
+              id: 'user-leoogum-seed-id',
+              name: 'Leo Ogum',
+              email: 'leoogum@gmail.com',
+              phone: '(21) 99887-7665',
+              cpf: '',
+              instagram: '@leoogum',
+              singer_code: '@leoogum',
+              plan_tier: 'pro',
+              plan_type: '💎 PRO ANUAL',
+              coupon_used: 'SAMBA30',
+              is_vip: false,
+              billing_due_date: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
+              is_online: true,
+              status_text: '🟢 Conectado (Desktop)',
+              reps_count: 5,
+              songs_count: 84,
+              last_seen: 'Hoje',
+              created_at: '2026-09-08'
+            });
           }
 
           // Higienização crucial: Expurgar desenvolvedor/SuperAdmin e contas temporárias dummy do CRM
@@ -290,15 +298,19 @@
           PrompterAdmin.allUserData = allUserData;
         }
         
-        var rawCoupons = localStorage.getItem(STORAGE_COUPONS_KEY);
-        if (rawCoupons) allCoupons = JSON.parse(rawCoupons);
-        else {
-          allCoupons = [
-            { id: 'c-1', code: 'VIP100', discount: '100% OFF', type: 'vip', uses: 14, maxUses: 50, status: 'active', desc: 'Acesso VIP Anual Gratuito' },
-            { id: 'c-2', code: 'PRO50', discount: '50% OFF', type: 'percent', uses: 38, maxUses: 100, status: 'active', desc: '50% de Desconto na Assinatura' },
-            { id: 'c-3', code: 'SAMBA30', discount: '30% OFF', type: 'percent', uses: 19, maxUses: 200, status: 'active', desc: '30% OFF de Boas-Vindas' }
-          ];
-          localStorage.setItem(STORAGE_COUPONS_KEY, JSON.stringify(allCoupons));
+        if (window.PrompterCoupons && typeof window.PrompterCoupons.getAll === 'function') {
+          allCoupons = window.PrompterCoupons.getAll();
+        } else {
+          var rawCoupons = localStorage.getItem(STORAGE_COUPONS_KEY);
+          if (rawCoupons) allCoupons = JSON.parse(rawCoupons);
+          else {
+            allCoupons = [
+              { id: 'c-1', code: 'VIP100', discount: '100% OFF', type: 'vip', uses: 14, maxUses: 50, status: 'active', desc: 'Acesso VIP Anual Gratuito' },
+              { id: 'c-2', code: 'PRO50', discount: '50% OFF', type: 'percent', uses: 38, maxUses: 100, status: 'active', desc: '50% de Desconto na Assinatura' },
+              { id: 'c-3', code: 'SAMBA30', discount: '30% OFF', type: 'percent', uses: 19, maxUses: 200, status: 'active', desc: '30% OFF de Boas-Vindas' }
+            ];
+            localStorage.setItem(STORAGE_COUPONS_KEY, JSON.stringify(allCoupons));
+          }
         }
 
         var rawPricing = localStorage.getItem(STORAGE_PRICING_KEY);
@@ -433,9 +445,13 @@
     },
 
     saveStoredCoupons: function () {
-      try {
-        localStorage.setItem(STORAGE_COUPONS_KEY, JSON.stringify(allCoupons));
-      } catch (e) {}
+      if (window.PrompterCoupons && typeof window.PrompterCoupons.saveAll === 'function') {
+        window.PrompterCoupons.saveAll(allCoupons);
+      } else {
+        try {
+          localStorage.setItem(STORAGE_COUPONS_KEY, JSON.stringify(allCoupons));
+        } catch (e) {}
+      }
     },
 
     saveStoredPricing: function () {
@@ -1463,21 +1479,33 @@
         if (vipNotice) vipNotice.style.display = isVip ? 'block' : 'none';
       }
 
+      function getVipCode() {
+        return (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+      }
+
+      function checkIsVipCoupon(code) {
+        if (!code) return false;
+        var clean = String(code).trim().toUpperCase();
+        if (clean === 'VIP100' || clean === 'CANTORVIP' || clean === 'CORTESIA') return true;
+        return !!(window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(clean));
+      }
+
       if (chkVip && selPlan) {
         chkVip.addEventListener('change', function () {
+          var activeVip = getVipCode();
           if (this.checked) {
             selPlan.value = 'vip';
             if (inputCoupon && (!inputCoupon.value || inputCoupon.value.trim() === '')) {
-              inputCoupon.value = 'VIP100';
+              inputCoupon.value = activeVip;
             }
-            if (selCoupon) selCoupon.value = 'VIP100';
+            if (selCoupon) selCoupon.value = activeVip;
             syncVipUi(true);
           } else {
             if (selPlan.value === 'vip') selPlan.value = 'pro_annual';
-            if (inputCoupon && inputCoupon.value.trim().toUpperCase() === 'VIP100') {
+            if (inputCoupon && checkIsVipCoupon(inputCoupon.value)) {
               inputCoupon.value = '';
             }
-            if (selCoupon && selCoupon.value === 'VIP100') {
+            if (selCoupon && checkIsVipCoupon(selCoupon.value)) {
               selCoupon.value = '';
             }
             syncVipUi(false);
@@ -1487,19 +1515,20 @@
 
       if (selPlan && chkVip) {
         selPlan.addEventListener('change', function () {
+          var activeVip = getVipCode();
           if (this.value === 'vip') {
             chkVip.checked = true;
             if (inputCoupon && (!inputCoupon.value || inputCoupon.value.trim() === '')) {
-              inputCoupon.value = 'VIP100';
+              inputCoupon.value = activeVip;
             }
-            if (selCoupon) selCoupon.value = 'VIP100';
+            if (selCoupon) selCoupon.value = activeVip;
             syncVipUi(true);
           } else {
             chkVip.checked = false;
-            if (inputCoupon && inputCoupon.value.trim().toUpperCase() === 'VIP100') {
+            if (inputCoupon && checkIsVipCoupon(inputCoupon.value)) {
               inputCoupon.value = '';
             }
-            if (selCoupon && selCoupon.value === 'VIP100') {
+            if (selCoupon && checkIsVipCoupon(selCoupon.value)) {
               selCoupon.value = '';
             }
             syncVipUi(false);
@@ -1511,7 +1540,7 @@
         selCoupon.addEventListener('change', function () {
           if (this.value) {
             inputCoupon.value = this.value;
-            if (this.value === 'VIP100') {
+            if (checkIsVipCoupon(this.value)) {
               if (chkVip) chkVip.checked = true;
               if (selPlan) selPlan.value = 'vip';
               syncVipUi(true);
@@ -1523,10 +1552,14 @@
       if (inputCoupon) {
         inputCoupon.addEventListener('input', function () {
           var val = (this.value || '').trim().toUpperCase();
-          if (val === 'VIP100') {
+          if (checkIsVipCoupon(val)) {
             if (chkVip) chkVip.checked = true;
             if (selPlan) selPlan.value = 'vip';
-            if (selCoupon) selCoupon.value = 'VIP100';
+            if (selCoupon) {
+              // Verifica se a opção existe no select
+              var hasOpt = Array.from(selCoupon.options).some(function(o) { return o.value === val; });
+              if (hasOpt) selCoupon.value = val;
+            }
             syncVipUi(true);
           }
         });
@@ -2093,6 +2126,13 @@
         this.markUserAsSeen(user.id || user.email);
       }
 
+      // Atualiza lista de cupons a partir do PrompterCoupons
+      if (window.PrompterCoupons && typeof window.PrompterCoupons.getAll === 'function') {
+        allCoupons = window.PrompterCoupons.getAll();
+      }
+
+      var activeVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+
       // Popula Datalist e Select rápido de Cupons disponíveis
       var datalist = document.getElementById('availableCouponsList');
       var selCoupon = document.getElementById('editSingerCouponSelect');
@@ -2149,7 +2189,7 @@
         document.getElementById('editSingerInstagram').value = user.instagram || '';
         document.getElementById('editSingerCode').value = normalizeSingerCode(user.singer_code, user.email);
         
-        var isUserVip = !!user.is_vip || user.plan_tier === 'vip' || (user.plan_type && (user.plan_type.indexOf('VIP') !== -1 || user.plan_type.indexOf('PARCEIRO') !== -1)) || user.coupon_used === 'VIP100';
+        var isUserVip = !!user.is_vip || user.plan_tier === 'vip' || (user.plan_type && (user.plan_type.indexOf('VIP') !== -1 || user.plan_type.indexOf('PARCEIRO') !== -1)) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(user.coupon_used)) || user.coupon_used === 'VIP100';
         if (chkVip) chkVip.checked = isUserVip;
         if (vipNotice) vipNotice.style.display = isUserVip ? 'block' : 'none';
 
@@ -2160,9 +2200,19 @@
         else if (user.plan_tier === 'free') pVal = 'free';
         document.getElementById('editSingerPlan').value = pVal;
 
-        var assignedCoupon = user.coupon_used || (isUserVip ? 'VIP100' : '');
+        var assignedCoupon = user.coupon_used || (isUserVip ? activeVipCode : '');
         if (inputCoupon) inputCoupon.value = assignedCoupon;
-        if (selCoupon) selCoupon.value = assignedCoupon;
+        if (selCoupon) {
+          selCoupon.value = assignedCoupon;
+          if (assignedCoupon && !selCoupon.value) {
+            // Se o cupom não estiver na lista padrão, adiciona dinamicamente como opção
+            var opt = document.createElement('option');
+            opt.value = assignedCoupon;
+            opt.textContent = assignedCoupon + ' (Personalizado)';
+            selCoupon.appendChild(opt);
+            selCoupon.value = assignedCoupon;
+          }
+        }
 
         document.getElementById('editSingerStatus').value = user.is_online ? 'online' : 'offline';
 
@@ -2215,8 +2265,8 @@
 
         if (chkVip) chkVip.checked = true;
         if (vipNotice) vipNotice.style.display = 'block';
-        if (inputCoupon) inputCoupon.value = 'VIP100';
-        if (selCoupon) selCoupon.value = 'VIP100';
+        if (inputCoupon) inputCoupon.value = activeVipCode;
+        if (selCoupon) selCoupon.value = activeVipCode;
 
         var editCodeFeedback = document.getElementById('editSingerCodeFeedback');
         if (editCodeFeedback) editCodeFeedback.style.display = 'none';
@@ -2379,7 +2429,7 @@
         }
         if (window.showToast) window.showToast('✅ Informações do cantor atualizadas com sucesso!', 'success');
 
-        // Permanência de 1.2 segundos para feedback nítido antes de fechar o modal
+        // Fechamento ágil e imediato (300ms) para não travar o operador
         setTimeout(function () {
           self._isSavingSinger = false;
           PrompterAdmin.closeSingerModal();
@@ -2394,7 +2444,7 @@
             btnSave.style.opacity = '1';
             btnSave.style.pointerEvents = '';
           }
-        }, 1200);
+        }, 300);
       }
 
       function finishError(err) {
@@ -2478,7 +2528,9 @@
     },
 
     executeSaveSinger: function (id, name, email, phone, cpf, instagram, code, planVal, statusVal, couponVal, isVip, dueDateVal) {
-      var isVipActive = (planVal === 'vip') || (!!isVip && planVal !== 'free' && planVal !== 'pro_annual' && planVal !== 'pro_monthly' && planVal !== 'trial');
+      var activeVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+      var isCouponVip = (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(couponVal)) || couponVal === 'VIP100';
+      var isVipActive = (planVal === 'vip') || isCouponVip || (!!isVip && planVal !== 'free' && planVal !== 'pro_annual' && planVal !== 'pro_monthly' && planVal !== 'trial');
       var isTrial = (planVal === 'trial');
       var isPro = isVipActive || (planVal !== 'free' && !isTrial);
 
@@ -2487,18 +2539,18 @@
 
       if (isVipActive) {
         planType = '👑 VIP Parceiro (100% OFF)';
-        couponVal = couponVal || 'VIP100';
+        couponVal = couponVal || activeVipCode;
       } else if (isTrial) {
         planType = '⚡ DEGUSTAÇÃO PRO (7 DIAS)';
-        if (couponVal === 'VIP100') couponVal = '';
+        if (isCouponVip) couponVal = '';
       } else if (planVal === 'pro_monthly') {
         planType = '⚡ PRO MENSAL';
-        if (couponVal === 'VIP100') couponVal = '';
+        if (isCouponVip) couponVal = '';
       } else if (planVal === 'free') {
         planType = '⚡ PLANO FREE';
-        if (couponVal === 'VIP100') couponVal = '';
+        if (isCouponVip) couponVal = '';
       } else {
-        if (couponVal === 'VIP100') couponVal = '';
+        if (isCouponVip) couponVal = '';
       }
 
       var cleanEmail = (email || '').trim().toLowerCase();
@@ -2597,6 +2649,29 @@
 
       PrompterAdmin.updateMetrics();
       PrompterAdmin.renderUsersTable();
+
+      // In-place highlight visual imediato ("refreshzinho no lugar")
+      try {
+        var targetRow = document.querySelector('tr[data-user-id="' + singerId + '"]') ||
+                        document.querySelector('tr[data-user-email="' + cleanEmail + '"]');
+        if (targetRow) {
+          targetRow.classList.remove('row-updated-highlight');
+          void targetRow.offsetWidth; // trigger reflow
+          targetRow.classList.add('row-updated-highlight');
+          setTimeout(function () {
+            if (targetRow) targetRow.classList.remove('row-updated-highlight');
+          }, 2500);
+        }
+      } catch (e) {}
+
+      // Broadcast em tempo real para sincronização cross-device de todos os perfis
+      if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+        window.PrompterCloud.broadcastEvent('singer_updated', {
+          singer: singerPayload,
+          sender: 'admin',
+          timestamp: new Date().toISOString()
+        });
+      }
 
       // Persistir no Supabase em segundo plano sem prender o modal
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
@@ -2921,8 +2996,8 @@
               // Princípio da Imutabilidade de Privilégios: impedir que leitura padrão 'free' da nuvem rebaixe VIP/PRO locais
               var isVipSinger = !!(
                 pEmail === 'alinecrissallai@gmail.com' ||
-                (localUser && (localUser.is_vip || localUser.plan_tier === 'vip' || (localUser.plan_type && (localUser.plan_type.indexOf('VIP') !== -1 || localUser.plan_type.indexOf('PARCEIRO') !== -1)) || localUser.coupon_used === 'VIP100')) ||
-                (p && (p.is_vip || p.plan_tier === 'vip' || (p.plan_type && (p.plan_type.indexOf('VIP') !== -1 || p.plan_type.indexOf('PARCEIRO') !== -1)) || p.coupon_used === 'VIP100'))
+                (localUser && (localUser.is_vip || localUser.plan_tier === 'vip' || (localUser.plan_type && (localUser.plan_type.indexOf('VIP') !== -1 || localUser.plan_type.indexOf('PARCEIRO') !== -1)) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(localUser.coupon_used)) || localUser.coupon_used === 'VIP100')) ||
+                (p && (p.is_vip || p.plan_tier === 'vip' || (p.plan_type && (p.plan_type.indexOf('VIP') !== -1 || p.plan_type.indexOf('PARCEIRO') !== -1)) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(p.coupon_used)) || p.coupon_used === 'VIP100'))
               );
               var isProSinger = isVipSinger || (localUser && localUser.plan_tier === 'pro') || (p && p.plan_tier === 'pro') || pEmail === 'leovitulli@gmail.com';
 
@@ -2932,7 +3007,8 @@
                 : (isProSinger
                     ? ((localUser && localUser.plan_type && localUser.plan_type.indexOf('MENSAL') !== -1) || (p && p.plan_type && p.plan_type.indexOf('MENSAL') !== -1) ? '⚡ PRO MENSAL' : '💎 PRO ANUAL')
                     : '⚡ PLANO FREE');
-              var resolvedCoupon = (localUser && localUser.coupon_used) || (p && p.coupon_used) || (isVipSinger ? 'VIP100' : '');
+              var defaultVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+              var resolvedCoupon = (localUser && localUser.coupon_used) || (p && p.coupon_used) || (isVipSinger ? defaultVipCode : '');
               var resolvedDueDate = isVipSinger ? '2099-12-31T23:59:59.000Z' : ((localUser && localUser.billing_due_date) || (p && p.billing_due_date) || null);
 
               var profData = {
@@ -3059,6 +3135,7 @@
         u.is_vip ||
         u.plan_tier === 'vip' ||
         (u.plan_type && (u.plan_type.indexOf('VIP') !== -1 || u.plan_type.indexOf('PARCEIRO') !== -1)) ||
+        (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(u.coupon_used)) ||
         u.coupon_used === 'VIP100' ||
         uEmail === 'alinecrissallai@gmail.com' ||
         uCode === '@alinecrissallai' ||
@@ -3270,7 +3347,7 @@
               planBadge += '<div style="margin-top: 4px;">' + finPill + '</div>';
             }
           }
-          if (user.coupon_used && user.coupon_used !== 'VIP100') {
+          if (user.coupon_used && !(window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(user.coupon_used)) && user.coupon_used !== 'VIP100') {
             planBadge += '<div style="font-size: 0.72rem; color: #a7f3d0; margin-top: 3px; font-weight: 600;">🏷️ ' + escapeHtml(user.coupon_used) + '</div>';
           }
         }
@@ -3308,7 +3385,7 @@
         var editBtn = '<button type="button" class="btn btn-outline btn-xs btn-edit-singer-row" data-user-id="' + user.id + '" style="color:#cbd5e1; border-color:rgba(255,255,255,0.2); padding:4px 8px; font-size:0.75rem; border-radius:6px;" title="Editar Perfil" onclick="event.stopPropagation();">✏️</button>';
 
         html +=
-          '<tr class="admin-user-row" data-user-id="' + user.id + '" title="Clique para gerenciar ' + escapeHtml(displayName) + '">' +
+          '<tr class="admin-user-row" data-user-id="' + user.id + '" data-user-email="' + escapeHtml((uEmail || '').toLowerCase()) + '" title="Clique para gerenciar ' + escapeHtml(displayName) + '">' +
             '<td style="text-align: center; width: 45px;">' + statusDot + '</td>' +
             '<td>' +
               '<div class="admin-user-cell">' +
@@ -3427,7 +3504,7 @@
         };
       }
 
-      var isVip = !!user.is_vip || (user.plan_type && user.plan_type.indexOf('VIP') !== -1) || user.coupon_used === 'VIP100';
+      var isVip = !!user.is_vip || user.plan_tier === 'vip' || (user.plan_type && (user.plan_type.indexOf('VIP') !== -1 || user.plan_type.indexOf('PARCEIRO') !== -1)) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(user.coupon_used)) || user.coupon_used === 'VIP100';
       if (isVip) {
         var isVipAnnual = user.plan_type && user.plan_type.toLowerCase().indexOf('anual') !== -1;
         var vipWaiver = isVipAnnual ? (pricingConfig.annualPrice || 299.00) : (pricingConfig.monthlyPrice || 39.90);
@@ -5135,7 +5212,7 @@
       if (overridePeriod) currentGrowthPeriod = overridePeriod;
       var totalUsers = allUserData.length;
       var proUsers = allUserData.filter(function (u) {
-        return u.plan_tier === 'pro' || !!u.is_vip || (u.plan_type && u.plan_type.indexOf('VIP') !== -1) || u.coupon_used === 'VIP100';
+        return u.plan_tier === 'pro' || !!u.is_vip || u.plan_tier === 'vip' || (u.plan_type && u.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(u.coupon_used)) || u.coupon_used === 'VIP100';
       }).length;
       var freeUsers = Math.max(0, totalUsers - proUsers);
       var convRate = totalUsers > 0 ? ((proUsers / totalUsers) * 100).toFixed(1) : '0.0';
@@ -6007,6 +6084,48 @@
             PrompterAdmin.renderHelpdeskList();
             PrompterAdmin.updateHelpdeskBadge();
           }
+        }
+      });
+
+      // Escuta atualizações de cantores para refletir em tempo real no CRM sem F5
+      window.PrompterCloud.onLiveEvent('singer_updated', function (payload) {
+        if (!payload || !payload.singer) return;
+        var s = payload.singer;
+        var idx = allUserData.findIndex(function (u) {
+          return (s.id && u.id === s.id) || (s.email && u.email && s.email.toLowerCase() === u.email.toLowerCase());
+        });
+        if (idx !== -1) {
+          Object.assign(allUserData[idx], s);
+        } else {
+          allUserData.unshift(s);
+        }
+        PrompterAdmin.saveStoredUsers();
+        PrompterAdmin.updateMetrics();
+        PrompterAdmin.renderUsersTable();
+
+        try {
+          var row = document.querySelector('tr[data-user-id="' + s.id + '"]') ||
+                    document.querySelector('tr[data-user-email="' + (s.email || '').toLowerCase() + '"]');
+          if (row) {
+            row.classList.remove('row-updated-highlight');
+            void row.offsetWidth;
+            row.classList.add('row-updated-highlight');
+            setTimeout(function () {
+              if (row) row.classList.remove('row-updated-highlight');
+            }, 2500);
+          }
+        } catch (e) {}
+      });
+
+      // Escuta atualizações de cupons em tempo real
+      window.PrompterCloud.onLiveEvent('coupons_updated', function (payload) {
+        if (window.PrompterCoupons && typeof window.PrompterCoupons.syncFromCloud === 'function') {
+          window.PrompterCoupons.syncFromCloud(function () {
+            allCoupons = window.PrompterCoupons.getAll();
+            if (typeof PrompterAdmin.renderCouponsTable === 'function') {
+              PrompterAdmin.renderCouponsTable();
+            }
+          });
         }
       });
     },

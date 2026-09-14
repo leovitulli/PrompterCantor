@@ -58,7 +58,7 @@
             currentProfile.is_vip = true;
             currentProfile.plan_tier = 'vip';
             currentProfile.plan_type = '👑 VIP 100% OFF';
-            currentProfile.coupon_used = 'VIP100';
+            currentProfile.coupon_used = currentProfile.coupon_used || ((window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100');
             currentProfile.billing_due_date = '2099-12-31T23:59:59.000Z';
           }
 
@@ -248,12 +248,12 @@
 
       var preExistingVip = !!(
         cleanEmail === 'alinecrissallai@gmail.com' ||
-        (existingAdminUser && (existingAdminUser.is_vip || existingAdminUser.plan_tier === 'vip' || (existingAdminUser.plan_type && existingAdminUser.plan_type.indexOf('VIP') !== -1) || existingAdminUser.coupon_used === 'VIP100'))
+        (existingAdminUser && (existingAdminUser.is_vip || existingAdminUser.plan_tier === 'vip' || (existingAdminUser.plan_type && existingAdminUser.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(existingAdminUser.coupon_used)) || existingAdminUser.coupon_used === 'VIP100'))
       );
       var preExistingPro = preExistingVip || (existingAdminUser && existingAdminUser.plan_tier === 'pro');
 
       var isAline = cleanEmail === 'alinecrissallai@gmail.com';
-      var isVipCoupon = coupon === 'VIP100' || coupon === 'CORTESIA' || coupon === 'DEV' || coupon === 'CANTORVIP' || isAline;
+      var isVipCoupon = (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(coupon)) || coupon === 'VIP100' || coupon === 'CORTESIA' || coupon === 'DEV' || coupon === 'CANTORVIP' || isAline;
       var isVip = preExistingVip || isVipCoupon;
       var isPro = isVip || preExistingPro || cleanEmail === 'leovitulli@gmail.com';
 
@@ -261,7 +261,8 @@
       var planType = isVip
         ? ((existingAdminUser && existingAdminUser.plan_type) || '👑 VIP 100% OFF')
         : (isPro ? ((existingAdminUser && existingAdminUser.plan_type) || '💎 PRO ANUAL') : '⚡ PLANO FREE');
-      var effectiveCoupon = coupon || (existingAdminUser ? existingAdminUser.coupon_used : '') || (isVip ? 'VIP100' : '');
+      var activeVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+      var effectiveCoupon = coupon || (existingAdminUser ? existingAdminUser.coupon_used : '') || (isVip ? activeVipCode : '');
       var effectiveDueDate = isVip ? '2099-12-31T23:59:59.000Z' : (existingAdminUser ? existingAdminUser.billing_due_date : null);
       
       var customSingerCode = (payload && payload.singerCode) ? PrompterAuth.formatSingerCode(payload.singerCode) : '';
@@ -445,8 +446,8 @@
         // Princípio da Imutabilidade de Privilégios: NUNCA rebaixar status VIP ou PRO
         var isVip = !!(
           cleanEmail === 'alinecrissallai@gmail.com' ||
-          (profile && (profile.is_vip || profile.plan_tier === 'vip' || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || profile.coupon_used === 'VIP100')) ||
-          (existingUser && (existingUser.is_vip || existingUser.plan_tier === 'vip' || (existingUser.plan_type && existingUser.plan_type.indexOf('VIP') !== -1) || existingUser.coupon_used === 'VIP100'))
+          (profile && (profile.is_vip || profile.plan_tier === 'vip' || (profile.plan_type && profile.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(profile.coupon_used)) || profile.coupon_used === 'VIP100')) ||
+          (existingUser && (existingUser.is_vip || existingUser.plan_tier === 'vip' || (existingUser.plan_type && existingUser.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(existingUser.coupon_used)) || existingUser.coupon_used === 'VIP100'))
         );
 
         var isPro = isVip ||
@@ -460,7 +461,8 @@
           : (isPro
               ? ((profile && profile.plan_type && profile.plan_type.indexOf('MENSAL') !== -1) || (existingUser && existingUser.plan_type && existingUser.plan_type.indexOf('MENSAL') !== -1) ? '⚡ PRO MENSAL' : '💎 PRO ANUAL')
               : '⚡ PLANO FREE');
-        var resolvedCoupon = (profile && profile.coupon_used) || (existingUser && existingUser.coupon_used) || (isVip ? 'VIP100' : '');
+        var defaultVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+        var resolvedCoupon = (profile && profile.coupon_used) || (existingUser && existingUser.coupon_used) || (isVip ? defaultVipCode : '');
         var resolvedDueDate = isVip
           ? '2099-12-31T23:59:59.000Z'
           : ((existingUser && existingUser.billing_due_date) || (profile && profile.billing_due_date) || null);
@@ -891,9 +893,11 @@
 
       var isKnownVipPre = !!(
         userEmail === 'alinecrissallai@gmail.com' ||
-        (adminUserPre && (adminUserPre.is_vip || adminUserPre.plan_tier === 'vip' || (adminUserPre.plan_type && adminUserPre.plan_type.indexOf('VIP') !== -1) || adminUserPre.coupon_used === 'VIP100'))
+        (adminUserPre && (adminUserPre.is_vip || adminUserPre.plan_tier === 'vip' || (adminUserPre.plan_type && adminUserPre.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(adminUserPre.coupon_used)) || adminUserPre.coupon_used === 'VIP100'))
       );
       var isKnownProPre = isKnownVipPre || userEmail === 'leovitulli@gmail.com' || userEmail === 'leoogum23@gmail.com' || (adminUserPre && adminUserPre.plan_tier === 'pro') || (meta && meta.plan_tier === 'pro');
+
+      var defaultVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
 
       var defaultProfile = {
         id: userId || (currentUser ? currentUser.id : 'local_user'),
@@ -906,7 +910,7 @@
         plan_tier: isKnownVipPre ? 'vip' : (isKnownProPre ? 'pro' : (meta.plan_tier || 'free')),
         plan_type: isKnownVipPre ? '👑 VIP 100% OFF' : (isKnownProPre ? ((adminUserPre && adminUserPre.plan_type) || '💎 PRO ANUAL') : '⚡ PLANO FREE'),
         is_vip: isKnownVipPre,
-        coupon_used: isKnownVipPre ? 'VIP100' : (adminUserPre ? adminUserPre.coupon_used : ''),
+        coupon_used: isKnownVipPre ? defaultVipCode : (adminUserPre ? adminUserPre.coupon_used : ''),
         billing_due_date: isKnownVipPre ? '2099-12-31T23:59:59.000Z' : (adminUserPre ? adminUserPre.billing_due_date : null),
         singer_code: meta.singer_code || (adminUserPre && adminUserPre.singer_code) || defaultCode
       };
@@ -972,16 +976,18 @@
                 fEmail === 'alinecrissallai@gmail.com' ||
                 found.plan_tier === 'vip' ||
                 (found.plan_type && found.plan_type.indexOf('VIP') !== -1) ||
-                (knownAdminUser && (knownAdminUser.is_vip || knownAdminUser.plan_tier === 'vip' || (knownAdminUser.plan_type && knownAdminUser.plan_type.indexOf('VIP') !== -1) || knownAdminUser.coupon_used === 'VIP100'))
+                (knownAdminUser && (knownAdminUser.is_vip || knownAdminUser.plan_tier === 'vip' || (knownAdminUser.plan_type && knownAdminUser.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(knownAdminUser.coupon_used)) || knownAdminUser.coupon_used === 'VIP100'))
               );
 
               var isProFound = isVipFound || fEmail === 'leovitulli@gmail.com' || found.plan_tier === 'pro' || (knownAdminUser && knownAdminUser.plan_tier === 'pro');
+
+              var defaultVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
 
               if (isVipFound) {
                 found.is_vip = true;
                 found.plan_tier = 'vip';
                 found.plan_type = (knownAdminUser && knownAdminUser.plan_type) || '👑 VIP Parceiro (100% OFF)';
-                found.coupon_used = (knownAdminUser && knownAdminUser.coupon_used) || 'VIP100';
+                found.coupon_used = (knownAdminUser && knownAdminUser.coupon_used) || defaultVipCode;
                 found.billing_due_date = '2099-12-31T23:59:59.000Z';
                 // Curar nuvem caso esteja defasada (usando apenas colunas válidas no profiles)
                 if (sb && found.id && found.plan_tier !== 'vip') {
@@ -1126,7 +1132,7 @@
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
         var initial = (displayName.charAt(0) || 'U').toUpperCase();
 
-        var isVip = !!(currentProfile && (currentProfile.is_vip || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.plan_tier === 'vip' || currentProfile.coupon_used === 'VIP100' || cleanEmail === 'alinecrissallai@gmail.com'));
+        var isVip = !!(currentProfile && (currentProfile.is_vip || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.plan_tier === 'vip' || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(currentProfile.coupon_used)) || currentProfile.coupon_used === 'VIP100' || cleanEmail === 'alinecrissallai@gmail.com'));
         var isPro = isVip || (currentProfile && currentProfile.plan_tier === 'pro') || cleanEmail === 'leovitulli@gmail.com';
         var planType = (currentProfile && currentProfile.plan_type) || (isVip ? '👑 VIP 100% OFF' : (isPro ? '💎 PRO ANUAL' : '⚡ PLANO FREE'));
         var isAdm = this.isAdmin();
@@ -1308,7 +1314,8 @@
             if (cpf !== undefined) uList[myIdx].cpf = cpf;
             if (instagram !== undefined) uList[myIdx].instagram = instagram;
           } else {
-            var isUserVipSaved = !!(currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.coupon_used === 'VIP100'));
+            var activeVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+            var isUserVipSaved = !!(currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(currentProfile.coupon_used)) || currentProfile.coupon_used === 'VIP100'));
             uList.unshift({
               id: currentUser.id || 'user-' + Date.now(),
               name: name,
@@ -1320,7 +1327,7 @@
               plan_tier: isUserVipSaved ? 'vip' : (currentProfile.plan_tier || 'pro'),
               plan_type: isUserVipSaved ? '👑 VIP 100% OFF' : (currentProfile.plan_type || '💎 PRO ANUAL'),
               is_vip: isUserVipSaved,
-              coupon_used: (currentProfile && currentProfile.coupon_used) || (isUserVipSaved ? 'VIP100' : ''),
+              coupon_used: (currentProfile && currentProfile.coupon_used) || (isUserVipSaved ? activeVipCode : ''),
               billing_due_date: isUserVipSaved ? '2099-12-31T23:59:59.000Z' : (currentProfile && currentProfile.billing_due_date ? currentProfile.billing_due_date : null),
               is_online: true,
               status_text: '🟢 Conectado e Ativo',
@@ -1360,11 +1367,13 @@
         if (instagram !== undefined) payload.instagram = instagram;
         if (isDev) payload.role = 'admin';
 
-        if (currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip')) {
+        var defaultVipCode = (window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100';
+
+        if (currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(currentProfile.coupon_used)))) {
           payload.is_vip = true;
           payload.plan_tier = 'vip';
           payload.plan_type = '👑 VIP Parceiro (100% OFF)';
-          payload.coupon_used = currentProfile.coupon_used || 'VIP100';
+          payload.coupon_used = currentProfile.coupon_used || defaultVipCode;
           payload.billing_due_date = '2099-12-31T23:59:59.000Z';
         }
 
@@ -1374,7 +1383,7 @@
 
         // Atualizar no System Registry em songs
         var regId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
-        var isRegVip = !!(currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || currentProfile.coupon_used === 'VIP100'));
+        var isRegVip = !!(currentProfile && (currentProfile.is_vip || currentProfile.plan_tier === 'vip' || (currentProfile.plan_type && currentProfile.plan_type.indexOf('VIP') !== -1) || (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(currentProfile.coupon_used)) || currentProfile.coupon_used === 'VIP100'));
 
         // 1. Gravação direta via REST fetch com apikey (garantia absoluta contra falhas na SDK)
         var anonKey = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) || '';
@@ -1432,7 +1441,7 @@
               plan_tier: isRegVip ? 'vip' : (currentProfile.plan_tier || 'pro'),
               plan_type: isRegVip ? '👑 VIP Parceiro (100% OFF)' : (currentProfile.plan_type || '💎 PRO ANUAL'),
               is_vip: isRegVip,
-              coupon_used: (currentProfile && currentProfile.coupon_used) || (isRegVip ? 'VIP100' : ''),
+              coupon_used: (currentProfile && currentProfile.coupon_used) || (isRegVip ? defaultVipCode : ''),
               billing_due_date: isRegVip ? '2099-12-31T23:59:59.000Z' : (currentProfile && currentProfile.billing_due_date ? currentProfile.billing_due_date : null),
               is_online: true,
               status_text: '🟢 Conectado e Ativo',
