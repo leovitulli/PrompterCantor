@@ -1569,6 +1569,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (searchDropdown) searchDropdown.classList.add('hidden');
 
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+      modal.style.zIndex = '10000095';
+
       var songTitle = (gSong.title || 'Música').toUpperCase();
       if (titleEl) titleEl.textContent = songTitle;
       if (subEl) subEl.textContent = (gSong.artist || 'Acervo CantaAí');
