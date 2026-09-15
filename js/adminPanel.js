@@ -384,75 +384,22 @@
             financeLedger = [];
           }
         }
-        if (!financeLedger || !Array.isArray(financeLedger) || financeLedger.length === 0) {
-          var nowDt = new Date();
-          financeLedger = [
-            {
-              id: 'fin-tx-seed-1',
-              user_id: 'f9e2fcbe-be30-413b-bccc-15f1b701c2d0',
-              user_name: 'Leo Ogum',
-              user_email: 'leoogum23@gmail.com',
-              user_code: '@leoogum23',
-              amount: 299.00,
-              plan_tier: 'pro',
-              plan_type: '💎 PRO ANUAL',
-              method: 'pix',
-              paid_at: new Date(nowDt.getFullYear(), nowDt.getMonth(), 2).toISOString(),
-              due_date: new Date(nowDt.getFullYear() + 1, nowDt.getMonth(), 2).toISOString(),
-              notes: 'Pix Baixa Manual Confirmada'
-            },
-            {
-              id: 'fin-tx-seed-2',
-              user_id: 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908',
-              user_name: 'Aline Criss Allai',
-              user_email: 'alinecrissallai@gmail.com',
-              user_code: '@alinecrissallai',
-              amount: 0.00,
-              plan_tier: 'vip',
-              plan_type: '👑 VIP 100% OFF',
-              method: 'coupon',
-              paid_at: new Date(nowDt.getFullYear(), nowDt.getMonth(), 8).toISOString(),
-              due_date: '2099-12-31T23:59:59.000Z',
-              notes: 'Cupom VIP100 aplicado - Cortesia Vitalícia'
-            }
-          ];
-          try {
-            localStorage.setItem(STORAGE_FINANCE_KEY, JSON.stringify(financeLedger));
-          } catch (e) {}
-        } else {
-          // Expurgar qualquer transação atribuída ao desenvolvedor do livro caixa
-          financeLedger = financeLedger.filter(function(tx) {
-            if (!tx) return false;
-            var txEmail = (tx.user_email || '').toLowerCase().trim();
-            return !isPlatformDeveloper(txEmail) && tx.user_id !== 'admin-leovitulli-id';
-          });
-
-          // Assegurar presença de Aline como cortesia VIP no livro caixa
-          var hasAlineTx = financeLedger.some(function(tx) {
-            return tx && ((tx.user_email && tx.user_email.toLowerCase() === 'alinecrissallai@gmail.com') || tx.user_id === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908');
-          });
-          if (!hasAlineTx) {
-            var nowDt = new Date();
-            financeLedger.push({
-              id: 'fin-tx-seed-2',
-              user_id: 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908',
-              user_name: 'Aline Criss Allai',
-              user_email: 'alinecrissallai@gmail.com',
-              user_code: '@alinecrissallai',
-              amount: 0.00,
-              plan_tier: 'vip',
-              plan_type: '👑 VIP 100% OFF',
-              method: 'coupon',
-              paid_at: new Date(nowDt.getFullYear(), nowDt.getMonth(), 8).toISOString(),
-              due_date: '2099-12-31T23:59:59.000Z',
-              notes: 'Cupom VIP100 aplicado - Cortesia Vitalícia'
-            });
-          }
-
-          try {
-            localStorage.setItem(STORAGE_FINANCE_KEY, JSON.stringify(financeLedger));
-          } catch (e) {}
+        if (!financeLedger || !Array.isArray(financeLedger)) {
+          financeLedger = [];
         }
+
+        // Expurgar qualquer transação de teste/fictícia antiga (ex: fin-tx-seed-1 de R$ 299 ou desenvolvedor)
+        financeLedger = financeLedger.filter(function(tx) {
+          if (!tx) return false;
+          if (tx.id === 'fin-tx-seed-1') return false;
+          var txEmail = (tx.user_email || '').toLowerCase().trim();
+          if (txEmail === 'leoogum23@gmail.com' && tx.amount === 299 && tx.id && tx.id.indexOf('seed') !== -1) return false;
+          return !isPlatformDeveloper(txEmail) && tx.user_id !== 'admin-leovitulli-id';
+        });
+
+        try {
+          localStorage.setItem(STORAGE_FINANCE_KEY, JSON.stringify(financeLedger));
+        } catch (e) {}
       } catch (e) {
         console.warn('Erro ao carregar dados do admin:', e);
       }
@@ -462,6 +409,43 @@
       try {
         localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(allUserData));
       } catch (e) {}
+    },
+
+    saveStoredFinance: function () {
+      try {
+        localStorage.setItem(STORAGE_FINANCE_KEY, JSON.stringify(financeLedger));
+      } catch (e) {}
+
+      var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) ? window.SUPABASE_CONFIG.url : '';
+      var authHeaders = PrompterAdmin.getAuthHeaders();
+      if (supUrl) {
+        var row = {
+          repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
+          title: 'Livro-Razão Financeiro ERP CantaAí PRO',
+          artist: 'SYSTEM_CONFIG_FINANCE',
+          composer: 'FINANCE_V1',
+          content: JSON.stringify(financeLedger)
+        };
+        var checkUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs?repertoire_id=eq.' + encodeURIComponent(SYSTEM_REGISTRY_REPERTOIRE_ID) + '&artist=eq.SYSTEM_CONFIG_FINANCE&select=id';
+        fetch(checkUrl, {
+          headers: authHeaders
+        }).then(function(r) { return r.ok ? r.json() : []; }).then(function(rows) {
+          var songsUrl = supUrl.replace(/\/$/, '') + '/rest/v1/songs';
+          if (Array.isArray(rows) && rows.length > 0) {
+            fetch(songsUrl + '?id=eq.' + encodeURIComponent(rows[0].id), {
+              method: 'PATCH',
+              headers: Object.assign({}, authHeaders, { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
+              body: JSON.stringify(row)
+            }).catch(function() {});
+          } else {
+            fetch(songsUrl, {
+              method: 'POST',
+              headers: Object.assign({}, authHeaders, { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
+              body: JSON.stringify([row])
+            }).catch(function() {});
+          }
+        }).catch(function() {});
+      }
     },
 
     saveStoredCoupons: function () {
@@ -2857,10 +2841,31 @@
         rows.forEach(function(row) {
           try {
             if (!row || !row.artist) return;
+            if (row.artist === 'SYSTEM_CONFIG_FINANCE' && row.content) {
+              try {
+                var cloudLedger = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+                if (Array.isArray(cloudLedger)) {
+                  financeLedger = cloudLedger.filter(function(tx) {
+                    if (!tx) return false;
+                    if (tx.id === 'fin-tx-seed-1') return false;
+                    var txEmail = (tx.user_email || '').toLowerCase().trim();
+                    if (txEmail === 'leoogum23@gmail.com' && tx.amount === 299 && tx.id && tx.id.indexOf('seed') !== -1) return false;
+                    return !isPlatformDeveloper(txEmail) && tx.user_id !== 'admin-leovitulli-id';
+                  });
+                  try {
+                    localStorage.setItem(STORAGE_FINANCE_KEY, JSON.stringify(financeLedger));
+                  } catch (e) {}
+                  PrompterAdmin.renderFinanceDashboard();
+                  PrompterAdmin.renderFinanceTable();
+                }
+              } catch (e) {}
+              return;
+            }
+
             // Ignorar chamados de suporte, comunicados e configurações do CRM de cantores
             if (row.artist === 'USER_SUPPORT_TICKET' || row.artist === 'SYSTEM_ANNOUNCEMENT' ||
-                row.artist === 'SYSTEM_CONFIG_PRICING' || row.artist === 'SUPPORT_REPLY' ||
-                (row.composer && row.composer.indexOf('TICKET:') === 0)) {
+                row.artist === 'SYSTEM_CONFIG_PRICING' || row.artist === 'SYSTEM_CONFIG_COUPONS' ||
+                row.artist === 'SUPPORT_REPLY' || (row.composer && row.composer.indexOf('TICKET:') === 0)) {
               return;
             }
             if (row.artist.indexOf('@cantaai.com') !== -1 || row.artist.indexOf('novo_cantor_') !== -1 || row.artist.indexOf('cantor_') === 0) {
@@ -3620,14 +3625,27 @@
       var diffTime = dueDate.getTime() - now.getTime();
       var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+      var hasConfirmedPayment = (uTxs && uTxs.some(function(t) { return Number(t.amount || 0) > 0; })) || (!!user.last_payment_at && Number(user.last_payment_amount || 0) > 0);
+
       var status = 'paid';
       var label = 'EM DIA';
-      if (diffDays < 0) {
-        status = 'overdue';
-        label = 'VENCIDO';
-      } else if (diffDays <= 5) {
-        status = 'due_soon';
-        label = 'VENCE EM BREVE';
+
+      if (!hasConfirmedPayment) {
+        if (diffDays < 0) {
+          status = 'overdue';
+          label = 'VENCIDO';
+        } else {
+          status = 'due_soon';
+          label = 'A VENCER';
+        }
+      } else {
+        if (diffDays < 0) {
+          status = 'overdue';
+          label = 'VENCIDO';
+        } else if (diffDays <= 5) {
+          status = 'due_soon';
+          label = 'VENCE EM BREVE';
+        }
       }
 
       var dDay = String(dueDate.getDate()).padStart(2, '0');
@@ -4041,6 +4059,7 @@
 
       // Persistir dados locais e na nuvem
       PrompterAdmin.saveStoredUsers();
+      PrompterAdmin.saveStoredFinance();
 
       // Sincronizar sessão ativa caso o usuário cujo pagamento teve baixa seja o atualmente autenticado
       var authUser = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
