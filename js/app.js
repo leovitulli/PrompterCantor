@@ -1733,6 +1733,18 @@ document.addEventListener('DOMContentLoaded', function () {
         };
       }
 
+      var btnPlayWithoutSaving = document.getElementById('btnPlayWithoutSaving');
+      if (btnPlayWithoutSaving) {
+        btnPlayWithoutSaving.onclick = function () {
+          closeModal();
+          if (searchInput) searchInput.value = '';
+          state.searchQuery = '';
+          if (btnClearSearch) btnClearSearch.classList.add('hidden');
+          openPrompterView(gSong);
+          if (window.showToast) window.showToast('✨ Tocando no Teleprompter.', 'info');
+        };
+      }
+
       // Carregar lista atualizada de repertórios com contagem
       if (selectEl) selectEl.innerHTML = '<option value="">Carregando repertórios...</option>';
       modal.classList.remove('hidden');
@@ -1976,34 +1988,17 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         });
 
-        // Binds de clique nas músicas do Acervo Global (Tocar Agora ou Importar Cópia com Seleção de Repertório)
+        // Binds de clique nas músicas do Acervo Global (Abre Modal de Seleção de Repertório)
         searchDropdown.querySelectorAll('.search-item-global-song').forEach(function (el) {
           var gIdx = parseInt(el.getAttribute('data-global-idx'), 10);
           var gSong = matchedGlobalSongs[gIdx];
           if (!gSong) return;
 
-          // Botão específico "+ Adicionar" abre o modal para escolher o repertório de destino
-          var btnAdd = el.querySelector('.btn-import-acervo');
-          if (btnAdd) {
-            btnAdd.addEventListener('click', function (e) {
-              e.stopPropagation();
-              var btn = this;
-              openImportRepertoireModal(gSong, btn);
-            });
-          }
-
-          // Clicar na linha abre direto no Teleprompter para tocar ao vivo
           el.addEventListener('click', function (e) {
-            if (e.target.closest('.btn-import-acervo')) return;
-            searchDropdown.classList.add('hidden');
-            if (searchInput) searchInput.value = '';
-            state.searchQuery = '';
-            if (btnClearSearch) btnClearSearch.classList.add('hidden');
-
-            openPrompterView(gSong);
-            if (window.showToast) {
-              window.showToast('✨ Tocando música do Acervo Global.', 'info');
-            }
+            e.stopPropagation();
+            e.preventDefault();
+            var btn = this.querySelector('.btn-import-acervo');
+            openImportRepertoireModal(gSong, btn || this);
           });
         });
       });
