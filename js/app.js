@@ -1913,6 +1913,8 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         }
 
+        window._lastMatchedGlobalSongs = matchedGlobalSongs;
+
         // SEÇÃO 3: DISPONÍVEIS NO ACERVO GLOBAL
         if (matchedGlobalSongs.length > 0) {
           html += '<div class="search-auto-section-title is-acervo">✨ Prontas no Acervo CantaAí (' + matchedGlobalSongs.length + ')</div>';
@@ -1927,14 +1929,14 @@ document.addEventListener('DOMContentLoaded', function () {
             var upperTitle = (s.title || 'Sem título').toUpperCase();
 
             html +=
-              '<div class="search-auto-item search-item-global-song" data-global-idx="' + gIdx + '">' +
+              '<div class="search-auto-item search-item-global-song" data-global-idx="' + gIdx + '" onclick="window.openImportModalByIndex(' + gIdx + ');">' +
                 '<div class="search-auto-info">' +
                   '<span class="search-auto-name">✨ ' + escapeHtml(upperTitle) + '</span>' +
                   '<span class="search-auto-meta">' + escapeHtml(metaParts.join(' • ')) + '</span>' +
                 '</div>' +
                 '<div class="search-auto-badges">' +
                   (s.key ? '<span class="badge badge-key" style="font-size:0.75rem;">' + escapeHtml(s.key) + '</span>' : '') +
-                  '<button type="button" class="btn-import-acervo" data-global-idx="' + gIdx + '" title="Adicionar cópia ao seu repertório">+ Adicionar</button>' +
+                  '<button type="button" class="btn-import-acervo" data-global-idx="' + gIdx + '" onclick="event.stopPropagation(); event.preventDefault(); window.openImportModalByIndex(' + gIdx + ');" title="Adicionar cópia ao seu repertório">+ Adicionar</button>' +
                 '</div>' +
               '</div>';
           });
@@ -1987,22 +1989,17 @@ document.addEventListener('DOMContentLoaded', function () {
             });
           });
         });
-
-        // Binds de clique nas músicas do Acervo Global (Abre Modal de Seleção de Repertório)
-        searchDropdown.querySelectorAll('.search-item-global-song').forEach(function (el) {
-          var gIdx = parseInt(el.getAttribute('data-global-idx'), 10);
-          var gSong = matchedGlobalSongs[gIdx];
-          if (!gSong) return;
-
-          el.addEventListener('click', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            var btn = this.querySelector('.btn-import-acervo');
-            openImportRepertoireModal(gSong, btn || this);
-          });
-        });
       });
     }
+
+    window.openImportModalByIndex = function (idx) {
+      if (searchDropdown) searchDropdown.classList.add('hidden');
+      var list = window._lastMatchedGlobalSongs || [];
+      var s = list[idx];
+      if (s) {
+        openImportRepertoireModal(s);
+      }
+    };
 
     if (searchInput) {
       searchInput.addEventListener('input', function (e) {
