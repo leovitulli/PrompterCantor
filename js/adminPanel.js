@@ -4858,6 +4858,11 @@
       var song = (PrompterAdmin.masterSongsCache || []).find(function(s) { return String(s.id) === String(songId); });
       if (!song) return;
 
+      if (typeof window.openImportRepertoireModal === 'function') {
+        window.openImportRepertoireModal(song);
+        return;
+      }
+
       var user = window.PrompterAuth ? window.PrompterAuth.getUser() : null;
       var curId = user ? user.id : 'guest';
 

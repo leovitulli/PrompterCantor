@@ -1924,21 +1924,61 @@
     <div class="modal-card import-rep-modal-card">
       <div class="modal-header" style="justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.4rem;">🎵</span>
+          <span style="font-size: 1.4rem;">📥</span>
           <div>
             <h3 style="font-size: 1.15rem; font-weight: 800; color: #f8fafc; margin: 0;">Salvar no Repertório</h3>
-            <span style="font-size: 0.78rem; color: #94a3b8;" id="importModalSongSub">Escolha em qual repertório salvar</span>
+            <span style="font-size: 0.78rem; color: #94a3b8;" id="importModalSongSub">Escolha ou crie um repertório</span>
           </div>
         </div>
         <button class="modal-close" id="btnCloseSelectRepertoireForImport">✕</button>
       </div>
-      <div class="modal-body" style="padding-top: 14px;">
-        <p style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 8px;">
-          Selecione o repertório onde deseja salvar uma cópia de <strong id="importModalSongTitle" style="color: #38bdf8;">Música</strong>:
-        </p>
-        <div id="importRepChoiceList" class="rep-choice-list">
-          <!-- Carregado dinamicamente -->
+      
+      <div class="modal-body" style="padding-top: 14px; display: flex; flex-direction: column; gap: 14px;">
+        <!-- Bloco de identificação da música -->
+        <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="overflow: hidden;">
+            <div style="font-size: 0.72rem; text-transform: uppercase; color: #38bdf8; font-weight: 700; letter-spacing: 0.05em;">Música a Importar</div>
+            <strong id="importModalSongTitle" style="color: #f8fafc; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">MÚSICA</strong>
+          </div>
+          <span id="importModalSongBadge" style="background: #38bdf8; color: #0f172a; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap;">Tom: -</span>
         </div>
+
+        <!-- Seção 1: Repertório Existente -->
+        <div id="importExistingRepSection" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+          <label style="font-size: 0.85rem; font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 6px; margin: 0;">
+            <span>📂</span> Repertório Existente:
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <select id="importSelectExistingRep" class="form-control" style="flex: 1; background: #0b1120; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; font-size: 0.88rem; border-radius: 8px; padding: 8px 10px; cursor: pointer;">
+              <!-- Carregado dinamicamente -->
+            </select>
+            <button type="button" id="btnRenameSelectedRep" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.8rem; white-space: nowrap; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #e2e8f0;" title="Renomear este repertório">
+              ✏️ Renomear
+            </button>
+          </div>
+          <button type="button" id="btnSaveToSelectedRep" class="btn btn-primary" style="width: 100%; padding: 10px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            ✓ Salvar no Repertório Selecionado
+          </button>
+        </div>
+
+        <!-- Divisor OU -->
+        <div style="display: flex; align-items: center; text-align: center; color: #64748b; font-size: 0.75rem; font-weight: 700; gap: 10px;">
+          <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.08);"></div>
+          <span>OU CRIE UM NOVO REPERTÓRIO</span>
+          <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.08);"></div>
+        </div>
+
+        <!-- Seção 2: Novo Repertório -->
+        <div style="background: rgba(251, 191, 36, 0.03); border: 1px dashed rgba(251, 191, 36, 0.35); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+          <label style="font-size: 0.85rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 6px; margin: 0;">
+            <span>➕</span> Nome do Novo Repertório:
+          </label>
+          <input type="text" id="importNewRepNameInput" class="form-control" placeholder="Ex: Pagode 2026, Samba de Raiz, etc." style="background: #0b1120; border: 1px solid rgba(251, 191, 36, 0.3); color: #f8fafc; font-size: 0.88rem; border-radius: 8px; padding: 8px 12px;">
+          <button type="button" id="btnCreateAndSaveRep" class="btn btn-warning" style="width: 100%; padding: 10px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #d97706, #b45309); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            ➕ Criar Repertório e Salvar Música
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -1950,14 +1990,15 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=126"></script>
   <script src="js/supabaseClient.js?v=132"></script>
-  <script src="js/db.js?v=123"></script>
+  <script src="js/db.js?v=124"></script>
   <script src="js/auth.js?v=131"></script>
-  <script src="js/adminPanel.js?v=154"></script>
+  <script src="js/adminPanel.js?v=155"></script>
   <script src="js/textParser.js?v=124"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
   <script src="js/transposer.js?v=123"></script>
   <script src="js/prompter.js?v=123"></script>
   <script src="js/tomColor.js?v=5"></script>
+  <script src="js/app.js?v=155"></script>
   <script src="js/brandIcons.js?v=3"></script>
   <script src="js/mediaPlayer.js?v=123"></script>
   <script src="js/advancedPlayer.js?v=123"></script>
