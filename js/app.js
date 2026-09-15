@@ -1567,6 +1567,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (!modal) return;
 
+      if (searchDropdown) searchDropdown.classList.add('hidden');
+
       var songTitle = (gSong.title || 'Música').toUpperCase();
       if (titleEl) titleEl.textContent = songTitle;
       if (subEl) subEl.textContent = (gSong.artist || 'Acervo CantaAí');
@@ -1575,6 +1577,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       function closeModal() {
         modal.classList.add('hidden');
+        modal.style.display = 'none';
       }
 
       if (btnClose) btnClose.onclick = closeModal;
@@ -1733,6 +1736,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // Carregar lista atualizada de repertórios com contagem
       if (selectEl) selectEl.innerHTML = '<option value="">Carregando repertórios...</option>';
       modal.classList.remove('hidden');
+      modal.style.display = 'flex';
 
       var repPromise = (PrompterDB.getRepertoiresWithCounts && typeof PrompterDB.getRepertoiresWithCounts === 'function')
         ? PrompterDB.getRepertoiresWithCounts()
