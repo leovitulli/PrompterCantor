@@ -430,6 +430,8 @@ textarea {
 
 /* Modal de Seleção de Repertório para Importação */
 .import-rep-modal-card {
+  position: relative;
+  z-index: 10;
   max-width: 480px;
   width: 92%;
   background: radial-gradient(circle at top right, #111a2e, #070a12 85%);
