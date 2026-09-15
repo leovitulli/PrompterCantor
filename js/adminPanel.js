@@ -4171,16 +4171,39 @@
 
       var html = '';
       allCoupons.forEach(function (c) {
-        var isVip = c.type === 'vip';
+        var isVip = c.type === 'vip' || c.discount === '100% OFF' || (c.code && c.code.toUpperCase().indexOf('VIP') !== -1);
         var badge = isVip
           ? '<span class="badge-plan-executive badge-plan-pro">👑 VIP 100% OFF</span>'
           : '<span class="badge-plan-executive badge-plan-free">⚡ ' + c.discount + '</span>';
+
+        // Contagem dinâmica e precisa de usos baseada nos cadastros reais da plataforma
+        var cCodeNorm = (c.code || '').trim().toUpperCase();
+        var dynamicUses = 0;
+
+        if (Array.isArray(allUserData)) {
+          dynamicUses = allUserData.filter(function (u) {
+            if (!u) return false;
+            var uCoupon = (u.coupon_used || '').trim().toUpperCase();
+            if (uCoupon === cCodeNorm) return true;
+            
+            // Se for o cupom VIP ativo ou cadastrado, computa também usuários VIP com tags equivalentes
+            if (isVip && (u.is_vip || u.plan_tier === 'vip' || (u.plan_type && (u.plan_type.indexOf('VIP') !== -1 || u.plan_type.indexOf('PARCEIRO') !== -1)))) {
+              if (uCoupon === 'VIP100' || uCoupon === 'VIP100ZITO' || uCoupon === 'CANTORVIP' || uCoupon === 'CORTESIA' || !uCoupon) {
+                return true;
+              }
+            }
+            return false;
+          }).length;
+        }
+
+        var totalUses = Math.max(c.uses || 0, dynamicUses);
+        c.uses = totalUses;
 
         html +=
           '<tr>' +
             '<td><code class="admin-code-tag" style="color: #fbbf24; font-size: 0.9rem; font-weight: 800;">' + c.code + '</code></td>' +
             '<td>' + badge + '</td>' +
-            '<td><strong>' + c.uses + '</strong> / ' + c.maxUses + ' usos</td>' +
+            '<td><strong>' + totalUses + '</strong> / ' + c.maxUses + ' usos</td>' +
             '<td><span style="color: #cbd5e1; font-size: 0.84rem;">' + c.desc + '</span></td>' +
             '<td style="text-align: right; white-space: nowrap;">' +
               '<div style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">' +

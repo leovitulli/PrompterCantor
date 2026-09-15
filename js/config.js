@@ -65,13 +65,26 @@ window.PrompterCoupons = {
     return clean === 'VIP100' || clean === 'CANTORVIP' || clean === 'CORTESIA' || clean === 'DEV';
   },
 
+  recordCouponUsage: function (code) {
+    if (!code) return;
+    var clean = String(code).trim().toUpperCase();
+    var list = this.getAll();
+    var found = list.find(function (c) {
+      return c && c.code && c.code.trim().toUpperCase() === clean;
+    });
+    if (found) {
+      found.uses = (found.uses || 0) + 1;
+      this.saveAll(list);
+    }
+  },
+
   saveAll: function (couponsList) {
     if (!Array.isArray(couponsList)) return;
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(couponsList));
     } catch (e) {}
 
-    var sysRepId = '00000000-0000-0000-0000-000000000001';
+    var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
     var anon = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.key) ? window.SUPABASE_CONFIG.key : '';
     var supUrl = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) ? window.SUPABASE_CONFIG.url : '';
     if (supUrl && anon) {
@@ -113,7 +126,7 @@ window.PrompterCoupons = {
     if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
       var baseUrl = window.SUPABASE_CONFIG.url.replace(/\/$/, '') + '/rest/v1';
       var anon = window.SUPABASE_CONFIG.key;
-      var sysRepId = '00000000-0000-0000-0000-000000000001';
+      var sysRepId = '3e42c00c-f10c-4b05-96b6-b782403d1d17';
       fetch(baseUrl + '/songs?repertoire_id=eq.' + encodeURIComponent(sysRepId) + '&artist=eq.SYSTEM_CONFIG_COUPONS&select=content', {
         headers: { 'apikey': anon, 'Authorization': 'Bearer ' + anon }
       }).then(function(r) { return r.ok ? r.json() : []; }).then(function(rows) {
