@@ -1565,14 +1565,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (btnClearSearch) btnClearSearch.classList.remove('hidden');
 
-      // Buscar repertórios e todas as músicas no banco de dados
+      // Buscar repertórios, músicas do usuário e acervo global na nuvem
       Promise.all([
         Promise.resolve(state.repertoires || []),
-        PrompterDB.getAllSongs()
+        PrompterDB.getAllSongs(),
+        PrompterDB.getAllSongsGlobal().catch(function () { return []; })
       ]).then(function (results) {
         var reps = results[0] || [];
         var allSongs = results[1] || [];
+        var allGlobalSongs = results[2] || [];
 
+        // 1. Repertórios correspondentes
         var matchedReps = reps.filter(function (r) {
           return r.name && normalizeSearch(r.name).indexOf(normQ) !== -1;
         });
@@ -1580,7 +1583,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var repMap = {};
         reps.forEach(function (r) { repMap[r.id] = r.name; });
 
-        var matchedSongs = allSongs.filter(function (s) {
+        // Helper para testar correspondência nos campos da música
+        function matchSongCriteria(s) {
           var normTitle = s.title ? normalizeSearch(s.title) : '';
           var normArtist = s.artist ? normalizeSearch(s.artist) : '';
           var normComposer = s.composer ? normalizeSearch(s.composer) : '';
@@ -1610,18 +1614,51 @@ document.addEventListener('DOMContentLoaded', function () {
           }
 
           return titleMatch || artistMatch || composerMatch || rhythmMatch || contentMatch;
+        }
+
+        // 2. Músicas do próprio usuário (Prioridade Máxima)
+        var ownSongKeys = {};
+        var matchedOwnSongs = allSongs.filter(function (s) {
+          var matched = matchSongCriteria(s);
+          if (matched) {
+            var key = (s.title || '').trim().toLowerCase() + '___' + (s.artist || '').trim().toLowerCase();
+            ownSongKeys[key] = true;
+            if (s.id) ownSongKeys[s.id] = true;
+          }
+          return matched;
+        });
+
+        // 3. Músicas disponíveis no Acervo Global (que o usuário não tem ainda)
+        var seenGlobalKeys = {};
+        var matchedGlobalSongs = [];
+
+        allGlobalSongs.forEach(function (s) {
+          if (!s || !s.title) return;
+          if (s.repertoireId === '3e42c00c-f10c-4b05-96b6-b782403d1d17') return; // ignora dados de sistema
+          var sKey = (s.title || '').trim().toLowerCase() + '___' + (s.artist || '').trim().toLowerCase();
+
+          // Se o usuário já possui no repertório, não duplicar na seção do acervo
+          if (ownSongKeys[sKey] || (s.id && ownSongKeys[s.id])) return;
+          // Deduplicar no acervo global para listar apenas uma versão limpa
+          if (seenGlobalKeys[sKey]) return;
+
+          if (matchSongCriteria(s)) {
+            seenGlobalKeys[sKey] = true;
+            matchedGlobalSongs.push(s);
+          }
         });
 
         if (!searchDropdown) return;
 
-        if (matchedReps.length === 0 && matchedSongs.length === 0) {
-          searchDropdown.innerHTML = '<div class="search-auto-empty">🔍 Nenhum repertório ou música encontrado para "<strong>' + escapeHtml(query) + '</strong>"</div>';
+        if (matchedReps.length === 0 && matchedOwnSongs.length === 0 && matchedGlobalSongs.length === 0) {
+          searchDropdown.innerHTML = '<div class="search-auto-empty">🔍 Nenhuma música ou repertório encontrado para "<strong>' + escapeHtml(query) + '</strong>"</div>';
           searchDropdown.classList.remove('hidden');
           return;
         }
 
         var html = '';
 
+        // SEÇÃO 1: REPERTÓRIOS
         if (matchedReps.length > 0) {
           html += '<div class="search-auto-section-title">📂 Repertórios (' + matchedReps.length + ')</div>';
           matchedReps.slice(0, 4).forEach(function (r) {
@@ -1635,9 +1672,10 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         }
 
-        if (matchedSongs.length > 0) {
-          html += '<div class="search-auto-section-title">🎵 Músicas (' + matchedSongs.length + ')</div>';
-          matchedSongs.slice(0, 20).forEach(function (s) {
+        // SEÇÃO 2: NO SEU REPERTÓRIO
+        if (matchedOwnSongs.length > 0) {
+          html += '<div class="search-auto-section-title">🎵 No seu Repertório (' + matchedOwnSongs.length + ')</div>';
+          matchedOwnSongs.slice(0, 15).forEach(function (s) {
             var repName = repMap[s.repertoireId] || 'Repertório';
             var metaParts = [repName];
             if (s.rhythm) metaParts.push(s.rhythm);
@@ -1661,10 +1699,37 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         }
 
+        // SEÇÃO 3: DISPONÍVEIS NO ACERVO GLOBAL
+        if (matchedGlobalSongs.length > 0) {
+          html += '<div class="search-auto-section-title is-acervo">✨ Prontas no Acervo CantaAí (' + matchedGlobalSongs.length + ')</div>';
+          matchedGlobalSongs.slice(0, 15).forEach(function (s, gIdx) {
+            var metaParts = ['Acervo CantaAí'];
+            if (s.artist) metaParts.push(s.artist);
+            if (s.rhythm) metaParts.push(s.rhythm);
+            if (s._matchedLyricSnippet) {
+              metaParts.push('💬 "' + s._matchedLyricSnippet + '..."');
+            }
+
+            var upperTitle = (s.title || 'Sem título').toUpperCase();
+
+            html +=
+              '<div class="search-auto-item search-item-global-song" data-global-idx="' + gIdx + '">' +
+                '<div class="search-auto-info">' +
+                  '<span class="search-auto-name">✨ ' + escapeHtml(upperTitle) + '</span>' +
+                  '<span class="search-auto-meta">' + escapeHtml(metaParts.join(' • ')) + '</span>' +
+                '</div>' +
+                '<div class="search-auto-badges">' +
+                  (s.key ? '<span class="badge badge-key" style="font-size:0.75rem;">' + escapeHtml(s.key) + '</span>' : '') +
+                  '<button type="button" class="btn-import-acervo" data-global-idx="' + gIdx + '" title="Adicionar cópia ao seu repertório">+ Adicionar</button>' +
+                '</div>' +
+              '</div>';
+          });
+        }
+
         searchDropdown.innerHTML = html;
         searchDropdown.classList.remove('hidden');
 
-        // Binds de clique nos itens do autocomplete
+        // Binds de clique nos itens de repertório
         searchDropdown.querySelectorAll('.search-item-rep').forEach(function (el) {
           el.addEventListener('click', function () {
             var rId = this.getAttribute('data-rep-id');
@@ -1676,6 +1741,7 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         });
 
+        // Binds de clique nas músicas do próprio usuário
         searchDropdown.querySelectorAll('.search-item-song').forEach(function (el) {
           el.addEventListener('click', function () {
             var sId = this.getAttribute('data-song-id');
@@ -1705,6 +1771,80 @@ document.addEventListener('DOMContentLoaded', function () {
             }).catch(function (err) {
               console.error('Erro ao abrir música selecionada na busca:', err);
             });
+          });
+        });
+
+        // Binds de clique nas músicas do Acervo Global (Tocar Agora ou Importar Cópia)
+        searchDropdown.querySelectorAll('.search-item-global-song').forEach(function (el) {
+          var gIdx = parseInt(el.getAttribute('data-global-idx'), 10);
+          var gSong = matchedGlobalSongs[gIdx];
+          if (!gSong) return;
+
+          // Botão específico "+ Adicionar"
+          var btnAdd = el.querySelector('.btn-import-acervo');
+          if (btnAdd) {
+            btnAdd.addEventListener('click', function (e) {
+              e.stopPropagation();
+              var btn = this;
+              btn.disabled = true;
+              btn.innerHTML = '⏳ Salvando...';
+
+              // Determinar repertório de destino
+              var targetRepId = (state.currentRepertoire && state.currentRepertoire.id)
+                ? state.currentRepertoire.id
+                : (state.repertoires && state.repertoires.length > 0 ? state.repertoires[0].id : null);
+
+              var repPromise = targetRepId
+                ? Promise.resolve(targetRepId)
+                : PrompterDB.saveRepertoire({ name: 'Meu Repertório', source: 'manual' });
+
+              repPromise.then(function (finalRepId) {
+                // Clonar música criando cópia 100% independente no repertório do cantor
+                var clonedSong = {
+                  title: gSong.title || 'Música',
+                  artist: gSong.artist || '',
+                  composer: gSong.composer || '',
+                  rhythm: gSong.rhythm || '',
+                  key: gSong.key || '',
+                  originalKey: gSong.originalKey || gSong.key || '',
+                  content: gSong.content || '',
+                  youtubeUrl: gSong.youtubeUrl || '',
+                  youtubeId: gSong.youtubeId || '',
+                  spotifyUrl: gSong.spotifyUrl || '',
+                  repertoireId: finalRepId
+                };
+
+                return PrompterDB.saveSong(clonedSong).then(function () {
+                  btn.innerHTML = '✓ Adicionada';
+                  btn.classList.add('is-added');
+                  if (window.showToast) {
+                    window.showToast('🎵 "' + (gSong.title || 'Música') + '" adicionada ao seu repertório!', 'success');
+                  }
+                  if (state.currentRepertoire && state.currentRepertoire.id === finalRepId) {
+                    loadRepertoireSongs(finalRepId);
+                  }
+                });
+              }).catch(function (err) {
+                console.error('Erro ao importar música do acervo:', err);
+                btn.disabled = false;
+                btn.innerHTML = '+ Adicionar';
+                if (window.showToast) window.showToast('Erro ao adicionar música. Tente novamente.', 'error');
+              });
+            });
+          }
+
+          // Clicar na linha abre direto no Teleprompter para tocar ao vivo
+          el.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-import-acervo')) return;
+            searchDropdown.classList.add('hidden');
+            if (searchInput) searchInput.value = '';
+            state.searchQuery = '';
+            if (btnClearSearch) btnClearSearch.classList.add('hidden');
+
+            openPrompterView(gSong);
+            if (window.showToast) {
+              window.showToast('✨ Tocando música do Acervo Global.', 'info');
+            }
           });
         });
       });

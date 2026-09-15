@@ -384,6 +384,50 @@ textarea {
   font-size: 0.88rem;
 }
 
+.search-auto-section-title.is-acervo {
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-item-global-song {
+  background: rgba(56, 189, 248, 0.03);
+}
+
+.search-item-global-song:hover {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.btn-import-acervo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-import-acervo:hover {
+  background: #38bdf8;
+  color: #0b1120;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.btn-import-acervo.is-added {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: #34d399;
+  color: #34d399;
+  pointer-events: none;
+}
+
 /* ── BOTÕES DA HEADER ───────────────────────────────── */
 .header-actions {
   display: flex;
