@@ -1549,6 +1549,149 @@ document.addEventListener('DOMContentLoaded', function () {
     var searchDropdown = document.getElementById('searchAutocompleteDropdown');
     var searchDebounce = null;
 
+    function openImportRepertoireModal(gSong, btnTrigger) {
+      if (!gSong) return;
+
+      var modal = document.getElementById('modalSelectRepertoireForImport');
+      var overlay = document.getElementById('overlaySelectRepertoireForImport');
+      var btnClose = document.getElementById('btnCloseSelectRepertoireForImport');
+      var titleEl = document.getElementById('importModalSongTitle');
+      var subEl = document.getElementById('importModalSongSub');
+      var listEl = document.getElementById('importRepChoiceList');
+
+      if (!modal || !listEl) return;
+
+      var songTitle = (gSong.title || 'Música').toUpperCase();
+      if (titleEl) titleEl.textContent = songTitle;
+      if (subEl) subEl.textContent = (gSong.artist || 'Acervo CantaAí') + (gSong.key ? (' (Tom: ' + gSong.key + ')') : '');
+
+      function closeModal() {
+        modal.classList.add('hidden');
+      }
+
+      if (btnClose) btnClose.onclick = closeModal;
+      if (overlay) overlay.onclick = closeModal;
+
+      listEl.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem; padding:16px; text-align:center;">Carregando seus repertórios...</div>';
+      modal.classList.remove('hidden');
+
+      PrompterDB.getAllRepertoires().then(function (reps) {
+        var userReps = reps || [];
+        var html = '';
+
+        if (userReps.length === 0) {
+          html +=
+            '<button type="button" class="rep-choice-btn is-new" id="btnChoiceCreateDefault">' +
+              '<div class="rep-choice-icon">📂</div>' +
+              '<div class="rep-choice-info">' +
+                '<strong class="rep-choice-name">Criar "Meu Repertório"</strong>' +
+                '<span class="rep-choice-meta">Criar seu primeiro repertório e salvar a música</span>' +
+              '</div>' +
+              '<span class="rep-choice-arrow">+</span>' +
+            '</button>';
+        } else {
+          userReps.forEach(function (r) {
+            html +=
+              '<button type="button" class="rep-choice-btn rep-select-target" data-rep-id="' + r.id + '" data-rep-name="' + escapeHtml(r.name) + '">' +
+                '<div class="rep-choice-icon">📂</div>' +
+                '<div class="rep-choice-info">' +
+                  '<strong class="rep-choice-name">' + escapeHtml(r.name) + '</strong>' +
+                  '<span class="rep-choice-meta">Toque para salvar neste repertório</span>' +
+                '</div>' +
+                '<span class="rep-choice-arrow">➔</span>' +
+              '</button>';
+          });
+
+          html +=
+            '<button type="button" class="rep-choice-btn is-new" id="btnChoiceCreateNew">' +
+              '<div class="rep-choice-icon">➕</div>' +
+              '<div class="rep-choice-info">' +
+                '<strong class="rep-choice-name">Criar Novo Repertório...</strong>' +
+                '<span class="rep-choice-meta">Criar um novo repertório e salvar nele</span>' +
+              '</div>' +
+              '<span class="rep-choice-arrow">+</span>' +
+            '</button>';
+        }
+
+        listEl.innerHTML = html;
+
+        function saveToRepertoire(targetRepId, targetRepName) {
+          closeModal();
+          if (btnTrigger) {
+            btnTrigger.disabled = true;
+            btnTrigger.innerHTML = '⏳ Salvando...';
+          }
+
+          var clonedSong = {
+            title: gSong.title || 'Música',
+            artist: gSong.artist || '',
+            composer: gSong.composer || '',
+            rhythm: gSong.rhythm || '',
+            key: gSong.key || '',
+            originalKey: gSong.originalKey || gSong.key || '',
+            content: gSong.content || '',
+            youtubeUrl: gSong.youtubeUrl || '',
+            youtubeId: gSong.youtubeId || '',
+            spotifyUrl: gSong.spotifyUrl || '',
+            repertoireId: targetRepId
+          };
+
+          PrompterDB.saveSong(clonedSong).then(function () {
+            if (btnTrigger) {
+              btnTrigger.innerHTML = '✓ Adicionada';
+              btnTrigger.classList.add('is-added');
+            }
+            if (window.showToast) {
+              window.showToast('🎵 "' + songTitle + '" adicionada ao repertório "' + targetRepName + '"!', 'success');
+            }
+            if (state.currentRepertoire && state.currentRepertoire.id === targetRepId) {
+              loadRepertoireSongs(targetRepId);
+            }
+          }).catch(function (err) {
+            console.error('Erro ao salvar cópia no repertório:', err);
+            if (btnTrigger) {
+              btnTrigger.disabled = false;
+              btnTrigger.innerHTML = '+ Adicionar';
+            }
+            if (window.showToast) window.showToast('Erro ao salvar música. Tente novamente.', 'error');
+          });
+        }
+
+        listEl.querySelectorAll('.rep-select-target').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var rId = this.getAttribute('data-rep-id');
+            var rName = this.getAttribute('data-rep-name');
+            saveToRepertoire(rId, rName);
+          });
+        });
+
+        var btnCreateDefault = document.getElementById('btnChoiceCreateDefault');
+        if (btnCreateDefault) {
+          btnCreateDefault.addEventListener('click', function () {
+            PrompterDB.saveRepertoire({ name: 'Meu Repertório', source: 'manual' }).then(function (newRepId) {
+              loadRepertoires();
+              saveToRepertoire(newRepId, 'Meu Repertório');
+            });
+          });
+        }
+
+        var btnCreateNew = document.getElementById('btnChoiceCreateNew');
+        if (btnCreateNew) {
+          btnCreateNew.addEventListener('click', function () {
+            var name = prompt('Nome do novo repertório:', 'Novo Repertório');
+            if (name && name.trim()) {
+              PrompterDB.saveRepertoire({ name: name.trim(), source: 'manual' }).then(function (newRepId) {
+                loadRepertoires();
+                saveToRepertoire(newRepId, name.trim());
+              });
+            }
+          });
+        }
+      }).catch(function (err) {
+        listEl.innerHTML = '<div style="color:#ef4444; font-size:0.85rem; padding:12px; text-align:center;">Erro ao carregar repertórios. Tente novamente.</div>';
+      });
+    }
+
     function executeGlobalSearch(query) {
       state.searchQuery = query;
       var normQ = normalizeSearch(query);
@@ -1774,62 +1917,19 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         });
 
-        // Binds de clique nas músicas do Acervo Global (Tocar Agora ou Importar Cópia)
+        // Binds de clique nas músicas do Acervo Global (Tocar Agora ou Importar Cópia com Seleção de Repertório)
         searchDropdown.querySelectorAll('.search-item-global-song').forEach(function (el) {
           var gIdx = parseInt(el.getAttribute('data-global-idx'), 10);
           var gSong = matchedGlobalSongs[gIdx];
           if (!gSong) return;
 
-          // Botão específico "+ Adicionar"
+          // Botão específico "+ Adicionar" abre o modal para escolher o repertório de destino
           var btnAdd = el.querySelector('.btn-import-acervo');
           if (btnAdd) {
             btnAdd.addEventListener('click', function (e) {
               e.stopPropagation();
               var btn = this;
-              btn.disabled = true;
-              btn.innerHTML = '⏳ Salvando...';
-
-              // Determinar repertório de destino
-              var targetRepId = (state.currentRepertoire && state.currentRepertoire.id)
-                ? state.currentRepertoire.id
-                : (state.repertoires && state.repertoires.length > 0 ? state.repertoires[0].id : null);
-
-              var repPromise = targetRepId
-                ? Promise.resolve(targetRepId)
-                : PrompterDB.saveRepertoire({ name: 'Meu Repertório', source: 'manual' });
-
-              repPromise.then(function (finalRepId) {
-                // Clonar música criando cópia 100% independente no repertório do cantor
-                var clonedSong = {
-                  title: gSong.title || 'Música',
-                  artist: gSong.artist || '',
-                  composer: gSong.composer || '',
-                  rhythm: gSong.rhythm || '',
-                  key: gSong.key || '',
-                  originalKey: gSong.originalKey || gSong.key || '',
-                  content: gSong.content || '',
-                  youtubeUrl: gSong.youtubeUrl || '',
-                  youtubeId: gSong.youtubeId || '',
-                  spotifyUrl: gSong.spotifyUrl || '',
-                  repertoireId: finalRepId
-                };
-
-                return PrompterDB.saveSong(clonedSong).then(function () {
-                  btn.innerHTML = '✓ Adicionada';
-                  btn.classList.add('is-added');
-                  if (window.showToast) {
-                    window.showToast('🎵 "' + (gSong.title || 'Música') + '" adicionada ao seu repertório!', 'success');
-                  }
-                  if (state.currentRepertoire && state.currentRepertoire.id === finalRepId) {
-                    loadRepertoireSongs(finalRepId);
-                  }
-                });
-              }).catch(function (err) {
-                console.error('Erro ao importar música do acervo:', err);
-                btn.disabled = false;
-                btn.innerHTML = '+ Adicionar';
-                if (window.showToast) window.showToast('Erro ao adicionar música. Tente novamente.', 'error');
-              });
+              openImportRepertoireModal(gSong, btn);
             });
           }
 

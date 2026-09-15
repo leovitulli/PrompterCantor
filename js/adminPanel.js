@@ -268,22 +268,23 @@
             }
           });
 
-          // Assegurar integridade absoluta do status VIP para Aline e qualquer outro usuário VIP registrado
+          // Assegurar integridade absoluta do status VIP para Douglinhas, Aline, Gio e qualquer outro usuário VIP registrado
           allUserData.forEach(function (u) {
             if (!u) return;
             var isVip = !!(
-              (u.email && u.email.toLowerCase() === 'alinecrissallai@gmail.com') ||
-              (u.singer_code && u.singer_code.toLowerCase() === '@alinecrissallai') ||
+              (u.email && (u.email.toLowerCase() === 'alinecrissallai@gmail.com' || u.email.toLowerCase() === 'dbispomatheus@gmail.com' || u.email.toLowerCase() === 'givitulli@gmail.com')) ||
+              (u.singer_code && (u.singer_code.toLowerCase() === '@alinecrissallai' || u.singer_code.toLowerCase() === 'douglinhasbatucada' || u.singer_code.toLowerCase() === '@douglinhasbatucada' || u.singer_code.toLowerCase() === '@gio_sangalo' || u.singer_code.toLowerCase() === 'gio_sangalo')) ||
               u.id === 'cb9a6aa2-c4d1-4b29-96d6-e3f273757908' ||
+              u.id === '10116f06-1ceb-47fc-9dff-068189534f32' ||
               u.is_vip ||
               u.plan_tier === 'vip' ||
-              (u.plan_type && u.plan_type.indexOf('VIP') !== -1) ||
+              (u.plan_type && (u.plan_type.indexOf('VIP') !== -1 || u.plan_type.indexOf('PARCEIRO') !== -1)) ||
               (window.PrompterCoupons && window.PrompterCoupons.isVipCoupon(u.coupon_used)) ||
               u.coupon_used === 'VIP100'
             );
             if (isVip) {
               u.plan_tier = 'vip';
-              u.plan_type = '👑 VIP 100% OFF';
+              u.plan_type = '👑 VIP Parceiro (100% OFF)';
               u.is_vip = true;
               u.coupon_used = u.coupon_used || ((window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100');
               if (!u.billing_due_date) u.billing_due_date = '2099-12-31T23:59:59.000Z';
@@ -2908,7 +2909,18 @@
                          (sEmail && u.email && u.email.trim().toLowerCase() === sEmail);
                 });
                 if (existIdx >= 0) {
-                  allUserData[existIdx] = Object.assign({}, allUserData[existIdx], sObj);
+                  var existingUser = allUserData[existIdx];
+                  var wasVip = existingUser.is_vip || existingUser.plan_tier === 'vip' || (existingUser.plan_type && (existingUser.plan_type.indexOf('VIP') !== -1 || existingUser.plan_type.indexOf('PARCEIRO') !== -1));
+                  var isNewVip = sObj.is_vip || sObj.plan_tier === 'vip' || (sObj.plan_type && (sObj.plan_type.indexOf('VIP') !== -1 || sObj.plan_type.indexOf('PARCEIRO') !== -1));
+
+                  allUserData[existIdx] = Object.assign({}, existingUser, sObj);
+                  if (wasVip && !isNewVip) {
+                    allUserData[existIdx].is_vip = true;
+                    allUserData[existIdx].plan_tier = 'vip';
+                    allUserData[existIdx].plan_type = existingUser.plan_type || '👑 VIP Parceiro (100% OFF)';
+                    allUserData[existIdx].coupon_used = existingUser.coupon_used || ((window.PrompterCoupons && window.PrompterCoupons.getActiveVipCouponCode()) || 'VIP100');
+                    allUserData[existIdx].billing_due_date = existingUser.billing_due_date || '2099-12-31T23:59:59.000Z';
+                  }
                 } else {
                   allUserData.unshift(sObj);
                 }

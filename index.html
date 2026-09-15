@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=126">
+  <link rel="stylesheet" href="css/style.css?v=127">
   <link rel="stylesheet" href="css/admin.css?v=139">
   <link rel="stylesheet" href="css/landing.css?v=122">
   <link rel="stylesheet" href="css/brand.css?v=41">
@@ -1918,6 +1918,31 @@
     </div>
   </div>
 
+  <!-- ─── MODAL DE SELEÇÃO DE REPERTÓRIO PARA IMPORTAÇÃO ─── -->
+  <div id="modalSelectRepertoireForImport" class="modal hidden" style="z-index: 1000025;">
+    <div class="modal-overlay" id="overlaySelectRepertoireForImport"></div>
+    <div class="modal-card import-rep-modal-card">
+      <div class="modal-header" style="justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.4rem;">🎵</span>
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 800; color: #f8fafc; margin: 0;">Salvar no Repertório</h3>
+            <span style="font-size: 0.78rem; color: #94a3b8;" id="importModalSongSub">Escolha em qual repertório salvar</span>
+          </div>
+        </div>
+        <button class="modal-close" id="btnCloseSelectRepertoireForImport">✕</button>
+      </div>
+      <div class="modal-body" style="padding-top: 14px;">
+        <p style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 8px;">
+          Selecione o repertório onde deseja salvar uma cópia de <strong id="importModalSongTitle" style="color: #38bdf8;">Música</strong>:
+        </p>
+        <div id="importRepChoiceList" class="rep-choice-list">
+          <!-- Carregado dinamicamente -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- NOTIFICAÇÕES TOAST -->
   <div id="toastContainer" class="toast-container"></div>
 
@@ -1927,7 +1952,7 @@
   <script src="js/supabaseClient.js?v=132"></script>
   <script src="js/db.js?v=123"></script>
   <script src="js/auth.js?v=131"></script>
-  <script src="js/adminPanel.js?v=151"></script>
+  <script src="js/adminPanel.js?v=152"></script>
   <script src="js/textParser.js?v=124"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
   <script src="js/transposer.js?v=123"></script>
@@ -1940,6 +1965,6 @@
   <script src="js/gdriveUI.js?v=123"></script>
   <script src="js/notificationsCenter.js?v=15"></script>
   <script src="js/interactiveTour.js?v=4"></script>
-  <script src="js/app.js?v=143"></script>
+  <script src="js/app.js?v=144"></script>
 </body>
 </html>
