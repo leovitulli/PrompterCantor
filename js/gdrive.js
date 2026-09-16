@@ -27,33 +27,40 @@ var GDriveImporter = (function() {
 
   function extractFolderId(url) {
     if (!url) return null;
+    var cleanUrl = url.trim();
+
+    // Se o link apontar para um arquivo ou documento individual, NUNCA é pasta
+    if (cleanUrl.indexOf('/document/d/') !== -1 || cleanUrl.indexOf('/file/d/') !== -1 || cleanUrl.indexOf('/spreadsheets/d/') !== -1 || cleanUrl.indexOf('/presentation/d/') !== -1) {
+      return null;
+    }
+
     var patterns = [
       /folders\/([a-zA-Z0-9_-]{15,60})/,
-      /[?&]id=([a-zA-Z0-9_-]{15,60})/,
-      /id=([a-zA-Z0-9_-]{15,60})/
+      /[?&]id=([a-zA-Z0-9_-]{15,60})(?:&|$)/
     ];
     for (var i = 0; i < patterns.length; i++) {
-      var match = url.match(patterns[i]);
+      var match = cleanUrl.match(patterns[i]);
       if (match && match[1]) return match[1];
     }
     // Se a própria string for apenas o ID (sem URL)
-    if (/^[a-zA-Z0-9_-]{25,50}$/.test(url.trim())) {
-      return url.trim();
+    if (/^[a-zA-Z0-9_-]{25,50}$/.test(cleanUrl)) {
+      return cleanUrl;
     }
     return null;
   }
 
   function extractFileId(url) {
     if (!url) return null;
+    var cleanUrl = url.trim();
     var patterns = [
       /\/file\/d\/([a-zA-Z0-9_-]{15,60})/,
       /\/document\/d\/([a-zA-Z0-9_-]{15,60})/,
       /\/spreadsheets\/d\/([a-zA-Z0-9_-]{15,60})/,
       /\/presentation\/d\/([a-zA-Z0-9_-]{15,60})/,
-      /[?&]id=([a-zA-Z0-9_-]{15,60})/
+      /[?&]id=([a-zA-Z0-9_-]{15,60})(?:&|$)/
     ];
     for (var i = 0; i < patterns.length; i++) {
-      var match = url.match(patterns[i]);
+      var match = cleanUrl.match(patterns[i]);
       if (match && match[1]) return match[1];
     }
     return null;
