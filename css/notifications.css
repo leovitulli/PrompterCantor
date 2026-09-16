@@ -1552,9 +1552,61 @@ body.light-mode #singerAnnouncementModal .modal-content > div:last-child {
    RESPONSIVIDADE (MOBILE & TABLET)
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
+  .notifications-anchor {
+    position: static !important;
+  }
+
   .notifications-popover {
-    width: 320px;
-    right: -50px;
+    position: fixed !important;
+    top: 140px;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: min(440px, calc(100vw - 20px)) !important;
+    margin: 0 auto !important;
+    max-height: calc(85dvh - 80px) !important;
+    border-radius: 18px !important;
+    transform-origin: top center !important;
+    z-index: 999999 !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  }
+
+  body.light-mode .notifications-popover,
+  body.theme-light .notifications-popover {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .notif-pop-header {
+    padding: 12px 14px 10px 14px !important;
+  }
+
+  .notif-pop-filters {
+    padding: 6px 10px !important;
+    gap: 4px !important;
+  }
+
+  .notif-pop-filter-btn {
+    font-size: 0.72rem !important;
+    padding: 6px 6px !important;
+  }
+
+  .notif-pop-list {
+    max-height: calc(85dvh - 220px) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .notif-pop-item {
+    padding: 10px 14px !important;
+    gap: 10px !important;
+  }
+
+  .notif-pop-footer {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+  }
+
+  .notif-pop-footer-link {
+    font-size: 0.78rem !important;
   }
 
   .support-center-modal-card {

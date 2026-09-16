@@ -817,13 +817,29 @@
 
       this.state.isPopoverOpen = true;
       pop.classList.remove('hidden');
+
+      // Posicionamento inteligente abaixo do botão do sino em dispositivos móveis
+      if (window.innerWidth <= 768) {
+        var btnBell = document.getElementById('btnHeaderNotifications');
+        if (btnBell) {
+          var rect = btnBell.getBoundingClientRect();
+          var topPos = Math.max(60, Math.round(rect.bottom + 8));
+          pop.style.top = topPos + 'px';
+        }
+      } else {
+        pop.style.top = '';
+      }
+
       this.renderPopover();
       this.fetchFromCloud();
     },
 
     closePopover: function () {
       var pop = document.getElementById('notificationsQuickPopover');
-      if (pop) pop.classList.add('hidden');
+      if (pop) {
+        pop.classList.add('hidden');
+        pop.style.top = '';
+      }
       this.state.isPopoverOpen = false;
     },
 
@@ -2173,8 +2189,8 @@
         });
       });
 
-      // Fechar Popover ao clicar fora
-      document.addEventListener('click', function (e) {
+      // Fechar Popover ao clicar ou tocar fora (suporte a iOS e Android)
+      function handleOutsidePopoverClick(e) {
         var pop = document.getElementById('notificationsQuickPopover');
         var btnBellEl = document.getElementById('btnHeaderNotifications');
         if (pop && !pop.classList.contains('hidden')) {
@@ -2182,7 +2198,10 @@
             self.closePopover();
           }
         }
-      });
+      }
+
+      document.addEventListener('click', handleOutsidePopoverClick);
+      document.addEventListener('touchstart', handleOutsidePopoverClick, { passive: true });
 
       // Fechar Modal
       var btnCloseModal = document.getElementById('btnCloseUserSupportModal');

@@ -3,13 +3,14 @@
  * Garante funcionamento 100% Offline em Smartphones e Tablets nos shows.
  */
 
-var CACHE_NAME = 'canta-ai-pro-v171';
+var CACHE_NAME = 'canta-ai-pro-v172';
 var ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
   './css/brand.css',
+  './css/notifications.css',
   './js/tomColor.js',
   './js/brandIcons.js',
   './js/rota.js',
@@ -30,6 +31,7 @@ var ASSETS = [
   './js/advancedPlayer.js',
   './js/gdrive.js',
   './js/gdriveUI.js',
+  './js/notificationsCenter.js',
   './js/app.js'
 ];
 
