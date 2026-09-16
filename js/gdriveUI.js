@@ -260,21 +260,15 @@ var GDriveUI = (function() {
     setLoading('Conectando ao Google Drive e buscando arquivos...');
 
     GDriveImporter.listFilesInFolder(url, function(count) {
-      setLoading('Escaneando pasta... (' + count + ' arquivos encontrados)');
+      setLoading('Buscando informações do link... (' + count + ' encontrado' + (count > 1 ? 's' : '') + ')');
     }).then(function(treeResult) {
       var allFiles = flattenTree(treeResult);
       _state.driveFiles = allFiles;
       _state.folderPairs = GDriveImporter.autoPairDriveFiles(allFiles);
       renderFilesList(_state.folderPairs);
     }).catch(function(err) {
-      console.error('Erro ao listar pasta:', err);
-      var msg = err.message || 'Erro ao acessar pasta do Drive.';
-      if (msg.indexOf('403') !== -1 || msg.indexOf('401') !== -1) {
-        msg = 'Sem permissão para acessar esta pasta. Certifique-se de que ela está configurada como "Qualquer pessoa com o link pode ver".';
-      } else if (msg.indexOf('404') !== -1) {
-        msg = 'Pasta não encontrada. Verifique o link fornecido.';
-      }
-      showError(msg);
+      console.warn('Falha ao processar link:', err);
+      showError(err.message || 'Não foi possível carregar o link informado.');
     });
   }
 

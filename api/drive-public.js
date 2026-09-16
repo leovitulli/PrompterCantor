@@ -176,13 +176,64 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    // 2. Download direto por fileId ou docId
+    // 2. Verificação ou Download direto por fileId ou docId
     if (fileId) {
       const isDoc = parsedUrl.searchParams.get('isDoc') === 'true';
+      const isCheck = parsedUrl.searchParams.get('check') === 'true';
       const target = isDoc
         ? `https://docs.google.com/document/d/${fileId}/export?format=txt`
         : `https://drive.google.com/uc?export=download&id=${fileId}`;
+
       const response = await fetchUrl(target);
+
+      // Tratar documento não encontrado ou privado
+      if (response.statusCode === 404) {
+        res.statusCode = 404;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({
+          error: isDoc
+            ? 'Documento não encontrado no Google Docs (Erro 404). Verifique se o link está completo e correto.'
+            : 'Arquivo não encontrado no Google Drive (Erro 404).'
+        }));
+        return;
+      }
+
+      const bodyStr = response.data.toString('utf8');
+      const isHtmlLogin = bodyStr.includes('accounts.google.com') || bodyStr.includes('ServiceLogin') || bodyStr.includes('Sign in - Google Accounts');
+
+      if (response.statusCode === 401 || response.statusCode === 403 || isHtmlLogin) {
+        res.statusCode = 403;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({
+          error: 'Acesso restrito. O arquivo/documento é privado. No Google Drive/Docs, clique em "Compartilhar" e selecione "Qualquer pessoa com o link pode ver".'
+        }));
+        return;
+      }
+
+      // Se for apenas verificação para listar no modal
+      if (isCheck) {
+        let docTitle = isDoc ? 'Documento Google Docs' : 'Arquivo Google Drive';
+        if (isDoc) {
+          const lines = bodyStr.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length > 0 && lines[0].length < 80) {
+            docTitle = lines[0];
+          }
+        }
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({
+          success: true,
+          files: [{
+            id: fileId,
+            name: isDoc ? (docTitle + '.txt') : docTitle,
+            mimeType: isDoc ? 'application/vnd.google-apps.document' : 'application/octet-stream',
+            size: response.data.length,
+            folderName: 'Google Drive'
+          }]
+        }));
+        return;
+      }
+
       res.statusCode = response.statusCode || 200;
       if (response.headers['content-type']) {
         res.setHeader('Content-Type', response.headers['content-type']);
@@ -195,7 +246,27 @@ module.exports = async function handler(req, res) {
     if (folderId) {
       const driveUrl = `https://drive.google.com/drive/folders/${folderId}`;
       const pageRes = await fetchUrl(driveUrl);
+
+      if (pageRes.statusCode === 404) {
+        res.statusCode = 404;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({
+          error: 'Pasta não encontrada no Google Drive (Erro 404). Verifique se o link da pasta está correto.'
+        }));
+        return;
+      }
+
       const htmlStr = pageRes.data.toString('utf8');
+      const isHtmlLogin = htmlStr.includes('accounts.google.com') || htmlStr.includes('ServiceLogin');
+
+      if (pageRes.statusCode === 401 || pageRes.statusCode === 403 || isHtmlLogin) {
+        res.statusCode = 403;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({
+          error: 'Pasta privada. No Google Drive, clique com botão direito na pasta > Compartilhar > e mude para "Qualquer pessoa com o link pode ver".'
+        }));
+        return;
+      }
 
       const files = parsePublicDriveFolderHtml(htmlStr);
 

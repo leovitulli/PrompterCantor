@@ -76,25 +76,25 @@ var GDriveImporter = (function() {
 
       return fetch(apiUrl)
         .then(function(res) {
-          if (!res.ok) {
-            throw new Error('Falha ao acessar pasta pública (HTTP ' + res.status + '). Verifique se a pasta está compartilhada como "Qualquer pessoa com o link".');
-          }
-          return res.json();
-        })
-        .then(function(data) {
-          if (!data || !data.files) {
-            return [];
-          }
-          if (onProgress) onProgress(data.files.length);
-          return data.files.map(function(f) {
-            return {
-              id: f.id,
-              name: f.name,
-              mimeType: f.mimeType || 'application/octet-stream',
-              size: f.size || 0,
-              downloadUrl: f.downloadUrl,
-              folderName: 'Google Drive'
-            };
+          return res.json().then(function(data) {
+            if (!res.ok || !data.success) {
+              var errText = (data && data.error) ? data.error : ('Falha ao acessar pasta (HTTP ' + res.status + ')');
+              throw new Error(errText);
+            }
+            if (onProgress) onProgress((data.files || []).length);
+            return (data.files || []).map(function(f) {
+              return {
+                id: f.id,
+                name: f.name,
+                mimeType: f.mimeType || 'application/octet-stream',
+                size: f.size || 0,
+                downloadUrl: f.downloadUrl,
+                folderName: 'Google Drive'
+              };
+            });
+          }).catch(function(jsonErr) {
+            if (jsonErr.message && jsonErr.message.indexOf('Falha') !== -1) throw jsonErr;
+            throw new Error('Falha ao conectar com a pasta pública do Drive (HTTP ' + res.status + ').');
           });
         });
     }
@@ -103,15 +103,27 @@ var GDriveImporter = (function() {
     var fileId = extractFileId(input);
     if (fileId) {
       var isDoc = isGoogleDocUrl(input);
-      var defaultName = isDoc ? 'Documento Google Docs' : 'Arquivo Google Drive';
-      if (onProgress) onProgress(1);
-      return Promise.resolve([{
-        id: fileId,
-        name: defaultName,
-        mimeType: isDoc ? 'application/vnd.google-apps.document' : 'application/octet-stream',
-        size: 0,
-        folderName: 'Google Drive'
-      }]);
+      var checkUrl = '/api/drive-public?fileId=' + encodeURIComponent(fileId) + (isDoc ? '&isDoc=true' : '') + '&check=true';
+
+      return fetch(checkUrl)
+        .then(function(res) {
+          return res.json().then(function(data) {
+            if (!res.ok || !data.success) {
+              var errMsg = (data && data.error) ? data.error : (isDoc
+                ? 'Documento não encontrado no Google Docs. Verifique se o link foi copiado por completo.'
+                : 'Arquivo não encontrado no Google Drive.');
+              throw new Error(errMsg);
+            }
+            if (onProgress) onProgress((data.files || []).length);
+            return data.files || [];
+          }).catch(function(jsonErr) {
+            if (jsonErr.message && jsonErr.message.indexOf('não encontrado') !== -1) throw jsonErr;
+            if (jsonErr.message && jsonErr.message.indexOf('Acesso') !== -1) throw jsonErr;
+            throw new Error(isDoc
+              ? 'Não foi possível acessar este Google Docs. Verifique se o link está como "Qualquer pessoa com o link pode ver".'
+              : 'Não foi possível acessar o arquivo do Drive.');
+          });
+        });
     }
 
     return Promise.reject(new Error('Link inválido. Cole o link público de uma pasta do Google Drive ou de um arquivo/Google Docs.'));
