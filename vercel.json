@@ -63,6 +63,10 @@
     {
       "src": "sw.js",
       "use": "@vercel/static"
+    },
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -103,8 +107,12 @@
       "dest": "/assets/$1"
     },
     {
+      "src": "/api/drive-public",
+      "dest": "/api/drive-public.js"
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/api/$1.js"
     },
     {
       "src": "/(.*)",
