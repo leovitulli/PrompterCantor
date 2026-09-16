@@ -246,7 +246,7 @@
       }
 
       if (!copy.status) {
-        copy.status = (copy.admin_response || copy.reply) ? 'resolved' : 'open';
+        copy.status = 'open';
       }
 
       return copy;
@@ -1750,6 +1750,13 @@
         ? ' • Cantor: <strong>' + self.escapeHtml(ticket.user_name || 'Cantor') + '</strong> &lt;' + self.escapeHtml(ticket.user_email) + '&gt;'
         : '';
 
+      var actionsHtml = '';
+      if (ctx.isAdmin) {
+        actionsHtml = !isResolved
+          ? '<button type="button" id="btnMarkTicketResolved" class="btn btn-outline btn-xs" style="color: #34d399; border-color: rgba(52, 211, 153, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 5px 12px; cursor: pointer;">✅ Marcar Resolvido</button>'
+          : '<button type="button" id="btnReopenTicket" class="btn btn-outline btn-xs" style="color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 5px 12px; cursor: pointer;">🔄 Reabrir Atendimento</button>';
+      }
+
       var headerHtml =
         '<div class="sc-thread-header" style="background: rgba(15, 23, 42, 0.7); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 14px 18px;">' +
           '<div class="sc-thread-title-area">' +
@@ -1767,11 +1774,7 @@
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="sc-thread-actions">' +
-            (!isResolved
-              ? '<button type="button" id="btnMarkTicketResolved" class="btn btn-outline btn-xs" style="color: #34d399; border-color: rgba(52, 211, 153, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 5px 12px; cursor: pointer;">✅ Marcar Resolvido</button>'
-              : '<button type="button" id="btnReopenTicket" class="btn btn-outline btn-xs" style="color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); font-size: 0.76rem; border-radius: 6px; padding: 5px 12px; cursor: pointer;">🔄 Reabrir Atendimento</button>') +
-          '</div>' +
+          (actionsHtml ? '<div class="sc-thread-actions">' + actionsHtml + '</div>' : '') +
         '</div>';
 
       // Feed de Mensagens
@@ -1913,18 +1916,32 @@
           created_at: nowIso
         };
 
+        var prevStatus = ticket.status;
         if (!ticket.messages) ticket.messages = [];
         ticket.messages.push(newMsg);
         if (isSenderStaff) {
           ticket.admin_response = text;
-          ticket.status = 'resolved';
+          // Resposta do desenvolvedor NÃO marca como resolvido; mantém o status atual
+          if (!ticket.status) ticket.status = 'open';
         } else {
+          // Quando o cliente envia mensagem, o chamado é mantido/reaberto como 'open'
           ticket.status = 'open';
         }
         ticket.updated_at = nowIso;
 
         self.saveAllTickets([ticket]);
         self.syncTicketToCloud(ticket);
+
+        // Se o chamado foi reaberto por nova mensagem do cliente, transmite mudança de status
+        if (!isSenderStaff && prevStatus === 'resolved') {
+          if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {
+            window.PrompterCloud.broadcastEvent('ticket_status_changed', {
+              ticketId: ticket.id,
+              status: 'open',
+              updated_at: ticket.updated_at
+            });
+          }
+        }
 
         // Dispara evento em tempo real no Barramento Global (Supabase + BroadcastChannel)
         if (window.PrompterCloud && typeof window.PrompterCloud.broadcastEvent === 'function') {

@@ -5834,7 +5834,8 @@
       ticket.messages.push(newMsg);
       ticket.reply = text;
       ticket.replied_at = nowIso;
-      ticket.status = 'resolved';
+      // Resposta do desenvolvedor NÃO marca como resolvido; mantém o status atual (ou 'open')
+      if (!ticket.status) ticket.status = 'open';
       ticket.updated_at = nowIso;
 
       if (input) input.value = '';
@@ -5861,19 +5862,20 @@
       // Injeção cirúrgica: adiciona a bolha ao feed sem re-renderizar a thread toda
       PrompterAdmin.appendAdminBubble(newMsg, ticket);
 
-      // Atualiza o cabeçalho da thread para 'Resolvido' sem recarregar a conversa
+      // Atualiza o cabeçalho da thread respeitando o status real do chamado
       var headerEl = document.getElementById('admHdThreadHeader');
       if (headerEl) {
+        var isNowResolved = (ticket.status === 'resolved');
         var statusPill = headerEl.querySelector('.sc-ticket-status-pill');
         if (statusPill) {
-          statusPill.className = 'sc-ticket-status-pill status-resolved';
-          statusPill.textContent = '🟢 Resolvido';
+          statusPill.className = 'sc-ticket-status-pill ' + (isNowResolved ? 'status-resolved' : 'status-open');
+          statusPill.textContent = isNowResolved ? '🟢 Resolvido' : '🟡 Em Aberto';
         }
         var btnToggle = document.getElementById('btnToggleStatusHd');
         if (btnToggle) {
-          btnToggle.className = 'btn btn-sm btn-outline';
-          btnToggle.style.cssText = 'color:#fbbf24; border-color:rgba(251,191,36,0.4); font-size:0.75rem;';
-          btnToggle.innerHTML = '🔄 Reabrir';
+          btnToggle.className = isNowResolved ? 'btn btn-sm btn-outline' : 'btn btn-sm btn-primary';
+          btnToggle.style.cssText = isNowResolved ? 'color:#fbbf24; border-color:rgba(251,191,36,0.4); font-size:0.75rem;' : 'font-size:0.75rem;';
+          btnToggle.innerHTML = isNowResolved ? '🔄 Reabrir' : '✅ Marcar Resolvido';
         }
       }
 
