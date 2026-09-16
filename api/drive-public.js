@@ -215,8 +215,12 @@ module.exports = async function handler(req, res) {
         let docTitle = isDoc ? 'Documento Google Docs' : 'Arquivo Google Drive';
         if (isDoc) {
           const lines = bodyStr.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-          if (lines.length > 0 && lines[0].length < 80) {
-            docTitle = lines[0];
+          for (let i = 0; i < Math.min(lines.length, 5); i++) {
+            let candidate = lines[i].replace(/^[^\w\s(]+/, '').trim();
+            if (candidate && !candidate.toLowerCase().startsWith('última atualização') && candidate.length > 2 && candidate.length < 80) {
+              docTitle = candidate;
+              break;
+            }
           }
         }
         res.statusCode = 200;
