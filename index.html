@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="css/admin.css?v=139">
   <link rel="stylesheet" href="css/landing.css?v=122">
   <link rel="stylesheet" href="css/brand.css?v=41">
-  <link rel="stylesheet" href="css/notifications.css?v=16">
+  <link rel="stylesheet" href="css/notifications.css?v=17">
   <link rel="stylesheet" href="css/interactiveTour.css?v=3">
 
   <!-- Detecção instantânea de sessão para evitar piscar da tela inicial -->
@@ -1423,13 +1423,10 @@
             <p class="sc-modal-desc">Comunicados oficiais da plataforma e canal direto de chat com nossa equipe</p>
           </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button type="button" id="btnSupportOpenTour" class="btn btn-outline btn-xs" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 5px 12px; font-size: 0.78rem; border-radius: 8px;" title="Ver o Passo a Passo do Aplicativo">📖 Tour do App</button>
-          <span id="ncAutoSyncStatus" title="Sincronização automática ativa" style="font-size: 0.72rem; color: #64748b; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block; animation: nc-pulse 2s infinite;"></span>
-            Auto-sync
-          </span>
-          <button class="modal-close" id="btnCloseUserSupportModal" title="Fechar">✕</button>
+        <div class="sc-modal-header-actions">
+          <span id="ncAutoSyncStatus" style="display: none;"></span>
+          <button type="button" id="btnSupportOpenTour" class="btn btn-outline btn-xs sc-btn-tour" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); padding: 5px 10px; font-size: 0.78rem; border-radius: 8px;" title="Ver o Passo a Passo do Aplicativo">📖 Tour do App</button>
+          <button class="modal-close sc-modal-close" id="btnCloseUserSupportModal" title="Fechar">✕</button>
         </div>
       </div>
 
@@ -2021,7 +2018,7 @@
   <script src="js/advancedPlayer.js?v=123"></script>
   <script src="js/gdrive.js?v=127"></script>
   <script src="js/gdriveUI.js?v=127"></script>
-  <script src="js/notificationsCenter.js?v=17"></script>
+  <script src="js/notificationsCenter.js?v=18"></script>
   <script src="js/interactiveTour.js?v=4"></script>
   <script src="js/app.js?v=162"></script>
 </body>

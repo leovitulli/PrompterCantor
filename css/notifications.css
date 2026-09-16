@@ -420,19 +420,33 @@
 
 /* Header estilizado da Central */
 .sc-modal-header {
-  padding: 14px 20px;
+  padding: 12px 20px;
   background: rgba(15, 23, 42, 0.95);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   flex-shrink: 0;
+}
+
+.sc-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#ncAutoSyncStatus {
+  display: none !important;
 }
 
 .sc-modal-header-info {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .sc-modal-icon-badge {
@@ -754,14 +768,15 @@
 
 /* Header da Thread Ativa */
 .sc-thread-header {
-  padding: 12px 18px;
+  padding: 10px 16px;
   background: rgba(15, 23, 42, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .sc-thread-title-area {
@@ -769,23 +784,37 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
 }
 
-.sc-btn-back-sidebar {
-  display: none;
-  background: transparent;
-  border: none;
-  color: #38bdf8;
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 4px;
+.sc-thread-info-col {
+  min-width: 0;
+  flex: 1;
+}
+
+.sc-thread-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .sc-thread-title {
-  font-size: 0.96rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #f8fafc;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.sc-thread-meta {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -794,8 +823,9 @@
 .sc-thread-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* Feed de Mensagens (Scrollable) */
@@ -1609,11 +1639,144 @@ body.light-mode #singerAnnouncementModal .modal-content > div:last-child {
     font-size: 0.78rem !important;
   }
 
+  /* Modal Container Fullscreen sem bordas ou padding externo no celular */
+  #userSupportModal.modal {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+
   .support-center-modal-card {
-    width: 100% !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
     border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  /* Cabeçalho do Modal super compacto */
+  .sc-modal-header {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+
+  .sc-modal-icon-badge {
+    display: none !important;
+  }
+
+  .sc-modal-title {
+    font-size: 0.88rem !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: calc(100vw - 125px) !important;
+  }
+
+  .sc-modal-desc {
+    display: none !important;
+  }
+
+  .sc-btn-tour {
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
+    border-radius: 6px !important;
+  }
+
+  .sc-modal-close,
+  .modal-close {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1.1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin-left: 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Abas de Navegação Compactas */
+  .sc-nav-tabs {
+    padding: 5px 8px !important;
+    gap: 6px !important;
+  }
+
+  .sc-tab-btn {
+    padding: 5px 8px !important;
+    font-size: 0.73rem !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  /* Header da Thread sem sobreposição */
+  .sc-thread-header {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .sc-thread-title-area {
+    gap: 6px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .sc-thread-title-row {
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .sc-thread-title {
+    font-size: 0.82rem !important;
+    max-width: 135px !important;
+  }
+
+  .sc-ticket-status-pill {
+    font-size: 0.62rem !important;
+    padding: 1px 5px !important;
+    white-space: nowrap !important;
+  }
+
+  .sc-thread-meta {
+    font-size: 0.68rem !important;
+  }
+
+  .sc-thread-actions {
+    gap: 4px !important;
+  }
+
+  .sc-thread-actions button {
+    font-size: 0.72rem !important;
+    padding: 4px 7px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Feed de Mensagens expandido e respirando */
+  .sc-thread-messages-feed {
+    padding: 10px 12px !important;
+    gap: 10px !important;
+  }
+
+  .chat-bubble-row {
+    max-width: 90% !important;
+    gap: 6px !important;
+  }
+
+  .chat-bubble-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .chat-bubble-box {
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
   }
 
   .sc-composer-textarea,
@@ -1622,7 +1785,25 @@ body.light-mode #singerAnnouncementModal .modal-content > div:last-child {
   }
 
   .sc-chat-composer {
-    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    padding: 6px 10px !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .sc-composer-input-row {
+    gap: 6px !important;
+  }
+
+  .sc-composer-textarea {
+    padding: 8px 10px !important;
+    min-height: 38px !important;
+  }
+
+  .sc-composer-btn-attach,
+  .sc-composer-btn-send {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 0.95rem !important;
+    flex-shrink: 0 !important;
   }
 
   .sc-chat-sidebar {
@@ -1644,10 +1825,6 @@ body.light-mode #singerAnnouncementModal .modal-content > div:last-child {
 
   .sc-btn-back-sidebar {
     display: inline-block;
-  }
-
-  .chat-bubble-row {
-    max-width: 92%;
   }
 }
 

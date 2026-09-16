@@ -1758,17 +1758,17 @@
       }
 
       var headerHtml =
-        '<div class="sc-thread-header" style="background: rgba(15, 23, 42, 0.7); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 14px 18px;">' +
+        '<div class="sc-thread-header">' +
           '<div class="sc-thread-title-area">' +
             '<button type="button" class="sc-btn-back-sidebar" id="btnBackToTicketsList" title="Voltar à lista">←</button>' +
-            '<div>' +
-              '<div style="display: flex; align-items: center; gap: 8px;">' +
-                '<h4 class="sc-thread-title" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #f8fafc;">' + self.escapeHtml(ticket.title || 'Atendimento') + '</h4>' +
+            '<div class="sc-thread-info-col">' +
+              '<div class="sc-thread-title-row">' +
+                '<h4 class="sc-thread-title">' + self.escapeHtml(ticket.title || 'Atendimento') + '</h4>' +
                 '<span class="sc-ticket-status-pill ' + (isResolved ? 'status-resolved' : 'status-open') + '">' +
                   (isResolved ? '🟢 Resolvido' : '🟡 Em Aberto') +
                 '</span>' +
               '</div>' +
-              '<div style="font-size: 0.75rem; color: #94a3b8; margin-top: 3px;">' +
+              '<div class="sc-thread-meta">' +
                 (catLabels[ticket.category] || '📩 Atendimento') + ' • Chamado #' + self.escapeHtml(String(ticket.id).slice(-6)) +
                 singerDetail +
               '</div>' +
