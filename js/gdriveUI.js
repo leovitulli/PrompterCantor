@@ -1,12 +1,12 @@
 /**
- * PrompterCantor - Controlador da UI do Google Drive
- * Gerencia autenticação, listagem, seleção e importação de arquivos do Drive.
+ * PrompterCantor - Controlador da UI do Google Drive (Modo Público + Pasta Local)
+ * Permite importar repertórios via Links Públicos do Drive / Docs ou seleção direta de pastas.
  */
 
 var GDriveUI = (function() {
 
   var _state = {
-    driveFiles: [],         // Todos os arquivos encontrados na pasta
+    driveFiles: [],         // Todos os arquivos encontrados na pasta ou seleção local
     selectedFileIds: {},    // IDs dos arquivos selecionados (chave: id, valor: true)
     folderPairs: [],        // Pares texto+áudio
     importing: false
@@ -26,23 +26,12 @@ var GDriveUI = (function() {
     var btnHeader = document.getElementById('btnGDriveModal');
 
     if (btnModal) {
-      if (connected) {
-        btnModal.innerHTML = '✅ Google Conectado — Clique para Desconectar';
-        btnModal.className = 'btn btn-gdrive-connected btn-lg';
-      } else {
-        btnModal.innerHTML = '🔑 Conectar Minha Conta Google';
-        btnModal.className = 'btn btn-gdrive btn-lg';
-      }
+      btnModal.innerHTML = '🌐 Modo Público Ativo (Sem Login)';
+      btnModal.className = 'btn btn-gdrive-connected btn-lg';
     }
 
     if (btnHeader) {
-      if (connected) {
-        btnHeader.innerHTML = '<span class="btn-icon">☁️</span> <span class="btn-text">Google Conectado</span>';
-        btnHeader.classList.add('btn-gdrive-connected');
-      } else {
-        btnHeader.innerHTML = '<span class="btn-icon">☁️</span> <span class="btn-text">Google Drive</span>';
-        btnHeader.classList.remove('btn-gdrive-connected');
-      }
+      btnHeader.innerHTML = '<span class="btn-icon">☁️</span> <span class="btn-text">Google Drive</span>';
     }
   }
 
@@ -82,12 +71,13 @@ var GDriveUI = (function() {
     if (!file) return '📄';
     if (file.mimeType === 'application/vnd.google-apps.document') return '📝';
     var ext = (file.name || '').toLowerCase().split('.').pop();
-    var audioExts = ['mp3', 'm4a', 'aac', 'wav', 'ogg', 'flac', 'opus', 'webm'];
+    var audioExts = ['mp3', 'm4a', 'aac', 'wav', 'ogg', 'flac', 'opus', 'webm', 'wma', '3gp'];
     var videoExts = ['mp4', 'mov', 'mkv', 'avi'];
     if (audioExts.indexOf(ext) !== -1) return '🎵';
     if (videoExts.indexOf(ext) !== -1) return '🎬';
     if (ext === 'pdf') return '📕';
     if (ext === 'docx' || ext === 'doc') return '📄';
+    if (ext === 'txt') return '📝';
     return '📁';
   }
 
@@ -100,8 +90,8 @@ var GDriveUI = (function() {
     if (!pairs || pairs.length === 0) {
       list.innerHTML =
         '<div class="gdrive-empty-folder">' +
-          '<p>Nenhum arquivo de música encontrado nesta pasta.</p>' +
-          '<p style="font-size:0.85rem; color:var(--text-muted)">Formatos aceitos: .docx, .pdf, .txt, Google Docs, .mp3, .m4a, .wav, etc.</p>' +
+          '<p>Nenhum arquivo de música compatível encontrado.</p>' +
+          '<p style="font-size:0.85rem; color:var(--text-muted)">Formatos aceitos: .docx, .doc, .pdf, .txt, Google Docs, .mp3, .m4a, .wav, .aac, etc.</p>' +
         '</div>';
       return;
     }
@@ -115,8 +105,8 @@ var GDriveUI = (function() {
     });
 
     var html = '<div class="gdrive-files-header">' +
-      '<span>' + pairs.length + ' música(s) encontrada(s)</span>' +
-      '<button id="btnGDriveSelectAll" class="btn btn-outline btn-sm">Selecionar Todos</button>' +
+      '<span>' + pairs.length + ' música(s) identificada(s)</span>' +
+      '<button type="button" id="btnGDriveSelectAll" class="btn btn-outline btn-sm">Selecionar Todos</button>' +
     '</div>';
 
     pairs.forEach(function(pair, idx) {
@@ -204,7 +194,6 @@ var GDriveUI = (function() {
         for (var c2 = 0; c2 < checkboxes.length; c2++) {
           if (!checkboxes[c2].checked) { allChecked = false; break; }
         }
-        // Toggle: se todos marcados, desmarca; senão marca todos
         for (var c3 = 0; c3 < checkboxes.length; c3++) {
           checkboxes[c3].checked = !allChecked;
           checkboxes[c3].dispatchEvent(new Event('change'));
@@ -221,7 +210,6 @@ var GDriveUI = (function() {
     var count = Object.keys(_state.selectedFileIds).length;
     if (count > 0) {
       btn.removeAttribute('disabled');
-      // Conta pares selecionados
       var pairsSelected = _state.folderPairs.filter(function(p) {
         return (p.textFile && _state.selectedFileIds[p.textFile.id]) ||
                (p.audioFile && _state.selectedFileIds[p.audioFile.id]);
@@ -258,27 +246,21 @@ var GDriveUI = (function() {
     return allFiles;
   }
 
-  // ─── Carregar pasta do Drive ───────────────────────────────────────────────
+  // ─── Carregar pasta / link do Drive ────────────────────────────────────────
 
   function loadFolder() {
     var urlInput = document.getElementById('gdriveFolderUrl');
     var url = urlInput ? urlInput.value.trim() : '';
-    var folderId = GDriveImporter.extractFolderId(url);
 
-    if (!folderId) {
-      showError('Link de pasta inválido. Cole um link do tipo: https://drive.google.com/drive/folders/...');
+    if (!url) {
+      showError('Por favor, cole o link público de uma pasta do Google Drive ou Google Docs.');
       return;
     }
 
-    if (!GDriveImporter.isConnected()) {
-      showError('Conecte sua conta Google primeiro.');
-      return;
-    }
+    setLoading('Conectando ao Google Drive e buscando arquivos...');
 
-    setLoading('Buscando subpastas e arquivos...');
-
-    GDriveImporter.listFilesInFolder(folderId, function(count) {
-      setLoading('Escaneando subpastas... (' + count + ' arquivos encontrados)');
+    GDriveImporter.listFilesInFolder(url, function(count) {
+      setLoading('Escaneando pasta... (' + count + ' arquivos encontrados)');
     }).then(function(treeResult) {
       var allFiles = flattenTree(treeResult);
       _state.driveFiles = allFiles;
@@ -288,15 +270,47 @@ var GDriveUI = (function() {
       console.error('Erro ao listar pasta:', err);
       var msg = err.message || 'Erro ao acessar pasta do Drive.';
       if (msg.indexOf('403') !== -1 || msg.indexOf('401') !== -1) {
-        msg = 'Sem permissão para acessar esta pasta. Verifique se ela está compartilhada com sua conta Google.';
+        msg = 'Sem permissão para acessar esta pasta. Certifique-se de que ela está configurada como "Qualquer pessoa com o link pode ver".';
       } else if (msg.indexOf('404') !== -1) {
-        msg = 'Pasta não encontrada. Verifique o link.';
+        msg = 'Pasta não encontrada. Verifique o link fornecido.';
       }
       showError(msg);
     });
   }
 
-  // ─── Importação em Streaming (com progresso em 2º plano) ─────────────────
+  // ─── Carregar arquivos / pasta local do dispositivo ────────────────────────
+
+  function handleLocalFiles(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    setLoading('Processando ' + fileList.length + ' arquivos selecionados...');
+
+    var descriptors = [];
+    for (var i = 0; i < fileList.length; i++) {
+      var f = fileList[i];
+      // Ignora arquivos de sistema
+      if (f.name.startsWith('.') || f.name.startsWith('~')) continue;
+
+      var relPath = f.webkitRelativePath || f.name;
+      var pathParts = relPath.split('/');
+      var subfolder = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : '';
+
+      descriptors.push({
+        id: 'local_' + i + '_' + encodeURIComponent(f.name),
+        name: f.name,
+        mimeType: f.type || 'application/octet-stream',
+        size: f.size,
+        subfolderName: subfolder,
+        folderPath: subfolder,
+        rawFile: f
+      });
+    }
+
+    _state.driveFiles = descriptors;
+    _state.folderPairs = GDriveImporter.autoPairDriveFiles(descriptors);
+    renderFilesList(_state.folderPairs);
+  }
+
+  // ─── Importação em Streaming (com progresso em 2º plano) ───────────────────
 
   function importSelected(onSongBatchDownloaded, onProgress, onComplete) {
     if (_state.importing) return;
@@ -310,7 +324,7 @@ var GDriveUI = (function() {
 
     _state.importing = true;
 
-    // FECHA O MODAL IMEDIATAMENTE!
+    // FECHA O MODAL IMEDIATAMENTE (Streaming em background)
     var modalEl = document.getElementById('gDriveModal');
     if (modalEl) modalEl.classList.add('hidden');
 
@@ -338,13 +352,19 @@ var GDriveUI = (function() {
         var tf = pair.textFile;
         var isGDoc = tf.mimeType === 'application/vnd.google-apps.document';
 
-        downloadPromise = (isGDoc
-          ? GDriveImporter.exportGDocsAsText(tf.id, tf.mimeType)
-          : GDriveImporter.downloadFileAsBlob(tf.id, tf.mimeType)
-        ).then(function(blob) {
+        var getBlobPromise;
+        if (tf.rawFile) {
+          getBlobPromise = Promise.resolve(tf.rawFile);
+        } else if (isGDoc) {
+          getBlobPromise = GDriveImporter.exportGDocsAsText(tf.id, tf.mimeType);
+        } else {
+          getBlobPromise = GDriveImporter.downloadFileAsBlob(tf.id, tf.mimeType);
+        }
+
+        downloadPromise = getBlobPromise.then(function(blob) {
           var ext = isGDoc ? '.txt' : tf.name.substring(tf.name.lastIndexOf('.'));
           var fileName = isGDoc ? (tf.name + '.txt') : tf.name;
-          var file = new File([blob], fileName, { type: blob.type });
+          var file = (blob instanceof File) ? blob : new File([blob], fileName, { type: blob.type || 'text/plain' });
 
           return window.TextParser.parseFile(file).then(function(parsedSongs) {
             for (var j = 0; j < parsedSongs.length; j++) {
@@ -362,30 +382,35 @@ var GDriveUI = (function() {
             }
 
             if (pair.audioFile && _state.selectedFileIds[pair.audioFile.id]) {
-              return GDriveImporter.downloadFileAsBlob(pair.audioFile.id, pair.audioFile.mimeType)
-                .then(function(audioBlob) {
-                  if (createdSongs.length > 0) {
-                    createdSongs[0].audioBlob = new File([audioBlob], pair.audioFile.name, { type: audioBlob.type });
-                    createdSongs[0].audioName = pair.audioFile.name;
-                  }
-                })
-                .catch(function(e) { console.warn('Erro ao baixar áudio:', e); });
+              var audioPromise = pair.audioFile.rawFile
+                ? Promise.resolve(pair.audioFile.rawFile)
+                : GDriveImporter.downloadFileAsBlob(pair.audioFile.id, pair.audioFile.mimeType);
+
+              return audioPromise.then(function(audioBlob) {
+                if (createdSongs.length > 0 && audioBlob) {
+                  createdSongs[0].audioBlob = (audioBlob instanceof File) ? audioBlob : new File([audioBlob], pair.audioFile.name, { type: audioBlob.type || 'audio/mpeg' });
+                  createdSongs[0].audioName = pair.audioFile.name;
+                }
+              }).catch(function(e) { console.warn('Erro ao carregar áudio:', e); });
             }
           });
         });
 
       } else if (pair.audioFile) {
-        downloadPromise = GDriveImporter.downloadFileAsBlob(pair.audioFile.id, pair.audioFile.mimeType)
-          .then(function(audioBlob) {
-            createdSongs.push({
-              title: window.TextParser ? window.TextParser.cleanFilename(pair.audioFile.name) : pair.audioFile.name.replace(/\.[^/.]+$/, ''),
-              key: '', artist: '', composer: '',
-              content: '(Apenas áudio guia gravado)',
-              audioBlob: new File([audioBlob], pair.audioFile.name, { type: audioBlob.type }),
-              audioName: pair.audioFile.name,
-              subfolderName: subfolder
-            });
+        var audioOnlyPromise = pair.audioFile.rawFile
+          ? Promise.resolve(pair.audioFile.rawFile)
+          : GDriveImporter.downloadFileAsBlob(pair.audioFile.id, pair.audioFile.mimeType);
+
+        downloadPromise = audioOnlyPromise.then(function(audioBlob) {
+          createdSongs.push({
+            title: window.TextParser ? window.TextParser.cleanFilename(pair.audioFile.name) : pair.audioFile.name.replace(/\.[^/.]+$/, ''),
+            key: '', artist: '', composer: '',
+            content: '(Apenas áudio guia gravado)',
+            audioBlob: (audioBlob instanceof File) ? audioBlob : new File([audioBlob], pair.audioFile.name, { type: audioBlob.type || 'audio/mpeg' }),
+            audioName: pair.audioFile.name,
+            subfolderName: subfolder
           });
+        });
       } else {
         processNext();
         return;
@@ -399,7 +424,7 @@ var GDriveUI = (function() {
           processNext();
         })
         .catch(function(err) {
-          console.error('Erro ao baixar par:', err);
+          console.error('Erro ao processar par de arquivos:', err);
           processNext();
         });
     }
@@ -414,38 +439,6 @@ var GDriveUI = (function() {
     var onProgress = callbacks && callbacks.onProgress;
     var onComplete = callbacks && callbacks.onComplete;
     var legacyCallback = typeof callbacks === 'function' ? callbacks : null;
-
-    // Botão conectar/desconectar Google
-    var btnConnect = document.getElementById('btnGDriveConnect');
-    if (btnConnect) {
-      btnConnect.addEventListener('click', function() {
-        if (GDriveImporter.isConnected()) {
-          GDriveImporter.disconnect();
-          setConnectBtn(false);
-          setStatus('Desconectado', 'default');
-          document.getElementById('gdriveFilesList').innerHTML = '';
-          var btn = document.getElementById('btnImportSelectedGDrive');
-          if (btn) btn.setAttribute('disabled', 'true');
-        } else {
-          setStatus('Aguardando autenticação...', 'loading');
-          btnConnect.setAttribute('disabled', 'true');
-          GDriveImporter.connect(function(token, err) {
-            btnConnect.removeAttribute('disabled');
-            if (err) {
-              setStatus('Erro: ' + err, 'error');
-              setConnectBtn(false);
-            } else {
-              setStatus('Conectado com sucesso!', 'success');
-              setConnectBtn(true);
-              var urlInput = document.getElementById('gdriveFolderUrl');
-              if (urlInput && urlInput.value.trim()) {
-                setTimeout(loadFolder, 300);
-              }
-            }
-          });
-        }
-      });
-    }
 
     // Botão abrir pasta no Drive
     var btnOpenDrive = document.getElementById('btnOpenDrivePreset');
@@ -462,23 +455,44 @@ var GDriveUI = (function() {
     if (urlInput) {
       urlInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.keyCode === 13) {
-          if (GDriveImporter.isConnected()) loadFolder();
-          else setStatus('Conecte sua conta Google primeiro.', 'warning');
-        }
-      });
-      urlInput.addEventListener('blur', function() {
-        if (GDriveImporter.isConnected() && urlInput.value.trim()) {
           loadFolder();
         }
       });
     }
 
-    // Botão de carregar pasta manualmente
+    // Botão de carregar link do Drive
     var btnLoadFolder = document.getElementById('btnLoadGDriveFolder');
     if (btnLoadFolder) {
       btnLoadFolder.addEventListener('click', function() {
-        if (GDriveImporter.isConnected()) loadFolder();
-        else setStatus('Conecte sua conta Google primeiro.', 'warning');
+        loadFolder();
+      });
+    }
+
+    // Opção 2: Selecionar Pasta Local / Drive Sincronizado
+    var btnPickFolder = document.getElementById('btnPickDriveLocalFolder');
+    var inputLocalFolder = document.getElementById('gdriveLocalFolderInput');
+    if (btnPickFolder && inputLocalFolder) {
+      btnPickFolder.addEventListener('click', function() {
+        inputLocalFolder.click();
+      });
+      inputLocalFolder.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+          handleLocalFiles(this.files);
+        }
+      });
+    }
+
+    // Opção 2: Selecionar Arquivos Avulsos
+    var btnPickFiles = document.getElementById('btnPickDriveLocalFiles');
+    var inputLocalFiles = document.getElementById('gdriveLocalFilesInput');
+    if (btnPickFiles && inputLocalFiles) {
+      btnPickFiles.addEventListener('click', function() {
+        inputLocalFiles.click();
+      });
+      inputLocalFiles.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+          handleLocalFiles(this.files);
+        }
       });
     }
 
@@ -494,14 +508,15 @@ var GDriveUI = (function() {
       });
     }
 
-    // Restaurar estado visual se já conectado
-    if (GDriveImporter.isConnected()) {
-      setConnectBtn(true);
-      setStatus('Conectado', 'success');
-    }
+    // Estado inicial
+    setStatus('Modo público ativo (sem login)', 'success');
   }
 
-  return { init: init };
+  return {
+    init: init,
+    loadFolder: loadFolder,
+    renderFilesList: renderFilesList
+  };
 
 })();
 

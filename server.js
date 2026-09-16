@@ -234,6 +234,18 @@ function startServer(portToUse) {
       if (handleMercadoPagoRoutes(req, res, reqPath)) return;
     }
 
+    // Interceptar rota pública do Google Drive
+    if (reqPath.startsWith('/api/drive-public')) {
+      try {
+        const driveHandler = require('./api/drive-public.js');
+        driveHandler(req, res);
+      } catch (err) {
+        console.error('Erro ao executar drive-public handler:', err);
+        sendJsonResponse(res, 500, { error: err.message });
+      }
+      return;
+    }
+
     // Rota oficial: "/" abre a página de vendas nova; o app continua em /index.html (ou /app)
     if (reqPath === '/' || !reqPath) reqPath = '/landing_v3.html';
     if (reqPath === '/app' || reqPath === '/app/') reqPath = '/index.html';

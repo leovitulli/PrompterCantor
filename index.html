@@ -741,38 +741,49 @@
           <input type="text" id="gdriveRepertoireName" class="form-control" placeholder="Ex: Repertório Drive, Ensaio Março...">
         </div>
 
-        <!-- Passo 1: Autenticação -->
+        <!-- Opção 1: Link Público do Google Drive / Docs -->
         <div class="gdrive-step">
-          <div class="gdrive-step-label">1. Conecte sua Conta Google</div>
-          <div class="gdrive-auth-box">
-            <button id="btnGDriveConnect" class="btn btn-gdrive btn-lg">
-              🔑 Conectar Minha Conta Google
-            </button>
-            <span id="gdriveAuthStatus" class="status-text">Não conectado</span>
-          </div>
-        </div>
-
-        <!-- Passo 2: Informar pasta -->
-        <div class="gdrive-step">
-          <div class="gdrive-step-label">2. Cole o link da pasta no Google Drive</div>
+          <div class="gdrive-step-label">🌐 Opção 1: Link Público do Google Drive ou Google Docs</div>
+          <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:0.75rem; line-height: 1.4;">
+            Cole o link da pasta ou do arquivo compartilhado (configurado como <em>"Qualquer pessoa com o link pode ver"</em>). Não requer login nem configuração de API!
+          </p>
           <div class="gdrive-folder-input-row">
-            <input type="url" id="gdriveFolderUrl" class="form-control" placeholder="https://drive.google.com/drive/folders/...">
-            <button id="btnLoadGDriveFolder" class="btn btn-primary">🔍 Buscar</button>
+            <input type="url" id="gdriveFolderUrl" class="form-control" placeholder="https://drive.google.com/drive/folders/... ou docs.google.com/document/d/...">
+            <button id="btnLoadGDriveFolder" class="btn btn-primary">🔍 Carregar Link</button>
           </div>
-          <div class="gdrive-folder-hint">
+          <div class="gdrive-folder-hint" style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+            <span id="gdriveAuthStatus" class="status-text" style="font-size:0.82rem; color:var(--text-muted)">Modo público ativo</span>
             <button id="btnOpenDrivePreset" class="btn btn-outline btn-sm">
               📂 Abrir Google Drive (nova aba)
             </button>
           </div>
         </div>
 
-        <!-- Passo 3: Lista de arquivos -->
+        <!-- Opção 2: Pasta do Computador / Celular -->
         <div class="gdrive-step">
-          <div class="gdrive-step-label">3. Selecione as músicas para importar</div>
+          <div class="gdrive-step-label">💻 Opção 2: Selecionar Pasta no Computador / Celular</div>
+          <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:0.75rem; line-height: 1.4;">
+            Se você tem o Google Drive sincronizado na sua máquina ou baixou os arquivos, escolha a pasta diretamente:
+          </p>
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+            <input type="file" id="gdriveLocalFolderInput" webkitdirectory directory multiple style="display:none">
+            <input type="file" id="gdriveLocalFilesInput" multiple accept=".docx,.doc,.pdf,.txt,.mp3,.m4a,.aac,.wav,.ogg,.flac" style="display:none">
+            <button type="button" id="btnPickDriveLocalFolder" class="btn btn-secondary">
+              📁 Selecionar Pasta Completa
+            </button>
+            <button type="button" id="btnPickDriveLocalFiles" class="btn btn-outline btn-sm">
+              📄 Selecionar Arquivos
+            </button>
+          </div>
+        </div>
+
+        <!-- Passo 3: Lista de músicas identificadas -->
+        <div class="gdrive-step">
+          <div class="gdrive-step-label">🎵 Músicas Detectadas para Importação</div>
           <div id="gdriveFilesList" class="gdrive-files-list">
             <div class="gdrive-placeholder">
               <span>🎵</span>
-              <p>Conecte sua conta e busque uma pasta para ver os arquivos aqui.</p>
+              <p>Cole o link público acima ou selecione uma pasta para listar as músicas e áudios.</p>
             </div>
           </div>
         </div>
@@ -2008,10 +2019,10 @@
   <script src="js/brandIcons.js?v=3"></script>
   <script src="js/mediaPlayer.js?v=123"></script>
   <script src="js/advancedPlayer.js?v=123"></script>
-  <script src="js/gdrive.js?v=123"></script>
-  <script src="js/gdriveUI.js?v=123"></script>
+  <script src="js/gdrive.js?v=124"></script>
+  <script src="js/gdriveUI.js?v=124"></script>
   <script src="js/notificationsCenter.js?v=15"></script>
   <script src="js/interactiveTour.js?v=4"></script>
-  <script src="js/app.js?v=161"></script>
+  <script src="js/app.js?v=162"></script>
 </body>
 </html>
