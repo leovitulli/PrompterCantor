@@ -682,9 +682,14 @@ var TextParser = {
     if (!line || !line.trim()) return false;
     var trimmed = line.trim();
 
-    // Regex abrangente para acordes nacionais e internacionais (7M, 7+, (13), (5-), 6/9, dim, etc.)
-    var CHORD_TOKEN_REGEX = /^[A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°\(\)\#\/b])*(?:\/[A-G][#b]?)?$/i;
-    var COMMON_WORDS = /^(?:o|a|os|as|um|uma|de|do|da|dos|das|em|no|na|nos|nas|por|para|pra|pro|pras|pros|com|sem|sob|sobre|e|ou|mas|se|que|quem|qual|quando|como|onde|porque|por que|meu|minha|meus|minhas|seu|sua|seus|suas|teu|tua|nosso|nossa|ele|ela|eles|elas|eu|tu|voce|você|voces|vocês|não|nao|sim|ja|já|mais|menos|muito|pouco|tudo|nada|amor|coracao|coração|vida|dor|sol|mar|ceu|céu|dia|noite|fim|luz|paz|som|beijo|prazer|sofrer|peito|distancia|distância|verdade|viver|entregar|lugar)$/i;
+    // Regex abrangente para acordes nacionais e internacionais (7M, 7+, (13), (5-), 6/9, dim, º, °, etc.)
+    var CHORD_TOKEN_REGEX = /^[A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°\(\)\#\/b])*(?:\/[A-G][#b]?)?$/;
+    var MUSICAL_MARKER_REGEX = /^(\|{1,2}|\|:|:\||%+|\/{1,2}|\\|n\.?c\.?|bis)$/i;
+    var SECTION_LABEL_REGEX = /^(?:intro|solo|riff|refr[ãa]o|ponte|passagem|final|interl[uú]dio|canto):?$/i;
+
+    // Palavras comuns do português que identificam letras líricas
+    // NOTA CRÍTICA: Preposições como 'a', 'e', 'em' são tratadas no fluxo de tokens para não colidir com A, E, Em
+    var COMMON_WORDS = /^(?:o|os|as|um|uma|uns|umas|de|do|da|dos|das|no|na|nos|nas|por|para|pra|pro|pras|pros|com|sem|sob|sobre|ou|mas|se|que|quem|qual|quando|como|onde|porque|por que|meu|minha|meus|minhas|seu|sua|seus|suas|teu|tua|nosso|nossa|ele|ela|eles|elas|eu|tu|voce|você|voces|vocês|não|nao|sim|ja|já|mais|menos|muito|pouco|tudo|nada|amor|coracao|coração|vida|dor|mar|ceu|céu|dia|noite|fim|luz|paz|som|beijo|prazer|sofrer|peito|distancia|distância|verdade|viver|entregar|lugar)$/i;
 
     var tokens = trimmed.split(/\s+/);
     if (tokens.length === 0) return false;
@@ -696,21 +701,39 @@ var TextParser = {
       var token = tokens[i].trim();
       if (!token) continue;
 
-      var cleanToken = token.replace(/^[\[\(]/, '').replace(/[\]\),;]$/, '');
+      var cleanToken = token.replace(/^[\[\(]/, '').replace(/[\]\),;:]$/, '');
 
+      // Marcadores de compasso (| C | G | % |) são contados como estrutura musical
+      if (MUSICAL_MARKER_REGEX.test(token) || MUSICAL_MARKER_REGEX.test(cleanToken)) {
+        continue;
+      }
+
+      // Rótulos de introdução / solo no começo da linha (ex: "Intro: C G Am F")
+      if (i === 0 && SECTION_LABEL_REGEX.test(token)) {
+        continue;
+      }
+
+      // Se bater com a sintaxe de acorde (com raiz maiúscula [A-G])
+      if (CHORD_TOKEN_REGEX.test(cleanToken)) {
+        if (token === 'a' || token === 'e' || token === 'o' || token === 'em') {
+          nonChordCount++;
+        } else {
+          chordCount++;
+        }
+        continue;
+      }
+
+      // Se for palavra lírica comum, desqualifica a linha imediatamente
       if (COMMON_WORDS.test(cleanToken)) {
         return false;
       }
 
-      if (CHORD_TOKEN_REGEX.test(cleanToken)) {
-        chordCount++;
-      } else {
-        nonChordCount++;
-      }
+      nonChordCount++;
     }
 
     if (chordCount === 0) return false;
-    return (chordCount / (chordCount + nonChordCount)) >= 0.7;
+    if (nonChordCount === 0) return true;
+    return (chordCount / (chordCount + nonChordCount)) >= 0.5;
   },
 
   /**
@@ -795,7 +818,7 @@ var TextParser = {
         bestKey = k;
       }
     }
-    return bestKey || 'A';
+    return bestKey || '';
   },
 
   /**

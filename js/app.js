@@ -1431,6 +1431,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function closePrompterView() {
     Prompter.stopScroll();
+    if (Prompter.releaseWakeLock) Prompter.releaseWakeLock();
     if (window.AdvancedPlayer) AdvancedPlayer.stop();
     if (window.MediaPlayer) MediaPlayer.hide();
     closeYoutubeModal();

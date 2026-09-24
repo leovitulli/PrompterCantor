@@ -9,6 +9,14 @@ var Prompter = {
   subpixelScroll: 0,
   fontSize: 32,
   animationFrameId: null,
+  lastFrameTime: 0,
+  wakeLockSentinel: null,
+
+  // Tabela calibrada de velocidade em pixels por segundo (independente de tela 60Hz/120Hz ProMotion)
+  // Velocidade 1: 8 px/s (ultra lenta e suave, ~4 a 5s por linha)
+  // Velocidade 2: 14 px/s (um pouco mais rápida que a 1)
+  // Progressão suave e confortável até 10x (135 px/s)
+  SPEED_TABLE: [0, 8, 14, 22, 32, 44, 58, 74, 92, 112, 135],
 
   scrollArea: null,
   textContentEl: null,
@@ -19,7 +27,34 @@ var Prompter = {
   scrollSpeedDisplay: null,
   fontSizeDisplay: null,
 
+  requestWakeLock: function() {
+    var self = this;
+    if ('wakeLock' in navigator && navigator.wakeLock && navigator.wakeLock.request) {
+      if (this.wakeLockSentinel && !this.wakeLockSentinel.released) return;
+      navigator.wakeLock.request('screen')
+        .then(function(sentinel) {
+          self.wakeLockSentinel = sentinel;
+          sentinel.addEventListener('release', function() {
+            self.wakeLockSentinel = null;
+          });
+        })
+        .catch(function(err) {
+          console.warn('[Prompter] WakeLock não pôde ser ativado:', err);
+        });
+    }
+  },
+
+  releaseWakeLock: function() {
+    if (this.wakeLockSentinel) {
+      try {
+        this.wakeLockSentinel.release();
+      } catch (e) {}
+      this.wakeLockSentinel = null;
+    }
+  },
+
   init: function() {
+    var self = this;
     this.scrollArea = document.getElementById('prompterScrollArea');
     this.textContentEl = document.getElementById('prompterTextContent');
     this.btnToggleScroll = document.getElementById('btnToggleScroll');
@@ -28,6 +63,17 @@ var Prompter = {
     this.scrollSpeedRange = document.getElementById('scrollSpeedRange');
     this.scrollSpeedDisplay = document.getElementById('scrollSpeedDisplay');
     this.fontSizeDisplay = document.getElementById('fontSizeDisplay');
+
+    // Manter a tela ligada se a aba voltar ao primeiro plano durante a apresentação
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        var prompterView = document.getElementById('prompterView');
+        var isOpen = prompterView && !prompterView.classList.contains('hidden') && prompterView.style.display !== 'none';
+        if (isOpen) {
+          self.requestWakeLock();
+        }
+      }
+    });
 
     // Responsividade Inteligente de Fonte Padrão:
     // Celulares: 22px-24px | Tablets/iPads: 28px-32px | Desktop: 32px
@@ -158,6 +204,7 @@ var Prompter = {
       this.init();
     }
     this.stopScroll();
+    this.requestWakeLock();
     if (this.scrollArea) this.scrollArea.scrollTop = 0;
 
     var cleaned = text || '';
@@ -172,7 +219,8 @@ var Prompter = {
     var displayText = this.currentRawText;
     if (window.Transposer && currentKey && originalKey && currentKey !== originalKey) {
       var dist = window.Transposer.getKeyDistance(originalKey, currentKey);
-      displayText = window.Transposer.transposeText(this.currentRawText, dist);
+      var useFlat = window.Transposer.prefersFlat ? window.Transposer.prefersFlat(currentKey) : (currentKey.indexOf('b') !== -1 || currentKey === 'F');
+      displayText = window.Transposer.transposeText(this.currentRawText, dist, useFlat);
     }
 
     var formattedHtml = this.formatChordsAndLyrics(displayText);
@@ -193,7 +241,8 @@ var Prompter = {
 
     if (window.Transposer && targetKey && origKey && targetKey !== origKey) {
       var dist = window.Transposer.getKeyDistance(origKey, targetKey);
-      displayText = window.Transposer.transposeText(this.currentRawText, dist);
+      var useFlat = window.Transposer.prefersFlat ? window.Transposer.prefersFlat(targetKey) : (targetKey.indexOf('b') !== -1 || targetKey === 'F');
+      displayText = window.Transposer.transposeText(this.currentRawText, dist, useFlat);
     }
 
     var formattedHtml = this.formatChordsAndLyrics(displayText);
@@ -226,8 +275,8 @@ var Prompter = {
       } else if (/^\[\s*(?:intro|refr[ãa]o|coro|ponte|solo|final|parte\s+[a-z0-9]|verso)\s*\]$/i.test(trimmed)) {
         html.push('<div class="prompter-section-tag">' + this.escapeHtml(trimmed) + '</div>');
       } else {
-        // Se a linha tiver acordes em colchetes [Gm], [C7]
-        var formattedLyric = this.escapeHtml(line).replace(/\[([A-G][#b]?(?:m|maj|min|dim|aug|sus|add|[0-9])*(?:\/[A-G][#b]?)?)\]/g, '<span class="inline-chord">$1</span>');
+        // Se a linha tiver acordes em colchetes [Gm], [C7M], [F#m7(b5)], etc.
+        var formattedLyric = this.escapeHtml(line).replace(/\[([A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°#b]|\([0-9\+\-º°#b]+\))*(?:\/[A-G][#b]?)?)\]/g, '<span class="inline-chord">$1</span>');
         html.push('<div class="lyric-line">' + formattedLyric + '</div>');
       }
     }
@@ -252,14 +301,17 @@ var Prompter = {
   startScroll: function() {
     if (this.isScrolling) return;
     this.isScrolling = true;
+    this.lastFrameTime = 0;
     this.subpixelScroll = this.scrollArea ? this.scrollArea.scrollTop : 0;
     this.cachedMaxScroll = this.scrollArea ? (this.scrollArea.scrollHeight - this.scrollArea.clientHeight) : 0;
+    this.requestWakeLock();
     this.updateScrollUI();
     this.step();
   },
 
   stopScroll: function() {
     this.isScrolling = false;
+    this.lastFrameTime = 0;
     if (this.animationFrameId) {
       if (window.cancelAnimationFrame) {
         cancelAnimationFrame(this.animationFrameId);
@@ -269,14 +321,29 @@ var Prompter = {
     this.updateScrollUI();
   },
 
-  step: function() {
+  step: function(timestamp) {
     var self = this;
     if (!this.isScrolling) return;
 
-    // Velocidade 1x é suave e lenta (aprox 20px/s), escalando progressivamente até 10x (200px/s)
-    var pixelsPerFrame = Math.max(0.2, this.scrollSpeed * 0.35);
+    var now = (typeof timestamp === 'number') ? timestamp : ((window.performance && performance.now) ? performance.now() : Date.now());
+
+    if (!this.lastFrameTime) {
+      this.lastFrameTime = now;
+    }
+
+    var dt = (now - this.lastFrameTime) / 1000;
+    this.lastFrameTime = now;
+
+    // Proteção contra saltos bruscos se aba foi minimizada ou throttled (máx 100ms)
+    if (dt > 0.1) dt = 0.1;
+    if (dt < 0) dt = 0;
+
+    var speedIdx = Math.max(1, Math.min(10, Math.round(this.scrollSpeed)));
+    var pxPerSecond = this.SPEED_TABLE[speedIdx] || (speedIdx * 12);
+    var pixelsToMove = pxPerSecond * dt;
+
     if (this.scrollArea) {
-      this.subpixelScroll += pixelsPerFrame;
+      this.subpixelScroll += pixelsToMove;
       this.scrollArea.scrollTop = Math.round(this.subpixelScroll);
       var maxScroll = this.cachedMaxScroll || (this.scrollArea.scrollHeight - this.scrollArea.clientHeight);
       if (this.scrollArea.scrollTop >= maxScroll - 4) {
@@ -286,7 +353,7 @@ var Prompter = {
     }
 
     var reqAnim = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(cb) { return setTimeout(cb, 16); };
-    this.animationFrameId = reqAnim(function() { self.step(); });
+    this.animationFrameId = reqAnim(function(t) { self.step(t); });
   },
 
   updateScrollUI: function() {
@@ -398,6 +465,7 @@ var Prompter = {
       setTimeout(function() {
         if (self.isScrolling) {
           self.subpixelScroll = 0;
+          self.lastFrameTime = 0;
           if (self.animationFrameId) {
             cancelAnimationFrame(self.animationFrameId);
             self.animationFrameId = null;

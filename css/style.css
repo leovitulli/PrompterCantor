@@ -3352,8 +3352,10 @@ textarea {
   overflow-y: auto !important;
   padding: 1.25rem 1.5rem !important;
   box-sizing: border-box !important;
-  scroll-behavior: smooth !important;
+  scroll-behavior: auto !important;
   -webkit-overflow-scrolling: touch !important;
+  touch-action: manipulation;
+  overscroll-behavior-y: contain;
 }
 
 .prompter-text-content {
@@ -3990,6 +3992,63 @@ textarea {
     margin-top: 0.55rem !important;
     white-space: pre-wrap !important;
     word-break: normal !important;
+  }
+}
+
+/* MODO PAISAGEM ULTRA OTIMIZADO PARA SUPORTES DE MICROFONE E PEDESTAIS (ALTURA <= 520px) */
+@media (max-height: 520px) and (orientation: landscape) {
+  .prompter-header {
+    padding: 3px 10px 4px 10px !important;
+    gap: 2px !important;
+  }
+  .prompter-title-area {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  .prompter-title-center {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+  #prompterSongTitle {
+    font-size: 1.05rem !important;
+    max-width: 40vw !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .prompter-song-submeta {
+    gap: 4px !important;
+    margin-top: 0 !important;
+  }
+  .prompter-controls {
+    padding-top: 2px !important;
+    gap: 4px !important;
+  }
+  .control-group {
+    height: 30px !important;
+    padding: 1px 3px !important;
+  }
+  .btn-scroll-play {
+    height: 30px !important;
+    min-height: 30px !important;
+    font-size: 0.76rem !important;
+    padding: 0 8px !important;
+  }
+  .btn-circle {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+  }
+  .prompter-scroll-area {
+    padding: 0.5rem 1.25rem !important;
+  }
+  .prompter-text-content {
+    padding-bottom: 50vh !important;
   }
 }
 

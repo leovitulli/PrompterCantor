@@ -72,8 +72,17 @@
     };
   }
 
+  function prefersFlat(key) {
+    if (!key) return false;
+    var norm = normalizeKey(key);
+    if (norm.indexOf('b') !== -1) return true;
+    var flatTonics = ['F', 'Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm', 'Abm', 'Dbm', 'Gbm', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'];
+    return flatTonics.indexOf(norm) !== -1;
+  }
+
   var Transposer = {
     normalizeKey: normalizeKey,
+    prefersFlat: prefersFlat,
 
     setSelectKey: function (selectEl, rawKey) {
       if (!selectEl) return;
@@ -182,6 +191,7 @@
       var self = this;
 
       var chordRegex = /([A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°#b]|\([0-9\+\-º°#b]+\))*(?:\/[A-G][#b]?)?)/g;
+      var inlineChordRegex = /\[([A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°#b]|\([0-9\+\-º°#b]+\))*(?:\/[A-G][#b]?)?)\]/g;
 
       var lines = text.split(/\r?\n/);
       var resultLines = [];
@@ -196,7 +206,11 @@
           });
           resultLines.push(transposedLine);
         } else {
-          resultLines.push(line);
+          // Linha de letra que pode conter acordes inline em colchetes [C7M], [Am], etc.
+          var transposedLyric = line.replace(inlineChordRegex, function (match, chord) {
+            return '[' + self.transposeChord(chord, semitones, preferFlat) + ']';
+          });
+          resultLines.push(transposedLyric);
         }
       }
 
