@@ -275,8 +275,8 @@ var Prompter = {
       } else if (/^\[\s*(?:intro|refr[ãa]o|coro|ponte|solo|final|parte\s+[a-z0-9]|verso)\s*\]$/i.test(trimmed)) {
         html.push('<div class="prompter-section-tag">' + this.escapeHtml(trimmed) + '</div>');
       } else {
-        // Se a linha tiver acordes em colchetes [Gm], [C7M], [F#m7(b5)], etc.
-        var formattedLyric = this.escapeHtml(line).replace(/\[([A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°#b]|\([0-9\+\-º°#b]+\))*(?:\/[A-G][#b]?)?)\]/g, '<span class="inline-chord">$1</span>');
+        // Se a linha tiver acordes em colchetes [Gm], [C7M], [F#m7(b5)], [Em5-/7], etc.
+        var formattedLyric = this.escapeHtml(line).replace(/\[([A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°\(\)\#\/b\u2013\u2014\u2212])*(?:\/[A-G][#b]?)?)\]/g, '<span class="inline-chord">$1</span>');
         html.push('<div class="lyric-line">' + formattedLyric + '</div>');
       }
     }

@@ -276,10 +276,11 @@ var TextParser = {
       str = out.join('\n');
     }
 
-    // 4. Normalização universal de quebras de linha e caracteres invisíveis
+    // 4. Normalização universal de quebras de linha, travessões e caracteres invisíveis
     return str
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')
+      .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
       .replace(/[\u00A0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]/g, ' ')
       .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
       .replace(/\t/g, '    ');
@@ -683,9 +684,9 @@ var TextParser = {
     var trimmed = line.trim();
 
     // Regex abrangente para acordes nacionais e internacionais (7M, 7+, (13), (5-), 6/9, dim, º, °, etc.)
-    var CHORD_TOKEN_REGEX = /^[A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°\(\)\#\/b])*(?:\/[A-G][#b]?)?$/;
+    var CHORD_TOKEN_REGEX = /^[A-G][#b]?(?:M|maj|min|m|dim|aug|sus|add|alt|[0-9\+\-º°\(\)\#\/b\u2013\u2014\u2212])*(?:\/[A-G][#b]?)?$/;
     var MUSICAL_MARKER_REGEX = /^(\|{1,2}|\|:|:\||%+|\/{1,2}|\\|n\.?c\.?|bis)$/i;
-    var SECTION_LABEL_REGEX = /^(?:intro|solo|riff|refr[ãa]o|ponte|passagem|final|interl[uú]dio|canto):?$/i;
+    var SECTION_LABEL_REGEX = /^(?:intro|introdu[çc][ãa]o|solo|riff|refr[ãa]o|ponte|passagem|final|interl[uú]dio|canto|parte\s+[a-z0-9]):?$/i;
 
     // Palavras comuns do português que identificam letras líricas
     // NOTA CRÍTICA: Preposições como 'a', 'e', 'em' são tratadas no fluxo de tokens para não colidir com A, E, Em

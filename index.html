@@ -44,8 +44,20 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js').catch(function(err) {
+        navigator.serviceWorker.register('./sw.js').then(function(reg) {
+          if (reg && reg.update) {
+            reg.update();
+          }
+        }).catch(function(err) {
           console.log('SW registration error:', err);
+        });
+
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
         });
       });
     }
@@ -2008,10 +2020,10 @@
   <script src="js/db.js?v=125"></script>
   <script src="js/auth.js?v=131"></script>
   <script src="js/adminPanel.js?v=157"></script>
-  <script src="js/textParser.js?v=125"></script>
+  <script src="js/textParser.js?v=126"></script>
   <script src="js/sampleRepertoire.js?v=123"></script>
-  <script src="js/transposer.js?v=124"></script>
-  <script src="js/prompter.js?v=124"></script>
+  <script src="js/transposer.js?v=125"></script>
+  <script src="js/prompter.js?v=125"></script>
   <script src="js/tomColor.js?v=5"></script>
   <script src="js/brandIcons.js?v=3"></script>
   <script src="js/mediaPlayer.js?v=123"></script>
