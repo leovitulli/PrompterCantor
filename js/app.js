@@ -880,11 +880,13 @@ document.addEventListener('DOMContentLoaded', function () {
           '<div class="song-row-main">' +
             '<div class="song-row-title-line">' +
               '<span class="song-row-title">' + escapeHtml(displayTitle) + '</span>' +
-              (song.key ? '<span class="badge badge-key song-row-key" title="Tom de Cantar">' + escapeHtml(song.key) + '</span>' : '<span class="badge badge-nokey">S/Tom</span>') +
-              (song.rhythm ? '<span class="badge badge-rhythm" title="Toque / Ritmo">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
-              (song.isOfflinePinned ? '<span class="badge badge-offline-mini" title="Salva offline">⚡</span>' : '') +
-              (song.youtubeUrl ? '<span class="badge badge-yt-mini" title="Vídeo no YouTube">▶ Vídeo</span>' : '') +
-              (song.audioBlob || song.audioUrl ? '<span class="song-audio-dot" title="Tem áudio guia local">🎵</span>' : '') +
+              '<div class="song-row-badges">' +
+                (song.key ? '<span class="badge badge-key song-row-key" title="Tom de Cantar">' + escapeHtml(song.key) + '</span>' : '<span class="badge badge-nokey">S/Tom</span>') +
+                (song.rhythm ? '<span class="badge badge-rhythm" title="Toque / Ritmo">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
+                (song.isOfflinePinned ? '<span class="badge badge-offline-mini" title="Salva offline">⚡</span>' : '') +
+                (song.youtubeUrl ? '<span class="badge badge-yt-mini" title="Vídeo no YouTube">▶ Vídeo</span>' : '') +
+                (song.audioBlob || song.audioUrl ? '<span class="song-audio-dot" title="Tem áudio guia local">🎵</span>' : '') +
+              '</div>' +
             '</div>' +
             (metaParts.length > 0 ? '<div class="song-row-meta">' + metaParts.join('<span class="meta-sep">•</span>') + '</div>' : '') +
           '</div>' +
