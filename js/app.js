@@ -859,15 +859,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var html = '<div class="songs-list-table">';
     for (var i = 0; i < songs.length; i++) {
       var song = songs[i];
-      var preview = getFirstTwoLines(song.content);
+      var lyricIntro = getSongLyricIntro(song.content, song.title, song.artist);
       var displayTitle = (song.title || 'Sem Título').toUpperCase();
       var trackNum = (song.trackNumber || (i + 1));
       var trackNumStr = trackNum < 10 ? '0' + trackNum : '' + trackNum;
 
-      var metaParts = [];
-      if (song.artist) metaParts.push('<span class="meta-part meta-artista">🎤 ' + escapeHtml(song.artist) + '</span>');
-      if (song.composer) metaParts.push('<span class="meta-part meta-compositor">✍️ ' + escapeHtml(song.composer) + '</span>');
-      if (preview) metaParts.push('<span class="meta-part meta-previa">💬 ' + escapeHtml(preview) + '</span>');
+      var displayKey = song.key ? (song.key.toUpperCase().indexOf('TOM') === 0 ? song.key : 'Tom: ' + song.key) : '';
 
       var svgUp = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
       var svgDown = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
@@ -881,14 +878,15 @@ document.addEventListener('DOMContentLoaded', function () {
             '<div class="song-row-title-line">' +
               '<span class="song-row-title">' + escapeHtml(displayTitle) + '</span>' +
               '<div class="song-row-badges">' +
-                (song.key ? '<span class="badge badge-key song-row-key" title="Tom de Cantar">' + escapeHtml(song.key) + '</span>' : '<span class="badge badge-nokey">S/Tom</span>') +
+                (displayKey ? '<span class="badge badge-key song-row-key" title="Tom de Cantar">' + escapeHtml(displayKey) + '</span>' : '<span class="badge badge-nokey">S/Tom</span>') +
                 (song.rhythm ? '<span class="badge badge-rhythm" title="Toque / Ritmo">🥁 ' + escapeHtml(song.rhythm) + '</span>' : '') +
                 (song.isOfflinePinned ? '<span class="badge badge-offline-mini" title="Salva offline">⚡</span>' : '') +
                 (song.youtubeUrl ? '<span class="badge badge-yt-mini" title="Vídeo no YouTube">▶ Vídeo</span>' : '') +
                 (song.audioBlob || song.audioUrl ? '<span class="song-audio-dot" title="Tem áudio guia local">🎵</span>' : '') +
               '</div>' +
             '</div>' +
-            (metaParts.length > 0 ? '<div class="song-row-meta">' + metaParts.join('<span class="meta-sep">•</span>') + '</div>' : '') +
+            (lyricIntro ? '<div class="song-row-lyric-intro" title="' + escapeHtml(lyricIntro) + '"><span class="meta-lyric-icon">💬</span> <span class="meta-lyric-text">' + escapeHtml(lyricIntro) + '</span></div>' : '') +
+            (song.artist ? '<div class="song-row-meta"><span class="meta-part meta-artista">🎤 ' + escapeHtml(song.artist) + '</span></div>' : '') +
           '</div>' +
           '<div class="song-row-actions">' +
             '<button class="btn-icon-action btn-move-up" data-song-id="' + song.id + '" title="Mover para Cima">' + svgUp + '</button>' +
@@ -1074,15 +1072,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function getFirstTwoLines(content) {
-    if (!content) return '';
-    var lines = content.split('\n');
-    var result = [];
-    for (var i = 0; i < lines.length && result.length < 2; i++) {
-      var line = lines[i].trim();
-      if (line && line.length > 2) result.push(line);
-    }
-    return result.join(' / ');
+  function getFirstTwoLines(content, title, artist) {
+    return getSongLyricIntro(content, title, artist);
   }
 
   // ═══════════════════════════════════════
@@ -1133,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var scrollArea = document.getElementById('prompterScrollArea');
         if (scrollArea) scrollArea.scrollTop = 0;
 
-        showToast((direction > 0 ? '▶ ' : '◀ ') + (targetSong.title || 'Música'), 'info');
+        // Sem banners/toasts de navegação na tela para não atrapalhar a visualização no palco
       }
     });
   }
@@ -1142,6 +1133,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!song) return;
     state.currentSong = song;
     saveActiveState('prompter', { songId: song.id, repertoireId: song.repertoireId });
+
+    // Limpar quaisquer toasts pendentes para não sobrepor a visão do cantor
+    var toastContainer = document.getElementById('toastContainer');
+    if (toastContainer) toastContainer.innerHTML = '';
 
     var btnScrollToTop = document.getElementById('btnScrollToTop');
     if (btnScrollToTop) btnScrollToTop.classList.remove('visible');
@@ -3730,23 +3725,35 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function getSongLyricIntro(content) {
+  function getSongLyricIntro(content, songTitle, songArtist) {
     if (!content) return '';
     var lines = content.split('\n');
     var lyricLines = [];
+    var tUpper = (songTitle || '').trim().toUpperCase();
+    var aUpper = (songArtist || '').trim().toUpperCase();
 
     for (var i = 0; i < lines.length && lyricLines.length < 2; i++) {
-      var line = lines[i].trim();
-      if (!line) continue;
-      // Pular tags e metadados
-      if (/^(tom|ritmo|bpm|intro|introdução|refrão|estrofe|solo|interlúdio|parte\s+[a-z0-9]|compasso|afinação)\s*[:：]/i.test(line)) continue;
-      if (/^\[.*\]$/.test(line)) continue;
-      // Pular linhas de acordes se detectado
-      if (window.TextParser && window.TextParser.isChordLine(line)) continue;
-      // Pular linhas curtas de pontuação
-      if (line.length < 3) continue;
+      var raw = lines[i].trim();
+      if (!raw) continue;
+      // Pular tags e metadados comuns em cifras
+      if (/^(tom|ritmo|bpm|intro|introdução|refrão|estrofe|solo|interlúdio|parte\s+[a-z0-9]|compasso|afinação|dedilhado|cifra|autor|compositor|artista)\s*[:：]/i.test(raw)) continue;
+      if (/^\[(intro|introdução|solo|refrão|estrofe|interlúdio|ponte|coda|final|parte).*\]$/i.test(raw)) continue;
+      if (/^\((intro|introdução|solo|cabeça|refrão|ponte)\)/i.test(raw)) continue;
 
-      lyricLines.push(line);
+      // Pular se for idêntico ao título da música ou ao artista
+      var upperRaw = raw.toUpperCase();
+      if (tUpper && (upperRaw === tUpper || (upperRaw.indexOf(tUpper) === 0 && upperRaw.length <= tUpper.length + 6))) continue;
+      if (aUpper && (upperRaw === aUpper || (upperRaw.indexOf(aUpper) === 0 && upperRaw.length <= aUpper.length + 6))) continue;
+
+      // Pular linhas puras de acordes
+      if (window.TextParser && window.TextParser.isChordLine(raw)) continue;
+
+      // Limpar acordes inline como [C], [Am7], [G/B] da linha para isolar a letra
+      var clean = raw.replace(/\[[A-G][b#]?[^\]]*\]/g, '').replace(/\s{2,}/g, ' ').trim();
+      if (clean.length < 3 || /^[|\-~=_*#/\\:\s]+$/.test(clean)) continue;
+      if (window.TextParser && window.TextParser.isChordLine(clean)) continue;
+
+      lyricLines.push(clean);
     }
     return lyricLines.join(' / ');
   }
@@ -3806,7 +3813,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (s.rhythm) metaParts.push(s.rhythm.toUpperCase());
       var metaStr = metaParts.length > 0 ? ' (' + escapeHtml(metaParts.join(' - ')) + ')' : '';
 
-      var lyricIntro = getSongLyricIntro(s.content);
+      var lyricIntro = getSongLyricIntro(s.content, s.title, s.artist);
 
       html +=
         '<div class="stage-setlist-row">' +
@@ -3849,11 +3856,15 @@ document.addEventListener('DOMContentLoaded', function () {
   function showToast(msg, type) {
     var container = document.getElementById('toastContainer');
     if (!container) return;
+    // Evitar acúmulo excessivo de toasts na tela
+    while (container.children.length >= 2) {
+      container.removeChild(container.firstChild);
+    }
     var toast = document.createElement('div');
     toast.className = 'toast toast-' + (type || 'info');
     toast.textContent = msg;
     container.appendChild(toast);
-    setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3500);
+    setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
   }
   // Expõe globalmente para que módulos externos (notificationsCenter, etc.) possam usar
   window.showToast = showToast;

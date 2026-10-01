@@ -1768,6 +1768,36 @@ textarea {
   text-overflow: ellipsis;
 }
 
+.song-row-lyric-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  font-style: italic;
+  line-height: 1.35;
+  margin-top: 0.15rem;
+  width: 100%;
+}
+
+.song-row-lyric-intro .meta-lyric-icon {
+  font-style: normal;
+  font-size: 0.82rem;
+  opacity: 0.85;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.song-row-lyric-intro .meta-lyric-text {
+  color: #cbd5e1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
 .meta-sep {
   color: rgba(255, 255, 255, 0.2);
 }
