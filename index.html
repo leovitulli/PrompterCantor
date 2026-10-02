@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/style.css?v=130">
   <link rel="stylesheet" href="css/admin.css?v=139">
   <link rel="stylesheet" href="css/landing.css?v=122">
-  <link rel="stylesheet" href="css/brand.css?v=43">
+  <link rel="stylesheet" href="css/brand.css?v=44">
   <link rel="stylesheet" href="css/notifications.css?v=17">
   <link rel="stylesheet" href="css/interactiveTour.css?v=3">
 
@@ -92,6 +92,7 @@
       <a href="#sectionPricing" class="landing-nav-link">Planos & Preços</a>
     </div>
     <div class="landing-nav-actions">
+      <button id="btnLandingInstallPwa" class="btn-nav-install hidden" title="Instalar Aplicativo CantaAí PRO">💻 Instalar App</button>
       <button id="btnLandingNavLogin" class="btn-nav-login">Entrar</button>
       <button id="btnLandingNavSignUp" class="btn-nav-signup">Começar Grátis</button>
     </div>
@@ -200,6 +201,16 @@
           </div>
         </div>
 
+        <button id="btnHeaderInstallPwa" class="btn btn-secondary btn-icon-sm btn-install-pwa hidden" title="Instalar CantaAí PRO no seu Computador ou Celular">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+            <polyline points="9 10 12 13 15 10"></polyline>
+            <line x1="12" y1="7" x2="12" y2="13"></line>
+          </svg>
+        </button>
+
         <button id="btnToggleTheme" class="btn btn-secondary btn-icon-sm" title="Alternar para Modo Claro">
           ☀️
         </button>
@@ -254,6 +265,10 @@
 
             <button id="btnProfileInteractiveTour" class="upm-item" style="color: #38bdf8;">
               <span class="upm-item-icon">📖</span> Tour Interativo do App
+            </button>
+
+            <button id="menuItemInstallPwa" class="upm-item hidden" style="color: #10b981;">
+              <span class="upm-item-icon">💻</span> Instalar Aplicativo
             </button>
 
             <div class="upm-divider"></div>
@@ -2032,6 +2047,6 @@
   <script src="js/gdriveUI.js?v=127"></script>
   <script src="js/notificationsCenter.js?v=18"></script>
   <script src="js/interactiveTour.js?v=4"></script>
-  <script src="js/app.js?v=165"></script>
+  <script src="js/app.js?v=166"></script>
 </body>
 </html>

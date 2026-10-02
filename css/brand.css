@@ -1485,6 +1485,41 @@ body.light-mode button#btnScrollToTop.btn-floating-top:hover {
     align-items: center !important;
     justify-content: center !important;
   }
+/* ══════════════════════════════════════════════════════════
+   BOTÕES DE INSTALAÇÃO DO APP (PWA DESKTOP & MOBILE)
+   ══════════════════════════════════════════════════════════ */
+.btn-install-pwa {
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.btn-install-pwa:hover {
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+  transform: translateY(-1px);
+}
+
+.btn-nav-install {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  padding: 0.45rem 0.85rem !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.btn-nav-install:hover {
+  background: rgba(16, 185, 129, 0.25) !important;
+  border-color: #10b981 !important;
+  color: #6ee7b7 !important;
+  transform: translateY(-1px);
 }
 
 /* ══════════════════════════════════════════════════════════

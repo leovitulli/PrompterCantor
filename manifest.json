@@ -1,24 +1,39 @@
 {
-  "name": "CantaAí PRO",
-  "short_name": "CantaAí",
+  "id": "/",
+  "name": "CantaAí PRO - Teleprompter & Repertórios",
+  "short_name": "CantaAí PRO",
   "description": "Teleprompter e Gestor de Repertório Profissional para Cantores e Instrumentistas",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0F1013",
-  "theme_color": "#0F1013",
+  "background_color": "#0f0f12",
+  "theme_color": "#0f0f12",
+  "categories": ["music", "entertainment", "productivity", "utilities"],
   "icons": [
+    {
+      "src": "assets/brand/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "assets/brand/favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "assets/brand/favicon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/brand/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "assets/brand/favicon-180.png",
@@ -26,9 +41,25 @@
       "type": "image/png"
     },
     {
-      "src": "assets/brand/icone-app.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "assets/brand/icone-app-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/landing/dashboard.webp",
+      "sizes": "1600x722",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Painel de Repertórios e Músicas do CantaAí PRO"
+    },
+    {
+      "src": "assets/mobile_screenshots/mobile_prompter.png",
+      "sizes": "471x1024",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Modo Palco Teleprompter no Celular"
     }
   ]
 }
