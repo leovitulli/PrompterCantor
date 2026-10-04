@@ -1523,6 +1523,281 @@ body.light-mode button#btnScrollToTop.btn-floating-top:hover {
 }
 
 /* ══════════════════════════════════════════════════════════
+   CARD FLUTUANTE & GUIA MODAL DE INSTALAÇÃO PWA
+   Padrão profissional baseado no ConsTruta ERP e Flowee Studio
+   ══════════════════════════════════════════════════════════ */
+.pwa-floating-prompt {
+  position: fixed !important;
+  bottom: 1.25rem !important;
+  right: 1.25rem !important;
+  z-index: 99999 !important;
+  max-width: 410px !important;
+  width: calc(100vw - 2.5rem) !important;
+  pointer-events: auto !important;
+  animation: pwaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes pwaSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pwa-card-body {
+  background: #181715 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65) !important;
+  padding: 1.15rem !important;
+  position: relative !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.pwa-card-close {
+  position: absolute !important;
+  top: 0.65rem !important;
+  right: 0.65rem !important;
+  width: 28px !important;
+  height: 28px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: none !important;
+  color: #94a3b8 !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  font-size: 0.85rem !important;
+  transition: all 0.15s ease !important;
+}
+.pwa-card-close:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.pwa-card-content {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.85rem !important;
+}
+
+.pwa-card-icon-box {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+}
+
+.pwa-app-icon {
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.pwa-card-info {
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding-right: 0.85rem !important;
+}
+
+.pwa-card-title {
+  font-family: var(--ca-font-display) !important;
+  font-size: 0.96rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin: 0 0 0.2rem 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.pwa-card-desc {
+  font-size: 0.8rem !important;
+  color: #94a3b8 !important;
+  line-height: 1.35 !important;
+  margin: 0 !important;
+}
+
+.pwa-ios-quick-tip {
+  margin-top: 0.6rem !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  border-radius: 10px !important;
+  padding: 0.5rem 0.65rem !important;
+  font-size: 0.76rem !important;
+  color: #cbd5e1 !important;
+  line-height: 1.35 !important;
+}
+
+.pwa-ios-step {
+  margin: 0 0 0.15rem 0 !important;
+}
+.pwa-ios-step:last-child {
+  margin-bottom: 0 !important;
+}
+
+.pwa-share-ico {
+  color: #38bdf8 !important;
+  font-weight: bold !important;
+}
+
+.pwa-card-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-top: 0.75rem !important;
+  flex-wrap: wrap !important;
+}
+
+.pwa-btn-install {
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  padding: 0.45rem 0.9rem !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.pwa-btn-dismiss {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.45rem 0.85rem !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #94a3b8 !important;
+}
+.pwa-btn-dismiss:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+/* Modal de Guia Detalhado */
+.pwa-guide-modal-content {
+  max-width: 500px !important;
+  width: 92vw !important;
+  background: #181715 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 20px !important;
+  padding: 1.5rem !important;
+  color: #ffffff !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75) !important;
+}
+
+.pwa-guide-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.pwa-guide-logo-box {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+}
+
+.pwa-guide-title {
+  font-family: var(--ca-font-display) !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+}
+
+.pwa-guide-subtitle {
+  font-size: 0.78rem !important;
+  color: #94a3b8 !important;
+  margin: 0.15rem 0 0 0 !important;
+}
+
+.pwa-guide-options {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+}
+
+.pwa-guide-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+  padding: 0.85rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.pwa-guide-card.active-platform {
+  background: rgba(16, 185, 129, 0.06) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.pwa-guide-card-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.pwa-platform-tag {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+.pwa-guide-text, .pwa-guide-steps {
+  font-size: 0.78rem !important;
+  color: #cbd5e1 !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.pwa-guide-steps p {
+  margin: 0 0 0.2rem 0 !important;
+}
+.pwa-guide-steps p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.pwa-guide-badge-note {
+  color: #34d399 !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  margin-top: 0.35rem !important;
+}
+
+.pwa-direct-install-box {
+  margin-top: 0.6rem !important;
+}
+
+.pwa-guide-footer {
+  margin-top: 1.25rem !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+.pwa-btn-got-it {
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  padding: 0.55rem 1.4rem !important;
+  border-radius: 10px !important;
+}
+
+/* ══════════════════════════════════════════════════════════
    REGRAS DE IMPRESSÃO PROFISSIONAL (CantaAí PRO)
    Garante tipografia oficial (Bricolage Grotesque & DM Sans)
    e logotipo vetorial nítido no papel e PDF A4.

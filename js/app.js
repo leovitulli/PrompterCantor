@@ -6972,71 +6972,9 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(checkSingerAnnouncements, 30000);
 
     // ═══════════════════════════════════════
-    //  INSTALADOR NATIVO PWA (CHROME / EDGE / DESKTOP / MOBILE)
+    //  INSTALADOR NATIVO PWA
+    //  Gerenciado centralmente por js/pwaInstaller.js (Padrão ConsTruta / Flowee)
     // ═══════════════════════════════════════
-    var deferredPwaInstallPrompt = null;
-
-    window.addEventListener('beforeinstallprompt', function (e) {
-      deferredPwaInstallPrompt = e;
-
-      var btnHeader = document.getElementById('btnHeaderInstallPwa');
-      if (btnHeader) {
-        btnHeader.classList.remove('hidden');
-        btnHeader.style.display = 'inline-flex';
-      }
-
-      var menuItem = document.getElementById('menuItemInstallPwa');
-      if (menuItem) {
-        menuItem.classList.remove('hidden');
-        menuItem.style.display = 'flex';
-      }
-
-      var btnLanding = document.getElementById('btnLandingInstallPwa');
-      if (btnLanding) {
-        btnLanding.classList.remove('hidden');
-        btnLanding.style.display = 'inline-flex';
-      }
-    });
-
-    function handlePwaInstallClick(e) {
-      if (e) e.preventDefault();
-      if (deferredPwaInstallPrompt) {
-        deferredPwaInstallPrompt.prompt();
-        deferredPwaInstallPrompt.userChoice.then(function (choice) {
-          if (choice && choice.outcome === 'accepted') {
-            if (window.showToast) window.showToast('🚀 Instalando CantaAí PRO no seu dispositivo...', 'info');
-          }
-          deferredPwaInstallPrompt = null;
-        });
-      } else {
-        if (window.showToast) {
-          window.showToast('💡 Dica: Clique no ícone de instalar (computador com seta) na barra de endereços do seu navegador Chrome/Edge.', 'info');
-        }
-      }
-    }
-
-    var btnPwaHeader = document.getElementById('btnHeaderInstallPwa');
-    if (btnPwaHeader) btnPwaHeader.addEventListener('click', handlePwaInstallClick);
-
-    var menuPwaItem = document.getElementById('menuItemInstallPwa');
-    if (menuPwaItem) menuPwaItem.addEventListener('click', handlePwaInstallClick);
-
-    var btnPwaLanding = document.getElementById('btnLandingInstallPwa');
-    if (btnPwaLanding) btnPwaLanding.addEventListener('click', handlePwaInstallClick);
-
-    window.addEventListener('appinstalled', function () {
-      deferredPwaInstallPrompt = null;
-      var btnHeader = document.getElementById('btnHeaderInstallPwa');
-      if (btnHeader) btnHeader.style.display = 'none';
-      var menuItem = document.getElementById('menuItemInstallPwa');
-      if (menuItem) menuItem.style.display = 'none';
-      var btnLanding = document.getElementById('btnLandingInstallPwa');
-      if (btnLanding) btnLanding.style.display = 'none';
-
-      if (window.showToast) {
-        window.showToast('🎉 CantaAí PRO instalado com sucesso!', 'success');
-      }
-    });
 
     // Inicialização da visualização: se usuário logado, vai direto ao App
     if (window.PrompterAuth && window.PrompterAuth.getUser()) {
