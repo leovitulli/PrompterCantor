@@ -193,6 +193,9 @@ document.addEventListener('DOMContentLoaded', function () {
       state.repertoires = reps || [];
       renderRepertoires();
       updateSaaSPlanBanner();
+      if (window.RepertoireShare && typeof window.RepertoireShare.loadSharedWithMe === 'function') {
+        window.RepertoireShare.loadSharedWithMe();
+      }
     });
   }
 
@@ -828,6 +831,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function renderSharedSongsView(rep, songs, isReadOnly) {
+    state.currentRepertoire = rep;
+    state.currentRepertoireSongs = songs || [];
+    state.currentSongIndex = -1;
+    if (isReadOnly) {
+      document.body.classList.add('canta-read-only-share');
+    }
+    var mainView = document.getElementById('mainRepertoireView');
+    var songsView = document.getElementById('repertoireSongsView');
+    var rsvTitle = document.getElementById('rsvTitle');
+    var rsvCount = document.getElementById('rsvCount');
+    if (mainView) mainView.classList.add('hidden');
+    if (songsView) songsView.classList.remove('hidden');
+    if (rsvTitle) rsvTitle.textContent = (rep && rep.name) ? rep.name : 'Repertório Compartilhado';
+    if (rsvCount) rsvCount.textContent = state.currentRepertoireSongs.length + (state.currentRepertoireSongs.length === 1 ? ' música' : ' músicas');
+    renderSongsList(state.currentRepertoireSongs);
+  }
+
   window.CantaApp = {
     resetActiveState: resetActiveState,
     loadRepertoires: loadRepertoires,
@@ -835,6 +856,7 @@ document.addEventListener('DOMContentLoaded', function () {
     openPrompterView: openPrompterView,
     closePrompterView: closePrompterView,
     closeRepertoireSongsView: closeRepertoireSongsView,
+    renderSharedSongsView: renderSharedSongsView,
     getState: function () { return state; }
   };
 
@@ -1133,6 +1155,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!song) return;
     state.currentSong = song;
     saveActiveState('prompter', { songId: song.id, repertoireId: song.repertoireId });
+
+    if (window.RepertoireShare && state.currentRepertoire && !document.body.classList.contains('canta-read-only-share')) {
+      window.RepertoireShare.broadcastMaestroSong(state.currentRepertoire, song);
+    }
 
     // Limpar quaisquer toasts pendentes para não sobrepor a visão do cantor
     var toastContainer = document.getElementById('toastContainer');
@@ -2454,6 +2480,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Botão Limpar Músicas Duplicadas do Repertório Atual
+    var btnRsvShare = document.getElementById('btnRsvShare');
+    if (btnRsvShare) {
+      btnRsvShare.addEventListener('click', function () {
+        if (window.RepertoireShare && state.currentRepertoire) {
+          window.RepertoireShare.openModal(state.currentRepertoire.id);
+        }
+      });
+    }
+
     var btnRsvCleanDuplicates = document.getElementById('btnRsvCleanDuplicates');
     if (btnRsvCleanDuplicates) {
       btnRsvCleanDuplicates.addEventListener('click', cleanDuplicateSongsInCurrentRepertoire);

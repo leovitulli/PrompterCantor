@@ -274,10 +274,50 @@ CREATE TABLE IF NOT EXISTS public.repertoires (
 );
 
 ALTER TABLE public.repertoires ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.repertoires ADD COLUMN IF NOT EXISTS share_token TEXT DEFAULT NULL;
+ALTER TABLE public.repertoires ADD COLUMN IF NOT EXISTS is_shared BOOLEAN DEFAULT false;
+ALTER TABLE public.repertoires ADD COLUMN IF NOT EXISTS shared_by_name TEXT DEFAULT '';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_repertoires_share_token ON public.repertoires(share_token) WHERE share_token IS NOT NULL;
+
+-- 11. TABELA DE COMPARTILHAMENTO DIRETO ENTRE MEMBROS CADASTRADOS (@login)
+CREATE TABLE IF NOT EXISTS public.repertoire_shares (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    repertoire_id UUID NOT NULL REFERENCES public.repertoires(id) ON DELETE CASCADE,
+    owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    owner_name TEXT DEFAULT '',
+    owner_singer_code TEXT DEFAULT '',
+    target_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    target_singer_code TEXT NOT NULL,
+    permission TEXT DEFAULT 'read', -- 'read' (sincronizado somente leitura)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(repertoire_id, target_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_repertoire_shares_target ON public.repertoire_shares(target_user_id);
+CREATE INDEX IF NOT EXISTS idx_repertoire_shares_rep ON public.repertoire_shares(repertoire_id);
+
+ALTER TABLE public.repertoire_shares ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Repertoire shares manageable by owner" ON public.repertoire_shares;
+CREATE POLICY "Repertoire shares manageable by owner" ON public.repertoire_shares
+    FOR ALL USING (auth.uid() = owner_id OR is_admin());
+
+DROP POLICY IF EXISTS "Repertoire shares viewable by target" ON public.repertoire_shares;
+CREATE POLICY "Repertoire shares viewable by target" ON public.repertoire_shares
+    FOR SELECT USING (auth.uid() = target_user_id);
+
 ALTER TABLE public.repertoires ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Repertoires isolated by user" ON public.repertoires;
 CREATE POLICY "Repertoires isolated by user" ON public.repertoires
     FOR ALL USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+
+DROP POLICY IF EXISTS "Repertoires viewable by shared members" ON public.repertoires;
+CREATE POLICY "Repertoires viewable by shared members" ON public.repertoires
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.repertoire_shares rs
+            WHERE rs.repertoire_id = id AND rs.target_user_id = auth.uid()
+        )
+    );
 
 -- 10. TABELA DE MÚSICAS (MULTI-TENANT POR USER_ID & REPERTOIRE_ID)
 CREATE TABLE IF NOT EXISTS public.songs (
@@ -306,3 +346,99 @@ ALTER TABLE public.songs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Songs isolated by user" ON public.songs;
 CREATE POLICY "Songs isolated by user" ON public.songs
     FOR ALL USING (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+
+DROP POLICY IF EXISTS "Songs viewable by shared members" ON public.songs;
+CREATE POLICY "Songs viewable by shared members" ON public.songs
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.repertoire_shares rs
+            WHERE rs.repertoire_id = songs.repertoire_id AND rs.target_user_id = auth.uid()
+        )
+    );
+
+-- 12. RPC SEGURA PARA LINK MÁGICO DE PALCO (VISITANTES NÃO CADASTRADOS & CONVIDADOS)
+CREATE OR REPLACE FUNCTION public.get_shared_repertoire(p_token TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    v_rep RECORD;
+    v_songs JSONB;
+    v_owner_name TEXT;
+    v_owner_code TEXT;
+BEGIN
+    IF p_token IS NULL OR length(trim(p_token)) < 6 THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT r.*, COALESCE(NULLIF(r.shared_by_name, ''), p.display_name, 'Cantor CantaAí') AS resolved_owner_name,
+           COALESCE(p.singer_code, '') AS resolved_owner_code
+    INTO v_rep
+    FROM public.repertoires r
+    LEFT JOIN public.profiles p ON p.id = r.user_id
+    WHERE r.share_token = trim(p_token) AND r.is_shared = true
+    LIMIT 1;
+
+    IF NOT FOUND THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT COALESCE(jsonb_agg(
+        jsonb_build_object(
+            'id', s.id,
+            'repertoire_id', s.repertoire_id,
+            'title', s.title,
+            'artist', s.artist,
+            'composer', s.composer,
+            'key', s.key,
+            'original_key', s.original_key,
+            'rhythm', s.rhythm,
+            'youtube_url', s.youtube_url,
+            'youtube_id', s.youtube_id,
+            'spotify_url', s.spotify_url,
+            'content', s.content,
+            'track_number', s.track_number,
+            'order', s."order"
+        ) ORDER BY s.track_number ASC NULLS LAST, s."order" ASC NULLS LAST, s.created_at ASC
+    ), '[]'::jsonb)
+    INTO v_songs
+    FROM public.songs s
+    WHERE s.repertoire_id = v_rep.id;
+
+    RETURN jsonb_build_object(
+        'repertoire', jsonb_build_object(
+            'id', v_rep.id,
+            'name', v_rep.name,
+            'share_token', v_rep.share_token,
+            'owner_name', v_rep.resolved_owner_name,
+            'owner_code', v_rep.resolved_owner_code
+        ),
+        'songs', v_songs
+    );
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.get_shared_repertoire(TEXT) TO anon, authenticated;
+
+-- 13. RPC SEGURA PARA BUSCA DE MÚSICO POR @HANDLE (SEM EXPOR E-MAIL/CPF/TELEFONE)
+CREATE OR REPLACE FUNCTION public.find_singer_by_handle(p_handle TEXT)
+RETURNS TABLE(id UUID, display_name TEXT, singer_code TEXT) AS $$
+DECLARE
+    v_clean TEXT;
+BEGIN
+    IF auth.uid() IS NULL THEN
+        RETURN;
+    END IF;
+    v_clean := lower(regexp_replace(trim(COALESCE(p_handle, '')), '^@+', ''));
+    IF length(v_clean) < 2 THEN
+        RETURN;
+    END IF;
+
+    RETURN QUERY
+    SELECT p.id, p.display_name, p.singer_code
+    FROM public.profiles p
+    WHERE lower(regexp_replace(COALESCE(p.singer_code, ''), '^@+', '')) = v_clean
+       OR lower(COALESCE(p.display_name, '')) = v_clean
+    LIMIT 5;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.find_singer_by_handle(TEXT) TO authenticated;

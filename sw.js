@@ -3,7 +3,7 @@
  * Garante funcionamento 100% Offline em Smartphones e Tablets nos shows.
  */
 
-var CACHE_NAME = 'canta-ai-pro-v182';
+var CACHE_NAME = 'canta-ai-pro-v183';
 var NETWORK_TIMEOUT_MS = 3500;
 
 var ASSETS = [
@@ -45,17 +45,18 @@ var ASSETS = [
   './js/notificationsCenter.js',
   './js/interactiveTour.js',
   './js/pwaInstaller.js',
+  './js/repertoireShare.js',
   './js/tomColor.js',
   './js/brandIcons.js',
   './js/app.js'
 ];
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', function (event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
+    caches.open(CACHE_NAME).then(function (cache) {
       return Promise.all(
-        ASSETS.map(function(assetUrl) {
-          return cache.add(assetUrl).catch(function(err) {
+        ASSETS.map(function (assetUrl) {
+          return cache.add(assetUrl).catch(function (err) {
             console.warn('SW: falha ao pré-cachear asset individual:', assetUrl, err);
           });
         })
@@ -65,11 +66,11 @@ self.addEventListener('install', function(event) {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', function (event) {
   event.waitUntil(
-    caches.keys().then(function(keys) {
+    caches.keys().then(function (keys) {
       return Promise.all(
-        keys.map(function(key) {
+        keys.map(function (key) {
           if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
@@ -81,22 +82,22 @@ self.addEventListener('activate', function(event) {
 });
 
 function fetchWithTimeout(request, timeoutMs) {
-  return new Promise(function(resolve, reject) {
-    var timer = setTimeout(function() {
+  return new Promise(function (resolve, reject) {
+    var timer = setTimeout(function () {
       reject(new Error('Network timeout'));
     }, timeoutMs);
 
-    fetch(request).then(function(response) {
+    fetch(request).then(function (response) {
       clearTimeout(timer);
       resolve(response);
-    }).catch(function(err) {
+    }).catch(function (err) {
       clearTimeout(timer);
       reject(err);
     });
   });
 }
 
-self.addEventListener('fetch', function(event) {
+self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
 
   var url = event.request.url || '';
@@ -107,20 +108,20 @@ self.addEventListener('fetch', function(event) {
 
   event.respondWith(
     fetchWithTimeout(event.request, NETWORK_TIMEOUT_MS)
-      .then(function(response) {
+      .then(function (response) {
         if (response && response.status === 200) {
           var responseClone = response.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
+          caches.open(CACHE_NAME).then(function (cache) {
             cache.put(event.request, responseClone);
           });
         }
         return response;
       })
-      .catch(function() {
-        return caches.match(event.request).then(function(exactMatch) {
+      .catch(function () {
+        return caches.match(event.request).then(function (exactMatch) {
           if (exactMatch) return exactMatch;
           return caches.match(event.request, { ignoreSearch: true });
-        }).then(function(cachedResponse) {
+        }).then(function (cachedResponse) {
           if (cachedResponse) return cachedResponse;
           var acceptHeader = event.request.headers.get('accept') || '';
           if (acceptHeader.indexOf('text/html') !== -1) {

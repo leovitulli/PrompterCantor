@@ -16,12 +16,17 @@
   var q = new URLSearchParams(window.location.search);
   var querAuth = q.has('auth');
   var querApp = q.get('action') === 'app';
+  var querShare = q.has('share');
   var logado = false;
   try { logado = !!localStorage.getItem('prompter_auth_user'); } catch (e) {}
 
-  if (!logado && !querAuth && !querApp) {
+  if (!logado && !querAuth && !querApp && !querShare) {
     window.location.replace('landing_v3.html');
     return;
+  }
+
+  if (querShare && !logado) {
+    document.documentElement.classList.add('canta-guest-share');
   }
 
   // Landing antiga desativada dentro do app
