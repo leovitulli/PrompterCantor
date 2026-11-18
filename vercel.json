@@ -107,6 +107,10 @@
       "dest": "/assets/$1"
     },
     {
+      "src": "/api/mp/(.*)",
+      "dest": "/api/mp.js"
+    },
+    {
       "src": "/api/drive-public",
       "dest": "/api/drive-public.js"
     },

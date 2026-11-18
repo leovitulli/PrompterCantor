@@ -187,12 +187,11 @@ var GDriveImporter = (function() {
   }
 
   function extractTrackNumber(filename) {
-    var match = (filename || '').match(/^(\d{1,3})[\s._-]/);
+    var match = (filename || '').match(/^\s*(\d{1,3})\s*[-_.)\s]/);
     if (match && match[1]) {
       return parseInt(match[1], 10);
     }
-    var numMatch = (filename || '').match(/(\d{1,3})/);
-    return numMatch ? parseInt(numMatch[1], 10) : null;
+    return null;
   }
 
   function autoPairDriveFiles(files) {
@@ -217,12 +216,14 @@ var GDriveImporter = (function() {
         }
       }
 
-      // 2. Se não casou por número, tentar por correspondência de nome
+      // 2. Se não casou por número, tentar por correspondência de nome (exigindo >= 4 caracteres para substring)
       if (!matched) {
         for (var a2 = 0; a2 < audioFiles.length; a2++) {
           var af = audioFiles[a2];
           var baseAudio = af.name.replace(/\.[^/.]+$/, '').trim().toLowerCase();
-          if (baseAudio === baseText || baseAudio.indexOf(baseText) !== -1 || baseText.indexOf(baseAudio) !== -1) {
+          var isSubstringMatch = (baseText.length >= 4 && baseAudio.length >= 4) &&
+                                 (baseAudio.indexOf(baseText) !== -1 || baseText.indexOf(baseAudio) !== -1);
+          if (baseAudio === baseText || isSubstringMatch) {
             matched = af;
             break;
           }

@@ -1,6 +1,24 @@
 const https = require('https');
-const http = require('http');
 const { URL } = require('url');
+
+const MAX_DOWNLOAD_BYTES = 50 * 1024 * 1024; // Limite de segurança de 50 MB por arquivo
+const DRIVE_ID_REGEX = /^[a-zA-Z0-9_-]{10,120}$/;
+
+function isAllowedGoogleUrl(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    if (u.protocol !== 'https:') return false;
+    const host = u.hostname.toLowerCase();
+    return (
+      host === 'drive.google.com' ||
+      host === 'docs.google.com' ||
+      host === 'drive.usercontent.google.com' ||
+      host.endsWith('.googleusercontent.com')
+    );
+  } catch (e) {
+    return false;
+  }
+}
 
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,10 +32,13 @@ function fetchUrl(targetUrl, maxRedirects = 5) {
       return reject(new Error('Muitos redirecionamentos'));
     }
 
-    const parsed = new URL(targetUrl);
-    const client = parsed.protocol === 'http:' ? http : https;
+    if (!isAllowedGoogleUrl(targetUrl)) {
+      return reject(new Error('Domínio ou protocolo não autorizado pelo proxy do Google Drive.'));
+    }
 
-    const req = client.get(targetUrl, {
+    const parsed = new URL(targetUrl);
+
+    const req = https.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': '*/*'
@@ -33,7 +54,16 @@ function fetchUrl(targetUrl, maxRedirects = 5) {
       }
 
       const chunks = [];
-      res.on('data', chunk => chunks.push(chunk));
+      let totalBytes = 0;
+      res.on('data', chunk => {
+        totalBytes += chunk.length;
+        if (totalBytes > MAX_DOWNLOAD_BYTES) {
+          req.destroy();
+          reject(new Error('Arquivo excede o limite máximo permitido (50 MB).'));
+          return;
+        }
+        chunks.push(chunk);
+      });
       res.on('end', () => {
         resolve({
           statusCode: res.statusCode,
@@ -165,8 +195,28 @@ module.exports = async function handler(req, res) {
   const proxyUrl = parsedUrl.searchParams.get('proxy');
 
   try {
-    // 1. Proxy direto de download de arquivo (evita bloqueios de CORS do browser)
+    if (fileId && !DRIVE_ID_REGEX.test(fileId)) {
+      res.statusCode = 400;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(JSON.stringify({ error: 'Formato de fileId inválido.' }));
+      return;
+    }
+
+    if (folderId && !DRIVE_ID_REGEX.test(folderId)) {
+      res.statusCode = 400;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(JSON.stringify({ error: 'Formato de folderId inválido.' }));
+      return;
+    }
+
+    // 1. Proxy direto de download de arquivo (evita bloqueios de CORS do browser, restrito a domínios Google)
     if (proxyUrl) {
+      if (!isAllowedGoogleUrl(proxyUrl)) {
+        res.statusCode = 403;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ error: 'URL não permitida pelo proxy do Google Drive.' }));
+        return;
+      }
       const response = await fetchUrl(proxyUrl);
       res.statusCode = response.statusCode || 200;
       if (response.headers['content-type']) {

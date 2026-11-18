@@ -5,9 +5,6 @@ window.SUPABASE_CONFIG = {
 
 window.MERCADO_PAGO_CONFIG = {
   publicKey: 'APP_USR-a2cab50d-8339-47c4-8e09-d5579f50f650',
-  accessToken: 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620',
-  clientId: '1840710581391633',
-  clientSecret: 'Dtc70YbHAjjydyFNTtYVZMUoYuHtHHy7',
   env: 'production'
 };
 

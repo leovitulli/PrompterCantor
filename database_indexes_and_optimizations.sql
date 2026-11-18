@@ -26,12 +26,19 @@ CREATE INDEX IF NOT EXISTS idx_announcements_target_email ON public.announcement
 CREATE INDEX IF NOT EXISTS idx_announcements_is_active ON public.announcements(is_active);
 CREATE INDEX IF NOT EXISTS idx_announcements_created_at ON public.announcements(created_at DESC);
 
--- 4. ÍNDICES NA TABELA SONGS (REPERTÓRIOS & CIFRAS EM NUVEM)
--- Acelera o carregamento instantâneo de músicas por repertório e buscas por artista
+-- 4. ÍNDICES NAS TABELAS REPERTOIRES E SONGS (REPERTÓRIOS & CIFRAS EM NUVEM)
+-- Acelera o carregamento instantâneo de repertórios e músicas por cantor (multi-tenancy)
 DO $$
 BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'repertoires') THEN
+        CREATE INDEX IF NOT EXISTS idx_repertoires_user_id ON public.repertoires(user_id);
+        CREATE INDEX IF NOT EXISTS idx_repertoires_user_created ON public.repertoires(user_id, created_at DESC);
+    END IF;
+
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'songs') THEN
+        CREATE INDEX IF NOT EXISTS idx_songs_user_id ON public.songs(user_id);
         CREATE INDEX IF NOT EXISTS idx_songs_repertoire_id ON public.songs(repertoire_id);
+        CREATE INDEX IF NOT EXISTS idx_songs_user_rep_track ON public.songs(user_id, repertoire_id, track_number ASC, created_at ASC);
         CREATE INDEX IF NOT EXISTS idx_songs_artist ON public.songs(artist);
         CREATE INDEX IF NOT EXISTS idx_songs_title ON public.songs(title);
     END IF;
@@ -41,3 +48,5 @@ END $$;
 ANALYZE public.profiles;
 ANALYZE public.tickets;
 ANALYZE public.announcements;
+ANALYZE public.repertoires;
+ANALYZE public.songs;

@@ -1108,6 +1108,10 @@
       if (self._pollInterval) clearInterval(self._pollInterval);
       var intervalMs = fast ? 2500 : 15000;
       self._pollInterval = setInterval(function () {
+        if (document.hidden) return;
+        var pView = document.getElementById('prompterView');
+        var isPrompterOpen = pView && !pView.classList.contains('hidden') && pView.style.display !== 'none';
+        if (isPrompterOpen && !self.state.isModalOpen) return;
         if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) {
           self.fetchFromCloud();
         }

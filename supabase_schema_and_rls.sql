@@ -45,7 +45,7 @@ BEGIN
         )
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
 -- 3. TRIGGER PARA CRIAR/ATUALIZAR PERFIL AUTOMÁTICO AO CADASTRAR NOVO USUÁRIO
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -63,6 +63,11 @@ BEGIN
         WHEN NEW.email = 'leovitulli@gmail.com' THEN '@leovitulli'
         ELSE COALESCE(NULLIF(NEW.raw_user_meta_data->>'singer_code', ''), '@' || split_part(NEW.email, '@', 1))
     END;
+
+    -- Evitar colisão de UNIQUE(singer_code) quando dois provedores têm o mesmo prefixo de e-mail
+    IF EXISTS (SELECT 1 FROM public.profiles WHERE singer_code = random_code AND id <> NEW.id) THEN
+        random_code := random_code || '_' || substr(NEW.id::text, 1, 4);
+    END IF;
     
     u_name := COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1));
     u_phone := COALESCE(NEW.raw_user_meta_data->>'phone', '');
@@ -124,11 +129,23 @@ CREATE POLICY "Profiles viewable by owner or admin" ON public.profiles
 
 DROP POLICY IF EXISTS "Profiles insertable" ON public.profiles;
 CREATE POLICY "Profiles insertable" ON public.profiles
-    FOR INSERT WITH CHECK (auth.uid() = id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+    FOR INSERT WITH CHECK (
+        (auth.uid() = id AND (role IS NULL OR role = 'user'))
+        OR is_admin()
+        OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com'
+    );
 
 DROP POLICY IF EXISTS "Profiles updateable by owner or admin" ON public.profiles;
 CREATE POLICY "Profiles updateable by owner or admin" ON public.profiles
-    FOR UPDATE USING (auth.uid() = id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
+    FOR UPDATE USING (auth.uid() = id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com')
+    WITH CHECK (
+        is_admin()
+        OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com'
+        OR (
+            auth.uid() = id
+            AND (role IS NULL OR role = 'user' OR role = (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid()))
+        )
+    );
 
 -- 6. POPULAR / SINCRONIZAR USUÁRIOS QUE JÁ EXISTEM NO AUTH.USERS (CORRIGINDO QUALQUER CÓDIGO COM HASH)
 INSERT INTO public.profiles (id, email, display_name, phone, cpf, instagram, singer_code, role, plan_tier, plan_type)
@@ -202,7 +219,7 @@ CREATE POLICY "Tickets viewable by owner or admin" ON public.tickets
 
 DROP POLICY IF EXISTS "Tickets insertable" ON public.tickets;
 CREATE POLICY "Tickets insertable" ON public.tickets
-    FOR INSERT WITH CHECK (auth.uid() = user_id OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com' OR true);
+    FOR INSERT WITH CHECK (auth.uid() = user_id OR auth.uid() IS NOT NULL OR is_admin() OR auth.jwt() ->> 'email' = 'leovitulli@gmail.com');
 
 DROP POLICY IF EXISTS "Tickets updatable by owner or admin" ON public.tickets;
 CREATE POLICY "Tickets updatable by owner or admin" ON public.tickets

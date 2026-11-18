@@ -151,9 +151,9 @@
     monthlyPrice: 39.90,
     annualPrice: 299.00,
     mpPublicKey: 'APP_USR-a2cab50d-8339-47c4-8e09-d5579f50f650',
-    mpAccessToken: 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620',
-    mpClientId: '1840710581391633',
-    mpClientSecret: 'Dtc70YbHAjjydyFNTtYVZMUoYuHtHHy7',
+    mpAccessToken: '',
+    mpClientId: '',
+    mpClientSecret: '',
     mpEnv: 'production'
   };
 
@@ -465,6 +465,12 @@
 
       var sb = window.PrompterCloud ? window.PrompterCloud.getClient() : null;
       if (sb) {
+        var publicSafePricing = {
+          monthlyPrice: pricingConfig.monthlyPrice,
+          annualPrice: pricingConfig.annualPrice,
+          mpPublicKey: pricingConfig.mpPublicKey,
+          mpEnv: pricingConfig.mpEnv
+        };
         sb.from('songs')
           .select('id')
           .eq('repertoire_id', SYSTEM_REGISTRY_REPERTOIRE_ID)
@@ -474,7 +480,7 @@
               repertoire_id: SYSTEM_REGISTRY_REPERTOIRE_ID,
               title: 'Configuração Mercado Pago e Precificação SaaS',
               artist: 'SYSTEM_CONFIG_PRICING',
-              content: JSON.stringify(pricingConfig)
+              content: JSON.stringify(publicSafePricing)
             };
             if (res.data && res.data.length > 0) {
               safeQuery(sb.from('songs').update(row).eq('id', res.data[0].id));
@@ -3408,28 +3414,29 @@
           ? '<a href="' + waUrl + '" target="_blank" class="admin-table-btn-link admin-btn-wa" title="Chamar no WhatsApp direto" onclick="event.stopPropagation();">💬 ' + escapeHtml(user.phone) + '</a>'
           : '<span style="color:#64748b; font-size:0.8rem;">Sem WhatsApp</span>';
 
-        var cleanInsta = (user.instagram || '').replace('@', '').trim();
-        var instaUrl = 'https://instagram.com/' + cleanInsta;
+        var cleanInsta = (user.instagram || '').replace(/^@+/, '').replace(/[^a-zA-Z0-9._]/g, '').trim();
+        var instaUrl = 'https://instagram.com/' + encodeURIComponent(cleanInsta);
         var instaButton = cleanInsta
           ? '<a href="' + instaUrl + '" target="_blank" class="admin-table-btn-link admin-btn-insta" title="Abrir Instagram direto" onclick="event.stopPropagation();">📸 @' + escapeHtml(cleanInsta) + '</a>'
           : '<span style="color:#64748b; font-size:0.8rem;">—</span>';
 
+        var safeUserId = escapeHtml(user.id || '');
         var cpfStr = user.cpf ? ('CPF: ' + user.cpf) : 'Sem CPF';
         var loginCodeStr = escapeHtml(normalizeSingerCode(user.singer_code, user.email));
         var isCeo = user.email && user.email.toLowerCase() === 'leovitulli@gmail.com';
         var delBtnHtml = isCeo
           ? ''
-          : '<button type="button" class="btn btn-outline btn-xs btn-del-singer-row" data-user-id="' + user.id + '" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); padding: 3px 7px; border-radius: 6px; font-size: 0.75rem;" title="Excluir Cantor" onclick="event.stopPropagation();">🗑️</button>';
+          : '<button type="button" class="btn btn-outline btn-xs btn-del-singer-row" data-user-id="' + safeUserId + '" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); padding: 3px 7px; border-radius: 6px; font-size: 0.75rem;" title="Excluir Cantor" onclick="event.stopPropagation();">🗑️</button>';
 
         var crmWaBtn = cleanPhone
           ? '<a href="' + waUrl + '" target="_blank" class="btn-crm-wa" title="Chamar no WhatsApp direto" onclick="event.stopPropagation();">📲 WhatsApp</a>'
           : '';
 
-        var attendBtn = '<button type="button" class="btn-crm-chat btn-attend-singer" data-user-id="' + user.id + '" title="Atendimento direto 1-a-1 no Helpdesk" onclick="event.stopPropagation();">💬 Atender</button>';
-        var editBtn = '<button type="button" class="btn btn-outline btn-xs btn-edit-singer-row" data-user-id="' + user.id + '" style="color:#cbd5e1; border-color:rgba(255,255,255,0.2); padding:4px 8px; font-size:0.75rem; border-radius:6px;" title="Editar Perfil" onclick="event.stopPropagation();">✏️</button>';
+        var attendBtn = '<button type="button" class="btn-crm-chat btn-attend-singer" data-user-id="' + safeUserId + '" title="Atendimento direto 1-a-1 no Helpdesk" onclick="event.stopPropagation();">💬 Atender</button>';
+        var editBtn = '<button type="button" class="btn btn-outline btn-xs btn-edit-singer-row" data-user-id="' + safeUserId + '" style="color:#cbd5e1; border-color:rgba(255,255,255,0.2); padding:4px 8px; font-size:0.75rem; border-radius:6px;" title="Editar Perfil" onclick="event.stopPropagation();">✏️</button>';
 
         html +=
-          '<tr class="admin-user-row" data-user-id="' + user.id + '" data-user-email="' + escapeHtml((uEmail || '').toLowerCase()) + '" title="Clique para gerenciar ' + escapeHtml(displayName) + '">' +
+          '<tr class="admin-user-row" data-user-id="' + safeUserId + '" data-user-email="' + escapeHtml((uEmail || '').toLowerCase()) + '" title="Clique para gerenciar ' + escapeHtml(displayName) + '">' +
             '<td style="text-align: center; width: 45px;">' + statusDot + '</td>' +
             '<td>' +
               '<div class="admin-user-cell">' +
@@ -4193,7 +4200,7 @@
         var isVip = c.type === 'vip' || c.discount === '100% OFF' || (c.code && c.code.toUpperCase().indexOf('VIP') !== -1);
         var badge = isVip
           ? '<span class="badge-plan-executive badge-plan-pro">👑 VIP 100% OFF</span>'
-          : '<span class="badge-plan-executive badge-plan-free">⚡ ' + c.discount + '</span>';
+          : '<span class="badge-plan-executive badge-plan-free">⚡ ' + escapeHtml(c.discount) + '</span>';
 
         // Contagem dinâmica e precisa de usos baseada nos cadastros reais da plataforma
         var cCodeNorm = (c.code || '').trim().toUpperCase();
@@ -4217,17 +4224,21 @@
 
         var totalUses = Math.max(c.uses || 0, dynamicUses);
         c.uses = totalUses;
+        var safeCode = escapeHtml(c.code || '');
+        var safeMaxUses = escapeHtml(c.maxUses || 0);
+        var safeDesc = escapeHtml(c.desc || '');
+        var safeId = escapeHtml(c.id || '');
 
         html +=
           '<tr>' +
-            '<td><code class="admin-code-tag" style="color: #fbbf24; font-size: 0.9rem; font-weight: 800;">' + c.code + '</code></td>' +
+            '<td><code class="admin-code-tag" style="color: #fbbf24; font-size: 0.9rem; font-weight: 800;">' + safeCode + '</code></td>' +
             '<td>' + badge + '</td>' +
-            '<td><strong>' + totalUses + '</strong> / ' + c.maxUses + ' usos</td>' +
-            '<td><span style="color: #cbd5e1; font-size: 0.84rem;">' + c.desc + '</span></td>' +
+            '<td><strong>' + totalUses + '</strong> / ' + safeMaxUses + ' usos</td>' +
+            '<td><span style="color: #cbd5e1; font-size: 0.84rem;">' + safeDesc + '</span></td>' +
             '<td style="text-align: right; white-space: nowrap;">' +
               '<div style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">' +
-                '<button class="btn btn-sm btn-outline btn-copy-coupon" data-code="' + c.code + '" title="Copiar código" style="padding: 4px 10px; font-size: 0.76rem; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">📋 Copiar</button>' +
-                '<button class="btn btn-sm btn-outline btn-del-coupon" data-id="' + c.id + '" data-code="' + c.code + '" style="color: #f87171; border-color: rgba(239,68,68,0.4); padding: 4px 8px; font-size: 0.76rem;" title="Excluir cupom">✕</button>' +
+                '<button class="btn btn-sm btn-outline btn-copy-coupon" data-code="' + safeCode + '" title="Copiar código" style="padding: 4px 10px; font-size: 0.76rem; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">📋 Copiar</button>' +
+                '<button class="btn btn-sm btn-outline btn-del-coupon" data-id="' + safeId + '" data-code="' + safeCode + '" style="color: #f87171; border-color: rgba(239,68,68,0.4); padding: 4px 8px; font-size: 0.76rem;" title="Excluir cupom">✕</button>' +
               '</div>' +
             '</td>' +
           '</tr>';
@@ -4309,7 +4320,7 @@
       }
 
       if (pubKey) pubKey.value = pricingConfig.mpPublicKey || 'APP_USR-a2cab50d-8339-47c4-8e09-d5579f50f650';
-      if (accToken) accToken.value = pricingConfig.mpAccessToken || 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620';
+      if (accToken) accToken.value = pricingConfig.mpAccessToken || '';
 
       this.checkMpConnectionStatus(true);
     },
@@ -4461,7 +4472,7 @@
           feedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
           feedback.style.color = '#fca5a5';
           feedback.innerHTML = '❌ <strong>Falha na Autenticação com o Mercado Pago:</strong><br>' +
-            (err.message || 'Verifique se copiou a chave inteira ou se a conta do Mercado Pago está ativa.') + '<br>' +
+            escapeHtml(err.message || 'Verifique se copiou a chave inteira ou se a conta do Mercado Pago está ativa.') + '<br>' +
             '<span style="font-size: 0.75rem; color: #f87171;">Certifique-se de que a Public Key começa com APP_USR- ou TEST- e o Access Token correspondente.</span>';
         }
         if (window.showToast) window.showToast('❌ Erro na validação das chaves do Mercado Pago.', 'warning');
@@ -4740,7 +4751,7 @@
                   '<span style="font-size: 0.75rem; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px;">' + repSongs.length + ' músicas</span>' +
                 '</div>' +
                 '<div class="master-rep-actions">' +
-                  '<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); PrompterAdmin.cloneEntireRepertoire(\'' + r.id + '\', \'' + escapeHtml(r.name).replace(/'/g, "\\'") + '\')" style="font-weight: 700; font-size: 0.78rem; padding: 5px 12px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" title="Clonar todo este repertório para sua conta">' +
+                  '<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); PrompterAdmin.cloneEntireRepertoire(\'' + escapeHtml(r.id).replace(/'/g, "\\'") + '\', \'' + escapeHtml(r.name).replace(/'/g, "\\'") + '\')" style="font-weight: 700; font-size: 0.78rem; padding: 5px 12px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" title="Clonar todo este repertório para sua conta">' +
                     '📥 Importar Repertório Completo' +
                   '</button>' +
                   '<span class="master-chevron">▼</span>' +
@@ -4753,7 +4764,7 @@
             html += '<div style="color: #64748b; font-size: 0.8rem; font-style: italic; padding: 6px 0;">Nenhuma música neste repertório.</div>';
           } else {
             repSongs.forEach(function (s, sIdx) {
-              var sId = s.id || ('s-' + sIdx);
+              var sId = escapeHtml(s.id || ('s-' + sIdx)).replace(/'/g, "\\'");
               var sTitle = (s.title || 'Sem Título').toUpperCase();
               var sKey = s.key || s.originalKey || '—';
               var sArtist = s.artist || '';
@@ -6030,9 +6041,12 @@
       var timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
       var msgId = msg.id || ('msg-' + Date.now());
 
-      var photoHtml = msg.image_url
+      var rawImageUrl = String(msg.image_url || '').trim();
+      var isSafeImageUrl = /^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-zA-Z0-9+/=\s]+$/i.test(rawImageUrl) || /^https:\/\//i.test(rawImageUrl);
+      var safeImageUrl = isSafeImageUrl ? escapeHtml(rawImageUrl) : '';
+      var photoHtml = safeImageUrl
         ? '<div class="chat-bubble-attachment" style="margin-top: 8px;">' +
-            '<img src="' + msg.image_url + '" class="chat-attachment-img ticket-thumb-clickable" data-src="' + msg.image_url + '" alt="Print Anexo" style="max-height: 180px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); display: block; object-fit: cover;">' +
+            '<img src="' + safeImageUrl + '" class="chat-attachment-img ticket-thumb-clickable" data-src="' + safeImageUrl + '" alt="Print Anexo" style="max-height: 180px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); display: block; object-fit: cover;">' +
           '</div>'
         : '';
 

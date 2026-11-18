@@ -1,0 +1,20 @@
+.DS_Store
+._*
+**/._*
+*.bak*
+**/*.bak*
+.env
+.env.*
+.chrome_temp/
+.agents/
+scratch/
+mockups/
+Claude outputs/
+*.sql
+*.sh
+*.md
+server.js
+landing_v2.html
+css/landing_v2.css
+js/landing_v2.js
+

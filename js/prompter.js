@@ -347,8 +347,13 @@ var Prompter = {
       this.scrollArea.scrollTop = Math.round(this.subpixelScroll);
       var maxScroll = this.cachedMaxScroll || (this.scrollArea.scrollHeight - this.scrollArea.clientHeight);
       if (this.scrollArea.scrollTop >= maxScroll - 4) {
-        this.stopScroll();
-        return;
+        // Recalcula scrollHeight real antes de parar (caso a fonte ou layout tenha mudado durante a rolagem)
+        maxScroll = this.scrollArea.scrollHeight - this.scrollArea.clientHeight;
+        this.cachedMaxScroll = maxScroll;
+        if (this.scrollArea.scrollTop >= maxScroll - 4) {
+          this.stopScroll();
+          return;
+        }
       }
     }
 
@@ -361,11 +366,17 @@ var Prompter = {
       if (this.isScrolling) {
         this.scrollPlayIcon.textContent = '⏸';
         this.scrollPlayText.textContent = 'Pausar Rolagem';
-        if (this.btnToggleScroll) this.btnToggleScroll.style.backgroundColor = '#ffab00';
+        if (this.btnToggleScroll) {
+          this.btnToggleScroll.classList.add('is-scrolling');
+          this.btnToggleScroll.style.backgroundColor = '#ffab00';
+        }
       } else {
         this.scrollPlayIcon.textContent = '▶';
         this.scrollPlayText.textContent = 'Iniciar Rolagem';
-        if (this.btnToggleScroll) this.btnToggleScroll.style.backgroundColor = 'var(--accent-color)';
+        if (this.btnToggleScroll) {
+          this.btnToggleScroll.classList.remove('is-scrolling');
+          this.btnToggleScroll.style.backgroundColor = 'var(--accent-color)';
+        }
       }
     }
   },
@@ -381,6 +392,9 @@ var Prompter = {
     }
     if (this.fontSizeDisplay) {
       this.fontSizeDisplay.textContent = this.fontSize + 'px';
+    }
+    if (this.scrollArea) {
+      this.cachedMaxScroll = this.scrollArea.scrollHeight - this.scrollArea.clientHeight;
     }
   },
 

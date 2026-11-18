@@ -5,7 +5,12 @@ const path = require('path');
 
 let PORT = parseInt(process.env.PORT, 10) || 3333;
 const PUBLIC_DIR = __dirname;
-const MP_DEFAULT_TOKEN = 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620';
+const MAX_BODY_SIZE = 65536; // 64 KB max body payload
+
+const COUPON_DISCOUNTS = {
+  'PRO50': 0.50,
+  'SAMBA30': 0.30
+};
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -57,12 +62,17 @@ function handleMercadoPagoRoutes(req, res, reqPath) {
   // Status check: /api/mp/payment-status/:id
   if (req.method === 'GET' && reqPath.startsWith('/api/mp/payment-status/')) {
     const paymentId = reqPath.replace('/api/mp/payment-status/', '').trim();
-    if (!paymentId) {
-      sendJsonResponse(res, 400, { success: false, error: 'ID do pagamento não informado.' });
+    if (!paymentId || !/^[a-zA-Z0-9_-]{1,64}$/.test(paymentId)) {
+      sendJsonResponse(res, 400, { success: false, error: 'ID do pagamento inválido ou não informado.' });
       return true;
     }
 
-    const token = process.env.MP_ACCESS_TOKEN || MP_DEFAULT_TOKEN;
+    const token = process.env.MP_ACCESS_TOKEN;
+    if (!token) {
+      sendJsonResponse(res, 503, { success: false, error: 'MP_ACCESS_TOKEN não configurado no servidor.' });
+      return true;
+    }
+
     const mpReq = https.request({
       hostname: 'api.mercadopago.com',
       path: '/v1/payments/' + encodeURIComponent(paymentId),
@@ -90,8 +100,7 @@ function handleMercadoPagoRoutes(req, res, reqPath) {
           } else {
             sendJsonResponse(res, mpRes.statusCode, {
               success: false,
-              error: parsed.message || 'Erro ao consultar status no Mercado Pago',
-              details: parsed
+              error: parsed.message || 'Erro ao consultar status no Mercado Pago'
             });
           }
         } catch (e) {
@@ -110,17 +119,31 @@ function handleMercadoPagoRoutes(req, res, reqPath) {
   // Create payment: /api/mp/create-payment
   if (req.method === 'POST' && reqPath === '/api/mp/create-payment') {
     let rawBody = '';
-    req.on('data', chunk => rawBody += chunk);
+    let aborted = false;
+    req.on('data', chunk => {
+      if (aborted) return;
+      rawBody += chunk;
+      if (rawBody.length > MAX_BODY_SIZE) {
+        aborted = true;
+        sendJsonResponse(res, 413, { success: false, error: 'Payload excede o tamanho máximo permitido (64 KB).' });
+        req.destroy();
+      }
+    });
     req.on('end', () => {
+      if (aborted) return;
       try {
         const payload = JSON.parse(rawBody || '{}');
-        const token = process.env.MP_ACCESS_TOKEN || payload.accessToken || MP_DEFAULT_TOKEN;
+        const token = process.env.MP_ACCESS_TOKEN;
+        if (!token) {
+          sendJsonResponse(res, 503, { success: false, error: 'MP_ACCESS_TOKEN não configurado no servidor.' });
+          return;
+        }
 
         const isAnnual = payload.plan === 'annual' || payload.plan === '💎 PRO ANUAL';
-        let amount = Number(payload.amount);
-        if (!amount || isNaN(amount) || amount <= 0) {
-          amount = isAnnual ? 299.00 : 39.90;
-        }
+        const baseAmount = isAnnual ? 299.00 : 39.90;
+        const couponCode = String(payload.coupon || '').trim().toUpperCase();
+        const discountRate = COUPON_DISCOUNTS[couponCode] || 0;
+        const amount = Number((baseAmount * (1 - discountRate)).toFixed(2));
 
         const email = (payload.email || '').trim().toLowerCase();
         const rawName = (payload.name || 'Cantor').trim();
@@ -249,8 +272,22 @@ function startServer(portToUse) {
     // Rota oficial: "/" abre a página de vendas nova; o app continua em /index.html (ou /app)
     if (reqPath === '/' || !reqPath) reqPath = '/landing_v3.html';
     if (reqPath === '/app' || reqPath === '/app/') reqPath = '/index.html';
-    
-    const filePath = path.join(PUBLIC_DIR, '.' + reqPath);
+
+    // Bloquear Path Traversal, dotfiles (.env, .git, .agents, .vercel) e arquivos internos de servidor/banco
+    const decodedPath = decodeURIComponent(reqPath);
+    const forbiddenPattern = /(\/\.)|(\.\.)|^\/(server\.js|package(-lock)?\.json|vercel\.json|sync_backup\.sh|api\/|scratch\/)|(\.(sql|sh|md|bak.*))$/i;
+    if (forbiddenPattern.test(decodedPath)) {
+      res.statusCode = 403;
+      res.end('Forbidden');
+      return;
+    }
+
+    const filePath = path.resolve(PUBLIC_DIR, '.' + decodedPath);
+    if (!filePath.startsWith(PUBLIC_DIR)) {
+      res.statusCode = 403;
+      res.end('Forbidden');
+      return;
+    }
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';

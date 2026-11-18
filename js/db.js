@@ -65,7 +65,14 @@
   function saveOfflineStore(userId, data) {
     try {
       localStorage.setItem(getOfflineKey(userId), JSON.stringify(data));
-    } catch (e) {}
+      return true;
+    } catch (e) {
+      console.warn('Limite de armazenamento local atingido (QuotaExceededError):', e);
+      if (typeof window.showToast === 'function') {
+        window.showToast('⚠️ Armazenamento local cheio. Limpe repertórios offline antigos para liberar espaço.', 'warning');
+      }
+      return false;
+    }
   }
 
   // ════════════════════════════════════════
@@ -252,19 +259,25 @@
 
     return sb.from('repertoires').upsert(payload).select().then(function(res) {
       invalidateCache();
-      if (res.error) {
-        if (res.error.code === 'PGRST204' || (res.error.message && res.error.message.indexOf('user_id') !== -1)) {
-          delete payload.user_id;
-          return sb.from('repertoires').upsert(payload).select().then(function(res2) {
-            if (res2.error) throw res2.error;
-            var s2 = res2.data && res2.data[0] ? res2.data[0] : null;
-            return s2 ? s2.id : payload.id;
-          });
-        }
-        throw res.error;
-      }
+      if (res.error) throw res.error;
       var saved = res.data && res.data[0] ? res.data[0] : null;
-      return saved ? saved.id : payload.id;
+      var savedId = saved ? saved.id : payload.id;
+      try {
+        var offStore = getOfflineStore(user.id);
+        if (offStore && offStore.repertoires && savedId) {
+          offStore.repertoires[savedId] = Object.assign({}, repertoire, { id: savedId, user_id: user.id });
+          saveOfflineStore(user.id, offStore);
+        }
+      } catch(e) {}
+      return savedId;
+    }).catch(function(err) {
+      // Fallback offline: salvar localmente quando sem internet no palco
+      var localId = payload.id || ('rep-local-' + Date.now());
+      var offStore = getOfflineStore(user.id);
+      if (!offStore.repertoires) offStore.repertoires = {};
+      offStore.repertoires[localId] = Object.assign({}, repertoire, { id: localId, user_id: user.id, _dirty: true, updatedAt: Date.now() });
+      saveOfflineStore(user.id, offStore);
+      return localId;
     });
   }
 
@@ -456,7 +469,6 @@
 
     return sb.from('songs').upsert(payload).select().then(function(res) {
       if (res.error) {
-        delete payload.user_id;
         delete payload.rhythm;
         delete payload.spotify_url;
         return sb.from('songs').upsert(payload).select().then(function(res2) {
@@ -483,6 +495,19 @@
         }
       } catch(e) {}
       return retId;
+    }).catch(function(err) {
+      // Fallback offline: salvar edição no cache local quando sem internet no palco
+      var localSongId = payload.id || song.id || ('song-local-' + Date.now());
+      try {
+        var offStore = getOfflineStore(user.id);
+        if (!offStore.songs) offStore.songs = {};
+        var rId = song.repertoireId || 'misc';
+        if (!offStore.songs[rId]) offStore.songs[rId] = [];
+        offStore.songs[rId] = offStore.songs[rId].filter(function(x) { return x.id !== localSongId; });
+        offStore.songs[rId].push(Object.assign({}, song, { id: localSongId, _dirty: true, updatedAt: Date.now() }));
+        saveOfflineStore(user.id, offStore);
+      } catch(e) {}
+      return localSongId;
     });
   }
 
@@ -533,7 +558,7 @@
     return sb.from('songs').upsert(buildPayloads(true, true, true)).select().then(function(res) {
       if (res.error) {
         console.warn('Erro ao salvar lote de músicas com payload completo, tentando fallback simplificado:', res.error);
-        return sb.from('songs').upsert(buildPayloads(false, false, false)).select().then(function(res2) {
+        return sb.from('songs').upsert(buildPayloads(false, true, false)).select().then(function(res2) {
           if (res2.error) throw res2.error;
           return res2.data || songsArray;
         });

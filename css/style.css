@@ -3780,6 +3780,31 @@ textarea {
   background: #dc2626 !important;
 }
 
+.btn-dock-play {
+  background: rgba(14, 165, 233, 0.25) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(14, 165, 233, 0.4) !important;
+}
+
+.btn-dock-play:hover {
+  background: rgba(14, 165, 233, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.btn-dock-play.is-paused {
+  background: rgba(34, 197, 94, 0.25) !important;
+  color: #4ade80 !important;
+  border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.btn-active-yt {
+  background: rgba(239, 68, 68, 0.25) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  color: #f87171 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.35) !important;
+}
+
 .youtube-player-dock .youtube-player-container {
   margin-bottom: 0 !important;
   border-radius: 0 !important;
@@ -3967,13 +3992,13 @@ textarea {
   }
 
   .btn-circle {
-    min-width: 26px !important;
-    min-height: 26px !important;
-    width: 26px !important;
-    height: 26px !important;
-    font-size: 0.82rem !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.85rem !important;
     font-weight: 800 !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     background: rgba(255, 255, 255, 0.08) !important;
     display: inline-flex !important;
     align-items: center !important;

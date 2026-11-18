@@ -745,9 +745,11 @@
               }
             }
 
-            // 4. Consulta ao Supabase profiles (suportando com @ e sem @, e ilike em display_name)
+            // 4. Consulta ao Supabase profiles (suportando com @ e sem @, e ilike em display_name com sanitização contra PostgREST injection)
+            var safeFormatted = formattedNoAt.replace(/[^a-zA-Z0-9._-]/g, '');
+            var safeRaw = rawNoAt.replace(/[^a-zA-Z0-9._\s-]/g, '');
             return sb.from('profiles').select('email, singer_code, display_name')
-              .or('singer_code.eq.' + formattedNoAt + ',singer_code.eq.@' + formattedNoAt + ',singer_code.eq.' + rawNoAt + ',singer_code.eq.@' + rawNoAt + ',display_name.ilike.' + rawNoAt)
+              .or('singer_code.eq.' + safeFormatted + ',singer_code.eq.@' + safeFormatted + ',singer_code.eq.' + safeRaw + ',singer_code.eq.@' + safeRaw + ',display_name.ilike.' + safeRaw)
               .limit(5).then(function (res) {
                 if (res.data && res.data.length > 0) {
                   var exact = res.data.find(function(p) {
@@ -917,11 +919,13 @@
 
       if (!sb) return Promise.resolve(defaultProfile);
 
-      return sb.from('profiles').select('*').then(function (res) {
+      var profileQuery = userId
+        ? sb.from('profiles').select('*').eq('id', userId).limit(1)
+        : sb.from('profiles').select('*').eq('email', (userEmail || '').toLowerCase()).limit(1);
+
+      return profileQuery.then(function (res) {
         if (res.data && res.data.length > 0) {
-          var found = res.data.find(function (p) {
-            return p.id === userId || (p.email && userEmail && p.email.toLowerCase() === userEmail.toLowerCase());
-          });
+          var found = res.data[0];
           if (found) {
             var fEmail = (found.email || userEmail || '').toLowerCase();
             var hadLegacyHash = found.singer_code && (found.singer_code.startsWith('#') || found.singer_code.toUpperCase().indexOf('CANTOR-') !== -1 || found.singer_code.toUpperCase().indexOf('DEV-ADMIN') !== -1);

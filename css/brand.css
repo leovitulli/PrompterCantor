@@ -266,6 +266,10 @@ body.light-mode .app-header { background: var(--ca-papel) !important; }
   font-weight: 600 !important;
   font-family: var(--ca-font-body) !important;
 }
+.btn-scroll-play.is-scrolling {
+  background: #f59e0b !important;
+  color: #161513 !important;
+}
 .btn-scroll-play:hover { transform: none !important; box-shadow: none !important; filter: brightness(0.9); }
 .prompter-nav-btn, .btn-back { border-radius: 8px !important; }
 .control-label { color: var(--text-muted) !important; font-weight: 500 !important; }
@@ -1485,6 +1489,8 @@ body.light-mode button#btnScrollToTop.btn-floating-top:hover {
     align-items: center !important;
     justify-content: center !important;
   }
+}
+
 /* ══════════════════════════════════════════════════════════
    BOTÕES DE INSTALAÇÃO DO APP (PWA DESKTOP & MOBILE)
    ══════════════════════════════════════════════════════════ */
@@ -1602,6 +1608,10 @@ body.light-mode button#btnScrollToTop.btn-floating-top:hover {
 .pwa-app-icon {
   width: 26px !important;
   height: 26px !important;
+  max-width: 26px !important;
+  max-height: 26px !important;
+  display: block !important;
+  flex-shrink: 0 !important;
 }
 
 .pwa-card-info {

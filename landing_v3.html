@@ -13,7 +13,7 @@
 <body>
 
 <header class="nav">
-  <a href="/" class="nav-logo" aria-label="CantaAí"><svg class="afinador" viewBox="0 0 84 84" aria-hidden="true"><line class="tk" data-i="0" x1="42.00" y1="12.00" x2="42.00" y2="6.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="1" x1="57.00" y1="16.02" x2="60.00" y2="10.82" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="2" x1="67.98" y1="27.00" x2="73.18" y2="24.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="3" x1="72.00" y1="42.00" x2="78.00" y2="42.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="4" x1="67.98" y1="57.00" x2="73.18" y2="60.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="5" x1="57.00" y1="67.98" x2="60.00" y2="73.18" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="6" x1="42.00" y1="72.00" x2="42.00" y2="78.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="7" x1="27.00" y1="67.98" x2="24.00" y2="73.18" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="8" x1="16.02" y1="57.00" x2="10.82" y2="60.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="9" x1="12.00" y1="42.00" x2="6.00" y2="42.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="10" x1="16.02" y1="27.00" x2="10.82" y2="24.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="11" x1="27.00" y1="16.02" x2="24.00" y2="10.82" stroke-width="3" stroke-linecap="round"/><path class="acento" d="M33 50 L51 34" stroke-width="9" stroke-linecap="round"/></svg><span class="wordmark">Canta<span class="wm-ai">Aí</span></span><span class="wm-pro">PRO</span></a>
+  <a href="#topo" class="nav-logo" aria-label="CantaAí"><svg class="afinador" viewBox="0 0 84 84" aria-hidden="true"><line class="tk" data-i="0" x1="42.00" y1="12.00" x2="42.00" y2="6.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="1" x1="57.00" y1="16.02" x2="60.00" y2="10.82" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="2" x1="67.98" y1="27.00" x2="73.18" y2="24.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="3" x1="72.00" y1="42.00" x2="78.00" y2="42.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="4" x1="67.98" y1="57.00" x2="73.18" y2="60.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="5" x1="57.00" y1="67.98" x2="60.00" y2="73.18" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="6" x1="42.00" y1="72.00" x2="42.00" y2="78.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="7" x1="27.00" y1="67.98" x2="24.00" y2="73.18" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="8" x1="16.02" y1="57.00" x2="10.82" y2="60.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="9" x1="12.00" y1="42.00" x2="6.00" y2="42.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="10" x1="16.02" y1="27.00" x2="10.82" y2="24.00" stroke-width="3" stroke-linecap="round"/><line class="tk" data-i="11" x1="27.00" y1="16.02" x2="24.00" y2="10.82" stroke-width="3" stroke-linecap="round"/><path class="acento" d="M33 50 L51 34" stroke-width="9" stroke-linecap="round"/></svg><span class="wordmark">Canta<span class="wm-ai">Aí</span></span><span class="wm-pro">PRO</span></a>
   <nav class="nav-links">
     <a href="#demo">Experimente</a>
     <a href="#tela">O app</a>
@@ -220,6 +220,13 @@
   spec.addEventListener('click', function (e) { var b = e.target.closest('.tom-bar'); if (b) setKey(+b.dataset.i, false, false); });
   sel.addEventListener('change', function () { var v = sel.value; setKey(parseInt(v, 10), /m$/.test(v), true); });
   document.querySelectorAll('.chips .chip').forEach(function (c) { c.addEventListener('click', function () { setKey(+c.dataset.i, !!c.dataset.minor, true); document.getElementById('demo').scrollIntoView({ behavior: 'smooth', block: 'center' }); }); });
+  var navLogo = document.querySelector('.nav-logo');
+  if (navLogo) {
+    navLogo.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
   render();
 })();
 </script>

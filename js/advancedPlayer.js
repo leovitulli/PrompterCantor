@@ -77,6 +77,8 @@ var AdvancedPlayer = (function() {
   function loadSong(song) {
     _currentSong = song;
     stop();
+    _pitchCache = {};
+    _buffer = null;
 
     var playerEl = document.getElementById('advancedPlayer');
     if (!playerEl) return;
@@ -565,6 +567,12 @@ var AdvancedPlayer = (function() {
 
   function hide() {
     stop();
+    _pitchCache = {};
+    _buffer = null;
+    if (_currentObjectUrl) {
+      URL.revokeObjectURL(_currentObjectUrl);
+      _currentObjectUrl = null;
+    }
     var el = document.getElementById('advancedPlayer');
     if (el) el.classList.add('hidden');
   }

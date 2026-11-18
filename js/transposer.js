@@ -86,8 +86,14 @@
 
     setSelectKey: function (selectEl, rawKey) {
       if (!selectEl) return;
+      function notifyTomColor() {
+        if (window.TomColor && typeof window.TomColor.apply === 'function') {
+          window.TomColor.apply(selectEl.value);
+        }
+      }
       if (!rawKey) {
         selectEl.value = '';
+        notifyTomColor();
         return;
       }
 
@@ -97,6 +103,7 @@
       for (var i = 0; i < selectEl.options.length; i++) {
         if (selectEl.options[i].value === normKey) {
           selectEl.selectedIndex = i;
+          notifyTomColor();
           return;
         }
       }
@@ -106,6 +113,7 @@
       for (var j = 0; j < selectEl.options.length; j++) {
         if (selectEl.options[j].value.toLowerCase() === lower) {
           selectEl.selectedIndex = j;
+          notifyTomColor();
           return;
         }
       }
@@ -117,6 +125,7 @@
         for (var e = 0; e < selectEl.options.length; e++) {
           if (selectEl.options[e].value.toLowerCase() === equiv.toLowerCase()) {
             selectEl.selectedIndex = e;
+            notifyTomColor();
             return;
           }
         }
@@ -128,6 +137,7 @@
       opt.textContent = normKey;
       selectEl.appendChild(opt);
       selectEl.value = normKey;
+      notifyTomColor();
     },
 
     getKeyDistance: function (fromKey, toKey) {
@@ -163,9 +173,9 @@
     transposeChord: function (chord, semitones, preferFlat) {
       if (!chord || semitones === 0) return chord;
 
-      var parts = chord.split('/');
-      var mainChord = parts[0];
-      var bassNote = parts[1] || '';
+      var slashMatch = chord.match(/^(.*)\/([A-G][#b]?)$/i);
+      var mainChord = slashMatch ? slashMatch[1] : chord;
+      var bassNote = slashMatch ? slashMatch[2] : '';
 
       var parsed = parseRootAndSuffix(mainChord);
       if (!parsed) return chord;

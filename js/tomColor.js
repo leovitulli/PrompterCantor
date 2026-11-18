@@ -72,9 +72,6 @@
     var sel = document.getElementById('prompterKeySelect');
     if (sel) sel.addEventListener('change', tick);
     tick();
-    // O app define o valor do select por código ao abrir cada música
-    // (Transposer.setSelectKey), o que não dispara "change": por isso a verificação leve.
-    setInterval(tick, 400);
   }
 
   if (document.readyState === 'loading') {

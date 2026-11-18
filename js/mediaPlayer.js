@@ -18,7 +18,7 @@ var MediaPlayer = {
   loadMedia: function(audioData, fileName) {
     this.stop();
 
-    if (!audioData) {
+    if (!audioData || !this.audioElement) {
       this.hide();
       return;
     }

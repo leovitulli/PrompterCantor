@@ -1218,8 +1218,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnPrompterYt) {
       if (song.youtubeUrl || song.youtubeId) {
         btnPrompterYt.classList.remove('hidden');
+        var ytKey = song.youtubeId || (song.youtubeUrl ? TextParser.extractYouTubeId(song.youtubeUrl) : '');
+        var isCurrentPlaying = !!(state.isYoutubePlaying && state.currentYoutubeSongKey === (ytKey || song.title));
+        updateYoutubeUIState(isCurrentPlaying);
         btnPrompterYt.onclick = function() {
-          if (state.currentSong) openYoutubeModal(state.currentSong);
+          if (state.currentSong) toggleYoutubePlayback(state.currentSong);
         };
       } else {
         btnPrompterYt.classList.add('hidden');
@@ -2089,7 +2092,23 @@ document.addEventListener('DOMContentLoaded', function () {
         closeRepertoireSongsView();
         Prompter.stopScroll();
         MediaPlayer.hide();
-        document.getElementById('prompterView').classList.add('hidden');
+        closeYoutubeModal();
+        if (typeof closeSpotifyModal === 'function') closeSpotifyModal();
+        var prompterView = document.getElementById('prompterView');
+        if (prompterView) {
+          prompterView.classList.add('hidden');
+          prompterView.style.display = 'none';
+        }
+        var tabRep = document.getElementById('tabRepertoire');
+        if (tabRep) {
+          tabRep.classList.remove('hidden');
+          tabRep.classList.add('active');
+        }
+        var mainView = document.getElementById('mainRepertoireView');
+        if (mainView) mainView.classList.remove('hidden');
+        var songsView = document.getElementById('repertoireSongsView');
+        if (songsView) songsView.classList.add('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
 
@@ -2268,7 +2287,7 @@ document.addEventListener('DOMContentLoaded', function () {
       };
     }
 
-    // Fechar / Minimizar Dock do YouTube
+    // Fechar / Minimizar / Pausar Dock do YouTube
     var btnCloseYtDock = document.getElementById('btnCloseYoutubeDock');
     if (btnCloseYtDock) {
       var handleCloseYt = function(e) {
@@ -2277,6 +2296,14 @@ document.addEventListener('DOMContentLoaded', function () {
       };
       btnCloseYtDock.addEventListener('pointerdown', handleCloseYt, { passive: false });
       btnCloseYtDock.addEventListener('click', handleCloseYt, { passive: false });
+    }
+
+    var btnTogglePlayYtDock = document.getElementById('btnTogglePlayYoutubeDock');
+    if (btnTogglePlayYtDock) {
+      btnTogglePlayYtDock.addEventListener('click', function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (state.currentSong) toggleYoutubePlayback(state.currentSong);
+      }, { passive: false });
     }
 
     // Fechar Dock do Spotify
@@ -2292,12 +2319,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var btnMinYtDock = document.getElementById('btnToggleMinYoutubeDock');
     if (btnMinYtDock) {
-      var handleMinYt = function(e) {
+      btnMinYtDock.addEventListener('click', function(e) {
         if (e && e.preventDefault) e.preventDefault();
         toggleMinYoutubeModal();
-      };
-      btnMinYtDock.addEventListener('pointerdown', handleMinYt, { passive: false });
-      btnMinYtDock.addEventListener('click', handleMinYt, { passive: false });
+      }, { passive: false });
     }
 
     // Botão Flutuante Voltar ao Topo (Funciona Instantaneamente em qualquer momento, mesmo durante rolagem ativa)
@@ -2602,8 +2627,70 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ═══════════════════════════════════════
-  //  MODAL VÍDEO DO YOUTUBE & DETECÇÃO DE TOM
+  //  MODAL VÍDEO DO YOUTUBE & CONTROLE DE ÁUDIO GUIA
   // ═══════════════════════════════════════
+
+  function sendYoutubeCommand(cmd) {
+    try {
+      var iframe = document.getElementById('youtubeIframePlayer') || document.querySelector('#youtubePlayerContainer iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: '' }), '*');
+      }
+    } catch (e) {
+      console.warn('Erro ao enviar comando ao YouTube:', e);
+    }
+  }
+
+  function updateYoutubeUIState(isPlaying) {
+    state.isYoutubePlaying = !!isPlaying;
+    var btnYt = document.getElementById('btnPrompterYoutube');
+    if (btnYt) {
+      if (isPlaying) {
+        btnYt.innerHTML = '⏸️ Pausar YT';
+        btnYt.classList.add('btn-active-yt');
+        btnYt.title = 'Pausar áudio guia do YouTube';
+      } else {
+        btnYt.innerHTML = '▶️ Áudio YT';
+        btnYt.classList.remove('btn-active-yt');
+        btnYt.title = 'Tocar áudio guia do YouTube';
+      }
+    }
+    var btnDockPlay = document.getElementById('btnTogglePlayYoutubeDock');
+    if (btnDockPlay) {
+      if (isPlaying) {
+        btnDockPlay.textContent = '⏸️ Pausar';
+        btnDockPlay.classList.remove('is-paused');
+        btnDockPlay.title = 'Pausar áudio';
+      } else {
+        btnDockPlay.textContent = '▶️ Tocar';
+        btnDockPlay.classList.add('is-paused');
+        btnDockPlay.title = 'Retomar áudio';
+      }
+    }
+  }
+
+  function toggleYoutubePlayback(song) {
+    if (!song) return;
+    var dock = document.getElementById('youtubePlayerDock');
+    var ytId = song.youtubeId || (song.youtubeUrl ? TextParser.extractYouTubeId(song.youtubeUrl) : '');
+    var songKey = ytId || (song.title || '');
+
+    // Se já está carregado no dock para a mesma música:
+    if (dock && !dock.classList.contains('hidden') && state.currentYoutubeSongKey === songKey) {
+      if (state.isYoutubePlaying) {
+        sendYoutubeCommand('pauseVideo');
+        updateYoutubeUIState(false);
+        showToast('⏸️ Áudio guia pausado', 'info');
+      } else {
+        sendYoutubeCommand('playVideo');
+        updateYoutubeUIState(true);
+        showToast('▶️ Áudio guia reproduzindo', 'success');
+      }
+    } else {
+      // Nova música ou dock fechado -> iniciar reprodução limpa
+      openYoutubeModal(song);
+    }
+  }
 
   function openYoutubeModal(song) {
     var dock = document.getElementById('youtubePlayerDock');
@@ -2613,14 +2700,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!dock || !song) return;
 
-    if (titleEl) titleEl.textContent = '🎵 Áudio Guia: ' + (song.title || 'Referência');
     var ytId = song.youtubeId || (song.youtubeUrl ? TextParser.extractYouTubeId(song.youtubeUrl) : '');
+    state.currentYoutubeSongKey = ytId || (song.title || '');
+
+    if (titleEl) titleEl.textContent = '🎵 Áudio Guia: ' + (song.title || 'Referência');
+
+    var originParam = (window.location && window.location.origin && window.location.origin.indexOf('http') === 0)
+      ? '&origin=' + encodeURIComponent(window.location.origin)
+      : '';
 
     if (ytId) {
-      container.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + ytId + '?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+      container.innerHTML = '<iframe id="youtubeIframePlayer" src="https://www.youtube-nocookie.com/embed/' + ytId + '?enablejsapi=1&autoplay=1' + originParam + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
     } else {
       var query = encodeURIComponent((song.title || '') + ' ' + (song.artist || ''));
-      container.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=' + query + '&autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+      container.innerHTML = '<iframe id="youtubeIframePlayer" src="https://www.youtube-nocookie.com/embed?listType=search&list=' + query + '&enablejsapi=1&autoplay=1' + originParam + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
     }
 
     if (btnExternal) {
@@ -2634,6 +2727,7 @@ document.addEventListener('DOMContentLoaded', function () {
     dock.classList.add('minimized'); // Por padrão exibe em modo áudio (vídeo oculto no palco)
     var btnMin = document.getElementById('btnToggleMinYoutubeDock');
     if (btnMin) btnMin.textContent = '👁️ Mostrar vídeo';
+    updateYoutubeUIState(true);
   }
 
   function toggleMinYoutubeModal() {
@@ -2658,6 +2752,8 @@ document.addEventListener('DOMContentLoaded', function () {
       dock.classList.add('hidden');
       dock.classList.remove('minimized');
     }
+    state.currentYoutubeSongKey = null;
+    updateYoutubeUIState(false);
   }
 
   // ═══════════════════════════════════════
@@ -5656,11 +5752,14 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn('Endpoint local /api/mp/create-payment indisponível ou 404, aplicando chamada direta à API do Mercado Pago:', err);
       }
 
-      // 2. Fallback resiliente: chamada direta à API oficial do Mercado Pago
+      // 2. Fallback resiliente (apenas se token estiver configurado na sessão admin local)
       var pricing = (window.PrompterAdmin && typeof window.PrompterAdmin.getPricingConfig === 'function') 
         ? window.PrompterAdmin.getPricingConfig() 
         : {};
-      var token = pricing.mpAccessToken || 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620';
+      var token = pricing.mpAccessToken || '';
+      if (!token) {
+        throw new Error('Serviço de pagamento temporariamente indisponível (/api/mp/create-payment).');
+      }
 
       var cleanCpf = (payload.cpf || '00000000000').replace(/\D/g, '');
       var nameParts = (payload.name || 'Cantor').trim().split(/\s+/);
@@ -5720,12 +5819,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } catch (e) {}
 
-      // 2. Fallback direto à API do Mercado Pago
+      // 2. Fallback direto à API do Mercado Pago (apenas se token estiver configurado na sessão admin local)
       try {
         var pricing = (window.PrompterAdmin && typeof window.PrompterAdmin.getPricingConfig === 'function') 
           ? window.PrompterAdmin.getPricingConfig() 
           : {};
-        var token = pricing.mpAccessToken || 'APP_USR-1840710581391633-090520-875d1432839c41e0eb371eef24ca36a5-76594620';
+        var token = pricing.mpAccessToken || '';
+        if (!token) return null;
         var mpResp = await fetch('https://api.mercadopago.com/v1/payments/' + encodeURIComponent(paymentId), {
           method: 'GET',
           headers: { 'Authorization': 'Bearer ' + token }

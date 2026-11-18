@@ -47,7 +47,7 @@
           '<button id="btnPwaCloseFloating" class="pwa-card-close" aria-label="Fechar" title="Fechar (não mostrar por 7 dias)">✕</button>' +
           '<div class="pwa-card-content">' +
             '<div class="pwa-card-icon-box">' +
-              '<svg class="pwa-app-icon" viewBox="0 0 84 84" fill="none" stroke="currentColor" stroke-linecap="round">' +
+              '<svg class="pwa-app-icon" width="26" height="26" style="width:26px;height:26px;max-width:26px;max-height:26px;" viewBox="0 0 84 84" fill="none" stroke="currentColor" stroke-linecap="round">' +
                 '<line x1="42.00" y1="12.00" x2="42.00" y2="4.00" stroke-width="5"/>' +
                 '<line x1="57.00" y1="16.02" x2="60.00" y2="10.82" stroke-width="3"/>' +
                 '<line x1="67.98" y1="27.00" x2="73.18" y2="24.00" stroke-width="3"/>' +
@@ -96,7 +96,7 @@
           '<button id="btnPwaCloseGuide" class="modal-close" title="Fechar">✕</button>' +
           '<div class="pwa-guide-header">' +
             '<div class="pwa-guide-logo-box">' +
-              '<svg class="pwa-app-icon" viewBox="0 0 84 84" fill="none" stroke="currentColor" stroke-linecap="round">' +
+              '<svg class="pwa-app-icon" width="26" height="26" style="width:26px;height:26px;max-width:26px;max-height:26px;" viewBox="0 0 84 84" fill="none" stroke="currentColor" stroke-linecap="round">' +
                 '<line x1="42.00" y1="12.00" x2="42.00" y2="4.00" stroke-width="5"/>' +
                 '<line x1="57.00" y1="16.02" x2="60.00" y2="10.82" stroke-width="3"/>' +
                 '<line x1="67.98" y1="27.00" x2="73.18" y2="24.00" stroke-width="3"/>' +

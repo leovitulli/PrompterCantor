@@ -643,7 +643,9 @@ var TextParser = {
         if (!youtubeUrl) youtubeUrl = inlineYtMatch[1];
         continue;
       } else if (genericUrlMatch) {
-        if (!youtubeUrl) youtubeUrl = genericUrlMatch[1];
+        if (!youtubeUrl && /(?:youtube\.com|youtu\.be)/i.test(genericUrlMatch[1])) {
+          youtubeUrl = genericUrlMatch[1];
+        }
         continue;
       }
       contentLines.push(line);
@@ -752,7 +754,7 @@ var TextParser = {
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (this.isChordLine(line)) {
-        var matches = line.match(/[A-G][#b]?(?:m|maj|min|dim|aug|sus|add|[0-9])*/g);
+        var matches = line.match(/[A-G][#b]?(?:7M|7\+|M|maj|min|m|dim|aug|sus|add|[0-9\+\-º°])*/g);
         if (matches) {
           for (var m = 0; m < matches.length; m++) {
             var raw = matches[m];
@@ -783,11 +785,18 @@ var TextParser = {
       'D7': ['G', 'Gm'],
       'G7': ['C', 'Cm'],
       'C7': ['F', 'Fm'],
-      'F7': ['Bb', 'Bbm'],
-      'B7': ['E', 'Em'],
+      'F7': ['Bb', 'Bbm', 'A#', 'A#m'],
+      'Bb7': ['Eb', 'Ebm', 'D#', 'D#m'],
+      'A#7': ['D#', 'D#m', 'Eb', 'Ebm'],
+      'Eb7': ['Ab', 'Abm', 'G#', 'G#m'],
+      'D#7': ['G#', 'G#m', 'Ab', 'Abm'],
+      'Ab7': ['Db', 'Dbm', 'C#', 'C#m'],
+      'G#7': ['C#', 'C#m', 'Db', 'Dbm'],
+      'Db7': ['Gb', 'Gbm', 'F#', 'F#m'],
+      'C#7': ['F#', 'F#m', 'Gb', 'Gbm'],
+      'Gb7': ['B', 'Bm'],
       'F#7': ['B', 'Bm'],
-      'C#7': ['F#', 'F#m'],
-      'G#7': ['C#', 'C#m']
+      'B7': ['E', 'Em']
     };
 
     for (var c = 0; c < allChords.length - 1; c++) {
