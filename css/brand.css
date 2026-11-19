@@ -1498,7 +1498,17 @@ body.light-mode button#btnScrollToTop.btn-floating-top:hover {
   color: #10b981 !important;
   border-color: rgba(16, 185, 129, 0.35) !important;
   background: rgba(16, 185, 129, 0.08) !important;
+  padding: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.btn-install-pwa svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  stroke: currentColor !important;
 }
 .btn-install-pwa:hover {
   background: rgba(16, 185, 129, 0.22) !important;

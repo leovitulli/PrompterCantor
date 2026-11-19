@@ -290,6 +290,38 @@
       if (callback) callback();
     },
 
+    // ── PERSISTÊNCIA DEFINITIVA DO TOUR (LOCALSTORAGE + COOKIE + SUPABASE) ──
+    hasSeenTour: function () {
+      try {
+        if (localStorage.getItem(STORAGE_KEY) === 'true') return true;
+        if (document.cookie && document.cookie.indexOf('cantaai_tour_seen=1') !== -1) return true;
+        var user = window.PrompterAuth && window.PrompterAuth.getUser ? window.PrompterAuth.getUser() : null;
+        if (user) {
+          var uKey = 'cantaai_tour_seen_user_' + (user.id || user.email || '');
+          if (localStorage.getItem(uKey) === 'true') return true;
+          if (user.user_metadata && user.user_metadata.tour_seen === true) return true;
+        }
+      } catch (e) {}
+      return false;
+    },
+
+    markTourSeen: function () {
+      try {
+        localStorage.setItem(STORAGE_KEY, 'true');
+        document.cookie = 'cantaai_tour_seen=1; max-age=31536000; path=/; SameSite=Lax';
+        var user = window.PrompterAuth && window.PrompterAuth.getUser ? window.PrompterAuth.getUser() : null;
+        if (user) {
+          var uKey = 'cantaai_tour_seen_user_' + (user.id || user.email || '');
+          localStorage.setItem(uKey, 'true');
+          if (user.user_metadata) user.user_metadata.tour_seen = true;
+          var sb = window.PrompterCloud && window.PrompterCloud.getClient ? window.PrompterCloud.getClient() : null;
+          if (sb && sb.auth && typeof sb.auth.updateUser === 'function') {
+            sb.auth.updateUser({ data: { tour_seen: true } }).catch(function () {});
+          }
+        }
+      } catch (e) {}
+    },
+
     // ── INICIALIZAÇÃO DO MOTOR ──
     init: function () {
       this.createTourDOM();
@@ -298,9 +330,10 @@
       var self = this;
       window.addEventListener('load', function () {
         setTimeout(function () {
-          var seen = localStorage.getItem(STORAGE_KEY);
+          if (window.location.search && window.location.search.indexOf('share=') !== -1) return;
+          if (self.hasSeenTour()) return;
           var isLogged = window.PrompterAuth && window.PrompterAuth.getUser && window.PrompterAuth.getUser();
-          if (!seen && isLogged) {
+          if (isLogged) {
             self.start(0);
           }
         }, 1200);
@@ -394,7 +427,15 @@
       if (this.elements.btnClose) {
         this.elements.btnClose.addEventListener('click', function (e) {
           e.stopPropagation();
-          self.close(false);
+          self.close(true);
+        });
+      }
+
+      if (this.elements.chkDontShow) {
+        this.elements.chkDontShow.addEventListener('change', function () {
+          if (this.checked) {
+            self.markTourSeen();
+          }
         });
       }
 
@@ -408,7 +449,7 @@
 
       window.addEventListener('keydown', function (e) {
         if (!self.isOpen) return;
-        if (e.key === 'Escape') self.close(false);
+        if (e.key === 'Escape') self.close(true);
         else if (e.key === 'ArrowRight') self.next();
         else if (e.key === 'ArrowLeft') self.prev();
       });
@@ -496,7 +537,7 @@
       this.elements.overlay.style.display = 'none';
 
       if (markSeen || (this.elements.chkDontShow && this.elements.chkDontShow.checked)) {
-        localStorage.setItem(STORAGE_KEY, 'true');
+        this.markTourSeen();
       }
     },
 
